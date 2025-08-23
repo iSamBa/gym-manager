@@ -23,10 +23,28 @@ This is a **gym management system** built with Next.js 15.5 and React 19. The ap
 
 ### Directory Structure
 
-- `src/app/` - Next.js App Router pages and layouts
-- `src/lib/` - Shared utilities and configurations
-- `src/lib/supabase.ts` - Supabase client configuration
-- `src/lib/utils.ts` - Tailwind utility functions (`cn` helper)
+```
+src/
+├── app/                          # Next.js App Router pages and layouts
+├── components/
+│   ├── ui/                      # shadcn/ui primitives (auto-generated)
+│   ├── forms/                   # Composed form components (SearchInput, etc.)
+│   ├── layout/                  # Layout & navigation (Header, Sidebar, MainLayout)
+│   ├── data-display/            # Tables, cards, lists
+│   └── feedback/                # Modals, alerts, notifications
+├── features/                    # Feature-based organization
+│   ├── members/
+│   │   ├── components/          # Member-specific components (MemberTable, etc.)
+│   │   ├── hooks/               # Member-specific hooks
+│   │   └── lib/                 # Member business logic
+│   ├── memberships/             # Membership management
+│   ├── payments/                # Payment processing
+│   └── dashboard/               # Dashboard & analytics (StatsCard, etc.)
+├── lib/                         # Shared utilities and configurations
+│   ├── supabase.ts             # Supabase client configuration
+│   └── utils.ts                # Tailwind utility functions (`cn` helper)
+└── hooks/                       # Shared hooks (useLocalStorage, etc.)
+```
 
 ### Key Configuration Files
 
@@ -50,14 +68,92 @@ The Supabase client is configured in `src/lib/supabase.ts` with:
 - Geist font family (sans and mono variants)
 - Supports dark/light mode classes
 
+### Component Architecture
+
+This project follows a **shadcn/ui component-first approach**:
+
+- **Primitives First**: Always use shadcn/ui components as building blocks
+- **Composition over Inheritance**: Build complex components by composing primitives
+- **Feature Isolation**: Keep feature-specific components in their feature directory
+- **Shared Components**: Reusable compositions in `src/components/`
+
+### Component Guidelines
+
 When working on this codebase:
 
-- Use the established import aliases (`@/lib`, `@/components`, etc.)
-- Follow the shadcn/ui component patterns for new UI elements
+- **ONLY use shadcn/ui components** - no custom CSS components
+- Use the established import aliases (`@/lib`, `@/components`, `@/hooks`, etc.)
+- Follow the shadcn/ui component patterns for all UI elements
 - Import the Supabase client from `@/lib/supabase`
 - Use the `cn()` utility from `@/lib/utils` for conditional Tailwind classes
+- Place feature-specific components in `src/features/[feature]/components/`
+- Place reusable components in appropriate `src/components/[category]/` directories
+
+## Hook Organization Guidelines
+
+This project uses **two separate hooks directories** with distinct purposes:
+
+### `src/hooks/` - Shared/Global Hooks
+
+**Purpose**: Cross-feature, reusable hooks used throughout the entire application
+
+**Examples:**
+
+- `useLocalStorage` - Generic browser storage hook
+- `useDebounce` - Generic debouncing functionality
+- `useAuth` - Global authentication state
+- `useTheme` - App-wide theme management
+- `useSupabase` - Global Supabase client wrapper
+
+**When to use:**
+
+- Hook logic is **not specific** to any single feature
+- Multiple features will use the same hook
+- Hook manages global application state
+- Utility hooks that enhance React functionality
+
+### `src/features/[feature]/hooks/` - Feature-Specific Hooks
+
+**Purpose**: Business logic hooks tightly coupled to a specific feature domain
+
+**Examples:**
+
+- `src/features/members/hooks/useMemberForm` - Member creation/editing logic
+- `src/features/members/hooks/useMemberList` - Member filtering, sorting, pagination
+- `src/features/payments/hooks/usePaymentProcessor` - Payment processing logic
+- `src/features/dashboard/hooks/useAnalytics` - Dashboard-specific data fetching
+
+**When to use:**
+
+- Hook contains **business logic specific** to that feature
+- Hook manages feature-specific state
+- Hook encapsulates API calls for that domain
+- Hook would only be used by components in that feature
+
+### Decision Tree for Hook Placement:
+
+```
+Is this hook used by multiple features?
+├── YES → `src/hooks/`
+└── NO → Is it feature-specific business logic?
+    ├── YES → `src/features/[feature]/hooks/`
+    └── NO → Consider if it should be a utility function instead
+```
+
+### Import Examples:
+
+```typescript
+// Shared hooks
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useAuth } from "@/hooks/use-auth";
+
+// Feature-specific hooks
+import { useMemberForm } from "@/features/members/hooks/use-member-form";
+import { usePaymentProcessor } from "@/features/payments/hooks/use-payment-processor";
+```
 
 # Workflow
 
-- Be sure to typecheck when you’re done making a series of code changes
+- Be sure to typecheck when you're done making a series of code changes
 - Prefer running single tests, and not the whole test suite, for performance
+- When creating hooks, use the decision tree above to determine correct placement
