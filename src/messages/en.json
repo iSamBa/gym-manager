@@ -1,0 +1,71 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "members": "Members",
+    "memberships": "Memberships",
+    "payments": "Payments",
+    "analytics": "Analytics"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome_message": "Welcome back! Here's what's happening at your gym today.",
+    "add_member": "Add Member",
+    "stats": {
+      "total_members": "Total Members",
+      "active_memberships": "Active memberships",
+      "monthly_revenue": "Monthly Revenue",
+      "current_month_earnings": "Current month earnings",
+      "classes_today": "Classes Today",
+      "scheduled_sessions": "Scheduled sessions",
+      "equipment_usage": "Equipment Usage",
+      "peak_hours_utilization": "Peak hours utilization",
+      "from_last_month": "from last month",
+      "same_as_yesterday": "same as yesterday",
+      "from_last_week": "from last week"
+    },
+    "quick_actions": {
+      "title": "Quick Actions",
+      "register_member": "Register New Member",
+      "schedule_class": "Schedule Class",
+      "process_payment": "Process Payment",
+      "view_reports": "View Reports"
+    },
+    "recent_activity": {
+      "title": "Recent Activity",
+      "checked_in": "Checked in",
+      "booked_yoga_class": "Booked yoga class",
+      "updated_payment_method": "Updated payment method",
+      "completed_workout": "Completed workout",
+      "minutes_ago": "minutes ago"
+    },
+    "todays_classes": {
+      "title": "Today's Classes",
+      "morning_yoga": "Morning Yoga",
+      "hiit_training": "HIIT Training",
+      "pilates": "Pilates",
+      "strength_training": "Strength Training"
+    }
+  },
+  "theme": {
+    "toggle_theme": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "user_menu": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "log_out": "Log out"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter"
+  }
+}

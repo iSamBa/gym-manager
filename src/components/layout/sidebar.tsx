@@ -11,22 +11,25 @@ import {
   Menu,
   Home,
 } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/lib/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
-
-const navigation = [
-  { name: "Dashboard", href: "/", icon: Home },
-  { name: "Members", href: "/members", icon: Users },
-  { name: "Memberships", href: "/memberships", icon: CreditCard },
-  { name: "Payments", href: "/payments", icon: Receipt },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
-];
 
 interface SidebarProps {
   className?: string;
 }
 
 export function Sidebar({ className }: SidebarProps) {
+  const t = useTranslations("navigation");
+
+  const navigation = [
+    { name: t("dashboard"), href: "/", icon: Home },
+    { name: t("members"), href: "/members", icon: Users },
+    { name: t("memberships"), href: "/memberships", icon: CreditCard },
+    { name: t("payments"), href: "/payments", icon: Receipt },
+    { name: t("analytics"), href: "/analytics", icon: BarChart3 },
+  ];
+
   return (
     <div className={cn("pb-12", className)}>
       <div className="space-y-4 py-4">

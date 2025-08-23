@@ -13,8 +13,11 @@ import {
   Plus,
   Activity,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function Home() {
+  const t = useTranslations("dashboard");
+
   // Mock user data
   const user = {
     name: "John Doe",
@@ -25,32 +28,32 @@ export default function Home() {
   // Mock stats data
   const stats = [
     {
-      title: "Total Members",
+      title: t("stats.total_members"),
       value: "2,847",
-      description: "Active memberships",
+      description: t("stats.active_memberships"),
       icon: Users,
-      trend: { value: 12, label: "from last month" },
+      trend: { value: 12, label: t("stats.from_last_month") },
     },
     {
-      title: "Monthly Revenue",
+      title: t("stats.monthly_revenue"),
       value: "$23,580",
-      description: "Current month earnings",
+      description: t("stats.current_month_earnings"),
       icon: DollarSign,
-      trend: { value: 8, label: "from last month" },
+      trend: { value: 8, label: t("stats.from_last_month") },
     },
     {
-      title: "Classes Today",
+      title: t("stats.classes_today"),
       value: "12",
-      description: "Scheduled sessions",
+      description: t("stats.scheduled_sessions"),
       icon: Calendar,
-      trend: { value: 0, label: "same as yesterday" },
+      trend: { value: 0, label: t("stats.same_as_yesterday") },
     },
     {
-      title: "Equipment Usage",
+      title: t("stats.equipment_usage"),
       value: "78%",
-      description: "Peak hours utilization",
+      description: t("stats.peak_hours_utilization"),
       icon: Activity,
-      trend: { value: -5, label: "from last week" },
+      trend: { value: -5, label: t("stats.from_last_week") },
     },
   ];
 
@@ -59,26 +62,26 @@ export default function Home() {
     {
       id: 1,
       member: "Alice Johnson",
-      action: "Checked in",
-      time: "2 minutes ago",
+      action: t("recent_activity.checked_in"),
+      time: `2 ${t("recent_activity.minutes_ago")}`,
     },
     {
       id: 2,
       member: "Bob Smith",
-      action: "Booked yoga class",
-      time: "5 minutes ago",
+      action: t("recent_activity.booked_yoga_class"),
+      time: `5 ${t("recent_activity.minutes_ago")}`,
     },
     {
       id: 3,
       member: "Carol Davis",
-      action: "Updated payment method",
-      time: "12 minutes ago",
+      action: t("recent_activity.updated_payment_method"),
+      time: `12 ${t("recent_activity.minutes_ago")}`,
     },
     {
       id: 4,
       member: "David Wilson",
-      action: "Completed workout",
-      time: "18 minutes ago",
+      action: t("recent_activity.completed_workout"),
+      time: `18 ${t("recent_activity.minutes_ago")}`,
     },
   ];
 
@@ -88,14 +91,12 @@ export default function Home() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Welcome back! Here&apos;s what&apos;s happening at your gym today.
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+            <p className="text-muted-foreground">{t("welcome_message")}</p>
           </div>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Add Member
+            {t("add_member")}
           </Button>
         </div>
 
@@ -118,24 +119,24 @@ export default function Home() {
           {/* Quick Actions */}
           <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+              <CardTitle>{t("quick_actions.title")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <Button variant="outline" className="w-full justify-start">
                 <Users className="mr-2 h-4 w-4" />
-                Register New Member
+                {t("quick_actions.register_member")}
               </Button>
               <Button variant="outline" className="w-full justify-start">
                 <Calendar className="mr-2 h-4 w-4" />
-                Schedule Class
+                {t("quick_actions.schedule_class")}
               </Button>
               <Button variant="outline" className="w-full justify-start">
                 <DollarSign className="mr-2 h-4 w-4" />
-                Process Payment
+                {t("quick_actions.process_payment")}
               </Button>
               <Button variant="outline" className="w-full justify-start">
                 <TrendingUp className="mr-2 h-4 w-4" />
-                View Reports
+                {t("quick_actions.view_reports")}
               </Button>
             </CardContent>
           </Card>
@@ -143,7 +144,7 @@ export default function Home() {
           {/* Recent Activity */}
           <Card>
             <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
+              <CardTitle>{t("recent_activity.title")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -170,13 +171,15 @@ export default function Home() {
           {/* Today's Classes */}
           <Card>
             <CardHeader>
-              <CardTitle>Today&apos;s Classes</CardTitle>
+              <CardTitle>{t("todays_classes.title")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">Morning Yoga</p>
+                    <p className="text-sm font-medium">
+                      {t("todays_classes.morning_yoga")}
+                    </p>
                     <p className="text-muted-foreground text-xs">
                       08:00 - 09:00
                     </p>
@@ -185,7 +188,9 @@ export default function Home() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">HIIT Training</p>
+                    <p className="text-sm font-medium">
+                      {t("todays_classes.hiit_training")}
+                    </p>
                     <p className="text-muted-foreground text-xs">
                       10:00 - 11:00
                     </p>
@@ -194,7 +199,9 @@ export default function Home() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">Pilates</p>
+                    <p className="text-sm font-medium">
+                      {t("todays_classes.pilates")}
+                    </p>
                     <p className="text-muted-foreground text-xs">
                       18:00 - 19:00
                     </p>
@@ -203,7 +210,9 @@ export default function Home() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">Strength Training</p>
+                    <p className="text-sm font-medium">
+                      {t("todays_classes.strength_training")}
+                    </p>
                     <p className="text-muted-foreground text-xs">
                       19:30 - 20:30
                     </p>

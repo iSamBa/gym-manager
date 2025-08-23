@@ -13,6 +13,7 @@ import {
 import { MobileSidebar } from "./sidebar";
 import { LogOut, Settings, User } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useTranslations } from "next-intl";
 
 interface HeaderProps {
   user?: {
@@ -23,6 +24,8 @@ interface HeaderProps {
 }
 
 export function Header({ user }: HeaderProps) {
+  const t = useTranslations("user_menu");
+
   return (
     <header className="border-b">
       <div className="flex h-16 items-center px-4">
@@ -63,16 +66,16 @@ export function Header({ user }: HeaderProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
+                  <span>{t("profile")}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
+                  <span>{t("settings")}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                  <span>{t("log_out")}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
