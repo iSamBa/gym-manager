@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MobileSidebar } from "./sidebar";
 import { LogOut, Settings, User } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface HeaderProps {
   user?: {
@@ -28,6 +29,7 @@ export function Header({ user }: HeaderProps) {
         <MobileSidebar />
 
         <div className="ml-auto flex items-center space-x-4">
+          <ThemeToggle />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
