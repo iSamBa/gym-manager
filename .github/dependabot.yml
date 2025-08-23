@@ -1,0 +1,127 @@
+version: 2
+
+updates:
+  # npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "aissam" # Replace with actual GitHub usernames
+    assignees:
+      - "aissam" # Replace with actual GitHub usernames
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "automated"
+    # Group related updates together
+    groups:
+      # React and Next.js ecosystem
+      react-ecosystem:
+        patterns:
+          - "react*"
+          - "next*"
+          - "@types/react*"
+      # Testing frameworks
+      testing-tools:
+        patterns:
+          - "vitest*"
+          - "@vitest/*"
+          - "playwright*"
+          - "@playwright/*"
+          - "@testing-library/*"
+          - "jest*"
+          - "@jest/*"
+      # Linting and formatting
+      code-quality:
+        patterns:
+          - "eslint*"
+          - "@eslint/*"
+          - "prettier*"
+          - "@typescript-eslint/*"
+      # Build tools
+      build-tools:
+        patterns:
+          - "webpack*"
+          - "babel*"
+          - "@babel/*"
+          - "turbopack*"
+      # UI libraries
+      ui-components:
+        patterns:
+          - "@radix-ui/*"
+          - "lucide-react"
+          - "tailwindcss*"
+          - "@tailwindcss/*"
+      # State management and data fetching
+      state-management:
+        patterns:
+          - "zustand"
+          - "@tanstack/*"
+          - "react-query*"
+      # Backend and database
+      backend:
+        patterns:
+          - "@supabase/*"
+          - "supabase*"
+      # Development dependencies (minor updates only)
+      dev-dependencies:
+        patterns:
+          - "@types/*"
+        update-types:
+          - "version-update:semver-patch"
+          - "version-update:semver-minor"
+    # Ignore major version updates for critical packages
+    ignore:
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "10:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "aissam" # Replace with actual GitHub usernames
+    assignees:
+      - "aissam" # Replace with actual GitHub usernames
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "github-actions"
+      - "dependencies"
+      - "automated"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # Docker (if you add Docker later)
+  # - package-ecosystem: "docker"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "monthly"
+  #   open-pull-requests-limit: 3
+  #   commit-message:
+  #     prefix: "docker"
+  #   labels:
+  #     - "docker"
+  #     - "dependencies"
