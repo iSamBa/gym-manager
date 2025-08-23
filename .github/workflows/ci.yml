@@ -255,6 +255,9 @@ jobs:
     needs: [lint, test, build]
     # Always run this job, but mark as failure if any needed job failed
     if: always()
+    permissions:
+      issues: write
+      pull-requests: write
     steps:
       - name: Check all jobs status
         run: |
