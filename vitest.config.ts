@@ -20,8 +20,8 @@ export default defineConfig({
     projects: [
       // Unit tests project
       {
-        name: "unit",
         test: {
+          name: "unit",
           environment: "jsdom",
           globals: true,
           setupFiles: ["./vitest.setup.ts"],
