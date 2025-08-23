@@ -42,3 +42,6 @@ next-env.d.ts
 
 #MCPs
 .mcp.json
+
+*storybook.log
+storybook-static
