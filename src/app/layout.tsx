@@ -1,5 +1,5 @@
-// This file is required for the app directory.
-// It's used for locale-based routing redirection.
+// Root layout - only used for redirect page
+// HTML structure is handled by [locale]/layout.tsx
 export default function RootLayout({
   children,
 }: {

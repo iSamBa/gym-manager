@@ -1,7 +1,9 @@
 "use client";
 
-import { MainLayout } from "@/components/layout/main-layout";
-import { StatsCard } from "@/features/dashboard/components/stats-card";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { SectionCards } from "@/components/section-cards";
+// import { ChartAreaInteractive } from "@/components/chart-area-interactive";
+// import { DataTable } from "@/components/data-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,51 +13,12 @@ import {
   Calendar,
   TrendingUp,
   Plus,
-  Activity,
+  // Activity,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export default function Home() {
   const t = useTranslations("dashboard");
-
-  // Mock user data
-  const user = {
-    name: "John Doe",
-    email: "john.doe@gym.com",
-    avatar: "JD",
-  };
-
-  // Mock stats data
-  const stats = [
-    {
-      title: t("stats.total_members"),
-      value: "2,847",
-      description: t("stats.active_memberships"),
-      icon: Users,
-      trend: { value: 12, label: t("stats.from_last_month") },
-    },
-    {
-      title: t("stats.monthly_revenue"),
-      value: "$23,580",
-      description: t("stats.current_month_earnings"),
-      icon: DollarSign,
-      trend: { value: 8, label: t("stats.from_last_month") },
-    },
-    {
-      title: t("stats.classes_today"),
-      value: "12",
-      description: t("stats.scheduled_sessions"),
-      icon: Calendar,
-      trend: { value: 0, label: t("stats.same_as_yesterday") },
-    },
-    {
-      title: t("stats.equipment_usage"),
-      value: "78%",
-      description: t("stats.peak_hours_utilization"),
-      icon: Activity,
-      trend: { value: -5, label: t("stats.from_last_week") },
-    },
-  ];
 
   // Mock recent activities
   const recentActivities = [
@@ -86,7 +49,7 @@ export default function Home() {
   ];
 
   return (
-    <MainLayout user={user}>
+    <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -101,18 +64,10 @@ export default function Home() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat, index) => (
-            <StatsCard
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              description={stat.description}
-              icon={stat.icon}
-              trend={stat.trend}
-            />
-          ))}
-        </div>
+        <SectionCards />
+
+        {/* Chart Section - Temporarily disabled */}
+        {/* <ChartAreaInteractive /> */}
 
         {/* Content Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -224,6 +179,6 @@ export default function Home() {
           </Card>
         </div>
       </div>
-    </MainLayout>
+    </DashboardLayout>
   );
 }

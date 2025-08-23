@@ -213,3 +213,4 @@ describe("Component Tests", () => {
 - Prefer running single tests with `npm test -- <test-file>` for performance during development
 - When creating hooks, use the decision tree above to determine correct placement
 - Write tests for all utility functions and critical business logic
+- **MUST ALWAYS DO** : When we start working on a new feature, the first thing to do is to create a new branch with a significant name for the feature.
