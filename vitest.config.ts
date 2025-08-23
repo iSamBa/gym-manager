@@ -10,10 +10,26 @@ const dirname =
     ? __dirname
     : path.dirname(fileURLToPath(import.meta.url));
 
-// More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@": path.resolve(dirname, "./src"),
+    },
+  },
   test: {
     projects: [
+      // Unit tests project
+      {
+        name: "unit",
+        test: {
+          environment: "jsdom",
+          globals: true,
+          setupFiles: ["./vitest.setup.ts"],
+          include: ["src/**/*.{test,spec}.{js,ts,tsx}"],
+          exclude: ["src/stories/**"],
+        },
+      },
+      // Storybook tests project
       {
         extends: true,
         plugins: [

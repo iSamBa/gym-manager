@@ -8,6 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run build` - Build production application with Turbopack
 - `npm start` - Start production server
 - `npm run lint` - Run ESLint for code quality checks
+- `npm test` - Run unit tests with Vitest
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
+- `npm run test:ui` - Run tests with Vitest UI
 
 ## Project Architecture
 
@@ -20,6 +24,7 @@ This is a **gym management system** built with Next.js 15.5 and React 19. The ap
 - **Tailwind CSS v4** for styling
 - **shadcn/ui** components (configured in `components.json`)
 - **Supabase** for backend services (database, auth, real-time features)
+- **Vitest** for unit testing with jsdom environment
 
 ### Directory Structure
 
@@ -50,6 +55,8 @@ src/
 
 - `components.json` - shadcn/ui configuration with "new-york" style, aliases set for `@/components`, `@/lib`, etc.
 - `tsconfig.json` - Path aliases configured (`@/*` → `./src/*`)
+- `vitest.config.ts` - Vitest testing configuration with multiple projects (unit tests + Storybook tests)
+- `vitest.setup.ts` - Global test setup and mocks
 - `.env.local` - Supabase credentials (not committed to git)
 
 ### Supabase Integration
@@ -152,8 +159,57 @@ import { useMemberForm } from "@/features/members/hooks/use-member-form";
 import { usePaymentProcessor } from "@/features/payments/hooks/use-payment-processor";
 ```
 
+## Testing Guidelines
+
+This project uses **Vitest** for unit testing with the following setup:
+
+### Testing Framework
+
+- **Vitest** with jsdom environment for unit tests
+- **Testing Library** for React component testing
+- **Storybook** integration for component testing in browser environment
+
+### Test Structure
+
+- Unit tests: `src/**/*.{test,spec}.{ts,tsx}`
+- Test utilities in `vitest.setup.ts`
+- Environment variable mocking with `vi.stubEnv()`
+- ES module mocking with `vi.mock()`
+
+### Testing Best Practices
+
+- Use `vi.mocked()` for TypeScript-friendly mocks
+- Use `vi.stubEnv()` for environment variable testing
+- Use dynamic imports `await import()` for module testing with mocks
+- Clean up with `vi.resetModules()` and `vi.unstubAllEnvs()` in beforeEach/afterEach
+
+### Example Test Structure
+
+```typescript
+import { vi, describe, it, expect, beforeEach } from "vitest";
+
+// Mock dependencies
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: vi.fn(),
+}));
+
+describe("Component Tests", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.unstubAllEnvs();
+  });
+
+  it("should test functionality", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "test-url");
+    const module = await import("../module");
+    // assertions...
+  });
+});
+```
+
 # Workflow
 
-- Be sure to typecheck when you're done making a series of code changes
-- Prefer running single tests, and not the whole test suite, for performance
+- Be sure to run `npm run lint` and `npm test` when you're done making a series of code changes
+- Prefer running single tests with `npm test -- <test-file>` for performance during development
 - When creating hooks, use the decision tree above to determine correct placement
+- Write tests for all utility functions and critical business logic
