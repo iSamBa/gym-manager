@@ -1,16 +1,6 @@
 // Database utility functions and helpers
 import { supabase } from "@/lib/supabase";
-import type {
-  Member,
-  UserProfile,
-  Equipment,
-  SubscriptionPlan,
-  MemberSubscription,
-  Class,
-  Trainer,
-  ClassBooking,
-  AttendanceLog,
-} from "./types";
+import type { Member, Equipment, Class } from "./types";
 
 // Error handling utility
 export class DatabaseError extends Error {
@@ -109,7 +99,7 @@ export const classUtils = {
 // Database connection test utility
 export async function testDatabaseConnection(): Promise<boolean> {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("members")
       .select("count", { count: "exact", head: true });
     return !error;

@@ -40,10 +40,7 @@ export function Sidebar({ className }: SidebarProps) {
           <div className="space-y-1">
             {navigation.map((item) => (
               <Link key={item.name} href={item.href}>
-                <Button
-                  variant="ghost"
-                  className="hover:!bg-sidebar-accent hover:!text-sidebar-accent-foreground [&_svg]:hover:!text-sidebar-accent-foreground w-full justify-start"
-                >
+                <Button variant="ghost" className="w-full justify-start">
                   <item.icon className="mr-2 h-4 w-4" />
                   {item.name}
                 </Button>
