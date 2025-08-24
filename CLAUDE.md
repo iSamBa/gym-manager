@@ -207,9 +207,66 @@ describe("Component Tests", () => {
 });
 ```
 
+## Git Branching Strategy
+
+This project follows a **feature branch workflow** for organized development:
+
+### 🚨 CRITICAL: New Features MUST Use Feature Branches
+
+**ALL new features, major changes, or significant additions MUST be developed on separate feature branches.**
+
+### Branch Naming Convention
+
+- **Feature branches**: `feature/[feature-name]`
+  - Example: `feature/admin-authentication`
+  - Example: `feature/member-management`
+  - Example: `feature/payment-processing`
+
+- **Bug fixes**: `bugfix/[issue-description]`
+  - Example: `bugfix/login-validation-error`
+
+- **Hotfixes**: `hotfix/[critical-issue]`
+  - Example: `hotfix/security-vulnerability`
+
+### Workflow Process
+
+1. **ALWAYS** create a new branch before starting work on a new feature
+2. Use descriptive branch names that clearly identify the feature
+3. Keep branches focused on a single feature or related set of changes
+4. Merge back to `main` via pull request when feature is complete
+5. Delete feature branch after successful merge
+
+### Commands
+
+```bash
+# Create and switch to new feature branch
+git checkout -b feature/your-feature-name
+
+# Push branch to remote
+git push -u origin feature/your-feature-name
+
+# Switch back to main
+git checkout main
+
+# Delete local branch after merge
+git branch -d feature/your-feature-name
+```
+
+### Why Feature Branches Are Required
+
+- **Isolation**: Keep experimental or incomplete features separate from stable code
+- **Collaboration**: Multiple developers can work on different features simultaneously
+- **Code Review**: Feature branches enable proper code review via pull requests
+- **Rollback**: Easy to revert specific features if issues arise
+- **Clean History**: Maintains a clean, organized commit history
+
+**⚠️ NEVER commit directly to `main` branch for new features!**
+
 # Workflow
 
+- **MANDATORY**: Create a new feature branch for any new feature or major change
 - Be sure to run `npm run lint` and `npm test` when you're done making a series of code changes
 - Prefer running single tests with `npm test -- <test-file>` for performance during development
 - When creating hooks, use the decision tree above to determine correct placement
 - Write tests for all utility functions and critical business logic
+- Always create pull requests for merging feature branches back to main
