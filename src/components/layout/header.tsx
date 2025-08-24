@@ -15,6 +15,7 @@ import { LogOut, Settings, User } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
+import { SessionStatus } from "@/components/session-status";
 
 interface HeaderProps {
   user?: {
@@ -38,6 +39,7 @@ export function Header({ user }: HeaderProps) {
         <MobileSidebar />
 
         <div className="ml-auto flex items-center space-x-4">
+          {user && <SessionStatus />}
           <ThemeToggle />
           {user ? (
             <DropdownMenu>

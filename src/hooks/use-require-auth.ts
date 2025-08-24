@@ -17,12 +17,25 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}) {
     if (isLoading) return;
 
     if (!isAuthenticated) {
+      // Store current path for redirect after login
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(
+          "auth-redirect",
+          window.location.pathname + window.location.search
+        );
+      }
       router.push(redirectTo);
       return;
     }
 
     if (requiredRole && user?.role !== requiredRole) {
-      // If user doesn't have required role, redirect to login or unauthorized page
+      // If user doesn't have required role, redirect to login
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(
+          "auth-redirect",
+          window.location.pathname + window.location.search
+        );
+      }
       router.push(redirectTo);
       return;
     }

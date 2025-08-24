@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { SessionGuard } from "@/components/session-guard";
 
 interface AuthContextType {
   user: Record<string, unknown> | null;
@@ -22,8 +23,19 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
+  const [rememberMe, setRememberMe] = useState(false);
 
-  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
+  useEffect(() => {
+    // Check if user has remember me enabled
+    const rememberedSetting = localStorage.getItem("remember-me") === "true";
+    setRememberMe(rememberedSetting);
+  }, []);
+
+  return (
+    <AuthContext.Provider value={auth}>
+      <SessionGuard rememberMe={rememberMe}>{children}</SessionGuard>
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuthContext() {

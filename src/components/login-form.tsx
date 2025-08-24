@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/use-auth";
 
 export function LoginForm({
@@ -21,6 +22,7 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const { signIn, isLoading } = useAuth();
   const router = useRouter();
@@ -37,7 +39,13 @@ export function LoginForm({
     }
 
     if (user) {
-      router.push("/dashboard");
+      // Store remember me preference
+      localStorage.setItem("remember-me", rememberMe.toString());
+
+      // Check if there's a redirect URL in session storage
+      const redirectTo = sessionStorage.getItem("auth-redirect") || "/";
+      sessionStorage.removeItem("auth-redirect");
+      router.push(redirectTo);
     }
   };
 
@@ -79,6 +87,21 @@ export function LoginForm({
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember-me"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) =>
+                      setRememberMe(checked === true)
+                    }
+                  />
+                  <Label
+                    htmlFor="remember-me"
+                    className="cursor-pointer text-sm font-normal"
+                  >
+                    Remember me for 7 days
+                  </Label>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Signing in..." : "Sign In"}

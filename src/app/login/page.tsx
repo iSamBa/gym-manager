@@ -5,6 +5,7 @@ import { LoginForm } from "@/components/login-form";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 
 export default function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -12,16 +13,12 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.push("/dashboard");
+      router.push("/");
     }
   }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
-    return (
-      <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-        <div className="text-center">Loading...</div>
-      </div>
-    );
+    return <LoadingSkeleton variant="auth" />;
   }
 
   if (isAuthenticated) {

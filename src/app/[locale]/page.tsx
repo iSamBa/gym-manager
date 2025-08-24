@@ -15,20 +15,14 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
+import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 
 export default function Home() {
   const t = useTranslations("dashboard");
   const { user, isLoading } = useRequireAdmin();
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg font-semibold">Loading...</div>
-          <p className="text-muted-foreground">Verifying authentication</p>
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton variant="dashboard" />;
   }
 
   if (!user) {
