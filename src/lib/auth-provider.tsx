@@ -14,7 +14,7 @@ interface AuthContextType {
     password: string
   ) => Promise<{
     user: Record<string, unknown> | null;
-    error: Error | null;
+    error: unknown;
   }>;
   signOut: () => Promise<void>;
 }
@@ -31,8 +31,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRememberMe(rememberedSetting);
   }, []);
 
+  // Create a wrapper that matches the expected context type
+  const contextValue: AuthContextType = {
+    user: auth.user,
+    isLoading: auth.isLoading,
+    isAuthenticated: auth.isAuthenticated,
+    isAdmin: auth.isAdmin,
+    signIn: async (email: string, password: string) => {
+      const result = await auth.signIn(email, password);
+      return {
+        user: result.user as Record<string, unknown> | null,
+        error: result.error,
+      };
+    },
+    signOut: auth.signOut,
+  };
+
   return (
-    <AuthContext.Provider value={auth}>
+    <AuthContext.Provider value={contextValue}>
       <SessionGuard rememberMe={rememberMe}>{children}</SessionGuard>
     </AuthContext.Provider>
   );
