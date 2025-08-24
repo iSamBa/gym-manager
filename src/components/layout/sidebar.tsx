@@ -10,6 +10,7 @@ import {
   BarChart3,
   Menu,
   Home,
+  Dumbbell,
 } from "lucide-react";
 import { Link } from "@/lib/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -34,7 +35,10 @@ export function Sidebar({ className }: SidebarProps) {
     <div className={cn("pb-12", className)}>
       <div className="space-y-4 py-4">
         <div className="px-3 py-2">
-          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+          <h2 className="mb-2 flex items-center px-4 text-lg font-semibold tracking-tight">
+            <div className="bg-primary text-primary-foreground mr-2 flex size-5 items-center justify-center rounded-md">
+              <Dumbbell className="size-3" />
+            </div>
             Gym Manager
           </h2>
           <div className="space-y-1">

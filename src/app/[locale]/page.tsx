@@ -12,7 +12,6 @@ import {
   TrendingUp,
   Plus,
   Activity,
-  Dumbbell,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
@@ -113,13 +112,8 @@ export default function Home() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-md">
-                <Dumbbell className="size-5" />
-              </div>
-              <h1 className="text-3xl font-bold tracking-tight">Gym Manager</h1>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
             <p className="text-muted-foreground">{t("welcome_message")}</p>
           </div>
           <Button>
