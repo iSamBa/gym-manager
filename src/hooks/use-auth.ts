@@ -1,8 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/store";
-import { UserProfile } from "@/features/database/lib/types";
 
 export function useAuth() {
   const {
@@ -12,6 +11,38 @@ export function useAuth() {
     setIsLoading,
     logout: clearUser,
   } = useAuthStore();
+
+  const loadUserProfile = useCallback(
+    async (authUser: User) => {
+      try {
+        const { data: profile, error } = await supabase
+          .from("user_profiles")
+          .select("*")
+          .eq("id", authUser.id)
+          .single();
+
+        if (error) {
+          console.error("Error loading user profile:", error);
+          return;
+        }
+
+        if (profile) {
+          setUser({
+            id: profile.id,
+            email: profile.email,
+            role: profile.role,
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            avatar_url: profile.avatar_url,
+            is_active: profile.is_active,
+          });
+        }
+      } catch (error) {
+        console.error("Error loading user profile:", error);
+      }
+    },
+    [setUser]
+  );
 
   useEffect(() => {
     // Initialize auth state
@@ -46,36 +77,7 @@ export function useAuth() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [setUser, setIsLoading]);
-
-  const loadUserProfile = async (authUser: User) => {
-    try {
-      const { data: profile, error } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("id", authUser.id)
-        .single();
-
-      if (error) {
-        console.error("Error loading user profile:", error);
-        return;
-      }
-
-      if (profile) {
-        setUser({
-          id: profile.id,
-          email: profile.email,
-          role: profile.role,
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          avatar_url: profile.avatar_url,
-          is_active: profile.is_active,
-        });
-      }
-    } catch (error) {
-      console.error("Error loading user profile:", error);
-    }
-  };
+  }, [setUser, setIsLoading, loadUserProfile]);
 
   const signIn = async (email: string, password: string) => {
     try {

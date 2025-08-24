@@ -34,7 +34,9 @@ export function LoginForm({
     const { user, error: signInError } = await signIn(email, password);
 
     if (signInError) {
-      setError(signInError.message || "Failed to sign in");
+      setError(
+        (signInError as { message?: string })?.message || "Failed to sign in"
+      );
       return;
     }
 

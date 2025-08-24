@@ -17,8 +17,8 @@ export function useActivityTracker({
   warningTime = SESSION_CONFIG.WARNING_BEFORE_LOGOUT,
 }: ActivityTrackerOptions = {}) {
   const lastActivityRef = useRef<number>(Date.now());
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  const warningTimeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const warningTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const isWarningActiveRef = useRef(false);
 
   const resetTimer = useCallback(() => {

@@ -16,16 +16,24 @@ export function useSessionSecurity({
 
   // Synchronize authentication state across tabs
   const handleStorageChange = useCallback(
-    (event: StorageEvent) => {
+    (event: Event) => {
+      const storageEvent = event as StorageEvent;
       if (!enableMultiTabSync) return;
 
       // If another tab logged out, log out this tab too
-      if (event.key === "auth-storage" && event.newValue === null) {
+      if (
+        storageEvent.key === "auth-storage" &&
+        storageEvent.newValue === null
+      ) {
         window.location.reload();
       }
 
       // If another tab logged in, refresh this tab to sync state
-      if (event.key === "auth-storage" && event.newValue && !isAuthenticated) {
+      if (
+        storageEvent.key === "auth-storage" &&
+        storageEvent.newValue &&
+        !isAuthenticated
+      ) {
         window.location.reload();
       }
     },
@@ -49,28 +57,25 @@ export function useSessionSecurity({
   }, [isAuthenticated, signOut, enableVisibilityCheck]);
 
   // Handle browser tab/window close
-  const handleBeforeUnload = useCallback(
-    (event: BeforeUnloadEvent) => {
-      if (!logoutOnTabClose || !isAuthenticated) return;
+  const handleBeforeUnload = useCallback(() => {
+    if (!logoutOnTabClose || !isAuthenticated) return;
 
-      // Check if this is the last tab
-      const tabId = sessionStorage.getItem("tab-id");
-      if (!tabId) {
-        // Generate a unique tab ID if it doesn't exist
-        const newTabId = Date.now().toString();
-        sessionStorage.setItem("tab-id", newTabId);
-      }
+    // Check if this is the last tab
+    const tabId = sessionStorage.getItem("tab-id");
+    if (!tabId) {
+      // Generate a unique tab ID if it doesn't exist
+      const newTabId = Date.now().toString();
+      sessionStorage.setItem("tab-id", newTabId);
+    }
 
-      // In a real implementation, you'd need a more sophisticated way
-      // to detect if this is the last tab. For now, just set a flag.
-      localStorage.setItem("tab-closing", Date.now().toString());
+    // In a real implementation, you'd need a more sophisticated way
+    // to detect if this is the last tab. For now, just set a flag.
+    localStorage.setItem("tab-closing", Date.now().toString());
 
-      // Optional: Show confirmation dialog
-      // event.preventDefault();
-      // event.returnValue = 'You will be logged out when you close this tab.';
-    },
-    [isAuthenticated, logoutOnTabClose]
-  );
+    // Optional: Show confirmation dialog
+    // event.preventDefault();
+    // event.returnValue = 'You will be logged out when you close this tab.';
+  }, [isAuthenticated, logoutOnTabClose]);
 
   // Clean up tab closing flag after a delay
   const handleUnload = useCallback(() => {

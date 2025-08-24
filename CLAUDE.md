@@ -38,13 +38,22 @@ src/
 │   ├── data-display/            # Tables, cards, lists
 │   └── feedback/                # Modals, alerts, notifications
 ├── features/                    # Feature-based organization
+│   ├── auth/                    # Authentication features
+│   ├── classes/                 # Class management and scheduling
+│   ├── database/                # Database schema and utilities
+│   │   ├── lib/
+│   │   │   ├── types.ts        # TypeScript database type definitions
+│   │   │   └── utils.ts        # Database utility functions
+│   │   └── README.md           # Comprehensive database schema documentation
+│   ├── dashboard/               # Dashboard & analytics (StatsCard, etc.)
+│   ├── equipment/               # Equipment management and tracking
 │   ├── members/
 │   │   ├── components/          # Member-specific components (MemberTable, etc.)
 │   │   ├── hooks/               # Member-specific hooks
 │   │   └── lib/                 # Member business logic
 │   ├── memberships/             # Membership management
 │   ├── payments/                # Payment processing
-│   └── dashboard/               # Dashboard & analytics (StatsCard, etc.)
+│   └── trainers/                # Trainer management and sessions
 ├── lib/                         # Shared utilities and configurations
 │   ├── supabase.ts             # Supabase client configuration
 │   └── utils.ts                # Tailwind utility functions (`cn` helper)
@@ -68,6 +77,18 @@ The Supabase client is configured in `src/lib/supabase.ts` with:
 - URL session detection
 - Uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` environment variables
 
+### Database Schema
+
+This application includes a comprehensive database schema with:
+
+- **User Management**: Authentication, profiles, and role-based access control
+- **Member Management**: Member profiles, emergency contacts, status tracking
+- **Equipment Management**: Equipment inventory, categorization, maintenance tracking
+- **Subscription System**: Plans, member subscriptions, payment processing
+- **Training System**: Trainers, classes, bookings, attendance tracking
+
+All tables implement **Row Level Security (RLS)** for proper data access control. The complete schema documentation is available in `src/features/database/README.md`.
+
 ### Styling & UI
 
 - Uses Tailwind CSS v4 with custom CSS variables
@@ -75,198 +96,60 @@ The Supabase client is configured in `src/lib/supabase.ts` with:
 - Geist font family (sans and mono variants)
 - Supports dark/light mode classes
 
-### Component Architecture
-
-This project follows a **shadcn/ui component-first approach**:
-
-- **Primitives First**: Always use shadcn/ui components as building blocks
-- **Composition over Inheritance**: Build complex components by composing primitives
-- **Feature Isolation**: Keep feature-specific components in their feature directory
-- **Shared Components**: Reusable compositions in `src/components/`
-
 ### Component Guidelines
 
-When working on this codebase:
-
 - **ONLY use shadcn/ui components** - no custom CSS components
-- Use the established import aliases (`@/lib`, `@/components`, `@/hooks`, etc.)
-- Follow the shadcn/ui component patterns for all UI elements
-- Import the Supabase client from `@/lib/supabase`
-- Use the `cn()` utility from `@/lib/utils` for conditional Tailwind classes
+- **Composition over inheritance** - build complex components by composing primitives
+- Use established import aliases (`@/lib`, `@/components`, `@/hooks`, etc.)
+- Import Supabase client from `@/lib/supabase`
+- Use `cn()` utility from `@/lib/utils` for conditional Tailwind classes
 - Place feature-specific components in `src/features/[feature]/components/`
 - Place reusable components in appropriate `src/components/[category]/` directories
 
-## Hook Organization Guidelines
-
-This project uses **two separate hooks directories** with distinct purposes:
+## Hook Organization
 
 ### `src/hooks/` - Shared/Global Hooks
 
-**Purpose**: Cross-feature, reusable hooks used throughout the entire application
-
-**Examples:**
-
-- `useLocalStorage` - Generic browser storage hook
-- `useDebounce` - Generic debouncing functionality
-- `useAuth` - Global authentication state
-- `useTheme` - App-wide theme management
-- `useSupabase` - Global Supabase client wrapper
-
-**When to use:**
-
-- Hook logic is **not specific** to any single feature
-- Multiple features will use the same hook
-- Hook manages global application state
-- Utility hooks that enhance React functionality
+Cross-feature, reusable hooks (useLocalStorage, useAuth, useTheme, etc.)
 
 ### `src/features/[feature]/hooks/` - Feature-Specific Hooks
 
-**Purpose**: Business logic hooks tightly coupled to a specific feature domain
+Business logic hooks specific to a feature domain (useMemberForm, usePaymentProcessor, etc.)
 
-**Examples:**
+**Decision**: Multiple features = `src/hooks/`, Single feature = `src/features/[feature]/hooks/`
 
-- `src/features/members/hooks/useMemberForm` - Member creation/editing logic
-- `src/features/members/hooks/useMemberList` - Member filtering, sorting, pagination
-- `src/features/payments/hooks/usePaymentProcessor` - Payment processing logic
-- `src/features/dashboard/hooks/useAnalytics` - Dashboard-specific data fetching
+## Testing
 
-**When to use:**
-
-- Hook contains **business logic specific** to that feature
-- Hook manages feature-specific state
-- Hook encapsulates API calls for that domain
-- Hook would only be used by components in that feature
-
-### Decision Tree for Hook Placement:
-
-```
-Is this hook used by multiple features?
-├── YES → `src/hooks/`
-└── NO → Is it feature-specific business logic?
-    ├── YES → `src/features/[feature]/hooks/`
-    └── NO → Consider if it should be a utility function instead
-```
-
-### Import Examples:
-
-```typescript
-// Shared hooks
-import { useLocalStorage } from "@/hooks/use-local-storage";
-import { useAuth } from "@/hooks/use-auth";
-
-// Feature-specific hooks
-import { useMemberForm } from "@/features/members/hooks/use-member-form";
-import { usePaymentProcessor } from "@/features/payments/hooks/use-payment-processor";
-```
-
-## Testing Guidelines
-
-This project uses **Vitest** for unit testing with the following setup:
-
-### Testing Framework
-
-- **Vitest** with jsdom environment for unit tests
-- **Testing Library** for React component testing
-- **Storybook** integration for component testing in browser environment
-
-### Test Structure
-
+- **Vitest** with jsdom environment and Testing Library
+- **Storybook** integration for component testing
 - Unit tests: `src/**/*.{test,spec}.{ts,tsx}`
-- Test utilities in `vitest.setup.ts`
-- Environment variable mocking with `vi.stubEnv()`
-- ES module mocking with `vi.mock()`
-
-### Testing Best Practices
-
-- Use `vi.mocked()` for TypeScript-friendly mocks
-- Use `vi.stubEnv()` for environment variable testing
-- Use dynamic imports `await import()` for module testing with mocks
+- Use `vi.mocked()`, `vi.stubEnv()`, dynamic imports for testing
 - Clean up with `vi.resetModules()` and `vi.unstubAllEnvs()` in beforeEach/afterEach
 
-### Example Test Structure
+## Git Branching
 
-```typescript
-import { vi, describe, it, expect, beforeEach } from "vitest";
+**🚨 CRITICAL: ALL new features MUST use feature branches!**
 
-// Mock dependencies
-vi.mock("@supabase/supabase-js", () => ({
-  createClient: vi.fn(),
-}));
+### Branch Naming
 
-describe("Component Tests", () => {
-  beforeEach(() => {
-    vi.resetModules();
-    vi.unstubAllEnvs();
-  });
+- `feature/[name]` - New features (feature/member-management)
+- `bugfix/[name]` - Bug fixes (bugfix/login-validation-error)
+- `hotfix/[name]` - Critical issues (hotfix/security-vulnerability)
 
-  it("should test functionality", async () => {
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "test-url");
-    const module = await import("../module");
-    // assertions...
-  });
-});
-```
+### Workflow
 
-## Git Branching Strategy
+1. Create branch: `git checkout -b feature/your-feature-name`
+2. Push branch: `git push -u origin feature/your-feature-name`
+3. Merge via pull request to `main`
+4. Delete branch after merge
 
-This project follows a **feature branch workflow** for organized development:
+**⚠️ NEVER commit directly to `main` for new features!**
 
-### 🚨 CRITICAL: New Features MUST Use Feature Branches
+## Workflow
 
-**ALL new features, major changes, or significant additions MUST be developed on separate feature branches.**
-
-### Branch Naming Convention
-
-- **Feature branches**: `feature/[feature-name]`
-  - Example: `feature/admin-authentication`
-  - Example: `feature/member-management`
-  - Example: `feature/payment-processing`
-
-- **Bug fixes**: `bugfix/[issue-description]`
-  - Example: `bugfix/login-validation-error`
-
-- **Hotfixes**: `hotfix/[critical-issue]`
-  - Example: `hotfix/security-vulnerability`
-
-### Workflow Process
-
-1. **ALWAYS** create a new branch before starting work on a new feature
-2. Use descriptive branch names that clearly identify the feature
-3. Keep branches focused on a single feature or related set of changes
-4. Merge back to `main` via pull request when feature is complete
-5. Delete feature branch after successful merge
-
-### Commands
-
-```bash
-# Create and switch to new feature branch
-git checkout -b feature/your-feature-name
-
-# Push branch to remote
-git push -u origin feature/your-feature-name
-
-# Switch back to main
-git checkout main
-
-# Delete local branch after merge
-git branch -d feature/your-feature-name
-```
-
-### Why Feature Branches Are Required
-
-- **Isolation**: Keep experimental or incomplete features separate from stable code
-- **Collaboration**: Multiple developers can work on different features simultaneously
-- **Code Review**: Feature branches enable proper code review via pull requests
-- **Rollback**: Easy to revert specific features if issues arise
-- **Clean History**: Maintains a clean, organized commit history
-
-**⚠️ NEVER commit directly to `main` branch for new features!**
-
-# Workflow
-
-- **MANDATORY**: Create a new feature branch for any new feature or major change
-- Be sure to run `npm run lint` and `npm test` when you're done making a series of code changes
-- Prefer running single tests with `npm test -- <test-file>` for performance during development
-- When creating hooks, use the decision tree above to determine correct placement
-- Write tests for all utility functions and critical business logic
-- Always create pull requests for merging feature branches back to dev
+- Create feature branch for any new feature or major change
+- Run `npm run lint` and `npm test` after code changes
+- Use single tests `npm test -- <test-file>` during development
+- Follow hook placement guidelines above
+- Write tests for utilities and business logic
+- Create pull requests for merging to main

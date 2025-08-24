@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Plus,
   Activity,
+  Dumbbell,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
@@ -34,9 +35,17 @@ export default function Home() {
     name:
       user.first_name && user.last_name
         ? `${user.first_name} ${user.last_name}`
-        : user.email,
-    email: user.email,
-    avatar: user.avatar_url || user.first_name?.[0] || user.email?.[0] || "A",
+        : (user.email as string) || "Unknown User",
+    email: (user.email as string) || "",
+    avatar:
+      (user.avatar_url as string) ||
+      (user.first_name && typeof user.first_name === "string"
+        ? user.first_name[0]
+        : "") ||
+      (user.email && typeof user.email === "string"
+        ? (user.email as string)[0]
+        : "") ||
+      "A",
   };
 
   // Mock stats data
@@ -104,8 +113,13 @@ export default function Home() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-md">
+                <Dumbbell className="size-5" />
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight">Gym Manager</h1>
+            </div>
             <p className="text-muted-foreground">{t("welcome_message")}</p>
           </div>
           <Button>
