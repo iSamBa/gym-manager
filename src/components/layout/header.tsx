@@ -14,6 +14,7 @@ import { MobileSidebar } from "./sidebar";
 import { LogOut, Settings, User } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/hooks/use-auth";
 
 interface HeaderProps {
   user?: {
@@ -25,6 +26,11 @@ interface HeaderProps {
 
 export function Header({ user }: HeaderProps) {
   const t = useTranslations("user_menu");
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+  };
 
   return (
     <header className="border-b">
@@ -73,7 +79,7 @@ export function Header({ user }: HeaderProps) {
                   <span>{t("settings")}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>{t("log_out")}</span>
                 </DropdownMenuItem>

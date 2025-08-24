@@ -269,4 +269,4 @@ git branch -d feature/your-feature-name
 - Prefer running single tests with `npm test -- <test-file>` for performance during development
 - When creating hooks, use the decision tree above to determine correct placement
 - Write tests for all utility functions and critical business logic
-- Always create pull requests for merging feature branches back to main
+- Always create pull requests for merging feature branches back to dev

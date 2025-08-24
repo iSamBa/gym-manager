@@ -14,15 +14,35 @@ import {
   Activity,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRequireAdmin } from "@/hooks/use-require-auth";
 
 export default function Home() {
   const t = useTranslations("dashboard");
+  const { user, isLoading } = useRequireAdmin();
 
-  // Mock user data
-  const user = {
-    name: "John Doe",
-    email: "john.doe@gym.com",
-    avatar: "JD",
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg font-semibold">Loading...</div>
+          <p className="text-muted-foreground">Verifying authentication</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // useRequireAdmin will handle redirect
+  }
+
+  // Convert user object to expected format for MainLayout
+  const layoutUser = {
+    name:
+      user.first_name && user.last_name
+        ? `${user.first_name} ${user.last_name}`
+        : user.email,
+    email: user.email,
+    avatar: user.avatar_url || user.first_name?.[0] || user.email?.[0] || "A",
   };
 
   // Mock stats data
@@ -86,7 +106,7 @@ export default function Home() {
   ];
 
   return (
-    <MainLayout user={user}>
+    <MainLayout user={layoutUser}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
