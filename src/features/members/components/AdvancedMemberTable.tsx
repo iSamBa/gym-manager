@@ -13,7 +13,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -27,7 +26,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  MoreHorizontal,
   Edit,
   Trash2,
   Eye,
@@ -50,7 +48,7 @@ import { cn } from "@/lib/utils";
 import type { Member, MemberStatus } from "@/features/database/lib/types";
 import type { MemberFilters } from "@/features/database/lib/utils";
 
-type SortField = "name" | "email" | "status" | "join_date" | "member_number";
+type SortField = "name" | "email" | "status" | "join_date";
 type SortDirection = "asc" | "desc";
 
 interface AdvancedMemberTableProps {
@@ -121,8 +119,6 @@ export function AdvancedMemberTable({
           multiplier * new Date(a.join_date).getTime() -
           new Date(b.join_date).getTime()
         );
-      case "member_number":
-        return multiplier * a.member_number.localeCompare(b.member_number);
       default:
         return 0;
     }
@@ -359,19 +355,18 @@ export function AdvancedMemberTable({
                 <SortButton field="status">Status</SortButton>
               </TableHead>
               <TableHead>
-                <SortButton field="member_number">Member #</SortButton>
-              </TableHead>
-              <TableHead>
                 <SortButton field="join_date">Join Date</SortButton>
               </TableHead>
-              {showActions && <TableHead className="w-[70px]"></TableHead>}
+              {showActions && (
+                <TableHead className="w-[120px]">Actions</TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
                 <TableCell
-                  colSpan={showActions ? 7 : 6}
+                  colSpan={showActions ? 6 : 5}
                   className="py-12 text-center"
                 >
                   <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" />
@@ -381,7 +376,7 @@ export function AdvancedMemberTable({
             ) : sortedMembers.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={showActions ? 7 : 6}
+                  colSpan={showActions ? 6 : 5}
                   className="py-12 text-center"
                 >
                   <p className="text-muted-foreground">No members found</p>
@@ -424,40 +419,40 @@ export function AdvancedMemberTable({
                       readonly={!showActions}
                     />
                   </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {member.member_number}
-                  </TableCell>
                   <TableCell className="text-sm">
                     {formatJoinDate(member.join_date)}
                   </TableCell>
                   {showActions && (
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => onView?.(member)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onEdit?.(member)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Member
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleSelectMember(member.id, true)}
-                            className="text-red-600 focus:text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Select for Deletion
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onView?.(member)}
+                          className="h-8 w-8 p-0"
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEdit?.(member)}
+                          className="h-8 w-8 p-0"
+                          title="Edit Member"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSelectMember(member.id, true)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                          title="Select for Deletion"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>

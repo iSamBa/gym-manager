@@ -147,9 +147,108 @@ export function useMemberPrefetch() {
     [queryClient]
   );
 
+  // Prefetch next and previous members for navigation optimization
+  const prefetchAdjacentMembers = useCallback(
+    (currentMemberId: string) => {
+      // Get members list from cache to find adjacent members
+      const cachedMembers = queryClient.getQueriesData<Member[]>({
+        queryKey: memberKeys.lists(),
+      });
+
+      for (const [, members] of cachedMembers) {
+        if (members) {
+          const currentIndex = members.findIndex(
+            (m) => m.id === currentMemberId
+          );
+          if (currentIndex !== -1) {
+            // Prefetch previous member
+            if (currentIndex > 0) {
+              const prevMember = members[currentIndex - 1];
+              prefetchMemberWithSubscription(prevMember.id);
+            }
+            // Prefetch next member
+            if (currentIndex < members.length - 1) {
+              const nextMember = members[currentIndex + 1];
+              prefetchMemberWithSubscription(nextMember.id);
+            }
+            break;
+          }
+        }
+      }
+    },
+    [queryClient, prefetchMemberWithSubscription]
+  );
+
+  // Prefetch members for table row hover
+  const prefetchOnHover = useCallback(
+    (id: string) => {
+      // Use shorter stale time for hover prefetching
+      queryClient.prefetchQuery({
+        queryKey: memberKeys.withSubscription(id),
+        queryFn: async () => {
+          const { memberUtils } = await import("@/features/database/lib/utils");
+          return memberUtils.getMemberWithSubscription(id);
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes for hover prefetch
+      });
+    },
+    [queryClient]
+  );
+
+  // Navigation-based prefetching
+  const prefetchNextMember = useCallback(
+    (currentMemberId: string) => {
+      const cachedMembers = queryClient.getQueriesData<Member[]>({
+        queryKey: memberKeys.lists(),
+      });
+
+      for (const [, members] of cachedMembers) {
+        if (members) {
+          const currentIndex = members.findIndex(
+            (m) => m.id === currentMemberId
+          );
+          if (currentIndex !== -1 && currentIndex < members.length - 1) {
+            const nextMember = members[currentIndex + 1];
+            prefetchMemberWithSubscription(nextMember.id);
+            return nextMember.id;
+          }
+        }
+      }
+      return null;
+    },
+    [queryClient, prefetchMemberWithSubscription]
+  );
+
+  const prefetchPreviousMember = useCallback(
+    (currentMemberId: string) => {
+      const cachedMembers = queryClient.getQueriesData<Member[]>({
+        queryKey: memberKeys.lists(),
+      });
+
+      for (const [, members] of cachedMembers) {
+        if (members) {
+          const currentIndex = members.findIndex(
+            (m) => m.id === currentMemberId
+          );
+          if (currentIndex > 0) {
+            const prevMember = members[currentIndex - 1];
+            prefetchMemberWithSubscription(prevMember.id);
+            return prevMember.id;
+          }
+        }
+      }
+      return null;
+    },
+    [queryClient, prefetchMemberWithSubscription]
+  );
+
   return {
     prefetchMember,
     prefetchMemberWithSubscription,
+    prefetchAdjacentMembers,
+    prefetchOnHover,
+    prefetchNextMember,
+    prefetchPreviousMember,
   };
 }
 
@@ -168,6 +267,40 @@ export function useMemberCacheUtils() {
   const invalidateMember = useCallback(
     (id: string) => {
       queryClient.invalidateQueries({ queryKey: memberKeys.detail(id) });
+      queryClient.invalidateQueries({
+        queryKey: memberKeys.withSubscription(id),
+      });
+    },
+    [queryClient]
+  );
+
+  // Smart cache invalidation for member updates
+  const invalidateMemberCache = useCallback(
+    async (id: string) => {
+      // Invalidate the specific member
+      await queryClient.invalidateQueries({ queryKey: memberKeys.detail(id) });
+      await queryClient.invalidateQueries({
+        queryKey: memberKeys.withSubscription(id),
+      });
+
+      // Invalidate member lists that might contain this member
+      await queryClient.invalidateQueries({ queryKey: memberKeys.lists() });
+
+      // Invalidate counts and analytics
+      await queryClient.invalidateQueries({ queryKey: memberKeys.count() });
+      await queryClient.invalidateQueries({
+        queryKey: memberKeys.countByStatus(),
+      });
+
+      // Invalidate search results that might include this member
+      const searchQueries = queryClient.getQueriesData({
+        queryKey: memberKeys.all,
+        predicate: (query) => query.queryKey.includes("search"),
+      });
+
+      for (const [queryKey] of searchQueries) {
+        await queryClient.invalidateQueries({ queryKey });
+      }
     },
     [queryClient]
   );
@@ -190,6 +323,46 @@ export function useMemberCacheUtils() {
   const setMemberInCache = useCallback(
     (member: Member) => {
       queryClient.setQueryData(memberKeys.detail(member.id), member);
+
+      // Also update member lists if they contain this member
+      const cachedLists = queryClient.getQueriesData<Member[]>({
+        queryKey: memberKeys.lists(),
+      });
+
+      for (const [queryKey, members] of cachedLists) {
+        if (members) {
+          const updatedMembers = members.map((m) =>
+            m.id === member.id ? member : m
+          );
+          queryClient.setQueryData(queryKey, updatedMembers);
+        }
+      }
+    },
+    [queryClient]
+  );
+
+  // Prefetch utilities
+  const prefetchMember = useCallback(
+    (id: string) => {
+      return queryClient.prefetchQuery({
+        queryKey: memberKeys.detail(id),
+        queryFn: async () => {
+          const { memberUtils } = await import("@/features/database/lib/utils");
+          return memberUtils.getMemberById(id);
+        },
+        staleTime: 10 * 60 * 1000,
+      });
+    },
+    [queryClient]
+  );
+
+  // Background refresh for active pages
+  const refreshMemberInBackground = useCallback(
+    (id: string) => {
+      queryClient.refetchQueries({
+        queryKey: memberKeys.detail(id),
+        type: "active", // Only refetch active queries
+      });
     },
     [queryClient]
   );
@@ -198,8 +371,11 @@ export function useMemberCacheUtils() {
     invalidateAllMembers,
     invalidateMemberLists,
     invalidateMember,
+    invalidateMemberCache,
     removeMemberFromCache,
     getMemberFromCache,
     setMemberInCache,
+    prefetchMember,
+    refreshMemberInBackground,
   };
 }

@@ -25,3 +25,9 @@ export {
   useMemberPrefetch,
   useMemberCacheUtils,
 } from "./use-member-search";
+
+// Route-based cache management
+export {
+  useRouteCacheManager,
+  usePageCacheStrategy,
+} from "./use-route-cache-manager";

@@ -18,9 +18,10 @@ import { useState } from "react";
 
 interface SidebarProps {
   className?: string;
+  onNavigate?: () => void;
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, onNavigate }: SidebarProps) {
   const t = useTranslations("navigation");
 
   const navigation = [
@@ -43,12 +44,17 @@ export function Sidebar({ className }: SidebarProps) {
           </h2>
           <div className="space-y-1">
             {navigation.map((item) => (
-              <Link key={item.name} href={item.href}>
-                <Button variant="ghost" className="w-full justify-start">
+              <Button
+                key={item.name}
+                variant="ghost"
+                className="w-full justify-start"
+                asChild
+              >
+                <Link href={item.href} onClick={onNavigate}>
                   <item.icon className="mr-2 h-4 w-4" />
                   {item.name}
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             ))}
           </div>
         </div>
@@ -69,7 +75,7 @@ export function MobileSidebar() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-64 p-0">
-        <Sidebar />
+        <Sidebar onNavigate={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
   );
