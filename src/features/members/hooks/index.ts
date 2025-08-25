@@ -13,6 +13,8 @@ export {
   useUpdateMemberStatus,
   useBulkUpdateMemberStatus,
   useDeleteMember,
+  useMembersInfinite,
+  useMembersPrefetch,
   memberKeys,
 } from "./use-members";
 

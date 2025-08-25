@@ -121,12 +121,14 @@ describe("Members Hooks", () => {
       expect(mockMemberUtils.getMemberById).toHaveBeenCalledWith(mockMember.id);
     });
 
-    it("should not fetch when ID is empty", () => {
-      const { useMember } = renderHook(() => useMember(""), {
+    it("should not fetch when ID is empty", async () => {
+      const { useMember } = await import("../use-members");
+
+      const { result } = renderHook(() => useMember(""), {
         wrapper: createQueryWrapper(),
       });
 
-      expect(useMember.current?.isLoading).toBe(false);
+      expect(result.current.isLoading).toBe(false);
       expect(mockMemberUtils.getMemberById).not.toHaveBeenCalled();
     });
   });
@@ -152,8 +154,11 @@ describe("Members Hooks", () => {
       // Execute the mutation
       await result.current.mutateAsync(newMemberData);
 
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
       expect(mockMemberUtils.createMember).toHaveBeenCalledWith(newMemberData);
-      expect(result.current.isSuccess).toBe(true);
     });
 
     it("should handle creation errors", async () => {
@@ -176,7 +181,10 @@ describe("Members Hooks", () => {
       await expect(result.current.mutateAsync(newMemberData)).rejects.toThrow(
         "Failed to create member"
       );
-      expect(result.current.isError).toBe(true);
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
     });
   });
 
@@ -197,11 +205,14 @@ describe("Members Hooks", () => {
         status: "suspended",
       });
 
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
       expect(mockMemberUtils.updateMemberStatus).toHaveBeenCalledWith(
         mockMember.id,
         "suspended"
       );
-      expect(result.current.isSuccess).toBe(true);
     });
   });
 
@@ -226,11 +237,14 @@ describe("Members Hooks", () => {
         status: "suspended",
       });
 
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
       expect(mockMemberUtils.bulkUpdateStatus).toHaveBeenCalledWith(
         memberIds,
         "suspended"
       );
-      expect(result.current.isSuccess).toBe(true);
     });
   });
 
@@ -246,8 +260,11 @@ describe("Members Hooks", () => {
 
       await result.current.mutateAsync(mockMember.id);
 
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
       expect(mockMemberUtils.deleteMember).toHaveBeenCalledWith(mockMember.id);
-      expect(result.current.isSuccess).toBe(true);
     });
 
     it("should handle delete errors", async () => {
@@ -263,7 +280,10 @@ describe("Members Hooks", () => {
       await expect(result.current.mutateAsync(mockMember.id)).rejects.toThrow(
         "Delete failed"
       );
-      expect(result.current.isError).toBe(true);
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
     });
   });
 });

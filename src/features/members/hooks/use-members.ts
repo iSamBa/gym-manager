@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { keepPreviousData } from "@tanstack/react-query";
 import { memberUtils, type MemberFilters } from "@/features/database/lib/utils";
 import type { Member, MemberStatus } from "@/features/database/lib/types";
@@ -330,4 +335,54 @@ export function useDeleteMember() {
       queryClient.invalidateQueries({ queryKey: memberKeys.lists() });
     },
   });
+}
+
+// Infinite scroll hook for large member lists
+export function useMembersInfinite(
+  filters: Omit<MemberFilters, "limit" | "offset"> = {},
+  pageSize = 20
+) {
+  return useInfiniteQuery({
+    queryKey: [...memberKeys.list(filters), "infinite"],
+    queryFn: ({ pageParam = 0 }) =>
+      memberUtils.getMembers({
+        ...filters,
+        limit: pageSize,
+        offset: pageParam * pageSize,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      // Return next page number if we got a full page, otherwise undefined
+      return lastPage.length === pageSize ? allPages.length : undefined;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// Prefetch members for pagination
+export function useMembersPrefetch() {
+  const queryClient = useQueryClient();
+
+  const prefetchPage = (
+    filters: MemberFilters,
+    pageNumber: number,
+    pageSize = 20
+  ) => {
+    return queryClient.prefetchQuery({
+      queryKey: memberKeys.list({
+        ...filters,
+        limit: pageSize,
+        offset: pageNumber * pageSize,
+      }),
+      queryFn: () =>
+        memberUtils.getMembers({
+          ...filters,
+          limit: pageSize,
+          offset: pageNumber * pageSize,
+        }),
+      staleTime: 5 * 60 * 1000,
+    });
+  };
+
+  return { prefetchPage };
 }
