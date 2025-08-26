@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect } from "react";
+import { use, useEffect, useState } from "react";
 import { MainLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   MemberAvatar,
   MemberStatusBadge,
+  EditMemberDialog,
   withMemberErrorBoundary,
 } from "@/features/members/components";
 import {
@@ -35,6 +36,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { Member } from "@/features/database/lib/types";
 
 interface MemberDetailPageProps {
   params: Promise<{ id: string }>;
@@ -49,9 +51,16 @@ const formatDate = (date: Date): string => {
   });
 };
 
+// Helper function to format address
+const formatAddress = (address: Member["address"]) => {
+  if (!address) return "No address provided";
+  return `${address.street}, ${address.city}, ${address.state} ${address.postal_code}, ${address.country}`;
+};
+
 function MemberDetailPage({ params }: MemberDetailPageProps) {
   const { id } = use(params);
   const router = useRouter();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Member data with subscription and emergency contacts
   const {
@@ -86,7 +95,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
   }, [member, prefetchAdjacentMembers]);
 
   const handleStatusChange = async (
-    newStatus: "active" | "inactive" | "pending"
+    newStatus: "active" | "inactive" | "pending" | "suspended"
   ) => {
     if (!member) return;
 
@@ -113,6 +122,11 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
     } catch (error) {
       console.error("Failed to delete member:", error);
     }
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditDialogOpen(false);
+    // The EditMemberDialog handles cache invalidation, so member data will refresh automatically
   };
 
   if (isLoading) {
@@ -190,12 +204,10 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link href={`/members/${member.id}/edit`}>
-              <Button variant="outline">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            </Link>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
             <Button
               variant="destructive"
               onClick={handleDeleteMember}
@@ -232,7 +244,8 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                       </h3>
                       <MemberStatusBadge
                         status={member.status}
-                        isUpdating={updateStatusMutation.isPending}
+                        memberId={member.id}
+                        readonly={true}
                       />
                     </div>
 
@@ -253,7 +266,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                       </div>
                       <div className="flex items-center gap-2">
                         <MapPin className="text-muted-foreground h-4 w-4" />
-                        <span>{member.address || "No address provided"}</span>
+                        <span>{formatAddress(member.address)}</span>
                       </div>
                     </div>
                   </div>
@@ -278,6 +291,16 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                     disabled={updateStatusMutation.isPending}
                   >
                     Mark Inactive
+                  </Button>
+                  <Button
+                    variant={
+                      member.status === "suspended" ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() => handleStatusChange("suspended")}
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    Mark Suspended
                   </Button>
                   <Button
                     variant={
@@ -412,7 +435,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                 <div className="flex justify-between text-sm">
                   <span>Member Since</span>
                   <span className="text-muted-foreground">
-                    {format(new Date(member.created_at), "MMM d, yyyy")}
+                    {formatDate(new Date(member.created_at))}
                   </span>
                 </div>
               </CardContent>
@@ -420,6 +443,14 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Edit Member Dialog */}
+      <EditMemberDialog
+        member={member}
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSuccess={handleEditSuccess}
+      />
     </MainLayout>
   );
 }

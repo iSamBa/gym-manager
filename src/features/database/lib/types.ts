@@ -3,8 +3,13 @@
 
 // Enums
 export type UserRole = "admin" | "trainer";
-export type MemberStatus = "active" | "inactive" | "suspended" | "expired";
-export type Gender = "male" | "female" | "other" | "prefer_not_to_say";
+export type MemberStatus =
+  | "active"
+  | "inactive"
+  | "suspended"
+  | "expired"
+  | "pending";
+export type Gender = "male" | "female";
 export type EquipmentStatus =
   | "active"
   | "maintenance"

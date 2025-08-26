@@ -15,9 +15,21 @@ import {
 } from "lucide-react";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
+import { MemberEvolutionChart } from "@/features/dashboard/components/member-evolution-chart";
+import { MemberStatusDistributionChart } from "@/features/dashboard/components/member-status-distribution-chart";
+import {
+  useMemberEvolution,
+  useMemberStatusDistribution,
+} from "@/features/dashboard/hooks/use-member-analytics";
 
 export default function Home() {
   const { user, isLoading } = useRequireAdmin();
+
+  // Fetch analytics data
+  const { data: memberEvolutionData, isLoading: isEvolutionLoading } =
+    useMemberEvolution(12);
+  const { data: memberStatusData, isLoading: isStatusDistributionLoading } =
+    useMemberStatusDistribution();
 
   if (isLoading) {
     return <LoadingSkeleton variant="dashboard" />;
@@ -236,6 +248,18 @@ export default function Home() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Analytics Charts */}
+        <div className="flex gap-6">
+          <MemberEvolutionChart
+            data={memberEvolutionData}
+            isLoading={isEvolutionLoading}
+          />
+          <MemberStatusDistributionChart
+            data={memberStatusData}
+            isLoading={isStatusDistributionLoading}
+          />
         </div>
       </div>
     </MainLayout>

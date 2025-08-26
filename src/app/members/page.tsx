@@ -3,26 +3,42 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { SearchInput } from "@/components/forms/search-input";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AdvancedMemberTable } from "@/features/members/components";
+import {
+  AdvancedMemberTable,
+  AddMemberDialog,
+  EditMemberDialog,
+  MemberFilters,
+} from "@/features/members/components";
+import type { Member } from "@/features/database/lib/types";
 import {
   useMembers,
   useMemberCount,
   useMemberCountByStatus,
-  useDebouncedMemberSearch,
   useMemberPrefetch,
   useRouteCacheManager,
   usePageCacheStrategy,
+  useMemberFilters,
 } from "@/features/members/hooks";
-import { Plus, Users, UserCheck, UserX, Clock } from "lucide-react";
-import Link from "next/link";
+import { Users, UserCheck, UserX, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function MembersPage() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const router = useRouter();
+
+  // Filter state management
+  const { filters, updateFilter } = useMemberFilters();
+
+  // Convert filter state to database filters
+  const databaseFilters = {
+    search: filters.search,
+    status: filters.status,
+    joinDateFrom: filters.joinDateFrom,
+    joinDateTo: filters.joinDateTo,
+  };
 
   // Main member data with auto-refresh
   const {
@@ -32,20 +48,13 @@ export default function MembersPage() {
     isFetching,
     isRefetching,
   } = useMembers({
-    search: searchQuery,
+    ...databaseFilters,
     refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
   // Member count for stats
   const { data: totalMemberCount } = useMemberCount();
   const { data: memberCountByStatus } = useMemberCountByStatus();
-
-  // Debounced search for real-time filtering
-  const { data: searchResults, isLoading: isSearching } =
-    useDebouncedMemberSearch(
-      searchQuery,
-      300 // 300ms debounce
-    );
 
   // Prefetching utilities
   const { prefetchOnHover } = useMemberPrefetch();
@@ -54,12 +63,32 @@ export default function MembersPage() {
   useRouteCacheManager();
   usePageCacheStrategy("list");
 
-  // Use search results when searching, otherwise use regular members
-  const displayMembers = searchQuery ? searchResults : members;
-
   const activeMembers = memberCountByStatus?.active || 0;
   const inactiveMembers = memberCountByStatus?.inactive || 0;
   const pendingMembers = memberCountByStatus?.pending || 0;
+
+  // Handler functions for member actions
+  const handleViewMember = (member: Member) => {
+    router.push(`/members/${member.id}`);
+  };
+
+  const handleEditMember = (member: Member) => {
+    setEditingMember(member);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleMemberClick = (member: Member) => {
+    router.push(`/members/${member.id}`);
+  };
+
+  const handleMemberHover = (member: Member) => {
+    prefetchOnHover(member.id);
+  };
+
+  const handleEditSuccess = () => {
+    // Optionally refresh the member list or update local state
+    // The cache invalidation in EditMemberDialog should handle this automatically
+  };
 
   return (
     <MainLayout>
@@ -78,12 +107,12 @@ export default function MembersPage() {
               )}
             </p>
           </div>
-          <Link href="/members/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Member
-            </Button>
-          </Link>
+          <AddMemberDialog
+            onMemberCreated={() => {
+              // The dialog handles navigation to the member profile
+              // Could add member list refresh here if needed
+            }}
+          />
         </div>
 
         {/* Stats Cards */}
@@ -130,14 +159,17 @@ export default function MembersPage() {
         </div>
 
         {/* Search and Filters */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="max-w-md flex-1">
-            <SearchInput
-              placeholder="Search members by name, email, or member number..."
-              value={searchQuery}
-              onChange={setSearchQuery}
-              isLoading={isSearching}
-            />
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-1 items-center gap-4">
+            <div className="max-w-md flex-1">
+              <SearchInput
+                placeholder="Search members by name..."
+                value={filters.search || ""}
+                onChange={(value) => updateFilter("search", value)}
+                isLoading={isMembersLoading && !!filters.search}
+              />
+            </div>
+            <MemberFilters compact className="shrink-0" />
           </div>
 
           {/* Background sync indicator */}
@@ -152,21 +184,30 @@ export default function MembersPage() {
         {/* Members Table */}
         <Card>
           <AdvancedMemberTable
-            members={displayMembers}
-            isLoading={isMembersLoading || isSearching}
+            members={members}
+            isLoading={isMembersLoading}
             error={error}
-            onMemberClick={(member) => {
-              // Navigate to member detail page using internationalized router
-              router.push(`/members/${member.id}`);
-            }}
-            onMemberHover={(member) => {
-              // Prefetch member details on hover for instant navigation
-              prefetchOnHover(member.id);
-            }}
-            enableInfiniteScroll={!searchQuery} // Only enable infinite scroll when not searching
+            onView={handleViewMember}
+            onEdit={handleEditMember}
+            onMemberClick={handleMemberClick}
+            onMemberHover={handleMemberHover}
+            enableInfiniteScroll={!filters.search} // Only enable infinite scroll when not searching
             className="border-0"
           />
         </Card>
+
+        {/* Edit Member Dialog */}
+        <EditMemberDialog
+          member={editingMember}
+          isOpen={isEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) {
+              setEditingMember(null);
+            }
+          }}
+          onSuccess={handleEditSuccess}
+        />
       </div>
     </MainLayout>
   );

@@ -133,10 +133,10 @@ export const memberUtils = {
         }
       }
 
-      // Apply search filter (searches first_name, last_name, email, member_number)
+      // Apply search filter (searches first_name, last_name only)
       if (filters.search) {
         query = query.or(
-          `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,member_number.ilike.%${filters.search}%`
+          `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`
         );
       }
 
@@ -224,7 +224,7 @@ export const memberUtils = {
 
   // Search and filtering
   async searchMembers(query: string): Promise<Member[]> {
-    if (!query || query.length < 2) {
+    if (!query || query.length < 1) {
       return [];
     }
 
@@ -232,9 +232,7 @@ export const memberUtils = {
       return await supabase
         .from("members")
         .select("*")
-        .or(
-          `first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%,member_number.ilike.%${query}%`
-        )
+        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
         .order("created_at", { ascending: false })
         .limit(20);
     });
@@ -289,6 +287,7 @@ export const memberUtils = {
         inactive: 0,
         suspended: 0,
         expired: 0,
+        pending: 0,
       };
 
       data?.forEach((member: { status: MemberStatus }) => {

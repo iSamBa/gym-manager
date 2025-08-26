@@ -5,6 +5,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -34,7 +35,7 @@ const memberFormSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
   date_of_birth: z.string().min(1, "Date of birth is required"),
-  gender: z.enum(["male", "female", "other"]),
+  gender: z.enum(["male", "female"]),
   address: z.object({
     street: z.string().min(1, "Street address is required"),
     city: z.string().min(1, "City is required"),
@@ -64,7 +65,6 @@ interface MemberFormProps {
 const genderOptions = [
   { value: "male", label: "Male" },
   { value: "female", label: "Female" },
-  { value: "other", label: "Other" },
 ];
 
 const statusOptions = [
@@ -190,7 +190,18 @@ export function MemberForm({
                     <FormItem>
                       <FormLabel>Date of Birth</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <DatePicker
+                          value={
+                            field.value ? new Date(field.value) : undefined
+                          }
+                          onChange={(date) => {
+                            field.onChange(
+                              date ? date.toISOString().split("T")[0] : ""
+                            );
+                          }}
+                          placeholder="Select date of birth"
+                          format="PPP"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

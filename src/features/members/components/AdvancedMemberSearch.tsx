@@ -29,7 +29,7 @@ interface AdvancedMemberSearchProps {
 export function AdvancedMemberSearch({
   onSearchResults,
   onMemberSelect,
-  placeholder = "Search members by name, email, member number, or phone...",
+  placeholder = "Search members by name...",
   className,
   showHistory = true,
   showSuggestions = true, // eslint-disable-line @typescript-eslint/no-unused-vars

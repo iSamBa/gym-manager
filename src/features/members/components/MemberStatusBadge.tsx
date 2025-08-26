@@ -52,13 +52,19 @@ const statusConfig = {
     color:
       "bg-orange-100 text-orange-800 hover:bg-orange-200 dark:bg-orange-900 dark:text-orange-300",
   },
+  pending: {
+    label: "Pending",
+    color:
+      "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-300",
+  },
 } as const;
 
 const statusTransitions: Record<MemberStatus, MemberStatus[]> = {
-  active: ["inactive", "suspended"],
-  inactive: ["active", "suspended"],
-  suspended: ["active", "inactive"],
-  expired: ["active"],
+  active: ["inactive", "suspended", "pending"],
+  inactive: ["active", "suspended", "pending"],
+  suspended: ["active", "inactive", "pending"],
+  expired: ["active", "pending"],
+  pending: ["active", "inactive", "suspended"],
 };
 
 export function MemberStatusBadge({
@@ -113,9 +119,23 @@ export function MemberStatusBadge({
     setConfirmDialog({ isOpen: false, newStatus: null });
   };
 
+  // Use same custom colors as interactive badges, but without hover effects for readonly mode
+  const readonlyColors = {
+    active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+    inactive: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
+    suspended: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+    expired:
+      "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+    pending:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+  } as const;
+
   if (readonly) {
     return (
-      <Badge className={cn(config.color, className)} variant="secondary">
+      <Badge
+        className={cn(readonlyColors[status], "cursor-default", className)}
+        variant="secondary"
+      >
         {config.label}
       </Badge>
     );
@@ -161,6 +181,7 @@ export function MemberStatusBadge({
                   "bg-gray-500": newStatus === "inactive",
                   "bg-red-500": newStatus === "suspended",
                   "bg-orange-500": newStatus === "expired",
+                  "bg-yellow-500": newStatus === "pending",
                 })}
               />
               {statusConfig[newStatus].label}

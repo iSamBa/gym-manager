@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   User,
   Mail,
   Phone,
@@ -18,17 +28,21 @@ import {
   CreditCard,
   Target,
   FileText,
+  Loader2,
 } from "lucide-react";
 import { MemberAvatar } from "./MemberAvatar";
 import { MemberStatusBadge } from "./MemberStatusBadge";
+import { useUpdateMemberStatus } from "@/features/members/hooks";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { Member } from "@/features/database/lib/types";
+import type { Member, MemberStatus } from "@/features/database/lib/types";
 
 interface MemberDetailsModalProps {
   member: Member | null;
   isOpen: boolean;
   onClose: () => void;
   onEdit?: (member: Member) => void;
+  onStatusChange?: (newStatus: MemberStatus) => void;
   className?: string;
 }
 
@@ -50,8 +64,75 @@ export function MemberDetailsModal({
   isOpen,
   onClose,
   onEdit,
+  onStatusChange,
   className,
 }: MemberDetailsModalProps) {
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    newStatus: MemberStatus | null;
+  }>({ isOpen: false, newStatus: null });
+
+  const updateStatusMutation = useUpdateMemberStatus();
+
+  const handleStatusChange = async (newStatus: MemberStatus) => {
+    if (newStatus === "suspended") {
+      setConfirmDialog({ isOpen: true, newStatus });
+      return;
+    }
+
+    await executeStatusChange(newStatus);
+  };
+
+  const executeStatusChange = async (newStatus: MemberStatus) => {
+    if (!member) return;
+
+    try {
+      await updateStatusMutation.mutateAsync({
+        id: member.id,
+        status: newStatus,
+      });
+
+      onStatusChange?.(newStatus);
+
+      toast.success("Status Updated", {
+        description: `Member status changed to ${getStatusLabel(newStatus)}`,
+      });
+    } catch {
+      toast.error("Status Update Failed", {
+        description: "Failed to update member status. Please try again.",
+      });
+    }
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (confirmDialog.newStatus) {
+      await executeStatusChange(confirmDialog.newStatus);
+    }
+    setConfirmDialog({ isOpen: false, newStatus: null });
+  };
+
+  const getStatusLabel = (status: MemberStatus) => {
+    const labels: Record<MemberStatus, string> = {
+      active: "Active",
+      inactive: "Inactive",
+      suspended: "Suspended",
+      expired: "Expired",
+      pending: "Pending",
+    };
+    return labels[status];
+  };
+
+  const getAvailableStatusChanges = (currentStatus: MemberStatus) => {
+    const transitions: Record<MemberStatus, MemberStatus[]> = {
+      active: ["inactive", "suspended", "pending"],
+      inactive: ["active", "suspended", "pending"],
+      suspended: ["active", "inactive", "pending"],
+      expired: ["active", "pending"],
+      pending: ["active", "inactive", "suspended"],
+    };
+    return transitions[currentStatus] || [];
+  };
+
   if (!member) return null;
 
   return (
@@ -87,9 +168,34 @@ export function MemberDetailsModal({
 
         <div className="space-y-6">
           {/* Status */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Status:</span>
-            <MemberStatusBadge status={member.status} memberId={member.id} />
+          <div>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="text-sm font-medium">Status:</span>
+              <MemberStatusBadge
+                status={member.status}
+                memberId={member.id}
+                readonly={true}
+              />
+            </div>
+
+            {/* Status Change Buttons */}
+            <div className="flex flex-wrap gap-2">
+              {getAvailableStatusChanges(member.status).map((newStatus) => (
+                <Button
+                  key={newStatus}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStatusChange(newStatus)}
+                  disabled={updateStatusMutation.isPending}
+                  className="text-xs"
+                >
+                  {updateStatusMutation.isPending ? (
+                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                  ) : null}
+                  Mark {getStatusLabel(newStatus)}
+                </Button>
+              ))}
+            </div>
           </div>
 
           <Separator />
@@ -239,6 +345,33 @@ export function MemberDetailsModal({
           </div>
         </div>
       </DialogContent>
+
+      {/* Status Change Confirmation Dialog */}
+      <AlertDialog
+        open={confirmDialog.isOpen}
+        onOpenChange={(open) =>
+          !open && setConfirmDialog({ isOpen: false, newStatus: null })
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Status Change</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to suspend this member? This action will
+              prevent them from accessing gym facilities.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmStatusChange}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Suspend Member
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

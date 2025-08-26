@@ -117,26 +117,35 @@ export function MemberFilters({
       {/* Status Filter */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">Member Status</Label>
-        <Select
-          value={filters.status || ""}
-          onValueChange={(value) =>
-            value
-              ? updateFilter("status", value as MemberStatus)
-              : removeFilter("status")
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="All statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All statuses</SelectItem>
-            {STATUS_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select
+            value={filters.status || undefined}
+            onValueChange={(value) =>
+              updateFilter("status", value as MemberStatus)
+            }
+          >
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {filters.status && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => removeFilter("status")}
+              className="h-10 w-10 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Join Date Range */}
@@ -231,51 +240,65 @@ export function MemberFilters({
       {/* Membership Type */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">Membership Type</Label>
-        <Select
-          value={filters.membershipType || ""}
-          onValueChange={(value) =>
-            value
-              ? updateFilter("membershipType", value)
-              : removeFilter("membershipType")
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="All types" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All types</SelectItem>
-            {MEMBERSHIP_TYPE_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select
+            value={filters.membershipType || undefined}
+            onValueChange={(value) => updateFilter("membershipType", value)}
+          >
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
+            <SelectContent>
+              {MEMBERSHIP_TYPE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {filters.membershipType && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => removeFilter("membershipType")}
+              className="h-10 w-10 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Payment Status */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">Payment Status</Label>
-        <Select
-          value={filters.paymentStatus || ""}
-          onValueChange={(value) =>
-            value
-              ? updateFilter("paymentStatus", value)
-              : removeFilter("paymentStatus")
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="All statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All statuses</SelectItem>
-            {PAYMENT_STATUS_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select
+            value={filters.paymentStatus || undefined}
+            onValueChange={(value) => updateFilter("paymentStatus", value)}
+          >
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              {PAYMENT_STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {filters.paymentStatus && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => removeFilter("paymentStatus")}
+              className="h-10 w-10 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filter Presets */}

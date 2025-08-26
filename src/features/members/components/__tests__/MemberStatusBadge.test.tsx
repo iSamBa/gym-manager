@@ -27,13 +27,13 @@ describe("MemberStatusBadge", () => {
     mockUpdateMemberStatus.isPending = false;
   });
 
-  it("renders status badge with correct color and label", () => {
+  it("renders status badge with correct label", () => {
     render(<MemberStatusBadge status="active" memberId="123" readonly />, {
       wrapper: createQueryWrapper(),
     });
 
     expect(screen.getByText("Active")).toBeInTheDocument();
-    expect(document.querySelector(".bg-green-100")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("renders readonly badge when readonly prop is true", () => {

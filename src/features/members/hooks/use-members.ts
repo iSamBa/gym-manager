@@ -58,7 +58,7 @@ export function useSearchMembers(query: string) {
   return useQuery({
     queryKey: memberKeys.search(query),
     queryFn: () => memberUtils.searchMembers(query),
-    enabled: query.length >= 2, // Only search with 2+ characters
+    enabled: query.length >= 1, // Only search with 1+ characters
     staleTime: 2 * 60 * 1000, // 2 minutes for search results
     placeholderData: keepPreviousData,
   });
@@ -151,13 +151,31 @@ export function useUpdateMember() {
           updated_at: new Date().toISOString(),
         });
 
-        // Update in lists too
+        // Update in lists too (handle both regular arrays and infinite query structures)
         queryClient.setQueriesData(
           { queryKey: memberKeys.lists() },
-          (oldData: Member[] | undefined) =>
-            oldData?.map((member) =>
-              member.id === id ? { ...member, ...data } : member
-            )
+          (oldData: Member[] | { pages: Member[][] } | undefined) => {
+            if (!oldData) return oldData;
+
+            const updateMember = (member: Member) =>
+              member.id === id ? { ...member, ...data } : member;
+
+            // Handle infinite query structure
+            if ("pages" in oldData && Array.isArray(oldData.pages)) {
+              return {
+                ...oldData,
+                pages: oldData.pages.map((page) => page.map(updateMember)),
+              };
+            }
+
+            // Handle regular array structure
+            if (Array.isArray(oldData)) {
+              return oldData.map(updateMember);
+            }
+
+            // Return unchanged if unknown structure
+            return oldData;
+          }
         );
       }
 
@@ -206,13 +224,34 @@ export function useUpdateMemberStatus() {
         });
       }
 
-      // Update in all member lists
+      // Update in all member lists (handle both regular arrays and infinite query structures)
       queryClient.setQueriesData(
         { queryKey: memberKeys.lists() },
-        (oldData: Member[] | undefined) =>
-          oldData?.map((member) =>
-            member.id === id ? { ...member, status } : member
-          )
+        (oldData: Member[] | { pages: Member[][] } | undefined) => {
+          if (!oldData) return oldData;
+
+          // Handle infinite query structure
+          if ("pages" in oldData && Array.isArray(oldData.pages)) {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page) =>
+                page.map((member) =>
+                  member.id === id ? { ...member, status } : member
+                )
+              ),
+            };
+          }
+
+          // Handle regular array structure
+          if (Array.isArray(oldData)) {
+            return oldData.map((member) =>
+              member.id === id ? { ...member, status } : member
+            );
+          }
+
+          // Return unchanged if unknown structure
+          return oldData;
+        }
       );
 
       return { previousMember };
@@ -256,15 +295,33 @@ export function useBulkUpdateMemberStatus() {
       // Cancel all relevant queries
       await queryClient.cancelQueries({ queryKey: memberKeys.lists() });
 
-      // Optimistically update all affected members in lists
+      // Optimistically update all affected members in lists (handle both regular arrays and infinite query structures)
       queryClient.setQueriesData(
         { queryKey: memberKeys.lists() },
-        (oldData: Member[] | undefined) =>
-          oldData?.map((member) =>
+        (oldData: Member[] | { pages: Member[][] } | undefined) => {
+          if (!oldData) return oldData;
+
+          const updateMember = (member: Member) =>
             memberIds.includes(member.id)
               ? { ...member, status, updated_at: new Date().toISOString() }
-              : member
-          )
+              : member;
+
+          // Handle infinite query structure
+          if ("pages" in oldData && Array.isArray(oldData.pages)) {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page) => page.map(updateMember)),
+            };
+          }
+
+          // Handle regular array structure
+          if (Array.isArray(oldData)) {
+            return oldData.map(updateMember);
+          }
+
+          // Return unchanged if unknown structure
+          return oldData;
+        }
       );
 
       // Update individual member caches too
@@ -306,11 +363,30 @@ export function useDeleteMember() {
       // Remove from cache optimistically
       queryClient.removeQueries({ queryKey: memberKeys.detail(id) });
 
-      // Remove from lists
+      // Remove from lists (handle both regular arrays and infinite query structures)
       queryClient.setQueriesData(
         { queryKey: memberKeys.lists() },
-        (oldData: Member[] | undefined) =>
-          oldData?.filter((member) => member.id !== id)
+        (oldData: Member[] | { pages: Member[][] } | undefined) => {
+          if (!oldData) return oldData;
+
+          // Handle infinite query structure
+          if ("pages" in oldData && Array.isArray(oldData.pages)) {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page) =>
+                page.filter((member) => member.id !== id)
+              ),
+            };
+          }
+
+          // Handle regular array structure
+          if (Array.isArray(oldData)) {
+            return oldData.filter((member) => member.id !== id);
+          }
+
+          // Return unchanged if unknown structure
+          return oldData;
+        }
       );
 
       return { previousMember };

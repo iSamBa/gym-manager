@@ -106,6 +106,24 @@ All tables implement **Row Level Security (RLS)** for proper data access control
 - Place feature-specific components in `src/features/[feature]/components/`
 - Place reusable components in appropriate `src/components/[category]/` directories
 
+#### shadcn/ui Dialog Width Override Issue
+
+When customizing Dialog component widths, custom classes may not apply due to CSS specificity conflicts with default responsive classes.
+
+**Problem:** Default Dialog includes `sm:max-w-lg` which overrides non-responsive custom width classes.
+
+**Solution:** Match the responsive prefix to override properly:
+
+```tsx
+// ❌ Won't work - lower specificity
+<DialogContent className="w-[60vw] max-w-[60vw]">
+
+// ✅ Works - matches responsive specificity
+<DialogContent className="w-[60vw] sm:max-w-[60vw]">
+```
+
+**Why:** The `sm:` prefix creates a media query with higher CSS specificity than plain utility classes. Always use responsive prefixes when overriding shadcn/ui responsive defaults.
+
 ## Hook Organization
 
 ### `src/hooks/` - Shared/Global Hooks
