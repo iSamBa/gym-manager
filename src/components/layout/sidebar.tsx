@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Users,
+  UserCheck,
   CreditCard,
   Receipt,
   BarChart3,
@@ -24,6 +25,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
   const navigation = [
     { name: "Dashboard", href: "/", icon: Home },
     { name: "Members", href: "/members", icon: Users },
+    { name: "Trainers", href: "/trainers", icon: UserCheck },
     { name: "Memberships", href: "/memberships", icon: CreditCard },
     { name: "Payments", href: "/payments", icon: Receipt },
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
