@@ -54,7 +54,6 @@ export function MemberTable({
             <TableHead>Email</TableHead>
             <TableHead>Phone</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Member #</TableHead>
             <TableHead>Join Date</TableHead>
             {showActions && <TableHead className="w-[70px]"></TableHead>}
           </TableRow>
@@ -84,9 +83,6 @@ export function MemberTable({
                   memberId={member.id}
                   readonly={!showActions}
                 />
-              </TableCell>
-              <TableCell className="font-mono text-sm">
-                {member.member_number}
               </TableCell>
               <TableCell className="text-sm">
                 {formatJoinDate(member.join_date)}

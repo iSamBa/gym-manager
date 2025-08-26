@@ -12,7 +12,8 @@ import { MemberForm } from "./MemberForm";
 import { useUpdateMember, useMemberCacheUtils } from "@/features/members/hooks";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-import type { Member, MemberUpdateData } from "@/features/database/lib/types";
+import type { Member } from "@/features/database/lib/types";
+import type { UpdateMemberData } from "@/features/database/lib/utils";
 
 interface EditMemberDialogProps {
   member: Member | null;
@@ -35,7 +36,7 @@ export function EditMemberDialog({
   // Cache utilities for smart invalidation
   const { invalidateMemberCache } = useMemberCacheUtils();
 
-  const handleSubmit = async (data: MemberUpdateData) => {
+  const handleSubmit = async (data: UpdateMemberData) => {
     if (!member) return;
 
     try {

@@ -70,7 +70,6 @@ export interface MemberFilters {
 }
 
 export interface CreateMemberData {
-  member_number: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -133,10 +132,10 @@ export const memberUtils = {
         }
       }
 
-      // Apply search filter (searches first_name, last_name only)
+      // Apply search filter (searches first_name, last_name, email)
       if (filters.search) {
         query = query.or(
-          `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`
+          `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`
         );
       }
 
@@ -224,7 +223,7 @@ export const memberUtils = {
 
   // Search and filtering
   async searchMembers(query: string): Promise<Member[]> {
-    if (!query || query.length < 1) {
+    if (!query || query.length < 2) {
       return [];
     }
 
@@ -232,7 +231,9 @@ export const memberUtils = {
       return await supabase
         .from("members")
         .select("*")
-        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
+        .or(
+          `first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`
+        )
         .order("created_at", { ascending: false })
         .limit(20);
     });
@@ -309,26 +310,6 @@ export const memberUtils = {
         .select("*")
         .gte("join_date", firstDayOfMonth.toISOString().split("T")[0])
         .order("join_date", { ascending: false });
-    });
-  },
-
-  // Member validation
-  async checkMemberNumberExists(
-    memberNumber: string,
-    excludeId?: string
-  ): Promise<boolean> {
-    return executeQuery(async () => {
-      let query = supabase
-        .from("members")
-        .select("id", { head: true })
-        .eq("member_number", memberNumber);
-
-      if (excludeId) {
-        query = query.neq("id", excludeId);
-      }
-
-      const { data, error } = await query;
-      return { data: !!data, error };
     });
   },
 

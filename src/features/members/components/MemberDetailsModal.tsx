@@ -148,9 +148,6 @@ export function MemberDetailsModal({
                 <h2 className="text-xl font-semibold">
                   {member.first_name} {member.last_name}
                 </h2>
-                <p className="text-muted-foreground text-sm">
-                  Member #{member.member_number}
-                </p>
               </div>
             </div>
             {onEdit && (
@@ -234,7 +231,9 @@ export function MemberDetailsModal({
               <div>
                 <span className="text-muted-foreground">Date of Birth:</span>
                 <p className="font-medium">
-                  {formatDate(member.date_of_birth)}
+                  {member.date_of_birth
+                    ? formatDate(member.date_of_birth)
+                    : "Not provided"}
                 </p>
               </div>
               <div>

@@ -297,7 +297,7 @@ export function useBulkDeleteMembers() {
       console.error("Bulk delete failed:", error);
     },
 
-    onSuccess: (result) => {
+    onSuccess: () => {
       // Invalidate queries on success
       queryClient.invalidateQueries({ queryKey: memberKeys.lists() });
       queryClient.invalidateQueries({ queryKey: memberKeys.count() });

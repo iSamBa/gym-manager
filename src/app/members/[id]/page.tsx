@@ -197,9 +197,6 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                   <Clock className="text-muted-foreground h-4 w-4 animate-spin" />
                 )}
               </h1>
-              <p className="text-muted-foreground">
-                Member #{member.member_number}
-              </p>
             </div>
           </div>
 
@@ -331,7 +328,9 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                         className="bg-muted flex items-center justify-between rounded-lg p-3"
                       >
                         <div>
-                          <p className="font-medium">{contact.name}</p>
+                          <p className="font-medium">
+                            {contact.first_name} {contact.last_name}
+                          </p>
                           <p className="text-muted-foreground text-sm">
                             {contact.relationship}
                           </p>
@@ -368,7 +367,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Plan</span>
                       <Badge variant="secondary">
-                        {member.subscription.plan_name}
+                        {member.subscription.plan?.name || "Unknown Plan"}
                       </Badge>
                     </div>
 
@@ -397,7 +396,9 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                       <div className="flex justify-between">
                         <span>End Date</span>
                         <span>
-                          {formatDate(new Date(member.subscription.end_date))}
+                          {member.subscription.end_date
+                            ? formatDate(new Date(member.subscription.end_date))
+                            : "No end date"}
                         </span>
                       </div>
                       <div className="flex justify-between font-medium">
@@ -421,19 +422,13 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between text-sm">
-                  <span>Last Visit</span>
+                  <span>Member Since</span>
                   <span className="text-muted-foreground">
-                    {member.last_visit
-                      ? formatDate(new Date(member.last_visit))
-                      : "Never"}
+                    {formatDate(new Date(member.join_date))}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Total Visits</span>
-                  <span className="font-medium">{member.visit_count || 0}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Member Since</span>
+                  <span>Account Created</span>
                   <span className="text-muted-foreground">
                     {formatDate(new Date(member.created_at))}
                   </span>

@@ -22,7 +22,6 @@ vi.mock("sonner", () => ({
 const mockMembers: Member[] = [
   {
     id: "1",
-    member_number: "MEM001",
     first_name: "John",
     last_name: "Doe",
     email: "john.doe@example.com",
@@ -51,7 +50,6 @@ const mockMembers: Member[] = [
   },
   {
     id: "2",
-    member_number: "MEM002",
     first_name: "Jane",
     last_name: "Smith",
     email: "jane.smith@example.com",
@@ -89,8 +87,7 @@ describe("MemberTable", () => {
     expect(screen.getByText("John Doe")).toBeInTheDocument();
     expect(screen.getByText("Jane Smith")).toBeInTheDocument();
     expect(screen.getByText("john.doe@example.com")).toBeInTheDocument();
-    expect(screen.getByText("MEM001")).toBeInTheDocument();
-    expect(screen.getByText("MEM002")).toBeInTheDocument();
+    // Member numbers no longer displayed in UI
   });
 
   it("shows action buttons when showActions is true", () => {

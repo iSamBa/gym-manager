@@ -59,7 +59,7 @@ The database schema is managed through the **Supabase MCP server** integration i
 Key features:
 
 - Complete database schema with Row Level Security (RLS)
-- Auto-generated unique identifiers (member numbers, equipment numbers, trainer codes)
+- Auto-generated unique identifiers (equipment numbers, trainer codes)
 - Comprehensive audit trails with `created_at` and `updated_at` timestamps
 - Default data seeded for subscription plans, equipment categories, and class types
 
@@ -85,7 +85,6 @@ import type { Member, SubscriptionPlan } from "@/features/database/lib/types";
 
 const member: Member = {
   id: "uuid",
-  member_number: "GYM20240001",
   first_name: "John",
   last_name: "Doe",
   email: "john@example.com",
@@ -104,7 +103,7 @@ const member: Member = {
 
 ### Member Management
 
-- **members**: Comprehensive member profiles with auto-generated member numbers
+- **members**: Comprehensive member profiles
 - **member_emergency_contacts**: Emergency contact information with primary contact enforcement
 - Status tracking (active, inactive, suspended, expired)
 

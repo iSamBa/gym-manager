@@ -105,8 +105,7 @@ export function MemberCard({
                 />
               </div>
               <p className="text-muted-foreground text-xs">
-                {member.member_number} • Joined{" "}
-                {formatJoinDate(member.join_date)}
+                Joined {formatJoinDate(member.join_date)}
               </p>
             </div>
           </div>
@@ -156,9 +155,6 @@ export function MemberCard({
                 <h3 className="text-lg font-semibold">
                   {member.first_name} {member.last_name}
                 </h3>
-                <p className="text-muted-foreground text-sm">
-                  Member #{member.member_number}
-                </p>
                 <div className="mt-1 flex items-center gap-2">
                   <MemberStatusBadge
                     status={member.status}

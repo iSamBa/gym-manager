@@ -43,7 +43,7 @@ const memberFormSchema = z.object({
     postal_code: z.string().min(1, "Postal code is required"),
     country: z.string().min(1, "Country is required"),
   }),
-  status: z.enum(["active", "inactive", "suspended", "expired"]),
+  status: z.enum(["active", "inactive", "suspended", "expired", "pending"]),
   fitness_goals: z.string().optional(),
   medical_conditions: z.string().optional(),
   notes: z.string().optional(),
@@ -108,7 +108,10 @@ export function MemberForm({
           fitness_goals: member.fitness_goals || "",
           medical_conditions: member.medical_conditions || "",
           notes: member.notes || "",
-          preferred_contact_method: member.preferred_contact_method,
+          preferred_contact_method: member.preferred_contact_method as
+            | "email"
+            | "phone"
+            | "sms",
           marketing_consent: member.marketing_consent,
           waiver_signed: member.waiver_signed,
         }

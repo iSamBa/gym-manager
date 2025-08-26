@@ -6,7 +6,6 @@ import type { Member } from "@/features/database/lib/types";
 
 const mockMember: Member = {
   id: "123",
-  member_number: "MEM001",
   first_name: "John",
   last_name: "Doe",
   email: "john.doe@example.com",

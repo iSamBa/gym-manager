@@ -123,7 +123,6 @@ export interface UserProfile {
 // Members
 export interface Member {
   id: string;
-  member_number: string;
   first_name: string;
   last_name: string;
   email: string;

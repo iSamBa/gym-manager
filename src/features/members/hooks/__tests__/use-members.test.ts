@@ -25,7 +25,6 @@ const consoleErrorMock = vi
 // Sample test data
 const mockMember = {
   id: "123e4567-e89b-12d3-a456-426614174000",
-  member_number: "MEM001",
   first_name: "John",
   last_name: "Doe",
   email: "john.doe@example.com",
@@ -136,7 +135,6 @@ describe("Members Hooks", () => {
   describe("useCreateMember", () => {
     it("should create new member successfully", async () => {
       const newMemberData = {
-        member_number: "MEM999",
         first_name: "Test",
         last_name: "User",
         email: "test@example.com",
@@ -164,7 +162,6 @@ describe("Members Hooks", () => {
     it("should handle creation errors", async () => {
       const error = new Error("Failed to create member");
       const newMemberData = {
-        member_number: "MEM999",
         first_name: "Test",
         last_name: "User",
         email: "test@example.com",

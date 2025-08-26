@@ -167,7 +167,6 @@ export default function MembersPage() {
                 placeholder="Search members by name..."
                 value={searchQuery}
                 onChange={setSearchQuery}
-                isLoading={isMembersLoading && !!searchQuery}
               />
             </div>
 

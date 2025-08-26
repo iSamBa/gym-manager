@@ -208,10 +208,8 @@ export function usePageCacheStrategy(
             // Get recent member numbers to avoid conflicts
             const recentMembers = await memberUtils.getMembers({
               limit: 50,
-              orderBy: "created_at",
-              orderDirection: "desc",
             });
-            return recentMembers.map((m) => m.member_number);
+            return recentMembers.map((m) => `${m.first_name} ${m.last_name}`);
           },
           staleTime: 10 * 60 * 1000,
         });

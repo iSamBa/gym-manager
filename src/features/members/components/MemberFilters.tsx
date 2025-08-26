@@ -31,7 +31,10 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { MemberStatus } from "@/features/database/lib/types";
-import { useMemberFilters } from "../hooks/use-member-filters";
+import {
+  useMemberFilters,
+  type MemberFilterState,
+} from "../hooks/use-member-filters";
 
 // Filter configuration
 const STATUS_OPTIONS: Array<{ value: MemberStatus; label: string }> = [
@@ -56,7 +59,7 @@ const PAYMENT_STATUS_OPTIONS = [
 ];
 
 export interface MemberFiltersProps {
-  onFiltersChange?: (filters: Record<string, unknown>) => void;
+  onFiltersChange?: (filters: MemberFilterState) => void;
   className?: string;
   compact?: boolean;
 }
@@ -275,7 +278,12 @@ export function MemberFilters({
         <div className="flex gap-2">
           <Select
             value={filters.paymentStatus || undefined}
-            onValueChange={(value) => updateFilter("paymentStatus", value)}
+            onValueChange={(value) =>
+              updateFilter(
+                "paymentStatus",
+                value as "current" | "overdue" | "cancelled"
+              )
+            }
           >
             <SelectTrigger className="flex-1">
               <SelectValue placeholder="All statuses" />

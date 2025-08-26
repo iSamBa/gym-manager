@@ -502,7 +502,7 @@ export function BulkActionToolbar({
 
       {/* Progress dialog */}
       <Dialog open={showProgressDialog} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-md" hideClose>
+        <DialogContent className="sm:max-w-md" showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>{operationType}</DialogTitle>
             <DialogDescription>

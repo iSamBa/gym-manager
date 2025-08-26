@@ -44,12 +44,20 @@ export function useMember(id: string) {
 }
 
 // Member with subscription and emergency contacts
-export function useMemberWithSubscription(id: string) {
+export function useMemberWithSubscription(
+  id: string,
+  options?: {
+    refetchInterval?: number;
+    refetchOnWindowFocus?: boolean;
+  }
+) {
   return useQuery({
     queryKey: memberKeys.withSubscription(id),
     queryFn: () => memberUtils.getMemberWithSubscription(id),
     enabled: !!id,
     staleTime: 10 * 60 * 1000,
+    refetchInterval: options?.refetchInterval,
+    refetchOnWindowFocus: options?.refetchOnWindowFocus,
   });
 }
 

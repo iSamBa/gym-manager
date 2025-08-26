@@ -59,21 +59,40 @@ export function useBackgroundSync(config: Partial<BackgroundSyncConfig> = {}) {
     syncStrategy: "balanced",
   });
 
-  const syncIntervalRef = useRef<NodeJS.Timeout>();
-  const retryTimeoutRef = useRef<NodeJS.Timeout>();
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isActiveRef = useRef(true); // Page visibility
   const networkStatusRef = useRef<NetworkStatus>({ online: true });
 
   // Detect network status
   const updateNetworkStatus = useCallback(() => {
+    interface NetworkConnection {
+      effectiveType?: string;
+      downlink?: number;
+      rtt?: number;
+      saveData?: boolean;
+      addEventListener?: (event: string, handler: () => void) => void;
+      removeEventListener?: (event: string, handler: () => void) => void;
+    }
+
+    interface NavigatorWithConnection extends Navigator {
+      connection?: NetworkConnection;
+      mozConnection?: NetworkConnection;
+      webkitConnection?: NetworkConnection;
+    }
+
+    const nav = navigator as NavigatorWithConnection;
     const connection =
-      (navigator as any).connection ||
-      (navigator as any).mozConnection ||
-      (navigator as any).webkitConnection; // eslint-disable-line @typescript-eslint/no-explicit-any
+      nav.connection || nav.mozConnection || nav.webkitConnection;
 
     const status: NetworkStatus = {
       online: navigator.onLine,
-      effectiveType: connection?.effectiveType,
+      effectiveType: connection?.effectiveType as
+        | "2g"
+        | "3g"
+        | "4g"
+        | "slow-2g"
+        | undefined,
       downlink: connection?.downlink,
       rtt: connection?.rtt,
       saveData: connection?.saveData,
@@ -349,12 +368,27 @@ export function useBackgroundSync(config: Partial<BackgroundSyncConfig> = {}) {
     window.addEventListener("offline", handleOffline);
 
     // Connection change listener (if supported)
+    interface NetworkConnection {
+      effectiveType?: string;
+      downlink?: number;
+      rtt?: number;
+      saveData?: boolean;
+      addEventListener?: (event: string, handler: () => void) => void;
+      removeEventListener?: (event: string, handler: () => void) => void;
+    }
+
+    interface NavigatorWithConnection extends Navigator {
+      connection?: NetworkConnection;
+      mozConnection?: NetworkConnection;
+      webkitConnection?: NetworkConnection;
+    }
+
+    const nav = navigator as NavigatorWithConnection;
     const connection =
-      (navigator as any).connection ||
-      (navigator as any).mozConnection ||
-      (navigator as any).webkitConnection; // eslint-disable-line @typescript-eslint/no-explicit-any
+      nav.connection || nav.mozConnection || nav.webkitConnection;
     if (connection) {
-      connection.addEventListener("change", updateNetworkStatus);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (connection as any).addEventListener("change", updateNetworkStatus);
     }
 
     // Start sync schedule
@@ -367,7 +401,8 @@ export function useBackgroundSync(config: Partial<BackgroundSyncConfig> = {}) {
       window.removeEventListener("offline", handleOffline);
 
       if (connection) {
-        connection.removeEventListener("change", updateNetworkStatus);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (connection as any).removeEventListener("change", updateNetworkStatus);
       }
 
       if (syncIntervalRef.current) {
@@ -404,7 +439,7 @@ export function useUserActivityTracking() {
   >("moderate");
   const [lastActivity, setLastActivity] = useState(new Date());
 
-  const activityTimeoutRef = useRef<NodeJS.Timeout>();
+  const activityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const activityCountRef = useRef(0);
 
   // Track user activity

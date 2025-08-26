@@ -7,7 +7,7 @@ import { memberKeys } from "./use-members";
 // Enhanced search interface for complex queries
 export interface AdvancedMemberFilters extends MemberFilters {
   // Multi-field search
-  searchFields?: Array<"name" | "email" | "member_number" | "phone">;
+  searchFields?: Array<"name" | "email" | "phone">;
 
   // Advanced filters
   ageMin?: number;
@@ -89,8 +89,8 @@ export function useMemberSearchHistory() {
 
 // Advanced member search with complex query building
 export function useAdvancedMemberSearch(filters: AdvancedMemberFilters = {}) {
-  const { searchFields = ["name", "email", "member_number"], ...otherFilters } =
-    filters; // eslint-disable-line @typescript-eslint/no-unused-vars
+  // TODO: Implement searchFields and otherFilters when needed
+  // const { searchFields = ["name", "email"], ...otherFilters } = filters;
 
   return useQuery({
     queryKey: [...memberKeys.all, "advanced-search", filters],
@@ -193,24 +193,26 @@ function buildAdvancedSearchQuery(
 
   // Handle date-based age filters (convert to birth date ranges)
   if (ageMin !== undefined || ageMax !== undefined) {
-    const today = new Date();
+    // TODO: Implement age-based filtering when needed
+    // const today = new Date();
 
     if (ageMax !== undefined) {
-      const minBirthDate = new Date(
-        today.getFullYear() - ageMax - 1,
-        today.getMonth(),
-        today.getDate()
-      ); // eslint-disable-line @typescript-eslint/no-unused-vars
-      // Note: This would need to be implemented in the database utils
+      // TODO: Implement age-based filtering in database utils
+      // const minBirthDate = new Date(
+      //   today.getFullYear() - ageMax - 1,
+      //   today.getMonth(),
+      //   today.getDate()
+      // );
       // query.birthDateFrom = minBirthDate.toISOString();
     }
 
     if (ageMin !== undefined) {
-      const maxBirthDate = new Date(
-        today.getFullYear() - ageMin,
-        today.getMonth(),
-        today.getDate()
-      ); // eslint-disable-line @typescript-eslint/no-unused-vars
+      // TODO: Implement age-based filtering in database utils
+      // const maxBirthDate = new Date(
+      //   today.getFullYear() - ageMin,
+      //   today.getMonth(),
+      //   today.getDate()
+      // );
       // query.birthDateTo = maxBirthDate.toISOString();
     }
   }

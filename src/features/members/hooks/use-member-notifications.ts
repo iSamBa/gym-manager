@@ -146,14 +146,13 @@ export function useMemberNotifications(
 
       return id;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       isTypeEnabled,
       generateNotificationId,
       fullConfig.groupSimilar,
       fullConfig.maxVisible,
       fullConfig.duration,
-      groupSimilarNotifications,
-      showToastNotification,
     ]
   );
 

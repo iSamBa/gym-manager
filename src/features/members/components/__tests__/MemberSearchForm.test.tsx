@@ -21,9 +21,7 @@ describe("MemberSearchForm", () => {
       />
     );
 
-    expect(
-      screen.getByPlaceholderText(/search by name, email/i)
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search by name/i)).toBeInTheDocument();
   });
 
   it("calls onFiltersChange when search query changes", () => {
@@ -35,7 +33,7 @@ describe("MemberSearchForm", () => {
       />
     );
 
-    const searchInput = screen.getByPlaceholderText(/search by name, email/i);
+    const searchInput = screen.getByPlaceholderText(/search by name/i);
     fireEvent.change(searchInput, { target: { value: "john" } });
 
     expect(handleFiltersChange).toHaveBeenCalledWith({
@@ -55,7 +53,7 @@ describe("MemberSearchForm", () => {
     );
 
     expect(
-      screen.getByPlaceholderText("Search members...")
+      screen.getByPlaceholderText("Search members by name...")
     ).toBeInTheDocument();
     expect(screen.getByRole("button")).toBeInTheDocument(); // Filter button
   });

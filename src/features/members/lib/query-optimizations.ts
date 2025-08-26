@@ -4,9 +4,17 @@ import { memberUtils } from "@/features/database/lib/utils";
 import type { Member } from "@/features/database/lib/types";
 // import { memberKeys } from "../hooks/use-members"; // Reserved for future use
 
+// Query issue type for performance analysis
+interface QueryIssue {
+  type: "performance" | "caching" | "error";
+  severity: "info" | "warning" | "error";
+  message: string;
+  queries: unknown[];
+}
+
 // Query deduplication manager
 export class QueryDeduplicator {
-  private pendingQueries = new Map<string, Promise<any>>(); // eslint-disable-line @typescript-eslint/no-explicit-any
+  private pendingQueries = new Map<string, Promise<unknown>>();
 
   // Deduplicate identical queries
   async deduplicate<T>(key: string, queryFn: () => Promise<T>): Promise<T> {
@@ -115,7 +123,6 @@ export function createSelectiveFieldQuery(
 
     if (selection.basic) {
       result.id = member.id;
-      result.member_number = member.member_number;
       result.first_name = member.first_name;
       result.last_name = member.last_name;
       result.email = member.email;
@@ -129,7 +136,7 @@ export function createSelectiveFieldQuery(
 
     if (selection.membership) {
       result.join_date = member.join_date;
-      result.membership_type = member.membership_type;
+      // Note: membership_type would come from related subscription data
     }
 
     if (selection.personal) {
@@ -157,8 +164,8 @@ export function createSelectiveFieldQuery(
 export class ComputedFieldCache {
   private cache = new Map<
     string,
-    { value: any; timestamp: number; ttl: number }
-  >(); // eslint-disable-line @typescript-eslint/no-explicit-any
+    { value: unknown; timestamp: number; ttl: number }
+  >();
 
   // Cache a computed field
   set<T>(key: string, value: T, ttlMs = 5 * 60 * 1000): void {
@@ -270,6 +277,7 @@ export const memberComputedFields = {
       active: "✅",
       inactive: "⏸️",
       suspended: "⚠️",
+      expired: "📅",
       pending: "🕐",
     };
     return iconMap[member.status] || "❓";
@@ -278,9 +286,9 @@ export const memberComputedFields = {
   complianceStatus: (member: Member) => {
     const checks = [
       member.waiver_signed,
-      !!member.emergency_contacts,
       !!member.email,
       !!member.phone,
+      // Note: emergency_contacts would be checked via separate query
     ];
 
     const compliantChecks = checks.filter(Boolean).length;
@@ -298,7 +306,7 @@ export const memberComputedFields = {
               : "poor",
       missingItems: [
         !member.waiver_signed && "Waiver not signed",
-        !member.emergency_contacts && "Emergency contact missing",
+        // Emergency contacts checked via separate query
         !member.email && "Email address missing",
         !member.phone && "Phone number missing",
       ].filter(Boolean),
@@ -311,7 +319,6 @@ export const memberComputedFields = {
       member.last_name,
       member.email,
       member.phone,
-      member.member_number,
       member.notes,
     ]
       .filter(Boolean)
@@ -501,7 +508,7 @@ export class QueryPerformanceAnalyzer {
       allMetrics.reduce((sum, m) => sum + m!.caching.hitRate, 0) /
       allMetrics.length;
 
-    const issues = [];
+    const issues: QueryIssue[] = [];
 
     const slowQueries = this.getSlowQueries(500);
     if (slowQueries.length > 0) {
@@ -516,7 +523,7 @@ export class QueryPerformanceAnalyzer {
     const errorProneQueries = this.getErrorProneQueries(2);
     if (errorProneQueries.length > 0) {
       issues.push({
-        type: "reliability",
+        type: "error",
         severity: "error",
         message: `${errorProneQueries.length} queries have high error rates (>2%)`,
         queries: errorProneQueries.map((q) => q!.queryKey).slice(0, 5),
@@ -547,12 +554,11 @@ export class QueryPerformanceAnalyzer {
     };
   }
 
-  private generateRecommendations(issues: any[]) {
-    // eslint-disable-line @typescript-eslint/no-explicit-any
+  private generateRecommendations(issues: QueryIssue[]) {
     const recommendations = [];
 
     const hasPerformanceIssues = issues.some((i) => i.type === "performance");
-    const hasReliabilityIssues = issues.some((i) => i.type === "reliability");
+    const hasErrorIssues = issues.some((i) => i.type === "error");
     const hasCachingIssues = issues.some((i) => i.type === "caching");
 
     if (hasPerformanceIssues) {
@@ -563,7 +569,7 @@ export class QueryPerformanceAnalyzer {
       recommendations.push("Review and optimize complex query logic");
     }
 
-    if (hasReliabilityIssues) {
+    if (hasErrorIssues) {
       recommendations.push("Implement retry logic for failing queries");
       recommendations.push("Add better error handling and fallbacks");
       recommendations.push("Monitor database connection health");
@@ -592,7 +598,9 @@ export function enhanceQueryClient(queryClient: QueryClient) {
   // Add performance monitoring
   const originalQuery = queryClient.fetchQuery.bind(queryClient);
 
-  queryClient.fetchQuery = async (...args: any[]) => {
+  (queryClient as any).fetchQuery = async (
+    ...args: Parameters<typeof originalQuery>
+  ) => {
     // eslint-disable-line @typescript-eslint/no-explicit-any
     const [options] = args;
     const queryKey = options.queryKey;
@@ -603,7 +611,7 @@ export function enhanceQueryClient(queryClient: QueryClient) {
       const executionTime = Date.now() - startTime;
 
       queryPerformanceAnalyzer.recordExecution(
-        queryKey,
+        JSON.stringify(queryKey),
         executionTime,
         true,
         false // We don't have cache hit info here
@@ -614,7 +622,7 @@ export function enhanceQueryClient(queryClient: QueryClient) {
       const executionTime = Date.now() - startTime;
 
       queryPerformanceAnalyzer.recordExecution(
-        queryKey,
+        JSON.stringify(queryKey),
         executionTime,
         false,
         false

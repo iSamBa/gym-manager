@@ -14,6 +14,14 @@ export interface RealtimeConnectionStatus {
   latency?: number; // ms
 }
 
+// Supabase realtime payload types
+interface RealtimePayload {
+  eventType: "INSERT" | "UPDATE" | "DELETE";
+  new: Member | null;
+  old: Member | null;
+  errors?: unknown[];
+}
+
 // Real-time member change event
 export interface MemberChangeEvent {
   type: "INSERT" | "UPDATE" | "DELETE";
@@ -51,7 +59,7 @@ export function useRealtimeMembers(
     });
 
   const channelRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update connection status
   const updateConnectionStatus = useCallback(
@@ -67,8 +75,7 @@ export function useRealtimeMembers(
 
   // Handle member changes from real-time events
   const handleMemberChange = useCallback(
-    (payload: any) => {
-      // eslint-disable-line @typescript-eslint/no-explicit-any
+    (payload: RealtimePayload) => {
       const { eventType, new: newRecord, old: oldRecord } = payload;
 
       try {
@@ -171,9 +178,42 @@ export function useRealtimeMembers(
       onMemberChange,
       connectionStatus.reconnectAttempts,
       updateConnectionStatus,
-      scheduleReconnect,
     ]
   );
+
+  // Create a ref for the reconnect function to avoid circular dependencies
+  const scheduleReconnectRef = useRef<(() => void) | null>(null);
+
+  // Schedule reconnection
+  const scheduleReconnect = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+
+    const delay = Math.min(
+      1000 * Math.pow(2, connectionStatus.reconnectAttempts),
+      30000
+    ); // Exponential backoff, max 30s
+
+    reconnectTimeoutRef.current = setTimeout(() => {
+      updateConnectionStatus({
+        reconnectAttempts: connectionStatus.reconnectAttempts + 1,
+      });
+
+      // Clean up existing channel
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+        channelRef.current = null;
+      }
+
+      // Call setup function using ref to avoid circular dependency
+      setupRealtimeSubscription();
+    }, delay);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectionStatus.reconnectAttempts, updateConnectionStatus]);
+
+  // Set the ref after the function is defined
+  scheduleReconnectRef.current = scheduleReconnect;
 
   // Setup real-time subscription
   const setupRealtimeSubscription = useCallback(() => {
@@ -186,7 +226,7 @@ export function useRealtimeMembers(
       const channel = supabase
         .channel("members-changes")
         .on(
-          "postgres_changes",
+          "postgres_changes" as any, // eslint-disable-line @typescript-eslint/no-explicit-any
           {
             event: "*",
             schema: "public",
@@ -216,7 +256,7 @@ export function useRealtimeMembers(
                 autoReconnect &&
                 connectionStatus.reconnectAttempts < maxReconnectAttempts
               ) {
-                scheduleReconnect();
+                scheduleReconnectRef.current?.();
               }
               break;
             case "TIMED_OUT":
@@ -230,7 +270,7 @@ export function useRealtimeMembers(
                 autoReconnect &&
                 connectionStatus.reconnectAttempts < maxReconnectAttempts
               ) {
-                scheduleReconnect();
+                scheduleReconnectRef.current?.();
               }
               break;
             case "CLOSED":
@@ -263,36 +303,6 @@ export function useRealtimeMembers(
     maxReconnectAttempts,
   ]);
 
-  // Schedule reconnection
-  const scheduleReconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-    }
-
-    const delay = Math.min(
-      1000 * Math.pow(2, connectionStatus.reconnectAttempts),
-      30000
-    ); // Exponential backoff, max 30s
-
-    reconnectTimeoutRef.current = setTimeout(() => {
-      updateConnectionStatus({
-        reconnectAttempts: connectionStatus.reconnectAttempts + 1,
-      });
-
-      // Clean up existing channel
-      if (channelRef.current) {
-        channelRef.current.unsubscribe();
-        channelRef.current = null;
-      }
-
-      setupRealtimeSubscription();
-    }, delay);
-  }, [
-    connectionStatus.reconnectAttempts,
-    updateConnectionStatus,
-    setupRealtimeSubscription,
-  ]);
-
   // Cleanup real-time subscription
   const cleanupRealtimeSubscription = useCallback(() => {
     if (channelRef.current) {
@@ -302,7 +312,7 @@ export function useRealtimeMembers(
 
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = undefined;
+      reconnectTimeoutRef.current = null;
     }
 
     updateConnectionStatus({
@@ -316,11 +326,8 @@ export function useRealtimeMembers(
     cleanupRealtimeSubscription();
     updateConnectionStatus({ reconnectAttempts: 0 });
     setupRealtimeSubscription();
-  }, [
-    cleanupRealtimeSubscription,
-    updateConnectionStatus,
-    setupRealtimeSubscription,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleanupRealtimeSubscription, updateConnectionStatus]);
 
   // Setup subscription when enabled
   useEffect(() => {
@@ -331,7 +338,8 @@ export function useRealtimeMembers(
     }
 
     return cleanupRealtimeSubscription;
-  }, [enabled, setupRealtimeSubscription, cleanupRealtimeSubscription]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, cleanupRealtimeSubscription]);
 
   // Measure connection latency
   const measureLatency = useCallback(async () => {

@@ -22,7 +22,6 @@ let memberUtils: typeof import("../utils").memberUtils;
 // Sample test data
 const mockMember: Member = {
   id: "123e4567-e89b-12d3-a456-426614174000",
-  member_number: "MEM001",
   first_name: "John",
   last_name: "Doe",
   email: "john.doe@example.com",
@@ -199,7 +198,7 @@ describe("Member Utils Database Operations", () => {
       expect(mockSupabaseClient.from).toHaveBeenCalledWith("members");
       expect(mockQuery.select).toHaveBeenCalledWith("*");
       expect(mockQuery.or).toHaveBeenCalledWith(
-        "first_name.ilike.%John%,last_name.ilike.%John%,email.ilike.%John%,member_number.ilike.%John%"
+        "first_name.ilike.%John%,last_name.ilike.%John%,email.ilike.%John%"
       );
       expect(mockQuery.order).toHaveBeenCalledWith("created_at", {
         ascending: false,
@@ -225,7 +224,6 @@ describe("Member Utils Database Operations", () => {
       const newMember = {
         ...mockMember,
         id: "new-id",
-        member_number: "MEM999",
       };
       mockQuery.single.mockResolvedValue({
         data: newMember,
@@ -234,7 +232,6 @@ describe("Member Utils Database Operations", () => {
 
       const { memberUtils } = await import("../utils");
       const createData = {
-        member_number: "MEM999",
         first_name: "Test",
         last_name: "User",
         email: "test@example.com",
@@ -323,7 +320,7 @@ describe("Member Utils Database Operations", () => {
       const result = await memberUtils.searchMembers("John");
 
       expect(mockQuery.or).toHaveBeenCalledWith(
-        "first_name.ilike.%John%,last_name.ilike.%John%,email.ilike.%John%,member_number.ilike.%John%"
+        "first_name.ilike.%John%,last_name.ilike.%John%,email.ilike.%John%"
       );
       expect(mockQuery.limit).toHaveBeenCalledWith(20);
       expect(result).toEqual([mockMember]);
@@ -388,51 +385,7 @@ describe("Member Utils Database Operations", () => {
     });
   });
 
-  describe("checkMemberNumberExists", () => {
-    it("should return true when member number exists", async () => {
-      mockQuery.eq.mockResolvedValue({
-        data: mockMember,
-        error: null,
-      });
-
-      const { memberUtils } = await import("../utils");
-      const result = await memberUtils.checkMemberNumberExists("MEM001");
-
-      expect(mockQuery.select).toHaveBeenCalledWith("id", { head: true });
-      expect(mockQuery.eq).toHaveBeenCalledWith("member_number", "MEM001");
-      expect(result).toBe(true);
-    });
-
-    it("should throw error when member number does not exist", async () => {
-      // When member doesn't exist, Supabase returns null data
-      mockQuery.eq.mockResolvedValue({
-        data: null,
-        error: null,
-      });
-
-      const { memberUtils } = await import("../utils");
-
-      await expect(
-        memberUtils.checkMemberNumberExists("NONEXISTENT")
-      ).rejects.toThrow("No data returned from query");
-    });
-
-    it("should throw error when member number does not exist after exclusion", async () => {
-      // When member doesn't exist after exclusion, Supabase returns null data
-      mockQuery.neq.mockResolvedValue({
-        data: null,
-        error: null,
-      });
-
-      const { memberUtils } = await import("../utils");
-
-      await expect(
-        memberUtils.checkMemberNumberExists("MEM001", "exclude-id")
-      ).rejects.toThrow("No data returned from query");
-      expect(mockQuery.eq).toHaveBeenCalledWith("member_number", "MEM001");
-      expect(mockQuery.neq).toHaveBeenCalledWith("id", "exclude-id");
-    });
-  });
+  // checkMemberNumberExists function has been removed
 
   describe("checkEmailExists", () => {
     it("should return true when email exists", async () => {

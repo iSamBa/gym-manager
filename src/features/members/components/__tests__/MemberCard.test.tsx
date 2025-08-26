@@ -28,7 +28,6 @@ vi.mock("sonner", () => ({
 
 const mockMember: Member = {
   id: "123e4567-e89b-12d3-a456-426614174000",
-  member_number: "MEM001",
   first_name: "John",
   last_name: "Doe",
   email: "john.doe@example.com",
@@ -70,7 +69,7 @@ describe("MemberCard", () => {
 
       expect(screen.getByText("John Doe")).toBeInTheDocument();
       expect(screen.getByText("JD")).toBeInTheDocument(); // Avatar initials
-      expect(screen.queryByText("MEM001")).not.toBeInTheDocument();
+      // Member numbers no longer displayed in minimal variant
     });
 
     it("does not show actions in minimal variant", () => {
@@ -89,9 +88,7 @@ describe("MemberCard", () => {
       });
 
       expect(screen.getByText("John Doe")).toBeInTheDocument();
-      expect(
-        screen.getByText("MEM001 • Joined Jan 15, 2024")
-      ).toBeInTheDocument();
+      expect(screen.getByText("Joined Jan 15, 2024")).toBeInTheDocument();
       expect(screen.getByText("Active")).toBeInTheDocument();
     });
 
@@ -127,7 +124,7 @@ describe("MemberCard", () => {
       });
 
       expect(screen.getByText("John Doe")).toBeInTheDocument();
-      expect(screen.getByText("Member #MEM001")).toBeInTheDocument();
+      // Member numbers no longer displayed in UI
       expect(screen.getByText("john.doe@example.com")).toBeInTheDocument();
       expect(screen.getByText("+1234567890")).toBeInTheDocument();
       expect(screen.getByText("Weight loss")).toBeInTheDocument();

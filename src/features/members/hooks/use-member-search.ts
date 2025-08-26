@@ -45,39 +45,6 @@ export function useDebouncedMemberSearch(initialQuery = "", debounceMs = 300) {
 export function useMemberValidation() {
   const queryClient = useQueryClient();
 
-  const checkMemberNumberExists = useCallback(
-    async (memberNumber: string, excludeId?: string): Promise<boolean> => {
-      try {
-        // Check cache first for performance
-        const cachedMembers = queryClient.getQueriesData<Member[]>({
-          queryKey: memberKeys.lists(),
-        });
-
-        // Look through cached data first
-        for (const [, members] of cachedMembers) {
-          if (members) {
-            const exists = members.some(
-              (member) =>
-                member.member_number === memberNumber && member.id !== excludeId
-            );
-            if (exists) return true;
-          }
-        }
-
-        // If not found in cache, check database
-        const { memberUtils } = await import("@/features/database/lib/utils");
-        return await memberUtils.checkMemberNumberExists(
-          memberNumber,
-          excludeId
-        );
-      } catch (error) {
-        console.error("Error checking member number:", error);
-        return false;
-      }
-    },
-    [queryClient]
-  );
-
   const checkEmailExists = useCallback(
     async (email: string, excludeId?: string): Promise<boolean> => {
       try {
@@ -110,7 +77,6 @@ export function useMemberValidation() {
   );
 
   return {
-    checkMemberNumberExists,
     checkEmailExists,
   };
 }

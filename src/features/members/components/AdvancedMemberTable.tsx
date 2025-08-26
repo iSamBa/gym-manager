@@ -98,9 +98,7 @@ export function AdvancedMemberTable({
   }>({ isOpen: false, action: null });
 
   // Use infinite query when filters are provided, otherwise use passed props
-  const infiniteQuery = useMembersInfinite(filters, {
-    enabled: !!filters, // Only run query when filters are provided
-  });
+  const infiniteQuery = useMembersInfinite(filters || {}, 20);
 
   // Determine data source based on what's provided
   const data = propMembers ? { pages: [propMembers] } : infiniteQuery.data;

@@ -189,9 +189,7 @@ export function AdvancedMemberSearch({
                           <span className="font-medium">
                             {member.first_name} {member.last_name}
                           </span>
-                          <Badge variant="outline" className="text-xs">
-                            #{member.member_number}
-                          </Badge>
+                          {/* Member numbers no longer displayed */}
                           <Badge
                             variant={
                               member.status === "active"

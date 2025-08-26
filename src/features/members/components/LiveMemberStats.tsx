@@ -52,8 +52,9 @@ export function LiveMemberStats({
   const { data: totalCount = 0, refetch: refetchTotal } = useMemberCount();
   const { data: statusCounts, refetch: refetchStatusCounts } =
     useMemberCountByStatus();
-  const { data: newThisMonth = 0, refetch: refetchNewThisMonth } =
+  const { data: newThisMonthData = [], refetch: refetchNewThisMonth } =
     useNewMembersThisMonth();
+  const newThisMonth = newThisMonthData.length;
 
   // Real-time connection
   const { connectionStatus, isConnected, hasError, reconnect } =

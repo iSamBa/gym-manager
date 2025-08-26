@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MemberForm } from "@/features/members/components";
 import { useCreateMember } from "@/features/members/hooks";
 import { Plus, AlertCircle, CheckCircle } from "lucide-react";
-import type { MemberCreateData } from "@/features/database/lib/types";
+import type { CreateMemberData } from "@/features/database/lib/utils";
 
 interface AddMemberDialogProps {
   onMemberCreated?: (memberId: string) => void;
@@ -28,7 +28,7 @@ export function AddMemberDialog({ onMemberCreated }: AddMemberDialogProps) {
   // Create member mutation with optimistic updates
   const createMemberMutation = useCreateMember();
 
-  const handleSubmit = async (data: MemberCreateData) => {
+  const handleSubmit = async (data: CreateMemberData) => {
     try {
       setIsSubmitted(true);
 

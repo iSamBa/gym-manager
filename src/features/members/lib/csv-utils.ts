@@ -2,7 +2,6 @@ import type { Member } from "@/features/database/lib/types";
 
 // CSV column headers in the desired order
 const CSV_HEADERS = [
-  "Member Number",
   "First Name",
   "Last Name",
   "Email",
@@ -91,7 +90,6 @@ function formatDateTimeForCSV(dateString: string | undefined): string {
  */
 function memberToCSVRow(member: Member): string[] {
   return [
-    member.member_number,
     member.first_name,
     member.last_name,
     member.email,

@@ -133,8 +133,10 @@ export function useMemberTypeDistribution() {
 
         subscriptions?.forEach((subscription) => {
           const planType = (
-            subscription.subscription_plans as { plan_type: string } | null
-          )?.plan_type;
+            subscription as unknown as {
+              subscription_plans?: { plan_type?: string };
+            }
+          ).subscription_plans?.plan_type;
           if (planType) {
             typeCounts[planType] = (typeCounts[planType] || 0) + 1;
             totalMembers++;

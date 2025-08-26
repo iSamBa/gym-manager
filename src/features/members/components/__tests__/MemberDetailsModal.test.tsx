@@ -21,7 +21,6 @@ vi.mock("sonner", () => ({
 
 const mockMember: Member = {
   id: "123",
-  member_number: "MEM001",
   first_name: "John",
   last_name: "Doe",
   email: "john.doe@example.com",
@@ -61,7 +60,7 @@ describe("MemberDetailsModal", () => {
     );
 
     expect(screen.getByText("John Doe")).toBeInTheDocument();
-    expect(screen.getByText("Member #MEM001")).toBeInTheDocument();
+    // Member numbers no longer displayed in UI
     expect(screen.getByText("john.doe@example.com")).toBeInTheDocument();
     expect(screen.getByText("+1234567890")).toBeInTheDocument();
   });
