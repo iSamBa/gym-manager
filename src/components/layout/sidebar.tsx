@@ -12,8 +12,7 @@ import {
   Home,
   Dumbbell,
 } from "lucide-react";
-import { Link } from "@/lib/i18n/navigation";
-import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useState } from "react";
 
 interface SidebarProps {
@@ -22,14 +21,12 @@ interface SidebarProps {
 }
 
 export function Sidebar({ className, onNavigate }: SidebarProps) {
-  const t = useTranslations("navigation");
-
   const navigation = [
-    { name: t("dashboard"), href: "/", icon: Home },
-    { name: t("members"), href: "/members", icon: Users },
-    { name: t("memberships"), href: "/memberships", icon: CreditCard },
-    { name: t("payments"), href: "/payments", icon: Receipt },
-    { name: t("analytics"), href: "/analytics", icon: BarChart3 },
+    { name: "Dashboard", href: "/", icon: Home },
+    { name: "Members", href: "/members", icon: Users },
+    { name: "Memberships", href: "/memberships", icon: CreditCard },
+    { name: "Payments", href: "/payments", icon: Receipt },
+    { name: "Analytics", href: "/analytics", icon: BarChart3 },
   ];
 
   return (

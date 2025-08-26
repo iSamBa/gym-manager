@@ -1,10 +1,41 @@
-// This file is required for the app directory root.
-// The actual HTML structure is in [locale]/layout.tsx
-// The middleware handles locale redirection.
-export default function RootLayout({
-  children,
-}: {
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { QueryProvider } from "@/components/providers/query-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { AuthProvider } from "@/lib/auth-provider";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Gym Manager",
+  description: "Modern gym management system",
+};
+
+interface RootLayoutProps {
   children: React.ReactNode;
-}) {
-  return children;
+}
+
+export default async function RootLayout({ children }: RootLayoutProps) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ThemeProvider defaultTheme="system" storageKey="gym-manager-theme">
+          <AuthProvider>
+            <QueryProvider>{children}</QueryProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
 }

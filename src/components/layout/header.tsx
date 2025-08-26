@@ -13,7 +13,6 @@ import {
 import { MobileSidebar } from "./sidebar";
 import { LogOut, Settings, User } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
 import { SessionStatus } from "@/components/session-status";
 
@@ -26,7 +25,6 @@ interface HeaderProps {
 }
 
 export function Header({ user }: HeaderProps) {
-  const t = useTranslations("user_menu");
   const { signOut } = useAuth();
 
   const handleLogout = async () => {
@@ -74,16 +72,16 @@ export function Header({ user }: HeaderProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <User className="mr-2 h-4 w-4" />
-                  <span>{t("profile")}</span>
+                  <span>Profile</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
-                  <span>{t("settings")}</span>
+                  <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>{t("log_out")}</span>
+                  <span>Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

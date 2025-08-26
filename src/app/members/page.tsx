@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MainLayout } from "@/components/layout";
+import { MainLayout } from "@/components/layout/main-layout";
 import { SearchInput } from "@/components/forms/search-input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,7 +17,8 @@ import {
   usePageCacheStrategy,
 } from "@/features/members/hooks";
 import { Plus, Users, UserCheck, UserX, Clock } from "lucide-react";
-import { Link, useRouter } from "@/lib/i18n/navigation";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function MembersPage() {
   const [searchQuery, setSearchQuery] = useState("");

@@ -35,11 +35,19 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
 
 interface MemberDetailPageProps {
   params: Promise<{ id: string }>;
 }
+
+// Helper function to format dates
+const formatDate = (date: Date): string => {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
 
 function MemberDetailPage({ params }: MemberDetailPageProps) {
   const { id } = use(params);
@@ -240,8 +248,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                       <div className="flex items-center gap-2">
                         <Calendar className="text-muted-foreground h-4 w-4" />
                         <span>
-                          Joined{" "}
-                          {format(new Date(member.created_at), "MMM d, yyyy")}
+                          Joined {formatDate(new Date(member.created_at))}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -361,19 +368,13 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                       <div className="flex justify-between">
                         <span>Start Date</span>
                         <span>
-                          {format(
-                            new Date(member.subscription.start_date),
-                            "MMM d, yyyy"
-                          )}
+                          {formatDate(new Date(member.subscription.start_date))}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span>End Date</span>
                         <span>
-                          {format(
-                            new Date(member.subscription.end_date),
-                            "MMM d, yyyy"
-                          )}
+                          {formatDate(new Date(member.subscription.end_date))}
                         </span>
                       </div>
                       <div className="flex justify-between font-medium">
@@ -400,7 +401,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                   <span>Last Visit</span>
                   <span className="text-muted-foreground">
                     {member.last_visit
-                      ? format(new Date(member.last_visit), "MMM d, yyyy")
+                      ? formatDate(new Date(member.last_visit))
                       : "Never"}
                   </span>
                 </div>
