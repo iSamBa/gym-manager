@@ -44,6 +44,8 @@ export {
 
 export { useSimpleMemberFilters } from "./use-simple-member-filters";
 
+export { useExportMembers } from "./use-export-members";
+
 // Bulk operations and selection
 export {
   useBulkSelection,

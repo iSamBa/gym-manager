@@ -5,6 +5,7 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { SearchInput } from "@/components/forms/search-input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   AdvancedMemberTable,
   AddMemberDialog,
@@ -20,8 +21,9 @@ import {
   useRouteCacheManager,
   usePageCacheStrategy,
   useSimpleMemberFilters,
+  useExportMembers,
 } from "@/features/members/hooks";
-import { Users, UserCheck, UserX, Clock } from "lucide-react";
+import { Users, UserCheck, UserX, Clock, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function MembersPage() {
@@ -34,6 +36,9 @@ export default function MembersPage() {
 
   // Search state for the search input
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Export functionality
+  const { isExporting, exportMembers } = useExportMembers();
 
   // Main member data with auto-refresh
   const {
@@ -174,13 +179,28 @@ export default function MembersPage() {
             />
           </div>
 
-          {/* Background sync indicator */}
-          {isRefetching && (
-            <Badge variant="secondary" className="animate-pulse">
-              <Clock className="mr-1 h-3 w-3" />
-              Syncing
-            </Badge>
-          )}
+          {/* Export and Status Indicators */}
+          <div className="flex items-center gap-3">
+            {/* Export Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportMembers(members || [])}
+              disabled={isExporting || isMembersLoading}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {isExporting ? "Exporting..." : "Export"}
+            </Button>
+
+            {/* Background sync indicator */}
+            {isRefetching && (
+              <Badge variant="secondary" className="animate-pulse">
+                <Clock className="mr-1 h-3 w-3" />
+                Syncing
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Members Table */}
