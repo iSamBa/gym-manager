@@ -87,7 +87,7 @@ Core member information with auto-generated member numbers and comprehensive pro
 
 **Key Features:**
 
-- **Auto-generated member numbers**: Format "GYM{YYYY}{0001}" (e.g., GYM20240001)
+- **UUID primary keys**: Uses standard UUID identifiers
 - **Flexible address storage**: JSON field for address components
 - **Status tracking**: Active, inactive, suspended, expired
 - **Waiver management**: Track waiver signatures and dates
@@ -96,7 +96,7 @@ Core member information with auto-generated member numbers and comprehensive pro
 **Columns:**
 
 - `id` (UUID): Primary key
-- `member_number` (TEXT): Auto-generated unique identifier
+- UUID-based identification: Uses standard database UUIDs
 - `first_name`, `last_name` (TEXT): Member's name (required)
 - `email` (TEXT): Unique email address
 - `phone` (TEXT): Contact number
@@ -137,13 +137,9 @@ Emergency contact information with primary contact enforcement.
 
 ### Functions and Triggers
 
-#### `generate_member_number()`
+#### UUID-based identification
 
-Creates unique member numbers in format "GYM{YYYY}{0001}".
-
-#### `set_member_number()`
-
-Trigger function that auto-generates member numbers on insert.
+Members are identified using standard UUID primary keys for uniqueness.
 
 #### `ensure_one_primary_emergency_contact()`
 
@@ -499,7 +495,7 @@ Creates attendance log entries when members check into classes.
 
 **Member Operations:**
 
-- Member number searches
+- UUID-based member lookups
 - Status-based filtering
 - Join date chronological sorting
 
@@ -547,7 +543,7 @@ All tables implement comprehensive RLS policies ensuring:
 
 ### Automated Processes
 
-1. **Member number generation**: Automatic unique identifier creation
+1. **UUID identification**: Standard database UUID primary keys
 2. **Equipment maintenance scheduling**: Automatic date calculations
 3. **Payment reminders**: Automated reminder scheduling
 4. **Attendance tracking**: Automatic log creation

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   Table,
   TableBody,
@@ -8,46 +9,41 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
-
-interface Member {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: "active" | "inactive" | "suspended";
-  membershipType: string;
-  joinDate: string;
-  avatar?: string;
-}
+import { MemberAvatar } from "./MemberAvatar";
+import { MemberStatusBadge } from "./MemberStatusBadge";
+import type { Member } from "@/features/database/lib/types";
 
 interface MemberTableProps {
   members: Member[];
   onEdit?: (member: Member) => void;
   onDelete?: (member: Member) => void;
   onView?: (member: Member) => void;
+  showActions?: boolean;
 }
 
-const statusVariants = {
-  active: "default",
-  inactive: "secondary",
-  suspended: "destructive",
-} as const;
+const formatJoinDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
 
 export function MemberTable({
   members,
   onEdit,
   onDelete,
   onView,
+  showActions = true,
 }: MemberTableProps) {
   return (
     <div className="rounded-md border">
@@ -55,71 +51,72 @@ export function MemberTable({
         <TableHeader>
           <TableRow>
             <TableHead>Member</TableHead>
-            <TableHead>Contact</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Phone</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Membership</TableHead>
             <TableHead>Join Date</TableHead>
-            <TableHead className="w-[70px]"></TableHead>
+            {showActions && <TableHead className="w-[70px]"></TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {members.map((member) => (
             <TableRow key={member.id}>
-              <TableCell className="flex items-center space-x-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={member.avatar} alt={member.name} />
-                  <AvatarFallback>
-                    {member.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="font-medium">{member.name}</span>
-              </TableCell>
               <TableCell>
-                <div className="space-y-1">
-                  <div className="text-sm">{member.email}</div>
-                  <div className="text-muted-foreground text-xs">
-                    {member.phone}
-                  </div>
+                <div className="flex items-center space-x-3">
+                  <MemberAvatar member={member} size="sm" />
+                  <span className="font-medium">
+                    {member.first_name} {member.last_name}
+                  </span>
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant={statusVariants[member.status]}>
-                  {member.status}
-                </Badge>
+                <div className="text-sm">{member.email}</div>
               </TableCell>
-              <TableCell>{member.membershipType}</TableCell>
-              <TableCell>{member.joinDate}</TableCell>
               <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">Open menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onView?.(member)}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      View
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit?.(member)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => onDelete?.(member)}
-                      className="text-red-600"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="text-muted-foreground text-sm">
+                  {member.phone || "Not provided"}
+                </div>
               </TableCell>
+              <TableCell>
+                <MemberStatusBadge
+                  status={member.status}
+                  memberId={member.id}
+                  readonly={!showActions}
+                />
+              </TableCell>
+              <TableCell className="text-sm">
+                {formatJoinDate(member.join_date)}
+              </TableCell>
+              {showActions && (
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Open menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onView?.(member)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onEdit?.(member)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Member
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => onDelete?.(member)}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Member
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>

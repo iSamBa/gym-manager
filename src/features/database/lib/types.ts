@@ -3,8 +3,13 @@
 
 // Enums
 export type UserRole = "admin" | "trainer";
-export type MemberStatus = "active" | "inactive" | "suspended" | "expired";
-export type Gender = "male" | "female" | "other" | "prefer_not_to_say";
+export type MemberStatus =
+  | "active"
+  | "inactive"
+  | "suspended"
+  | "expired"
+  | "pending";
+export type Gender = "male" | "female";
 export type EquipmentStatus =
   | "active"
   | "maintenance"
@@ -98,6 +103,14 @@ export interface AccessHours {
   to?: string; // "HH:MM" format
 }
 
+// Member presence interface for real-time tracking
+export interface MemberPresence {
+  userId: string;
+  username: string;
+  action: "viewing" | "editing";
+  timestamp: Date;
+}
+
 // User Profiles
 export interface UserProfile {
   id: string;
@@ -118,7 +131,6 @@ export interface UserProfile {
 // Members
 export interface Member {
   id: string;
-  member_number: string;
   first_name: string;
   last_name: string;
   email: string;

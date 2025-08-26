@@ -12,23 +12,21 @@ import {
   Home,
   Dumbbell,
 } from "lucide-react";
-import { Link } from "@/lib/i18n/navigation";
-import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useState } from "react";
 
 interface SidebarProps {
   className?: string;
+  onNavigate?: () => void;
 }
 
-export function Sidebar({ className }: SidebarProps) {
-  const t = useTranslations("navigation");
-
+export function Sidebar({ className, onNavigate }: SidebarProps) {
   const navigation = [
-    { name: t("dashboard"), href: "/", icon: Home },
-    { name: t("members"), href: "/members", icon: Users },
-    { name: t("memberships"), href: "/memberships", icon: CreditCard },
-    { name: t("payments"), href: "/payments", icon: Receipt },
-    { name: t("analytics"), href: "/analytics", icon: BarChart3 },
+    { name: "Dashboard", href: "/", icon: Home },
+    { name: "Members", href: "/members", icon: Users },
+    { name: "Memberships", href: "/memberships", icon: CreditCard },
+    { name: "Payments", href: "/payments", icon: Receipt },
+    { name: "Analytics", href: "/analytics", icon: BarChart3 },
   ];
 
   return (
@@ -43,12 +41,17 @@ export function Sidebar({ className }: SidebarProps) {
           </h2>
           <div className="space-y-1">
             {navigation.map((item) => (
-              <Link key={item.name} href={item.href}>
-                <Button variant="ghost" className="w-full justify-start">
+              <Button
+                key={item.name}
+                variant="ghost"
+                className="w-full justify-start"
+                asChild
+              >
+                <Link href={item.href} onClick={onNavigate}>
                   <item.icon className="mr-2 h-4 w-4" />
                   {item.name}
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             ))}
           </div>
         </div>
@@ -69,7 +72,7 @@ export function MobileSidebar() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-64 p-0">
-        <Sidebar />
+        <Sidebar onNavigate={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
   );
