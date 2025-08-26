@@ -9,7 +9,7 @@ import {
   AdvancedMemberTable,
   AddMemberDialog,
   EditMemberDialog,
-  MemberFilters,
+  SimpleMemberFilters,
 } from "@/features/members/components";
 import type { Member } from "@/features/database/lib/types";
 import {
@@ -19,7 +19,7 @@ import {
   useMemberPrefetch,
   useRouteCacheManager,
   usePageCacheStrategy,
-  useMemberFilters,
+  useSimpleMemberFilters,
 } from "@/features/members/hooks";
 import { Users, UserCheck, UserX, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -29,16 +29,11 @@ export default function MembersPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const router = useRouter();
 
-  // Filter state management
-  const { filters, updateFilter } = useMemberFilters();
+  // Simplified filter state management
+  const { filters, updateFilters, databaseFilters } = useSimpleMemberFilters();
 
-  // Convert filter state to database filters
-  const databaseFilters = {
-    search: filters.search,
-    status: filters.status,
-    joinDateFrom: filters.joinDateFrom,
-    joinDateTo: filters.joinDateTo,
-  };
+  // Search state for the search input
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Main member data with auto-refresh
   const {
@@ -48,8 +43,8 @@ export default function MembersPage() {
     isFetching,
     isRefetching,
   } = useMembers({
+    search: searchQuery,
     ...databaseFilters,
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
   // Member count for stats
@@ -160,16 +155,23 @@ export default function MembersPage() {
 
         {/* Search and Filters */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-1 items-center gap-4">
+          <div className="flex flex-1 flex-col gap-4 sm:flex-row">
+            {/* Search Input */}
             <div className="max-w-md flex-1">
               <SearchInput
                 placeholder="Search members by name..."
-                value={filters.search || ""}
-                onChange={(value) => updateFilter("search", value)}
-                isLoading={isMembersLoading && !!filters.search}
+                value={searchQuery}
+                onChange={setSearchQuery}
+                isLoading={isMembersLoading && !!searchQuery}
               />
             </div>
-            <MemberFilters compact className="shrink-0" />
+
+            {/* Simplified Filters */}
+            <SimpleMemberFilters
+              filters={filters}
+              onFiltersChange={updateFilters}
+              className="shrink-0"
+            />
           </div>
 
           {/* Background sync indicator */}
@@ -191,7 +193,7 @@ export default function MembersPage() {
             onEdit={handleEditMember}
             onMemberClick={handleMemberClick}
             onMemberHover={handleMemberHover}
-            enableInfiniteScroll={!filters.search} // Only enable infinite scroll when not searching
+            enableInfiniteScroll={!searchQuery} // Only enable infinite scroll when not searching
             className="border-0"
           />
         </Card>

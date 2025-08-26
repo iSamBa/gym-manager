@@ -42,6 +42,8 @@ export {
   type FilterPreset,
 } from "./use-member-filters";
 
+export { useSimpleMemberFilters } from "./use-simple-member-filters";
+
 // Bulk operations and selection
 export {
   useBulkSelection,

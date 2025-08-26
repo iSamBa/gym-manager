@@ -5,6 +5,7 @@ export { MemberTable } from "./member-table";
 export { AdvancedMemberTable } from "./AdvancedMemberTable";
 export { MemberSearchForm } from "./MemberSearchForm";
 export { MemberFilters } from "./MemberFilters";
+export { SimpleMemberFilters } from "./SimpleMemberFilters";
 export { MemberDetailsModal } from "./MemberDetailsModal";
 export { MemberForm } from "./MemberForm";
 export { AddMemberDialog } from "./AddMemberDialog";
