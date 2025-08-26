@@ -103,6 +103,14 @@ export interface AccessHours {
   to?: string; // "HH:MM" format
 }
 
+// Member presence interface for real-time tracking
+export interface MemberPresence {
+  userId: string;
+  username: string;
+  action: "viewing" | "editing";
+  timestamp: Date;
+}
+
 // User Profiles
 export interface UserProfile {
   id: string;

@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import type { Member } from "@/features/database/lib/types";
+import type { Member, MemberPresence } from "@/features/database/lib/types";
 import { memberKeys } from "./use-members";
 
 // Real-time connection status
@@ -510,17 +510,9 @@ export function useMemberConflictResolution() {
 
 // Hook for real-time presence (who's viewing/editing members)
 export function useMemberPresence(memberId?: string) {
-  const [presence, setPresence] = useState<
-    Map<
-      string,
-      {
-        userId: string;
-        username: string;
-        action: "viewing" | "editing";
-        timestamp: Date;
-      }
-    >
-  >(new Map());
+  const [presence, setPresence] = useState<Map<string, MemberPresence>>(
+    new Map()
+  );
 
   const channelRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -573,9 +565,10 @@ export function useMemberPresence(memberId?: string) {
       .on("presence", { event: "join" }, ({ key, newPresences }) => {
         setPresence((prev) => {
           const newMap = new Map(prev);
-          newPresences.forEach((presence: any) => {
-            // eslint-disable-line @typescript-eslint/no-explicit-any
-            newMap.set(key, presence);
+          newPresences.forEach((presence) => {
+            // Extract the MemberPresence data from Supabase presence payload
+            const presenceData = presence as unknown as MemberPresence;
+            newMap.set(key, presenceData);
           });
           return newMap;
         });

@@ -598,10 +598,11 @@ export function enhanceQueryClient(queryClient: QueryClient) {
   // Add performance monitoring
   const originalQuery = queryClient.fetchQuery.bind(queryClient);
 
+  // Override fetchQuery method with monitoring (requires any cast for method override)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (queryClient as any).fetchQuery = async (
     ...args: Parameters<typeof originalQuery>
   ) => {
-    // eslint-disable-line @typescript-eslint/no-explicit-any
     const [options] = args;
     const queryKey = options.queryKey;
     const startTime = Date.now();
