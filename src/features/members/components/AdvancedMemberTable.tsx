@@ -52,9 +52,16 @@ type SortField = "name" | "email" | "status" | "join_date";
 type SortDirection = "asc" | "desc";
 
 interface AdvancedMemberTableProps {
-  filters: MemberFilters;
+  // Support both filtering and direct member list approaches
+  filters?: MemberFilters;
+  members?: Member[];
+  isLoading?: boolean;
+  error?: Error | null;
   onEdit?: (member: Member) => void;
   onView?: (member: Member) => void;
+  onMemberClick?: (member: Member) => void;
+  onMemberHover?: (member: Member) => void;
+  enableInfiniteScroll?: boolean;
   showActions?: boolean;
   className?: string;
 }
@@ -66,8 +73,14 @@ interface SortConfig {
 
 export function AdvancedMemberTable({
   filters,
+  members: propMembers,
+  isLoading: propIsLoading,
+  error: propError,
   onEdit,
   onView,
+  onMemberClick,
+  onMemberHover,
+  enableInfiniteScroll = true,
   showActions = true,
   className,
 }: AdvancedMemberTableProps) {
@@ -84,16 +97,20 @@ export function AdvancedMemberTable({
     newStatus?: MemberStatus;
   }>({ isOpen: false, action: null });
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-    isFetching,
-    refetch,
-  } = useMembersInfinite(filters);
+  // Use infinite query when filters are provided, otherwise use passed props
+  const infiniteQuery = useMembersInfinite(filters, {
+    enabled: !!filters, // Only run query when filters are provided
+  });
+
+  // Determine data source based on what's provided
+  const data = propMembers ? { pages: [propMembers] } : infiniteQuery.data;
+  const fetchNextPage = infiniteQuery.fetchNextPage;
+  const hasNextPage = enableInfiniteScroll && infiniteQuery.hasNextPage;
+  const isFetchingNextPage = infiniteQuery.isFetchingNextPage;
+  const isLoading = propIsLoading ?? infiniteQuery.isLoading;
+  const isError = propError ? true : infiniteQuery.isError;
+  const isFetching = infiniteQuery.isFetching;
+  const refetch = infiniteQuery.refetch;
 
   const bulkUpdateMutation = useBulkUpdateMemberStatus();
   const deleteMemberMutation = useDeleteMember();
@@ -193,6 +210,28 @@ export function AdvancedMemberTable({
     } catch {
       toast.error("Delete Failed", {
         description: "Failed to delete members. Please try again.",
+      });
+    }
+  };
+
+  const handleSingleDelete = async (member: Member) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${member.first_name} ${member.last_name}? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await deleteMemberMutation.mutateAsync(member.id);
+
+      toast.success("Member Deleted", {
+        description: `${member.first_name} ${member.last_name} has been deleted`,
+      });
+    } catch {
+      toast.error("Delete Failed", {
+        description: "Failed to delete member. Please try again.",
       });
     }
   };
@@ -349,8 +388,9 @@ export function AdvancedMemberTable({
                 <SortButton field="name">Member</SortButton>
               </TableHead>
               <TableHead>
-                <SortButton field="email">Contact</SortButton>
+                <SortButton field="email">Email</SortButton>
               </TableHead>
+              <TableHead>Phone</TableHead>
               <TableHead>
                 <SortButton field="status">Status</SortButton>
               </TableHead>
@@ -366,7 +406,7 @@ export function AdvancedMemberTable({
             {isLoading ? (
               <TableRow>
                 <TableCell
-                  colSpan={showActions ? 6 : 5}
+                  colSpan={showActions ? 7 : 6}
                   className="py-12 text-center"
                 >
                   <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" />
@@ -376,7 +416,7 @@ export function AdvancedMemberTable({
             ) : sortedMembers.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={showActions ? 6 : 5}
+                  colSpan={showActions ? 7 : 6}
                   className="py-12 text-center"
                 >
                   <p className="text-muted-foreground">No members found</p>
@@ -384,9 +424,14 @@ export function AdvancedMemberTable({
               </TableRow>
             ) : (
               sortedMembers.map((member) => (
-                <TableRow key={member.id}>
+                <TableRow
+                  key={member.id}
+                  className="hover:bg-muted/50 cursor-pointer"
+                  onClick={() => onMemberClick?.(member)}
+                  onMouseEnter={() => onMemberHover?.(member)}
+                >
                   {showActions && (
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={selectedMembers.has(member.id)}
                         onCheckedChange={(checked) =>
@@ -405,14 +450,14 @@ export function AdvancedMemberTable({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="space-y-1">
-                      <div className="text-sm">{member.email}</div>
-                      <div className="text-muted-foreground text-xs">
-                        {member.phone || "Not provided"}
-                      </div>
-                    </div>
+                    <div className="text-sm">{member.email}</div>
                   </TableCell>
                   <TableCell>
+                    <div className="text-muted-foreground text-sm">
+                      {member.phone || "Not provided"}
+                    </div>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <MemberStatusBadge
                       status={member.status}
                       memberId={member.id}
@@ -423,12 +468,15 @@ export function AdvancedMemberTable({
                     {formatJoinDate(member.join_date)}
                   </TableCell>
                   {showActions && (
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center space-x-1">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onView?.(member)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onView?.(member);
+                          }}
                           className="h-8 w-8 p-0"
                           title="View Details"
                         >
@@ -437,7 +485,10 @@ export function AdvancedMemberTable({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onEdit?.(member)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit?.(member);
+                          }}
                           className="h-8 w-8 p-0"
                           title="Edit Member"
                         >
@@ -446,9 +497,13 @@ export function AdvancedMemberTable({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleSelectMember(member.id, true)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSingleDelete(member);
+                          }}
                           className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                          title="Select for Deletion"
+                          title="Delete Member"
+                          disabled={deleteMemberMutation.isPending}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

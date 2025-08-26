@@ -51,7 +51,8 @@ export function MemberTable({
         <TableHeader>
           <TableRow>
             <TableHead>Member</TableHead>
-            <TableHead>Contact</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Phone</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Member #</TableHead>
             <TableHead>Join Date</TableHead>
@@ -70,11 +71,11 @@ export function MemberTable({
                 </div>
               </TableCell>
               <TableCell>
-                <div className="space-y-1">
-                  <div className="text-sm">{member.email}</div>
-                  <div className="text-muted-foreground text-xs">
-                    {member.phone || "Not provided"}
-                  </div>
+                <div className="text-sm">{member.email}</div>
+              </TableCell>
+              <TableCell>
+                <div className="text-muted-foreground text-sm">
+                  {member.phone || "Not provided"}
                 </div>
               </TableCell>
               <TableCell>
