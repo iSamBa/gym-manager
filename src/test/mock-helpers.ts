@@ -3,12 +3,26 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Centralized mock management for consistent test setup
 
-/**
- * Setup Supabase mocks to prevent multiple client instance warnings
- * and provide consistent mocking patterns across all tests
- */
-export function setupSupabaseMocks() {
-  // Create a mock Supabase client that prevents instance conflicts
+// Global mocks for Supabase - must be hoisted
+const {
+  mockChannel: globalMockChannel,
+  mockSupabaseClient: globalMockSupabaseClient,
+} = vi.hoisted(() => {
+  const mockChannel = {
+    on: vi.fn().mockReturnThis(),
+    subscribe: vi.fn().mockImplementation((callback) => {
+      if (typeof callback === "function") {
+        // Simulate successful subscription asynchronously
+        setTimeout(() => callback("SUBSCRIBED"), 0);
+      }
+      return mockChannel;
+    }),
+    unsubscribe: vi.fn().mockReturnThis(),
+    track: vi.fn(),
+    untrack: vi.fn(),
+    presenceState: vi.fn().mockReturnValue({}),
+  };
+
   const mockSupabaseClient = {
     auth: {
       getSession: vi
@@ -57,14 +71,31 @@ export function setupSupabaseMocks() {
         }),
       }),
     },
-  } as unknown as SupabaseClient;
+    // Add realtime/channel support
+    channel: vi.fn().mockReturnValue(mockChannel),
+  } as unknown as SupabaseClient & { channel: typeof mockChannel };
 
-  // Mock the Supabase module using vi.doMock to avoid hoisting issues
-  vi.doMock("@/lib/supabase", () => ({
-    supabase: mockSupabaseClient,
-  }));
+  return { mockChannel, mockSupabaseClient };
+});
 
-  return mockSupabaseClient;
+// Apply the global mock
+vi.mock("@/lib/supabase", () => ({
+  supabase: globalMockSupabaseClient,
+}));
+
+// Export global mocks for direct use in tests
+export { globalMockSupabaseClient, globalMockChannel };
+
+/**
+ * Setup Supabase mocks to prevent multiple client instance warnings
+ * and provide consistent mocking patterns across all tests
+ */
+export function setupSupabaseMocks() {
+  // Return the globally hoisted mocks
+  return {
+    mockSupabaseClient: globalMockSupabaseClient,
+    mockChannel: globalMockChannel,
+  };
 }
 
 /**
@@ -282,16 +313,20 @@ export function globalTestCleanup() {
  * Setup complete test environment with all necessary mocks
  */
 export function setupTestEnvironment() {
-  setupSupabaseMocks();
+  const { mockSupabaseClient, mockChannel } = setupSupabaseMocks();
   const localStorageCleanup = setupLocalStorageMocks();
   const timerCleanup = setupTimerMocks();
   setupDOMMocks();
   setupNextRouterMocks();
 
   // Return cleanup function that cleans up everything
-  return () => {
-    localStorageCleanup();
-    timerCleanup();
-    globalTestCleanup();
+  return {
+    cleanup: () => {
+      localStorageCleanup();
+      timerCleanup();
+      globalTestCleanup();
+    },
+    mockSupabaseClient,
+    mockChannel,
   };
 }
