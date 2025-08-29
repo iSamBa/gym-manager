@@ -4,6 +4,12 @@ import type { Member, MemberStatus } from "../types";
 // Mock the Supabase client directly at the module level
 const mockSupabaseClient = {
   from: vi.fn(),
+  auth: {
+    getUser: vi.fn().mockResolvedValue({
+      data: { user: { id: "admin-user-id" } },
+      error: null,
+    }),
+  },
 };
 
 // Mock the supabase module that utils.ts imports
@@ -115,8 +121,24 @@ describe("Member Utils Database Operations", () => {
     mockQuery.not.mockReturnValue(mockQuery);
     // Note: single() doesn't return mockQuery - it's a terminal method
 
-    // Setup mockSupabaseClient.from to return our chainable mock
-    mockSupabaseClient.from.mockReturnValue(mockQuery);
+    // Setup mockSupabaseClient.from to return different mocks based on table
+    mockSupabaseClient.from.mockImplementation((table) => {
+      if (table === "user_profiles") {
+        // For admin role checking
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { role: "admin" },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      // For all other tables (members, etc.)
+      return mockQuery;
+    });
 
     // Make mockQuery thenable with a default successful response
     mockQuery.then = vi.fn().mockImplementation((resolve, reject) => {
@@ -198,7 +220,7 @@ describe("Member Utils Database Operations", () => {
       expect(mockSupabaseClient.from).toHaveBeenCalledWith("members");
       expect(mockQuery.select).toHaveBeenCalledWith("*");
       expect(mockQuery.or).toHaveBeenCalledWith(
-        "first_name.ilike.%John%,last_name.ilike.%John%,email.ilike.%John%"
+        "first_name.ilike.%John%,last_name.ilike.%John%"
       );
       expect(mockQuery.order).toHaveBeenCalledWith("created_at", {
         ascending: false,
@@ -320,7 +342,7 @@ describe("Member Utils Database Operations", () => {
       const result = await memberUtils.searchMembers("John");
 
       expect(mockQuery.or).toHaveBeenCalledWith(
-        "first_name.ilike.%John%,last_name.ilike.%John%,email.ilike.%John%"
+        "first_name.ilike.%John%,last_name.ilike.%John%"
       );
       expect(mockQuery.limit).toHaveBeenCalledWith(20);
       expect(result).toEqual([mockMember]);

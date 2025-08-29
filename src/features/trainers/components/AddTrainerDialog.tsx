@@ -12,17 +12,17 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { MemberForm } from "@/features/members/components";
-import { useCreateMember } from "@/features/members/hooks";
+import { TrainerForm } from "@/features/trainers/components/TrainerForm";
+import { useCreateTrainer } from "@/features/trainers/hooks";
 import { useAuth } from "@/hooks/use-auth";
-import { Plus, AlertCircle, CheckCircle, Shield } from "lucide-react";
-import type { CreateMemberData } from "@/features/database/lib/utils";
+import { Plus, AlertCircle, Shield, CheckCircle } from "lucide-react";
+import type { CreateTrainerData } from "@/features/database/lib/utils";
 
-interface AddMemberDialogProps {
-  onMemberCreated?: (memberId: string) => void;
+interface AddTrainerDialogProps {
+  onTrainerCreated?: (trainerId: string) => void;
 }
 
-export function AddMemberDialog({ onMemberCreated }: AddMemberDialogProps) {
+export function AddTrainerDialog({ onTrainerCreated }: AddTrainerDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
@@ -31,34 +31,34 @@ export function AddMemberDialog({ onMemberCreated }: AddMemberDialogProps) {
   // Check admin status
   const { isAdmin, isAuthenticated, isLoading } = useAuth();
 
-  // Create member mutation with optimistic updates
-  const createMemberMutation = useCreateMember();
+  // Create trainer mutation with optimistic updates
+  const createTrainerMutation = useCreateTrainer();
 
   // Don't render if not admin
   if (!isAuthenticated || isLoading) {
     return (
       <Button disabled>
         <Plus className="mr-2 h-4 w-4" />
-        Add Member
+        Add Trainer
       </Button>
     );
   }
 
   if (!isAdmin) {
     return (
-      <Button disabled title="Only administrators can create members">
+      <Button disabled title="Only administrators can create trainers">
         <Shield className="mr-2 h-4 w-4" />
-        Add Member (Admin Only)
+        Add Trainer (Admin Only)
       </Button>
     );
   }
 
-  const handleSubmit = async (data: CreateMemberData) => {
+  const handleSubmit = async (data: CreateTrainerData) => {
     try {
       setIsSubmitted(true);
 
-      // Create member with optimistic UI updates
-      const newMember = await createMemberMutation.mutateAsync(data);
+      // Create trainer with optimistic UI updates
+      const newTrainer = await createTrainerMutation.mutateAsync(data);
 
       // Show success state briefly before closing dialog
       setTimeout(() => {
@@ -66,16 +66,17 @@ export function AddMemberDialog({ onMemberCreated }: AddMemberDialogProps) {
         setIsSubmitted(false);
 
         // Reset form by closing and reopening if needed
-        if (onMemberCreated) {
-          onMemberCreated(newMember.id);
+        if (onTrainerCreated) {
+          onTrainerCreated(newTrainer.id);
         }
 
-        // Navigate to the new member's profile
-        router.push(`/members/${newMember.id}`);
+        // Navigate to the trainers page
+        router.push("/trainers");
       }, 1500);
     } catch (error) {
+      // Reset loading state on error
       setIsSubmitted(false);
-      console.error("Failed to create member:", error);
+      console.error("Failed to create trainer:", error);
     }
   };
 
@@ -93,7 +94,7 @@ export function AddMemberDialog({ onMemberCreated }: AddMemberDialogProps) {
     if (!open && !isSubmitted) {
       // Only show confirmation if there might be unsaved changes
       handleCancel();
-    } else if (!createMemberMutation.isPending) {
+    } else if (!createTrainerMutation.isPending) {
       setIsOpen(open);
       if (!open) {
         setIsSubmitted(false);
@@ -102,24 +103,24 @@ export function AddMemberDialog({ onMemberCreated }: AddMemberDialogProps) {
   };
 
   // Show success state after submission
-  if (isSubmitted && createMemberMutation.isSuccess) {
+  if (isSubmitted && createTrainerMutation.isSuccess) {
     return (
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Add Member
+            Add Trainer
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-md">
           <div className="p-6 text-center">
             <CheckCircle className="mx-auto mb-4 h-16 w-16 text-green-600" />
             <h2 className="mb-2 text-2xl font-bold">
-              Member Created Successfully!
+              Trainer Created Successfully!
             </h2>
             <p className="text-muted-foreground mb-4">
-              The new member has been added to your gym. You&apos;ll be
-              redirected to their profile shortly.
+              The new trainer has been added to your gym. You&apos;ll be
+              redirected to the trainers page shortly.
             </p>
             <div className="animate-pulse">Redirecting...</div>
           </div>
@@ -133,35 +134,35 @@ export function AddMemberDialog({ onMemberCreated }: AddMemberDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          Add Member
+          Add Trainer
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] w-[60vw] overflow-y-auto sm:max-w-[60vw]">
+      <DialogContent className="max-h-[85vh] w-[70vw] overflow-y-auto sm:max-w-[70vw]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <Plus className="h-6 w-6" />
-            Add New Member
+            Add New Trainer
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Error Display */}
-          {createMemberMutation.error && (
+          {createTrainerMutation.error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                {createMemberMutation.error instanceof Error
-                  ? createMemberMutation.error.message
-                  : "Failed to create member. Please try again."}
+                {createTrainerMutation.error instanceof Error
+                  ? createTrainerMutation.error.message
+                  : "Failed to create trainer. Please try again."}
               </AlertDescription>
             </Alert>
           )}
 
-          {/* Member Form */}
-          <MemberForm
+          {/* Trainer Form */}
+          <TrainerForm
             onSubmit={handleSubmit}
             onCancel={handleCancel}
-            isLoading={createMemberMutation.isPending}
+            isLoading={createTrainerMutation.isPending}
           />
         </div>
       </DialogContent>
@@ -171,7 +172,7 @@ export function AddMemberDialog({ onMemberCreated }: AddMemberDialogProps) {
         isOpen={showConfirmCancel}
         onOpenChange={setShowConfirmCancel}
         onConfirm={handleConfirmCancel}
-        title="Cancel Adding Member?"
+        title="Cancel Adding Trainer?"
         description="Are you sure you want to cancel? Any unsaved changes will be lost."
         confirmText="Yes, Cancel"
         cancelText="Continue Editing"

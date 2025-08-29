@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -87,6 +88,7 @@ export function AdvancedMemberTable({
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
     new Set()
   );
+  const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     field: "name",
     direction: "asc",
@@ -212,21 +214,25 @@ export function AdvancedMemberTable({
     }
   };
 
-  const handleSingleDelete = async (member: Member) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete ${member.first_name} ${member.last_name}? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
+  const handleSingleDelete = (member: Member) => {
+    setMemberToDelete(member);
+  };
+
+  const handleConfirmSingleDelete = async () => {
+    if (!memberToDelete) return;
 
     try {
-      await deleteMemberMutation.mutateAsync(member.id);
+      await deleteMemberMutation.mutateAsync(memberToDelete.id);
 
       toast.success("Member Deleted", {
-        description: `${member.first_name} ${member.last_name} has been deleted`,
+        description: `${memberToDelete.first_name} ${memberToDelete.last_name} has been deleted`,
       });
+
+      // Clear selection if the deleted member was selected
+      const updatedSelection = new Set(selectedMembers);
+      updatedSelection.delete(memberToDelete.id);
+      setSelectedMembers(updatedSelection);
+      setMemberToDelete(null);
     } catch {
       toast.error("Delete Failed", {
         description: "Failed to delete member. Please try again.",
@@ -609,6 +615,23 @@ export function AdvancedMemberTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Single Member Delete Confirmation */}
+      <ConfirmDialog
+        isOpen={!!memberToDelete}
+        onOpenChange={(open) => !open && setMemberToDelete(null)}
+        onConfirm={handleConfirmSingleDelete}
+        title="Delete Member"
+        description={
+          memberToDelete
+            ? `Are you sure you want to delete ${memberToDelete.first_name} ${memberToDelete.last_name}? This action cannot be undone.`
+            : ""
+        }
+        confirmText="Delete Member"
+        cancelText="Cancel"
+        variant="destructive"
+        isLoading={deleteMemberMutation.isPending}
+      />
     </div>
   );
 }

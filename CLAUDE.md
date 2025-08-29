@@ -163,6 +163,64 @@ Business logic hooks specific to a feature domain (useMemberForm, usePaymentProc
 
 **⚠️ NEVER commit directly to `main` for new features!**
 
+## Quality Control & Issue Prevention Guidelines
+
+### **🚨 CRITICAL: Prevent Build/Test/Lint Issues**
+
+**Pre-Development Checklist:**
+
+- Always run `npm run lint` and `npm test` before starting new work
+- Create feature branches for ANY changes (never commit to main)
+- Write tests with proper TypeScript types from the start
+
+### **Development Standards**
+
+**TypeScript Rules:**
+
+- ❌ **NEVER use `any` type** - always define proper interfaces
+- ✅ Use specific types: `Member`, `BulkOperationResult`, etc.
+- ✅ For complex types, create interfaces in `types.ts`
+
+**Test File Best Practices:**
+
+- ✅ Remove unused imports immediately after writing tests
+- ✅ Use proper async/await patterns for async operations
+- ✅ Set appropriate timeouts for integration tests (>500ms)
+- ✅ Clean up mocks in `beforeEach`/`afterEach` blocks
+- ✅ Separate unit tests from integration tests
+
+**Mock Management:**
+
+- ✅ Centralize mock setups in test utilities
+- ✅ Use proper TypeScript types for mock return values
+- ✅ Clean up global mocks between tests
+
+### **Pre-Commit Requirements**
+
+**MUST pass before any commit:**
+
+1. `npm run lint` - 0 errors, 0 warnings
+2. `npm run build` - successful compilation
+3. `npm test` - 100% test pass rate
+4. Manual verification of changed functionality
+
+### **Issue Resolution Workflow**
+
+**When build/test/lint fails:**
+
+1. **Stop all development** - fix quality issues first
+2. **Identify root cause** - analyze error patterns
+3. **Fix systematically** - address similar issues together
+4. **Verify completely** - run all quality checks
+5. **Document learnings** - update this guide if needed
+
+**Common Anti-Patterns to Avoid:**
+
+- ❌ Commenting out failing tests instead of fixing them
+- ❌ Using `// @ts-ignore` to bypass TypeScript errors
+- ❌ Leaving console.log statements in production code
+- ❌ Creating overly complex integration tests without proper cleanup
+
 ## Workflow
 
 - Create feature branch for any new feature or major change
@@ -171,3 +229,5 @@ Business logic hooks specific to a feature domain (useMemberForm, usePaymentProc
 - Follow hook placement guidelines above
 - Write tests for utilities and business logic
 - Create pull requests for merging to main
+
+- Never use native UI components unless they don't exist in shadcn ui components

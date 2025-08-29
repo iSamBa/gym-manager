@@ -121,7 +121,6 @@ export interface UserProfile {
   phone?: string;
   avatar_url?: string;
   bio?: string;
-  date_of_birth?: string;
   hire_date?: string;
   is_active: boolean;
   created_at: string;
@@ -332,7 +331,6 @@ export interface TrainerSpecialization {
 
 export interface Trainer {
   id: string;
-  trainer_code: string;
   hourly_rate?: number;
   commission_rate: number;
   max_clients_per_session: number;
