@@ -4,41 +4,119 @@ import { useState } from "react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { SearchInput } from "@/components/forms/search-input";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  UserCheck,
-  Users,
-  Award,
-  Calendar,
-  Download,
-  Clock,
-  Plus,
-} from "lucide-react";
+  AdvancedTrainerTable,
+  AddTrainerDialog,
+  EditTrainerDialog,
+  SimpleTrainerFilters,
+} from "@/features/trainers/components";
+import type { TrainerWithProfile } from "@/features/database/lib/types";
+import {
+  useTrainers,
+  useTrainerCount,
+  useTrainerCountByStatus,
+  useSimpleTrainerFilters,
+  useExportTrainers,
+  useTrainersWithExpiringCerts,
+} from "@/features/trainers/hooks";
+import { useRequireAdmin } from "@/hooks/use-require-auth";
+import { UserCheck, Users, Award, Calendar, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function TrainersPage() {
+  const [editingTrainer, setEditingTrainer] =
+    useState<TrainerWithProfile | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
-  // Placeholder state - will be replaced with real hooks in Phase 2
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading] = useState(false);
-  const [isExporting] = useState(false);
+  // Require admin role for entire page
+  const { isLoading: isAuthLoading, hasRequiredRole } =
+    useRequireAdmin("/login");
 
-  // Placeholder data - will be replaced with real data from hooks
-  const totalTrainers = 12;
-  const activeTrainers = 10;
-  const availableTrainers = 8;
-  const expiringCertifications = 2;
+  // Simplified filter state management
+  const { filters, updateFilters, databaseFilters } = useSimpleTrainerFilters();
 
-  const handleAddTrainer = () => {
-    // TODO: Implement add trainer functionality in Phase 3
-    console.log("Add trainer clicked");
+  // Export functionality
+  const { isExporting, exportTrainers } = useExportTrainers();
+
+  // Main trainer data with auto-refresh
+  const {
+    data: trainers,
+    isLoading: isTrainersLoading,
+    error,
+  } = useTrainers({
+    search: searchQuery,
+    ...databaseFilters,
+  });
+
+  // Trainer counts for stats
+  const { data: totalTrainerCount } = useTrainerCount();
+  const { data: trainerCountByStatus } = useTrainerCountByStatus();
+  const { data: expiringCertsCount } = useTrainersWithExpiringCerts(30); // 30 days
+
+  if (isAuthLoading) {
+    return (
+      <MainLayout>
+        <div className="flex min-h-[400px] items-center justify-center">
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!hasRequiredRole) {
+    return null; // Will redirect to login
+  }
+
+  // Calculate stats from count data
+  const totalTrainers = totalTrainerCount || 0;
+  const activeTrainers = trainerCountByStatus?.active || 0;
+  const expiringCertifications = expiringCertsCount?.length || 0;
+
+  // Calculate available trainers from the actual trainers data
+  const availableTrainers =
+    trainers?.filter((trainer) => trainer.is_accepting_new_clients).length || 0;
+
+  // Handler functions for trainer actions
+  const handleViewTrainer = (trainer: TrainerWithProfile) => {
+    router.push(`/trainers/${trainer.id}`);
   };
 
-  const handleExport = () => {
-    // TODO: Implement export functionality in Phase 2
-    console.log("Export clicked");
+  const handleEditTrainer = (trainer: TrainerWithProfile) => {
+    setEditingTrainer(trainer);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleTrainerClick = (trainer: TrainerWithProfile) => {
+    // Validate trainer ID before navigation
+    if (
+      !trainer?.id ||
+      typeof trainer.id !== "string" ||
+      trainer.id.trim() === ""
+    ) {
+      console.error("Invalid trainer ID for navigation:", trainer);
+      return;
+    }
+
+    try {
+      router.push(`/trainers/${trainer.id.trim()}`);
+    } catch (error) {
+      console.error("Navigation error:", error);
+    }
+  };
+
+  const handleTrainerHover = () => {
+    // Future: Add prefetch functionality
+  };
+
+  const handleEditSuccess = () => {
+    // Cache invalidation is handled automatically by EditTrainerDialog
+  };
+
+  const handleExport = async () => {
+    await exportTrainers(trainers || []);
   };
 
   return (
@@ -52,10 +130,7 @@ export default function TrainersPage() {
               Manage your gym trainers and their specializations
             </p>
           </div>
-          <Button onClick={handleAddTrainer} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Trainer
-          </Button>
+          <AddTrainerDialog />
         </div>
 
         {/* Stats Cards */}
@@ -86,7 +161,7 @@ export default function TrainersPage() {
               <div>
                 <p className="text-2xl font-bold">{availableTrainers}</p>
                 <p className="text-muted-foreground text-xs">
-                  Available for New Clients
+                  Accepting New Clients
                 </p>
               </div>
             </div>
@@ -117,11 +192,12 @@ export default function TrainersPage() {
               />
             </div>
 
-            {/* Placeholder for filters - will be implemented in Phase 3 */}
+            {/* Filter Controls */}
             <div className="shrink-0">
-              <Badge variant="outline" className="text-sm">
-                Filters: Coming in Phase 3
-              </Badge>
+              <SimpleTrainerFilters
+                filters={filters}
+                onFiltersChange={updateFilters}
+              />
             </div>
           </div>
 
@@ -131,7 +207,7 @@ export default function TrainersPage() {
               variant="outline"
               size="sm"
               onClick={handleExport}
-              disabled={isExporting || isLoading}
+              disabled={isExporting || isTrainersLoading}
               className="gap-2"
             >
               <Download className="h-4 w-4" />
@@ -140,26 +216,28 @@ export default function TrainersPage() {
           </div>
         </div>
 
-        {/* Trainers Table Placeholder */}
+        {/* Trainers Table */}
         <Card>
-          <div className="p-8 text-center">
-            <UserCheck className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-            <h3 className="mb-2 text-lg font-semibold">Trainers Table</h3>
-            <p className="text-muted-foreground mb-4">
-              The trainers table will be implemented in Phase 3 with full
-              functionality including:
-            </p>
-            <div className="text-muted-foreground space-y-1 text-sm">
-              <p>• Advanced table with sorting and pagination</p>
-              <p>• Trainer details (name, specializations, status, rates)</p>
-              <p>• Actions (view, edit, manage sessions)</p>
-              <p>• Real-time data from database</p>
-            </div>
-          </div>
+          <AdvancedTrainerTable
+            trainers={trainers}
+            isLoading={isTrainersLoading}
+            error={error}
+            onEdit={handleEditTrainer}
+            onView={handleViewTrainer}
+            onTrainerClick={handleTrainerClick}
+            onTrainerHover={handleTrainerHover}
+            showActions={true}
+            enableInfiniteScroll={false}
+          />
         </Card>
 
-        {/* Placeholder for Edit Trainer Dialog */}
-        {/* TODO: Implement EditTrainerDialog in Phase 3 */}
+        {/* Edit Trainer Dialog */}
+        <EditTrainerDialog
+          trainer={editingTrainer}
+          isOpen={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onSuccess={handleEditSuccess}
+        />
       </div>
     </MainLayout>
   );

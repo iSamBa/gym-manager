@@ -23,19 +23,22 @@ import {
   useSimpleMemberFilters,
   useExportMembers,
 } from "@/features/members/hooks";
+import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { Users, UserCheck, UserX, Clock, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function MembersPage() {
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
+
+  // Require admin role for entire page
+  const { isLoading: isAuthLoading, hasRequiredRole } =
+    useRequireAdmin("/login");
 
   // Simplified filter state management
   const { filters, updateFilters, databaseFilters } = useSimpleMemberFilters();
-
-  // Search state for the search input
-  const [searchQuery, setSearchQuery] = useState("");
 
   // Export functionality
   const { isExporting, exportMembers } = useExportMembers();
@@ -62,6 +65,20 @@ export default function MembersPage() {
   // Route-based cache management
   useRouteCacheManager();
   usePageCacheStrategy("list");
+
+  if (isAuthLoading) {
+    return (
+      <MainLayout>
+        <div className="flex min-h-[400px] items-center justify-center">
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!hasRequiredRole) {
+    return null; // Will redirect to login
+  }
 
   const activeMembers = memberCountByStatus?.active || 0;
   const inactiveMembers = memberCountByStatus?.inactive || 0;

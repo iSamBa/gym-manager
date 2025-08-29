@@ -48,40 +48,6 @@ export function useDebouncedTrainerSearch(initialQuery = "", debounceMs = 300) {
 export function useTrainerValidation() {
   const queryClient = useQueryClient();
 
-  const checkTrainerCodeExists = useCallback(
-    async (trainerCode: string, excludeId?: string): Promise<boolean> => {
-      try {
-        // Check cache first
-        const cachedTrainers = queryClient.getQueriesData<Trainer[]>({
-          queryKey: trainerKeys.lists(),
-        });
-
-        // Look through cached data first
-        for (const [, trainers] of cachedTrainers) {
-          if (trainers) {
-            const exists = trainers.some(
-              (trainer) =>
-                trainer.trainer_code.toLowerCase() ===
-                  trainerCode.toLowerCase() && trainer.id !== excludeId
-            );
-            if (exists) return true;
-          }
-        }
-
-        // If not found in cache, check database
-        const { trainerUtils } = await import("@/features/database/lib/utils");
-        return await trainerUtils.checkTrainerCodeExists(
-          trainerCode,
-          excludeId
-        );
-      } catch (error) {
-        console.error("Error checking trainer code:", error);
-        return false;
-      }
-    },
-    [queryClient]
-  );
-
   const checkEmailExists = useCallback(
     async (email: string, excludeId?: string): Promise<boolean> => {
       try {
@@ -117,7 +83,6 @@ export function useTrainerValidation() {
   );
 
   return {
-    checkTrainerCodeExists,
     checkEmailExists,
   };
 }

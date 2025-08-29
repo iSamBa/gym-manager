@@ -17,6 +17,16 @@ vi.mock("@/features/database/lib/utils", () => ({
   memberUtils: mockMemberUtils,
 }));
 
+// Mock the useAuth hook to provide admin access
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({
+    user: { id: "admin-user-id", email: "admin@example.com" },
+    isAdmin: true,
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 // Mock console.error
 const consoleErrorMock = vi
   .spyOn(console, "error")

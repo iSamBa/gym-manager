@@ -7,6 +7,7 @@ import {
 import { keepPreviousData } from "@tanstack/react-query";
 import { memberUtils, type MemberFilters } from "@/features/database/lib/utils";
 import type { Member, MemberStatus } from "@/features/database/lib/types";
+import { useAuth } from "@/hooks/use-auth";
 
 // Query key factory for consistent cache management
 export const memberKeys = {
@@ -110,10 +111,19 @@ export function useNewMembersThisMonth() {
 
 // Create member mutation with optimistic updates
 export function useCreateMember() {
+  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: memberUtils.createMember,
+    mutationFn: async (
+      data: Parameters<typeof memberUtils.createMember>[0]
+    ) => {
+      // Frontend admin check
+      if (!isAdmin) {
+        throw new Error("Only administrators can create members");
+      }
+      return memberUtils.createMember(data);
+    },
     onSuccess: (newMember) => {
       // Invalidate member lists to show the new member
       queryClient.invalidateQueries({ queryKey: memberKeys.lists() });

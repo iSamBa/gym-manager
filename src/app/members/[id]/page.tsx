@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   MemberAvatar,
   MemberStatusBadge,
@@ -61,6 +62,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
   const { id } = use(params);
   const router = useRouter();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Member data with subscription and emergency contacts
   const {
@@ -109,15 +111,17 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
     }
   };
 
-  const handleDeleteMember = async () => {
-    if (
-      !member ||
-      !window.confirm("Are you sure you want to delete this member?")
-    )
-      return;
+  const handleDeleteMember = () => {
+    if (!member) return;
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!member) return;
 
     try {
       await deleteMutation.mutateAsync(member.id);
+      setShowDeleteConfirm(false);
       router.push("/members");
     } catch (error) {
       console.error("Failed to delete member:", error);
@@ -445,6 +449,23 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSuccess={handleEditSuccess}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleConfirmDelete}
+        title="Delete Member"
+        description={
+          member
+            ? `Are you sure you want to delete ${member.first_name} ${member.last_name}? This action cannot be undone.`
+            : "Are you sure you want to delete this member? This action cannot be undone."
+        }
+        confirmText="Delete Member"
+        cancelText="Cancel"
+        variant="destructive"
+        isLoading={deleteMutation.isPending}
       />
     </MainLayout>
   );

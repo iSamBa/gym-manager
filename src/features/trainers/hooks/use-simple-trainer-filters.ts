@@ -13,7 +13,6 @@ export interface SimpleTrainerFilters {
     | "nutrition"
     | "rehabilitation";
   availability: "all" | "accepting" | "not-accepting";
-  experience: "all" | "entry" | "intermediate" | "experienced" | "expert";
 }
 
 // Convert simple filters to database query filters
@@ -22,7 +21,6 @@ export function useSimpleTrainerFilters() {
     status: "all",
     specialization: "all",
     availability: "all",
-    experience: "all",
   });
 
   const updateFilters = useCallback((newFilters: SimpleTrainerFilters) => {
@@ -44,7 +42,6 @@ export function useSimpleTrainerFilters() {
       status: "all",
       specialization: "all",
       availability: "all",
-      experience: "all",
     });
   }, []);
 
@@ -57,19 +54,15 @@ export function useSimpleTrainerFilters() {
       dbFilters.status = filters.status;
     }
 
-    // Specialization filter
+    // Specialization filter - mapping UI values to actual database UUIDs
     if (filters.specialization && filters.specialization !== "all") {
       const specializationMap = {
-        "personal-training": ["Personal Training"],
-        "group-fitness": ["Group Fitness"],
-        yoga: ["Yoga"],
-        pilates: ["Pilates"],
-        nutrition: ["Nutrition", "Nutritional Counseling"],
-        rehabilitation: [
-          "Physical Therapy",
-          "Injury Rehabilitation",
-          "Post-Rehabilitation",
-        ],
+        "personal-training": ["1146be5b-c50c-46c2-b2e8-7d6195d3fa52"],
+        "group-fitness": ["41f657b2-fef9-46ff-99e0-1d585a131110"],
+        yoga: ["be928a6b-191b-4e87-b036-888f7de53261"],
+        pilates: ["5566e075-5e5f-4570-ba83-b1da8cf4ec2c"],
+        nutrition: ["def9f5a0-9047-4c93-ac31-a43d094f9b16"],
+        rehabilitation: ["81cf7dd4-70cd-4cb1-b873-f692b68a798e"],
       };
 
       const specializations = specializationMap[filters.specialization];
@@ -81,24 +74,6 @@ export function useSimpleTrainerFilters() {
     // Availability filter
     if (filters.availability && filters.availability !== "all") {
       dbFilters.isAcceptingNewClients = filters.availability === "accepting";
-    }
-
-    // Experience filter
-    if (filters.experience && filters.experience !== "all") {
-      const experienceRanges = {
-        entry: { min: 0, max: 2 },
-        intermediate: { min: 2, max: 5 },
-        experienced: { min: 5, max: 10 },
-        expert: { min: 10, max: undefined },
-      };
-
-      const range = experienceRanges[filters.experience];
-      if (range) {
-        dbFilters.yearsExperienceMin = range.min;
-        if (range.max !== undefined) {
-          dbFilters.yearsExperienceMax = range.max;
-        }
-      }
     }
 
     return dbFilters;
@@ -132,16 +107,6 @@ export function useSimpleTrainerFilters() {
       summary.push(availabilityLabels[filters.availability]);
     }
 
-    if (filters.experience && filters.experience !== "all") {
-      const experienceLabels = {
-        entry: "Entry Level (0-2 years)",
-        intermediate: "Intermediate (2-5 years)",
-        experienced: "Experienced (5-10 years)",
-        expert: "Expert (10+ years)",
-      };
-      summary.push(`Experience: ${experienceLabels[filters.experience]}`);
-    }
-
     return summary;
   }, [filters]);
 
@@ -150,8 +115,7 @@ export function useSimpleTrainerFilters() {
     return (
       filters.status !== "all" ||
       filters.specialization !== "all" ||
-      filters.availability !== "all" ||
-      filters.experience !== "all"
+      filters.availability !== "all"
     );
   }, [filters]);
 
@@ -161,7 +125,6 @@ export function useSimpleTrainerFilters() {
     if (filters.status !== "all") count++;
     if (filters.specialization !== "all") count++;
     if (filters.availability !== "all") count++;
-    if (filters.experience !== "all") count++;
     return count;
   }, [filters]);
 
@@ -187,13 +150,6 @@ export function useSimpleTrainerFilters() {
     []
   );
 
-  const setExperienceFilter = useCallback(
-    (experience: SimpleTrainerFilters["experience"]) => {
-      setFilters((prev) => ({ ...prev, experience }));
-    },
-    []
-  );
-
   // Common filter presets
   const applyPreset = useCallback(
     (presetName: string) => {
@@ -203,7 +159,6 @@ export function useSimpleTrainerFilters() {
             status: "active",
             specialization: "all",
             availability: "accepting",
-            experience: "all",
           });
           break;
         case "personal-trainers":
@@ -211,7 +166,6 @@ export function useSimpleTrainerFilters() {
             status: "active",
             specialization: "personal-training",
             availability: "all",
-            experience: "all",
           });
           break;
         case "group-instructors":
@@ -219,15 +173,6 @@ export function useSimpleTrainerFilters() {
             status: "active",
             specialization: "group-fitness",
             availability: "all",
-            experience: "all",
-          });
-          break;
-        case "experienced":
-          setFilters({
-            status: "active",
-            specialization: "all",
-            availability: "all",
-            experience: "experienced",
           });
           break;
         default:
@@ -259,13 +204,6 @@ export function useSimpleTrainerFilters() {
         { value: "accepting", label: "Accepting New Clients" },
         { value: "not-accepting", label: "Not Accepting" },
       ] as const,
-      experience: [
-        { value: "all", label: "All Experience Levels" },
-        { value: "entry", label: "Entry Level (0-2 years)" },
-        { value: "intermediate", label: "Intermediate (2-5 years)" },
-        { value: "experienced", label: "Experienced (5-10 years)" },
-        { value: "expert", label: "Expert (10+ years)" },
-      ] as const,
     }),
     []
   );
@@ -283,7 +221,6 @@ export function useSimpleTrainerFilters() {
     setStatusFilter,
     setSpecializationFilter,
     setAvailabilityFilter,
-    setExperienceFilter,
     // Presets
     applyPreset,
     // Options for UI components

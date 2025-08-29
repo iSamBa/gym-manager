@@ -8,13 +8,22 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  TrainerAvatar,
+  TrainerStatusBadge,
+  EditTrainerDialog,
+  DeleteTrainerDialog,
+} from "@/features/trainers/components";
+import {
+  useTrainerWithProfile,
+  useDeleteTrainer,
+  useUpdateTrainerAvailability,
+} from "@/features/trainers/hooks";
 import {
   Edit,
   ArrowLeft,
   Phone,
   Mail,
-  Calendar,
   User,
   Clock,
   AlertCircle,
@@ -23,10 +32,10 @@ import {
   Users,
   DollarSign,
   GraduationCap,
-  UserCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface TrainerDetailPageProps {
   params: Promise<{ id: string }>;
@@ -41,62 +50,76 @@ const formatDate = (date: Date): string => {
   });
 };
 
-// Helper function to get initials
-const getInitials = (firstName: string, lastName: string) => {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-};
-
 function TrainerDetailPage({ params }: TrainerDetailPageProps) {
   const { id } = use(params);
   const router = useRouter();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  // Placeholder data - will be replaced with real hooks in Phase 2
-  const isLoading = false;
-  const error = null;
-  const isFetching = false;
+  // Real data hooks
+  const {
+    data: trainer,
+    isLoading,
+    error,
+    isFetching,
+  } = useTrainerWithProfile(id);
 
-  // Mock trainer data for demonstration
-  const trainer = {
-    id,
-    first_name: "John",
-    last_name: "Smith",
-    email: "john.smith@gym.com",
-    phone: "(555) 123-4567",
-    trainer_code: "TR001",
-    hourly_rate: 75,
-    commission_rate: 20,
-    years_experience: 8,
-    certifications: ["ACSM-CPT", "NASM-PES", "CPR/AED"],
-    specializations: ["Personal Training", "Strength Training", "Weight Loss"],
-    languages: ["English", "Spanish"],
-    max_clients_per_session: 4,
-    is_accepting_new_clients: true,
-    created_at: "2023-01-15T10:30:00Z",
-    updated_at: "2024-01-15T10:30:00Z",
-    cpr_certification_expires: "2024-12-15T00:00:00Z",
-    background_check_date: "2023-01-10T00:00:00Z",
-    insurance_policy_number: "INS-123456789",
-  };
+  const deleteTrainerMutation = useDeleteTrainer();
+  const updateAvailabilityMutation = useUpdateTrainerAvailability();
 
   const handleEditTrainer = () => {
-    // TODO: Implement edit trainer functionality in Phase 3
     setIsEditDialogOpen(true);
-    console.log("Edit trainer clicked");
   };
 
-  const handleDeleteTrainer = async () => {
-    if (!window.confirm("Are you sure you want to delete this trainer?"))
-      return;
+  const handleStatusChange = async (status: "active" | "inactive") => {
+    if (!trainer) return;
 
-    // TODO: Implement delete functionality in Phase 2
-    console.log("Delete trainer clicked");
-    router.push("/trainers");
+    const newAvailability = status === "active";
+
+    try {
+      await updateAvailabilityMutation.mutateAsync({
+        id: trainer.id,
+        isAccepting: newAvailability,
+      });
+
+      toast.success("Status Updated", {
+        description: `Trainer marked as ${newAvailability ? "available" : "unavailable"} for new clients.`,
+      });
+    } catch {
+      toast.error("Update Failed", {
+        description: "Failed to update trainer status. Please try again.",
+      });
+    }
   };
 
-  const handleStatusChange = (newStatus: "active" | "inactive") => {
-    // TODO: Implement status change in Phase 2
-    console.log("Status change:", newStatus);
+  const handleDeleteTrainer = () => {
+    if (!trainer) return;
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!trainer) return;
+
+    const trainerName = `${trainer.user_profile?.first_name || "Unknown"} ${trainer.user_profile?.last_name || "Trainer"}`;
+
+    try {
+      await deleteTrainerMutation.mutateAsync(trainer.id);
+
+      toast.success("Trainer Deleted", {
+        description: `${trainerName} has been removed from the system.`,
+      });
+
+      setIsDeleteDialogOpen(false);
+      router.push("/trainers");
+    } catch {
+      toast.error("Delete Failed", {
+        description: "Failed to delete trainer. Please try again.",
+      });
+    }
+  };
+
+  const handleEditSuccess = () => {
+    // Cache invalidation is handled by the dialog
   };
 
   if (isLoading) {
@@ -117,13 +140,23 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
   }
 
   if (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "An unknown error occurred";
+
+    console.error("Trainer detail page error:", error);
+
     return (
       <MainLayout>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Failed to load trainer details. Please try again.
-            <Button variant="outline" size="sm" className="ml-2">
+            Failed to load trainer details: {errorMessage}
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-2"
+              onClick={() => window.location.reload()}
+            >
               Retry
             </Button>
           </AlertDescription>
@@ -157,13 +190,16 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
             </Link>
             <div>
               <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-                {trainer.first_name} {trainer.last_name}
+                {trainer.user_profile?.first_name || "Unknown"}{" "}
+                {trainer.user_profile?.last_name || "Trainer"}
                 {isFetching && (
                   <Clock className="text-muted-foreground h-4 w-4 animate-spin" />
                 )}
               </h1>
               <p className="text-muted-foreground">
-                Trainer Code: {trainer.trainer_code}
+                {trainer.years_experience
+                  ? `${trainer.years_experience} years experience`
+                  : "Experience not specified"}
               </p>
             </div>
           </div>
@@ -193,41 +229,32 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-start gap-4">
-                  <Avatar className="h-16 w-16 flex-shrink-0">
-                    <AvatarImage
-                      src=""
-                      alt={`${trainer.first_name} ${trainer.last_name}`}
-                    />
-                    <AvatarFallback className="text-lg">
-                      {getInitials(trainer.first_name, trainer.last_name)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <TrainerAvatar trainer={trainer} size="xl" showStatus />
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-semibold">
-                        {trainer.first_name} {trainer.last_name}
+                        {trainer.user_profile?.first_name || "Unknown"}{" "}
+                        {trainer.user_profile?.last_name || "Trainer"}
                       </h3>
-                      <Badge
-                        variant={
-                          trainer.is_accepting_new_clients
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {trainer.is_accepting_new_clients
-                          ? "Available"
-                          : "Unavailable"}
-                      </Badge>
+                      <TrainerStatusBadge
+                        isAcceptingNewClients={trainer.is_accepting_new_clients}
+                        trainerId={trainer.id}
+                        readonly={true}
+                      />
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
                       <div className="flex items-center gap-2">
                         <Mail className="text-muted-foreground h-4 w-4" />
-                        <span>{trainer.email}</span>
+                        <span>
+                          {trainer.user_profile?.email || "Not provided"}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Phone className="text-muted-foreground h-4 w-4" />
-                        <span>{trainer.phone || "Not provided"}</span>
+                        <span>
+                          {trainer.user_profile?.phone || "Not provided"}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <DollarSign className="text-muted-foreground h-4 w-4" />
@@ -251,6 +278,7 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
                     }
                     size="sm"
                     onClick={() => handleStatusChange("active")}
+                    disabled={updateAvailabilityMutation.isPending}
                   >
                     Mark Available
                   </Button>
@@ -260,6 +288,7 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
                     }
                     size="sm"
                     onClick={() => handleStatusChange("inactive")}
+                    disabled={updateAvailabilityMutation.isPending}
                   >
                     Mark Unavailable
                   </Button>
@@ -280,11 +309,15 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
                 <div>
                   <h4 className="mb-2 text-sm font-medium">Specializations</h4>
                   <div className="flex flex-wrap gap-2">
-                    {trainer.specializations.map((spec, index) => (
+                    {trainer.specializations?.map((spec, index) => (
                       <Badge key={index} variant="secondary">
                         {spec}
                       </Badge>
-                    ))}
+                    )) || (
+                      <span className="text-muted-foreground text-sm">
+                        None specified
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -292,12 +325,16 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
                 <div>
                   <h4 className="mb-2 text-sm font-medium">Certifications</h4>
                   <div className="flex flex-wrap gap-2">
-                    {trainer.certifications.map((cert, index) => (
+                    {trainer.certifications?.map((cert, index) => (
                       <Badge key={index} variant="outline">
                         <Award className="mr-1 h-3 w-3" />
                         {cert}
                       </Badge>
-                    ))}
+                    )) || (
+                      <span className="text-muted-foreground text-sm">
+                        None specified
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -305,11 +342,15 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
                 <div>
                   <h4 className="mb-2 text-sm font-medium">Languages</h4>
                   <div className="flex flex-wrap gap-2">
-                    {trainer.languages.map((lang, index) => (
+                    {trainer.languages?.map((lang, index) => (
                       <Badge key={index} variant="outline">
                         {lang}
                       </Badge>
-                    ))}
+                    )) || (
+                      <span className="text-muted-foreground text-sm">
+                        None specified
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -335,26 +376,12 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
 
           {/* Sidebar - Status & Compliance */}
           <div className="space-y-6">
-            {/* Status Card */}
+            {/* Details Card */}
             <Card>
               <CardHeader>
-                <CardTitle>Status & Availability</CardTitle>
+                <CardTitle>Session Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Status</span>
-                  <Badge
-                    variant={
-                      trainer.is_accepting_new_clients ? "default" : "secondary"
-                    }
-                  >
-                    <UserCheck className="mr-1 h-3 w-3" />
-                    {trainer.is_accepting_new_clients
-                      ? "Available"
-                      : "Unavailable"}
-                  </Badge>
-                </div>
-
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Hourly Rate</span>
                   <span className="font-medium">${trainer.hourly_rate}</span>
@@ -380,25 +407,32 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
                     <span>CPR Expires</span>
                     <span
                       className={
+                        trainer.cpr_certification_expires &&
                         new Date(trainer.cpr_certification_expires) <
-                        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                          new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
                           ? "font-medium text-yellow-600"
                           : ""
                       }
                     >
-                      {formatDate(new Date(trainer.cpr_certification_expires))}
+                      {trainer.cpr_certification_expires
+                        ? formatDate(
+                            new Date(trainer.cpr_certification_expires)
+                          )
+                        : "Not provided"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Background Check</span>
                     <span>
-                      {formatDate(new Date(trainer.background_check_date))}
+                      {trainer.background_check_date
+                        ? formatDate(new Date(trainer.background_check_date))
+                        : "Not provided"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Insurance Policy</span>
                     <span className="font-mono text-xs">
-                      {trainer.insurance_policy_number}
+                      {trainer.insurance_policy_number || "Not provided"}
                     </span>
                   </div>
                 </div>
@@ -429,22 +463,22 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
         </div>
       </div>
 
-      {/* TODO: Implement EditTrainerDialog in Phase 3 */}
-      {isEditDialogOpen && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Edit Trainer</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                Edit trainer functionality will be implemented in Phase 3.
-              </p>
-              <Button onClick={() => setIsEditDialogOpen(false)}>Close</Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Delete Confirmation Dialog */}
+      <DeleteTrainerDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        trainerName={`${trainer.user_profile?.first_name || "Unknown"} ${trainer.user_profile?.last_name || "Trainer"}`}
+        isDeleting={deleteTrainerMutation.isPending}
+      />
+
+      {/* Edit Trainer Dialog */}
+      <EditTrainerDialog
+        trainer={trainer}
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSuccess={handleEditSuccess}
+      />
     </MainLayout>
   );
 }

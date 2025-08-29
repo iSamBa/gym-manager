@@ -5,12 +5,10 @@ import type {
 
 // CSV column headers in the desired order
 const CSV_HEADERS = [
-  "Trainer Code",
   "First Name",
   "Last Name",
   "Email",
   "Phone",
-  "Date of Birth",
   "Hourly Rate",
   "Commission Rate",
   "Years Experience",
@@ -122,12 +120,10 @@ function trainerToCSVRow(trainer: Trainer | TrainerWithProfile): string[] {
     "user_profile" in trainer ? trainer.user_profile : undefined;
 
   return [
-    trainer.trainer_code,
     userProfile?.first_name || "",
     userProfile?.last_name || "",
     userProfile?.email || "",
     userProfile?.phone || "",
-    formatDateForCSV(userProfile?.date_of_birth),
     formatCurrencyForCSV(trainer.hourly_rate),
     formatPercentageForCSV(trainer.commission_rate),
     trainer.years_experience?.toString() || "",

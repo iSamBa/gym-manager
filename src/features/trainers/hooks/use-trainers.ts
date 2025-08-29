@@ -9,10 +9,8 @@ import {
   trainerUtils,
   type TrainerFilters,
 } from "@/features/database/lib/utils";
-import type {
-  Trainer,
-  TrainerWithProfile,
-} from "@/features/database/lib/types";
+import type { Trainer } from "@/features/database/lib/types";
+import { useAuth } from "@/hooks/use-auth";
 
 // Query key factory for consistent cache management
 export const trainerKeys = {
@@ -63,11 +61,43 @@ export function useTrainerWithProfile(
 ) {
   return useQuery({
     queryKey: trainerKeys.withProfile(id),
-    queryFn: () => trainerUtils.getTrainerWithProfile(id),
+    queryFn: async () => {
+      // Validate ID format before making API call
+      if (!id || typeof id !== "string" || id.trim() === "") {
+        throw new Error(`Invalid trainer ID: ${id}`);
+      }
+
+      // Additional validation for UUID format (common in Supabase)
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(id.trim())) {
+        throw new Error(
+          `Invalid trainer ID format: ${id}. Expected UUID format.`
+        );
+      }
+
+      try {
+        return await trainerUtils.getTrainerWithProfile(id.trim());
+      } catch (error) {
+        console.error(`Failed to fetch trainer with ID ${id}:`, error);
+        throw error;
+      }
+    },
     enabled: !!id,
     staleTime: 10 * 60 * 1000,
     refetchInterval: options?.refetchInterval,
     refetchOnWindowFocus: options?.refetchOnWindowFocus,
+    retry: (failureCount, error) => {
+      // Don't retry on validation errors
+      if (
+        error instanceof Error &&
+        error.message.includes("Invalid trainer ID")
+      ) {
+        return false;
+      }
+      // Default retry behavior for other errors
+      return failureCount < 3;
+    },
   });
 }
 
@@ -130,10 +160,19 @@ export function useTrainersWithExpiringCerts(days = 30) {
 
 // Create trainer mutation with optimistic updates
 export function useCreateTrainer() {
+  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: trainerUtils.createTrainer,
+    mutationFn: async (
+      data: Parameters<typeof trainerUtils.createTrainer>[0]
+    ) => {
+      // Frontend admin check
+      if (!isAdmin) {
+        throw new Error("Only administrators can create trainers");
+      }
+      return trainerUtils.createTrainer(data);
+    },
     onSuccess: (newTrainer) => {
       // Invalidate trainer lists to show the new trainer
       queryClient.invalidateQueries({ queryKey: trainerKeys.lists() });

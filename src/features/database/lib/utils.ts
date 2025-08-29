@@ -26,9 +26,32 @@ export class DatabaseError extends Error {
   }
 }
 
+// Admin validation utility
+export async function validateAdminAccess(): Promise<void> {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new DatabaseError("Authentication required");
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || !profile || profile.role !== "admin") {
+    throw new DatabaseError("Admin privileges required for this operation");
+  }
+}
+
 // Generic database operations
 export async function executeQuery<T>(
-  queryFn: () => Promise<{ data: T | null; error: unknown }>
+  queryFn: () => Promise<{ data: T | null; error: unknown }>,
+  options?: { allowNullData?: boolean }
 ): Promise<T> {
   const { data, error } = await queryFn();
 
@@ -56,11 +79,11 @@ export async function executeQuery<T>(
     throw new DatabaseError(errorMessage, errorCode, errorDetails);
   }
 
-  if (!data) {
+  if (!data && !options?.allowNullData) {
     throw new DatabaseError("No data returned from query");
   }
 
-  return data;
+  return data as T;
 }
 
 // Enhanced member utilities for TanStack Query integration
@@ -125,7 +148,6 @@ export interface TrainerFilters {
 }
 
 export interface CreateTrainerData {
-  trainer_code: string;
   hourly_rate?: number;
   commission_rate?: number;
   max_clients_per_session?: number;
@@ -145,12 +167,15 @@ export interface CreateTrainerData {
   last_name: string;
   email: string;
   phone?: string;
-  date_of_birth?: string;
-  profile_picture_url?: string;
 }
 
 export interface UpdateTrainerData {
-  trainer_code?: string;
+  // User profile fields
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  // Trainer-specific fields
   hourly_rate?: number;
   commission_rate?: number;
   max_clients_per_session?: number;
@@ -191,10 +216,10 @@ export const memberUtils = {
         }
       }
 
-      // Apply search filter (searches first_name, last_name, email)
+      // Apply search filter (searches first_name, last_name only)
       if (filters.search) {
         query = query.or(
-          `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`
+          `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`
         );
       }
 
@@ -221,6 +246,7 @@ export const memberUtils = {
   },
 
   async createMember(memberData: CreateMemberData): Promise<Member> {
+    await validateAdminAccess();
     return executeQuery(async () => {
       return await supabase
         .from("members")
@@ -271,13 +297,16 @@ export const memberUtils = {
   },
 
   async deleteMember(id: string): Promise<void> {
-    await executeQuery(async () => {
-      const { data, error } = await supabase
-        .from("members")
-        .delete()
-        .eq("id", id);
-      return { data: data || null, error };
-    });
+    await executeQuery(
+      async () => {
+        const { data, error } = await supabase
+          .from("members")
+          .delete()
+          .eq("id", id);
+        return { data: data || null, error };
+      },
+      { allowNullData: true }
+    );
   },
 
   // Search and filtering
@@ -290,9 +319,7 @@ export const memberUtils = {
       return await supabase
         .from("members")
         .select("*")
-        .or(
-          `first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`
-        )
+        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
         .order("created_at", { ascending: false })
         .limit(20);
     });
@@ -410,6 +437,62 @@ export const memberUtils = {
 };
 
 export const trainerUtils = {
+  // Helper method to convert specialization UUIDs to names
+  async convertSpecializationUuidsToNames(
+    trainers: Trainer[]
+  ): Promise<Trainer[]> {
+    if (!trainers || trainers.length === 0) {
+      return trainers;
+    }
+
+    // Extract all unique specialization UUIDs from all trainers
+    const allSpecializationUuids = new Set<string>();
+    trainers.forEach((trainer) => {
+      if (trainer.specializations && Array.isArray(trainer.specializations)) {
+        trainer.specializations.forEach((uuid) => {
+          if (
+            typeof uuid === "string" &&
+            uuid.match(
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+            )
+          ) {
+            allSpecializationUuids.add(uuid);
+          }
+        });
+      }
+    });
+
+    if (allSpecializationUuids.size === 0) {
+      return trainers;
+    }
+
+    // Fetch specialization names in one batch
+    const { data: specializations, error } = await supabase
+      .from("trainer_specializations")
+      .select("id, name")
+      .in("id", Array.from(allSpecializationUuids));
+
+    if (error) {
+      console.error("Failed to fetch specialization names:", error);
+      return trainers; // Return trainers with UUIDs if fetch fails
+    }
+
+    // Create UUID to name mapping
+    const uuidToNameMap = new Map<string, string>();
+    specializations?.forEach((spec) => {
+      uuidToNameMap.set(spec.id, spec.name);
+    });
+
+    // Convert UUIDs to names for each trainer
+    return trainers.map((trainer) => ({
+      ...trainer,
+      specializations:
+        trainer.specializations?.map(
+          (uuid) => uuidToNameMap.get(uuid) || uuid // Fallback to UUID if name not found
+        ) || [],
+    }));
+  },
+
   // Core CRUD operations
   async getTrainerById(id: string): Promise<Trainer> {
     return executeQuery(async () => {
@@ -418,29 +501,134 @@ export const trainerUtils = {
   },
 
   async getTrainers(filters: TrainerFilters = {}): Promise<Trainer[]> {
-    return executeQuery(async () => {
-      let query = supabase
-        .from("trainers")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      // Apply search filter (searches user profile first_name, last_name)
+    const result = await executeQuery(async () => {
+      // When search filter is provided, use user_profiles query approach (like searchTrainers)
       if (filters.search) {
-        // Join with user_profiles to search names
-        query = supabase
-          .from("trainers")
+        let query = supabase
+          .from("user_profiles")
           .select(
             `
-            *,
-            user_profile:user_profiles(first_name, last_name, email)
+            id,
+            role,
+            email,
+            first_name,
+            last_name,
+            phone,
+            avatar_url,
+            bio,
+            hire_date,
+            is_active,
+            created_at,
+            updated_at,
+            trainers(*)
           `
           )
+          .eq("role", "trainer")
           .or(
-            `user_profile.first_name.ilike.%${filters.search}%,user_profile.last_name.ilike.%${filters.search}%,user_profile.email.ilike.%${filters.search}%`,
-            { foreignTable: "user_profiles" }
+            `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`
           )
           .order("created_at", { ascending: false });
+
+        // Apply pagination for user_profiles query
+        if (filters.offset !== undefined) {
+          query = query.range(
+            filters.offset,
+            filters.offset + (filters.limit || 50) - 1
+          );
+        } else if (filters.limit) {
+          query = query.limit(filters.limit);
+        }
+
+        const { data, error } = await query;
+        if (error || !data) return { data: null, error };
+
+        // Transform to match expected Trainer[] structure and filter by other conditions
+        let trainersWithProfile = data
+          .map((profile) => {
+            // Handle different trainer data formats from PostgREST
+            const trainerData = Array.isArray(profile.trainers)
+              ? profile.trainers[0]
+              : profile.trainers;
+
+            // Skip if no trainer data exists
+            if (!trainerData || !trainerData.id) {
+              return null;
+            }
+
+            return {
+              ...trainerData,
+              user_profile: {
+                id: profile.id,
+                role: profile.role,
+                email: profile.email,
+                first_name: profile.first_name,
+                last_name: profile.last_name,
+                phone: profile.phone,
+                avatar_url: profile.avatar_url,
+                bio: profile.bio,
+                hire_date: profile.hire_date,
+                is_active: profile.is_active,
+                created_at: profile.created_at,
+                updated_at: profile.updated_at,
+              },
+            };
+          })
+          .filter((trainer) => trainer && trainer.id); // Filter out null results and profiles without trainer records
+
+        // Apply remaining filters on the results
+        if (filters.status) {
+          if (filters.status === "active") {
+            trainersWithProfile = trainersWithProfile.filter(
+              (t) => t.is_accepting_new_clients === true
+            );
+          } else if (filters.status === "inactive") {
+            trainersWithProfile = trainersWithProfile.filter(
+              (t) => t.is_accepting_new_clients === false
+            );
+          }
+        }
+
+        if (filters.specializations && filters.specializations.length > 0) {
+          trainersWithProfile = trainersWithProfile.filter(
+            (t) =>
+              t.specializations &&
+              t.specializations.some((spec: string) =>
+                filters.specializations!.includes(spec)
+              )
+          );
+        }
+
+        if (filters.isAcceptingNewClients !== undefined) {
+          trainersWithProfile = trainersWithProfile.filter(
+            (t) => t.is_accepting_new_clients === filters.isAcceptingNewClients
+          );
+        }
+
+        if (filters.yearsExperienceMin !== undefined) {
+          trainersWithProfile = trainersWithProfile.filter(
+            (t) => (t.years_experience || 0) >= filters.yearsExperienceMin!
+          );
+        }
+
+        if (filters.yearsExperienceMax !== undefined) {
+          trainersWithProfile = trainersWithProfile.filter(
+            (t) => (t.years_experience || 0) <= filters.yearsExperienceMax!
+          );
+        }
+
+        return { data: trainersWithProfile, error: null };
       }
+
+      // When no search filter, use efficient trainers table query
+      let query = supabase
+        .from("trainers")
+        .select(
+          `
+          *,
+          user_profile:user_profiles(first_name, last_name, email, phone, avatar_url, bio)
+        `
+        )
+        .order("created_at", { ascending: false });
 
       // Apply status filter - assuming active/inactive based on business logic
       // Note: trainers table doesn't have status field, so we'll check is_accepting_new_clients
@@ -454,7 +642,7 @@ export const trainerUtils = {
 
       // Apply specializations filter
       if (filters.specializations && filters.specializations.length > 0) {
-        query = query.contains("specializations", filters.specializations);
+        query = query.overlaps("specializations", filters.specializations);
       }
 
       // Apply accepting new clients filter
@@ -485,57 +673,57 @@ export const trainerUtils = {
 
       return query;
     });
+
+    // Post-process to convert specialization UUIDs to names
+    return this.convertSpecializationUuidsToNames(result);
   },
 
   async createTrainer(trainerData: CreateTrainerData): Promise<Trainer> {
+    await validateAdminAccess();
     return executeQuery(async () => {
-      // First create user profile
-      const { data: userProfile, error: profileError } = await supabase
-        .from("user_profiles")
-        .insert({
-          first_name: trainerData.first_name,
-          last_name: trainerData.last_name,
-          email: trainerData.email,
-          phone: trainerData.phone,
-          date_of_birth: trainerData.date_of_birth,
-          profile_picture_url: trainerData.profile_picture_url,
-          role: "trainer",
-        })
-        .select("*")
-        .single();
+      // Use the atomic database function for trainer creation
+      const { data: result, error } = await supabase.rpc(
+        "create_trainer_with_profile",
+        {
+          p_first_name: trainerData.first_name,
+          p_last_name: trainerData.last_name,
+          p_email: trainerData.email,
+          p_phone: trainerData.phone || null,
+          p_hourly_rate: trainerData.hourly_rate || null,
+          p_commission_rate: trainerData.commission_rate || 0.15,
+          p_max_clients_per_session: trainerData.max_clients_per_session || 1,
+          p_years_experience: trainerData.years_experience || null,
+          p_certifications: trainerData.certifications || [],
+          p_specializations: trainerData.specializations || [],
+          p_languages: trainerData.languages || ["English"],
+          p_availability: trainerData.availability || {},
+          p_is_accepting_new_clients:
+            trainerData.is_accepting_new_clients ?? true,
+          p_emergency_contact: trainerData.emergency_contact || null,
+          p_insurance_policy_number:
+            trainerData.insurance_policy_number || null,
+          p_background_check_date: trainerData.background_check_date || null,
+          p_cpr_certification_expires:
+            trainerData.cpr_certification_expires || null,
+          p_notes: trainerData.notes || null,
+        }
+      );
 
-      if (profileError || !userProfile) {
+      if (error) {
         throw new DatabaseError(
-          "Failed to create user profile for trainer",
-          profileError?.code,
-          profileError
+          error.message || "Failed to create trainer",
+          error.code,
+          error
         );
       }
 
-      // Then create trainer record
-      return await supabase
-        .from("trainers")
-        .insert({
-          id: userProfile.id, // Use same ID as user profile
-          trainer_code: trainerData.trainer_code,
-          hourly_rate: trainerData.hourly_rate,
-          commission_rate: trainerData.commission_rate || 0.15, // Default 15%
-          max_clients_per_session: trainerData.max_clients_per_session || 1,
-          years_experience: trainerData.years_experience,
-          certifications: trainerData.certifications || [],
-          specializations: trainerData.specializations || [],
-          languages: trainerData.languages || ["English"],
-          availability: trainerData.availability || {},
-          is_accepting_new_clients:
-            trainerData.is_accepting_new_clients ?? true,
-          emergency_contact: trainerData.emergency_contact,
-          insurance_policy_number: trainerData.insurance_policy_number,
-          background_check_date: trainerData.background_check_date,
-          cpr_certification_expires: trainerData.cpr_certification_expires,
-          notes: trainerData.notes,
-        })
-        .select("*")
-        .single();
+      if (!result) {
+        throw new DatabaseError("No data returned from trainer creation");
+      }
+
+      // The function returns JSON with both trainer and user_profile
+      // Return just the trainer portion to maintain interface compatibility
+      return { data: result.trainer, error: null };
     });
   },
 
@@ -544,10 +732,38 @@ export const trainerUtils = {
     trainerData: UpdateTrainerData
   ): Promise<Trainer> {
     return executeQuery(async () => {
+      // Separate user profile fields from trainer fields
+      const { first_name, last_name, email, phone, ...trainerFields } =
+        trainerData;
+
+      // Update user profile if any profile fields are provided
+      if (first_name || last_name || email || phone) {
+        const profileUpdate: Record<string, unknown> = {};
+        if (first_name !== undefined) profileUpdate.first_name = first_name;
+        if (last_name !== undefined) profileUpdate.last_name = last_name;
+        if (email !== undefined) profileUpdate.email = email;
+        if (phone !== undefined) profileUpdate.phone = phone;
+        profileUpdate.updated_at = new Date().toISOString();
+
+        const { error: profileError } = await supabase
+          .from("user_profiles")
+          .update(profileUpdate)
+          .eq("id", id);
+
+        if (profileError) {
+          throw new DatabaseError(
+            "Failed to update trainer profile information",
+            profileError.code,
+            profileError
+          );
+        }
+      }
+
+      // Update trainer record
       return await supabase
         .from("trainers")
         .update({
-          ...trainerData,
+          ...trainerFields,
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
@@ -557,29 +773,60 @@ export const trainerUtils = {
   },
 
   async deleteTrainer(id: string): Promise<void> {
-    await executeQuery(async () => {
-      // First delete trainer record
-      const { error: trainerError } = await supabase
-        .from("trainers")
-        .delete()
-        .eq("id", id);
+    await executeQuery(
+      async () => {
+        // First delete associated classes
+        const { error: classesError } = await supabase
+          .from("classes")
+          .delete()
+          .eq("trainer_id", id);
 
-      if (trainerError) {
-        throw new DatabaseError(
-          "Failed to delete trainer",
-          trainerError.code,
-          trainerError
-        );
-      }
+        if (classesError) {
+          throw new DatabaseError(
+            "Failed to delete trainer classes",
+            classesError.code,
+            classesError
+          );
+        }
 
-      // Then delete associated user profile
-      const { data, error } = await supabase
-        .from("user_profiles")
-        .delete()
-        .eq("id", id);
+        // Then delete associated trainer sessions
+        const { error: sessionsError } = await supabase
+          .from("trainer_sessions")
+          .delete()
+          .eq("trainer_id", id);
 
-      return { data: data || null, error };
-    });
+        if (sessionsError) {
+          throw new DatabaseError(
+            "Failed to delete trainer sessions",
+            sessionsError.code,
+            sessionsError
+          );
+        }
+
+        // Then delete trainer record
+        const { error: trainerError } = await supabase
+          .from("trainers")
+          .delete()
+          .eq("id", id);
+
+        if (trainerError) {
+          throw new DatabaseError(
+            "Failed to delete trainer",
+            trainerError.code,
+            trainerError
+          );
+        }
+
+        // Finally delete associated user profile
+        const { data, error } = await supabase
+          .from("user_profiles")
+          .delete()
+          .eq("id", id);
+
+        return { data: data || null, error };
+      },
+      { allowNullData: true }
+    );
   },
 
   // Search and filtering
@@ -590,19 +837,54 @@ export const trainerUtils = {
 
     return executeQuery(async () => {
       return await supabase
-        .from("trainers")
+        .from("user_profiles")
         .select(
           `
-          *,
-          user_profile:user_profiles(*)
+          id,
+          role,
+          email,
+          first_name,
+          last_name,
+          phone,
+          avatar_url,
+          bio,
+          hire_date,
+          is_active,
+          created_at,
+          updated_at,
+          trainers(*)
         `
         )
-        .or(
-          `user_profile.first_name.ilike.%${query}%,user_profile.last_name.ilike.%${query}%,user_profile.email.ilike.%${query}%`,
-          { foreignTable: "user_profiles" }
-        )
+        .eq("role", "trainer")
+        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(20)
+        .then(({ data, error }) => {
+          if (error || !data) return { data: null, error };
+
+          // Transform to match TrainerWithProfile interface
+          const trainersWithProfile = data
+            .map((profile) => ({
+              ...profile.trainers[0],
+              user_profile: {
+                id: profile.id,
+                role: profile.role,
+                email: profile.email,
+                first_name: profile.first_name,
+                last_name: profile.last_name,
+                phone: profile.phone,
+                avatar_url: profile.avatar_url,
+                bio: profile.bio,
+                hire_date: profile.hire_date,
+                is_active: profile.is_active,
+                created_at: profile.created_at,
+                updated_at: profile.updated_at,
+              },
+            }))
+            .filter((trainer) => trainer.id); // Filter out profiles without trainer records
+
+          return { data: trainersWithProfile, error: null };
+        });
     });
   },
 
@@ -680,24 +962,60 @@ export const trainerUtils = {
 
   // Trainer with relations
   async getTrainerWithProfile(id: string): Promise<TrainerWithProfile> {
-    return executeQuery(async () => {
-      return await supabase
-        .from("trainers")
-        .select(
-          `
-          *,
-          user_profile:user_profiles(*),
-          specializations_details:trainer_specializations(
-            id,
-            name,
-            description,
-            certification_required
-          )
+    // First get the trainer with user profile
+    const trainerResult = await supabase
+      .from("trainers")
+      .select(
         `
-        )
-        .eq("id", id)
-        .single();
-    });
+        *,
+        user_profile:user_profiles(*)
+      `
+      )
+      .eq("id", id)
+      .single();
+
+    if (trainerResult.error) {
+      throw new DatabaseError(
+        trainerResult.error.message || "Failed to fetch trainer",
+        trainerResult.error.code,
+        trainerResult.error.details
+      );
+    }
+
+    if (!trainerResult.data) {
+      throw new DatabaseError("No trainer found with the provided ID");
+    }
+
+    const trainer = trainerResult.data;
+
+    // Convert specialization UUIDs to names
+    const trainersWithConvertedSpecs =
+      await this.convertSpecializationUuidsToNames([trainer]);
+    const trainerWithConvertedSpecs = trainersWithConvertedSpecs[0];
+
+    // Then get specializations details if trainer has specializations
+    let specializations_details: TrainerSpecialization[] = [];
+    if (trainer.specializations && trainer.specializations.length > 0) {
+      const specializationsResult = await supabase
+        .from("trainer_specializations")
+        .select("id, name, description, certification_required, created_at")
+        .in("id", trainer.specializations);
+
+      if (specializationsResult.error) {
+        throw new DatabaseError(
+          specializationsResult.error.message ||
+            "Failed to fetch specializations",
+          specializationsResult.error.code,
+          specializationsResult.error.details
+        );
+      }
+      specializations_details = specializationsResult.data || [];
+    }
+
+    return {
+      ...trainerWithConvertedSpecs,
+      specializations_details,
+    };
   },
 
   // Bulk operations
@@ -717,22 +1035,55 @@ export const trainerUtils = {
     });
   },
 
-  async checkTrainerCodeExists(
-    trainerCode: string,
-    excludeId?: string
-  ): Promise<boolean> {
+  // Cleanup utility for orphaned trainer profiles
+  async cleanupOrphanedTrainerProfiles(): Promise<{
+    orphanedCount: number;
+    cleanedUpIds: string[];
+  }> {
+    await validateAdminAccess();
     return executeQuery(async () => {
-      let query = supabase
-        .from("trainers")
-        .select("id", { head: true })
-        .eq("trainer_code", trainerCode);
+      // First, identify orphaned user_profiles with role='trainer' that don't have corresponding trainer records
+      const { data: orphanedProfiles, error: selectError } = await supabase
+        .from("user_profiles")
+        .select("id, email, first_name, last_name")
+        .eq("role", "trainer")
+        .not("id", "in", `(SELECT id FROM trainers)`);
 
-      if (excludeId) {
-        query = query.neq("id", excludeId);
+      if (selectError) {
+        throw new DatabaseError(
+          "Failed to identify orphaned trainer profiles",
+          selectError.code,
+          selectError
+        );
       }
 
-      const { data, error } = await query;
-      return { data: !!data, error };
+      if (!orphanedProfiles || orphanedProfiles.length === 0) {
+        return { data: { orphanedCount: 0, cleanedUpIds: [] }, error: null };
+      }
+
+      const orphanedIds = orphanedProfiles.map((profile) => profile.id);
+
+      // Delete the orphaned profiles
+      const { error: deleteError } = await supabase
+        .from("user_profiles")
+        .delete()
+        .in("id", orphanedIds);
+
+      if (deleteError) {
+        throw new DatabaseError(
+          "Failed to clean up orphaned trainer profiles",
+          deleteError.code,
+          deleteError
+        );
+      }
+
+      return {
+        data: {
+          orphanedCount: orphanedProfiles.length,
+          cleanedUpIds: orphanedIds,
+        },
+        error: null,
+      };
     });
   },
 };
