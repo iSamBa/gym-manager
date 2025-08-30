@@ -14,6 +14,7 @@ import {
   Activity,
 } from "lucide-react";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
+import { mapUserForLayout } from "@/lib/auth-utils";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { MemberEvolutionChart } from "@/features/dashboard/components/member-evolution-chart";
 import { MemberStatusDistributionChart } from "@/features/dashboard/components/member-status-distribution-chart";
@@ -40,22 +41,7 @@ export default function Home() {
   }
 
   // Convert user object to expected format for MainLayout
-  const layoutUser = {
-    name:
-      user.first_name && user.last_name
-        ? `${user.first_name} ${user.last_name}`
-        : (user.email as string) || "Unknown User",
-    email: (user.email as string) || "",
-    avatar:
-      (user.avatar_url as string) ||
-      (user.first_name && typeof user.first_name === "string"
-        ? user.first_name[0]
-        : "") ||
-      (user.email && typeof user.email === "string"
-        ? (user.email as string)[0]
-        : "") ||
-      "A",
-  };
+  const layoutUser = mapUserForLayout(user);
 
   // Stats data
   const stats = [

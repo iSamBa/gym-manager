@@ -21,6 +21,7 @@ import {
   useTrainersWithExpiringCerts,
 } from "@/features/trainers/hooks";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
+import { mapUserForLayout } from "@/lib/auth-utils";
 import { UserCheck, Users, Award, Calendar, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -32,8 +33,11 @@ export default function TrainersPage() {
   const router = useRouter();
 
   // Require admin role for entire page
-  const { isLoading: isAuthLoading, hasRequiredRole } =
-    useRequireAdmin("/login");
+  const {
+    user,
+    isLoading: isAuthLoading,
+    hasRequiredRole,
+  } = useRequireAdmin("/login");
 
   // Simplified filter state management
   const { filters, updateFilters, databaseFilters } = useSimpleTrainerFilters();
@@ -58,7 +62,7 @@ export default function TrainersPage() {
 
   if (isAuthLoading) {
     return (
-      <MainLayout>
+      <MainLayout user={mapUserForLayout(user)}>
         <div className="flex min-h-[400px] items-center justify-center">
           <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
         </div>
@@ -119,8 +123,11 @@ export default function TrainersPage() {
     await exportTrainers(trainers || []);
   };
 
+  // Convert user object to expected format for MainLayout
+  const layoutUser = mapUserForLayout(user);
+
   return (
-    <MainLayout>
+    <MainLayout user={layoutUser}>
       <div className="space-y-6">
         {/* Header Section */}
         <div className="flex items-center justify-between">
