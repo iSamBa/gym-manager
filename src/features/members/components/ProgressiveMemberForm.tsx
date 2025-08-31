@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect, useId } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -47,25 +48,34 @@ import { toast } from "sonner";
 
 // Schema for each step
 const personalInfoSchema = z.object({
-  first_name: z.string().min(1, "First name is required").max(50),
-  last_name: z.string().min(1, "Last name is required").max(50),
-  date_of_birth: z.string().min(1, "Date of birth is required"),
-  gender: z.enum(["male", "female"]),
+  first_name: z
+    .string()
+    .min(1, "Please enter your first name")
+    .max(50, "First name must be 50 characters or less"),
+  last_name: z
+    .string()
+    .min(1, "Please enter your last name")
+    .max(50, "Last name must be 50 characters or less"),
+  date_of_birth: z.string().min(1, "Please select your date of birth"),
+  gender: z.enum(["male", "female"], { message: "Please select your gender" }),
 });
 
 const contactInfoSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z
+    .string()
+    .email("Please enter a valid email address (e.g., john@example.com)"),
   phone: z.string().optional(),
-  preferred_contact_method: z.enum(["email", "phone", "sms"]),
+  preferred_contact_method: z.enum(["email", "phone", "sms"], {
+    message: "Please select your preferred contact method",
+  }),
 });
 
 const addressSchema = z.object({
   address: z.object({
-    street: z.string().min(1, "Street address is required"),
-    city: z.string().min(1, "City is required"),
-    state: z.string().min(1, "State is required"),
-    postal_code: z.string().min(1, "Postal code is required"),
-    country: z.string().min(1, "Country is required"),
+    street: z.string().optional(),
+    city: z.string().optional(),
+    postal_code: z.string().optional(),
+    country: z.string().optional(),
   }),
 });
 
@@ -75,7 +85,9 @@ const healthInfoSchema = z.object({
 });
 
 const settingsSchema = z.object({
-  status: z.enum(["active", "inactive", "suspended", "expired", "pending"]),
+  status: z.enum(["active", "inactive", "suspended", "expired", "pending"], {
+    message: "Please select a member status",
+  }),
   notes: z.string().optional(),
   marketing_consent: z.boolean(),
   waiver_signed: z.boolean(),
@@ -120,6 +132,7 @@ const steps: StepInfo[] = [
     description: "Member's address",
     icon: MapPin,
     schema: addressSchema,
+    isOptional: true,
   },
   {
     id: 4,
@@ -144,6 +157,7 @@ interface ProgressiveMemberFormProps {
   onCancel: () => void;
   isLoading?: boolean;
   className?: string;
+  showHeader?: boolean;
 }
 
 export function ProgressiveMemberForm({
@@ -152,11 +166,17 @@ export function ProgressiveMemberForm({
   onCancel,
   isLoading = false,
   className,
+  showHeader = true,
 }: ProgressiveMemberFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isValidatingStep, setIsValidatingStep] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const announceRef = useRef<HTMLDivElement>(null);
+  const formId = useId();
+
+  // Form state persistence key
+  const formStorageKey = `progressive-member-form-${member?.id || "new"}`;
 
   const form = useForm<MemberFormData>({
     resolver: zodResolver(memberFormSchema),
@@ -172,9 +192,8 @@ export function ProgressiveMemberForm({
           address: member.address || {
             street: "",
             city: "",
-            state: "",
             postal_code: "",
-            country: "USA",
+            country: "Morocco",
           },
           status: member.status,
           fitness_goals: member.fitness_goals || "",
@@ -197,9 +216,8 @@ export function ProgressiveMemberForm({
           address: {
             street: "",
             city: "",
-            state: "",
             postal_code: "",
-            country: "USA",
+            country: "Morocco",
           },
           status: "active",
           fitness_goals: "",
@@ -213,6 +231,90 @@ export function ProgressiveMemberForm({
 
   const progress = (currentStep / steps.length) * 100;
   const currentStepInfo = steps.find((step) => step.id === currentStep)!;
+
+  // Form state persistence with localStorage
+  useEffect(() => {
+    if (!member) {
+      // Only for new members, not editing existing ones
+      try {
+        const savedData = localStorage.getItem(formStorageKey);
+        const savedStep = localStorage.getItem(`${formStorageKey}-step`);
+        if (savedData) {
+          const parsedData = JSON.parse(savedData);
+          // Restore form values
+          Object.keys(parsedData).forEach((key) => {
+            if (parsedData[key] !== undefined) {
+              form.setValue(key as keyof MemberFormData, parsedData[key], {
+                shouldValidate: false,
+              });
+            }
+          });
+        }
+        if (savedStep) {
+          setCurrentStep(parseInt(savedStep, 10));
+        }
+      } catch (error) {
+        console.warn("Failed to restore form state:", error);
+      }
+    }
+  }, [member, form, formStorageKey]);
+
+  // Save form state when values change
+  useEffect(() => {
+    if (!member) {
+      // Only for new members
+      const subscription = form.watch((values) => {
+        try {
+          localStorage.setItem(formStorageKey, JSON.stringify(values));
+          localStorage.setItem(
+            `${formStorageKey}-step`,
+            currentStep.toString()
+          );
+        } catch (error) {
+          console.warn("Failed to save form state:", error);
+        }
+      });
+      return () => subscription.unsubscribe();
+    }
+  }, [form, member, formStorageKey, currentStep]);
+
+  // Accessibility: Announce step changes to screen readers
+  useEffect(() => {
+    if (announceRef.current) {
+      announceRef.current.textContent = `Step ${currentStep} of ${steps.length}: ${currentStepInfo.title}`;
+    }
+  }, [currentStep, currentStepInfo.title]);
+
+  // Focus management: Focus first input when step changes (with form stability check)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formRef.current && !isValidatingStep) {
+        const firstInput = formRef.current?.querySelector(
+          "input:not([disabled]), select:not([disabled]), textarea:not([disabled])"
+        ) as HTMLElement;
+        if (
+          firstInput &&
+          document.activeElement !== firstInput &&
+          document.contains(firstInput)
+        ) {
+          firstInput.focus();
+        }
+      }
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [currentStep, isValidatingStep]);
+
+  // Debug form values when they change (remove in production)
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      const subscription = form.watch((values, { name, type }) => {
+        if (type === "change" && name) {
+          console.log("Field changed:", name, "New values:", values);
+        }
+      });
+      return () => subscription.unsubscribe();
+    }
+  }, [form]);
 
   const validateCurrentStep = useCallback(async () => {
     setIsValidatingStep(true);
@@ -251,13 +353,6 @@ export function ProgressiveMemberForm({
     const isValid = await validateCurrentStep();
     if (isValid && currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
-      // Focus on first input of next step
-      setTimeout(() => {
-        const firstInput = formRef.current?.querySelector(
-          "input, select, textarea"
-        ) as HTMLElement;
-        firstInput?.focus();
-      }, 100);
     }
   };
 
@@ -289,8 +384,36 @@ export function ProgressiveMemberForm({
       }
     }
 
-    await onSubmit(data);
+    try {
+      await onSubmit(data);
+
+      // Clear localStorage on successful submission
+      if (!member) {
+        try {
+          localStorage.removeItem(formStorageKey);
+          localStorage.removeItem(`${formStorageKey}-step`);
+        } catch (error) {
+          console.warn("Failed to clear form storage:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to submit form:", error);
+      throw error; // Re-throw to let parent handle the error
+    }
   };
+
+  // Handle cancel with localStorage cleanup
+  const handleCancel = useCallback(() => {
+    if (!member) {
+      try {
+        localStorage.removeItem(formStorageKey);
+        localStorage.removeItem(`${formStorageKey}-step`);
+      } catch (error) {
+        console.warn("Failed to clear form storage:", error);
+      }
+    }
+    onCancel();
+  }, [member, formStorageKey, onCancel]);
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -299,6 +422,7 @@ export function ProgressiveMemberForm({
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
+                key="step1-first-name"
                 control={form.control}
                 name="first_name"
                 render={({ field }) => (
@@ -306,18 +430,25 @@ export function ProgressiveMemberForm({
                     <FormLabel>First Name *</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter first name"
                         {...field}
+                        id="first_name"
+                        placeholder="e.g., John"
                         className="h-12"
-                        aria-describedby="first-name-error"
-                        autoFocus
+                        aria-describedby="first-name-error first-name-help"
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
                       />
                     </FormControl>
+                    <FormDescription id="first-name-help" className="text-xs">
+                      Enter your legal first name
+                    </FormDescription>
                     <FormMessage id="first-name-error" />
                   </FormItem>
                 )}
               />
               <FormField
+                key="step1-last-name"
                 control={form.control}
                 name="last_name"
                 render={({ field }) => (
@@ -325,12 +456,19 @@ export function ProgressiveMemberForm({
                     <FormLabel>Last Name *</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter last name"
                         {...field}
+                        id="last_name"
+                        placeholder="e.g., Smith"
                         className="h-12"
-                        aria-describedby="last-name-error"
+                        aria-describedby="last-name-error last-name-help"
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
                       />
                     </FormControl>
+                    <FormDescription id="last-name-help" className="text-xs">
+                      Enter your legal last name
+                    </FormDescription>
                     <FormMessage id="last-name-error" />
                   </FormItem>
                 )}
@@ -349,12 +487,17 @@ export function ProgressiveMemberForm({
                         value={field.value ? new Date(field.value) : undefined}
                         onChange={(date) => {
                           field.onChange(
-                            date ? date.toISOString().split("T")[0] : ""
+                            date ? format(date, "yyyy-MM-dd") : ""
                           );
                         }}
                         placeholder="Select date of birth"
                         format="PPP"
                         className="h-12"
+                        showYearMonthPickers={true}
+                        yearRange={{
+                          from: 1930,
+                          to: new Date().getFullYear() - 13,
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -392,8 +535,9 @@ export function ProgressiveMemberForm({
       case 2:
         return (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
               <FormField
+                key="step2-email"
                 control={form.control}
                 name="email"
                 render={({ field }) => (
@@ -401,19 +545,27 @@ export function ProgressiveMemberForm({
                     <FormLabel>Email Address *</FormLabel>
                     <FormControl>
                       <Input
-                        type="email"
-                        placeholder="john.doe@email.com"
                         {...field}
+                        id="email"
+                        type="email"
+                        placeholder="john.doe@example.com"
                         className="h-12"
-                        autoFocus
-                        aria-describedby="email-error"
+                        aria-describedby="email-error email-help"
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
                       />
                     </FormControl>
+                    <FormDescription id="email-help" className="text-xs">
+                      We&apos;ll use this to send important updates about your
+                      membership
+                    </FormDescription>
                     <FormMessage id="email-error" />
                   </FormItem>
                 )}
               />
               <FormField
+                key="step2-phone"
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
@@ -421,12 +573,20 @@ export function ProgressiveMemberForm({
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="+1 (555) 123-4567"
                         {...field}
+                        id="phone"
+                        placeholder="+1 (555) 123-4567"
                         className="h-12"
-                        aria-describedby="phone-error"
+                        aria-describedby="phone-error phone-help"
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
                       />
                     </FormControl>
+                    <FormDescription id="phone-help" className="text-xs">
+                      Optional - we&apos;ll use this for urgent communications
+                      only
+                    </FormDescription>
                     <FormMessage id="phone-error" />
                   </FormItem>
                 )}
@@ -469,13 +629,12 @@ export function ProgressiveMemberForm({
               name="address.street"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Street Address *</FormLabel>
+                  <FormLabel>Street Address</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="123 Main Street, Apt 4B"
+                      placeholder="Rue Mohammed V"
                       {...field}
                       className="h-12"
-                      autoFocus
                     />
                   </FormControl>
                   <FormMessage />
@@ -483,16 +642,16 @@ export function ProgressiveMemberForm({
               )}
             />
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="address.city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>City *</FormLabel>
+                    <FormLabel>City</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="New York"
+                        placeholder="Casablanca"
                         {...field}
                         className="h-12"
                       />
@@ -503,25 +662,12 @@ export function ProgressiveMemberForm({
               />
               <FormField
                 control={form.control}
-                name="address.state"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>State/Province *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="NY" {...field} className="h-12" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="address.postal_code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Postal Code *</FormLabel>
+                    <FormLabel>Postal Code</FormLabel>
                     <FormControl>
-                      <Input placeholder="10001" {...field} className="h-12" />
+                      <Input placeholder="20000" {...field} className="h-12" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -534,13 +680,9 @@ export function ProgressiveMemberForm({
               name="address.country"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Country *</FormLabel>
+                  <FormLabel>Country</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="United States"
-                      {...field}
-                      className="h-12"
-                    />
+                    <Input placeholder="Morocco" {...field} className="h-12" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -570,7 +712,6 @@ export function ProgressiveMemberForm({
                       placeholder="Describe fitness goals (e.g., weight loss, muscle gain, endurance training)..."
                       className="min-h-[100px] resize-none"
                       {...field}
-                      autoFocus
                     />
                   </FormControl>
                   <FormDescription>
@@ -623,11 +764,36 @@ export function ProgressiveMemberForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="active">🟢 Active</SelectItem>
-                      <SelectItem value="inactive">⚫ Inactive</SelectItem>
-                      <SelectItem value="suspended">🟡 Suspended</SelectItem>
-                      <SelectItem value="expired">🔴 Expired</SelectItem>
-                      <SelectItem value="pending">🔵 Pending</SelectItem>
+                      <SelectItem value="active">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                          Active
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="inactive">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full bg-gray-500"></div>
+                          Inactive
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="suspended">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
+                          Suspended
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="expired">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                          Expired
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="pending">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full bg-blue-500"></div>
+                          Pending
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -717,25 +883,42 @@ export function ProgressiveMemberForm({
   };
 
   return (
-    <div className={cn("mx-auto max-w-2xl space-y-6", className)}>
+    <div
+      className={cn("mx-auto max-w-2xl space-y-6", className)}
+      role="region"
+      aria-label="Member registration form"
+    >
+      {/* Screen reader announcements */}
+      <div
+        ref={announceRef}
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      />
       {/* Progress Header */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">
-            {member ? "Edit Member" : "Add New Member"}
-          </h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCancel}
-            aria-label="Close form"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+        {showHeader && (
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h1
+              className="text-xl font-bold sm:text-2xl"
+              id={`${formId}-title`}
+            >
+              {member ? "Edit Member" : "Add New Member"}
+            </h1>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCancel}
+              aria-label="Close form"
+              className="min-h-[44px] min-w-[44px] touch-manipulation self-start sm:self-center"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
 
         {/* Step Progress */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">
               Step {currentStep} of {steps.length}
@@ -744,63 +927,81 @@ export function ProgressiveMemberForm({
               {Math.round(progress)}% Complete
             </span>
           </div>
-          <Progress value={progress} className="h-2" />
+          <Progress
+            value={progress}
+            className="h-3"
+            aria-label={`Form progress: step ${currentStep} of ${steps.length}, ${Math.round(progress)}% complete`}
+          />
         </div>
 
         {/* Step Navigation */}
-        <div className="flex flex-wrap gap-2">
-          {steps.map((step) => {
-            const isCompleted = completedSteps.includes(step.id);
-            const isCurrent = step.id === currentStep;
-            const isAccessible = step.id <= currentStep || isCompleted;
+        <nav aria-label="Form steps" className="w-full">
+          <ol className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
+            {steps.map((step) => {
+              const isCompleted = completedSteps.includes(step.id);
+              const isCurrent = step.id === currentStep;
+              const isAccessible = step.id <= currentStep || isCompleted;
 
-            return (
-              <Button
-                key={step.id}
-                variant={
-                  isCurrent ? "default" : isCompleted ? "secondary" : "ghost"
-                }
-                size="sm"
-                className={cn(
-                  "h-auto flex-col gap-1 p-2 text-xs",
-                  !isAccessible && "cursor-not-allowed opacity-50"
-                )}
-                onClick={() => isAccessible && handleStepClick(step.id)}
-                disabled={!isAccessible}
-                aria-current={isCurrent ? "step" : undefined}
-              >
-                <div className="flex items-center gap-1">
-                  {isCompleted ? (
-                    <Check className="h-3 w-3" />
-                  ) : (
-                    <step.icon className="h-3 w-3" />
-                  )}
-                  <span className="hidden sm:inline">{step.title}</span>
-                </div>
-                {step.isOptional && (
-                  <Badge variant="outline" className="px-1 py-0 text-[10px]">
-                    Optional
-                  </Badge>
-                )}
-              </Button>
-            );
-          })}
-        </div>
+              return (
+                <li key={step.id} className="flex">
+                  <Button
+                    variant={
+                      isCurrent
+                        ? "default"
+                        : isCompleted
+                          ? "secondary"
+                          : "ghost"
+                    }
+                    size="sm"
+                    className={cn(
+                      "h-auto min-h-[44px] flex-1 touch-manipulation flex-col gap-1 p-2 text-xs sm:flex-initial",
+                      !isAccessible && "cursor-not-allowed opacity-50"
+                    )}
+                    onClick={() => isAccessible && handleStepClick(step.id)}
+                    disabled={!isAccessible}
+                    aria-current={isCurrent ? "step" : undefined}
+                    aria-label={`Step ${step.id}: ${step.title}${step.isOptional ? " (optional)" : ""}${isCompleted ? ", completed" : ""}${isCurrent ? ", current step" : ""}`}
+                  >
+                    <div className="flex items-center gap-1">
+                      {isCompleted ? (
+                        <Check className="h-3 w-3" aria-hidden="true" />
+                      ) : (
+                        <step.icon className="h-3 w-3" aria-hidden="true" />
+                      )}
+                      <span className="hidden truncate sm:inline">
+                        {step.title}
+                      </span>
+                      <span className="truncate sm:hidden">{step.id}</span>
+                    </div>
+                  </Button>
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
       </div>
 
       {/* Form Content */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <currentStepInfo.icon className="h-5 w-5" />
-            {currentStepInfo.title}
+          <CardTitle
+            className="flex flex-col gap-2 sm:flex-row sm:items-center"
+            id={`${formId}-step-title`}
+          >
+            <div className="flex items-center gap-2">
+              <currentStepInfo.icon className="h-5 w-5" aria-hidden="true" />
+              {currentStepInfo.title}
+            </div>
             {currentStepInfo.isOptional && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="self-start sm:self-center">
                 Optional
               </Badge>
             )}
           </CardTitle>
-          <p className="text-muted-foreground text-sm">
+          <p
+            className="text-muted-foreground text-sm"
+            id={`${formId}-step-description`}
+          >
             {currentStepInfo.description}
           </p>
         </CardHeader>
@@ -811,6 +1012,12 @@ export function ProgressiveMemberForm({
               onSubmit={form.handleSubmit(handleSubmit)}
               className="space-y-6"
               noValidate
+              aria-labelledby={
+                showHeader
+                  ? `${formId}-title ${formId}-step-title`
+                  : `${formId}-step-title`
+              }
+              aria-describedby={`${formId}-step-description`}
             >
               {renderStepContent()}
             </form>
@@ -819,15 +1026,20 @@ export function ProgressiveMemberForm({
       </Card>
 
       {/* Navigation Footer */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <Button
           type="button"
           variant="outline"
           onClick={handlePreviousStep}
           disabled={currentStep === 1}
-          className="flex items-center gap-2"
+          className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:w-auto"
+          aria-label={
+            currentStep === 1
+              ? "Previous step (disabled - first step)"
+              : `Go to previous step: ${steps[currentStep - 2]?.title}`
+          }
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           Previous
         </Button>
 
@@ -837,17 +1049,24 @@ export function ProgressiveMemberForm({
               type="button"
               onClick={handleNextStep}
               disabled={isValidatingStep}
-              className="flex items-center gap-2"
+              className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
+              aria-label={`Continue to next step: ${steps[currentStep]?.title}`}
             >
               {isValidatingStep ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Validating...
+                  <Loader2
+                    className="h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                  />
+                  <span>Validating...</span>
+                  <span className="sr-only">
+                    Please wait while we validate your information
+                  </span>
                 </>
               ) : (
                 <>
-                  Continue
-                  <ChevronRight className="h-4 w-4" />
+                  <span>Continue</span>
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </>
               )}
             </Button>
@@ -855,18 +1074,25 @@ export function ProgressiveMemberForm({
             <Button
               type="submit"
               disabled={isLoading}
-              className="flex items-center gap-2"
+              className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
               onClick={() => form.handleSubmit(handleSubmit)()}
+              aria-label={`${member ? "Update" : "Create"} member with provided information`}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
+                  <Loader2
+                    className="h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                  />
+                  <span>Saving...</span>
+                  <span className="sr-only">
+                    Please wait while we save the member information
+                  </span>
                 </>
               ) : (
                 <>
-                  <Save className="h-4 w-4" />
-                  {member ? "Update Member" : "Create Member"}
+                  <Save className="h-4 w-4" aria-hidden="true" />
+                  <span>{member ? "Update Member" : "Create Member"}</span>
                 </>
               )}
             </Button>

@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   AdvancedMemberTable,
-  AddMemberDialog,
   EditMemberDialog,
   SimpleMemberFilters,
 } from "@/features/members/components";
@@ -25,7 +24,7 @@ import {
 } from "@/features/members/hooks";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { mapUserForLayout } from "@/lib/auth-utils";
-import { Users, UserCheck, UserX, Clock, Download } from "lucide-react";
+import { Users, UserCheck, UserX, Clock, Download, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function MembersPage() {
@@ -131,12 +130,10 @@ export default function MembersPage() {
               )}
             </p>
           </div>
-          <AddMemberDialog
-            onMemberCreated={() => {
-              // The dialog handles navigation to the member profile
-              // Could add member list refresh here if needed
-            }}
-          />
+          <Button onClick={() => router.push("/members/new")} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Member
+          </Button>
         </div>
 
         {/* Stats Cards */}
@@ -229,7 +226,7 @@ export default function MembersPage() {
         {/* Members Table */}
         <Card>
           <AdvancedMemberTable
-            members={members}
+            members={members || []}
             isLoading={isMembersLoading}
             error={error}
             onView={handleViewMember}

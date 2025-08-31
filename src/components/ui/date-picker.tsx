@@ -20,6 +20,8 @@ interface DatePickerProps {
   disabled?: boolean;
   className?: string;
   format?: string;
+  yearRange?: { from?: number; to?: number };
+  showYearMonthPickers?: boolean;
 }
 
 export function DatePicker({
@@ -29,6 +31,8 @@ export function DatePicker({
   disabled = false,
   className,
   format: dateFormat = "PPP",
+  yearRange,
+  showYearMonthPickers = false,
 }: DatePickerProps) {
   return (
     <Popover>
@@ -51,8 +55,13 @@ export function DatePicker({
           mode="single"
           selected={value}
           onSelect={onChange}
-          defaultMonth={value}
+          defaultMonth={
+            value || (yearRange?.to ? new Date(yearRange.to, 0) : undefined)
+          }
           initialFocus
+          captionLayout={showYearMonthPickers ? "dropdown" : undefined}
+          fromYear={yearRange?.from}
+          toYear={yearRange?.to}
         />
       </PopoverContent>
     </Popover>

@@ -82,11 +82,11 @@ export type SessionType =
 
 // Address interface for JSON field
 export interface Address {
-  street: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  country: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
 }
 
 // Emergency contact interface for JSON field
