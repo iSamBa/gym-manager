@@ -148,6 +148,8 @@ export interface TrainerFilters {
 }
 
 export interface CreateTrainerData {
+  // Trainer-specific data
+  date_of_birth?: string;
   hourly_rate?: number;
   commission_rate?: number;
   max_clients_per_session?: number;
@@ -176,6 +178,7 @@ export interface UpdateTrainerData {
   email?: string;
   phone?: string;
   // Trainer-specific fields
+  date_of_birth?: string;
   hourly_rate?: number;
   commission_rate?: number;
   max_clients_per_session?: number;
@@ -689,6 +692,7 @@ export const trainerUtils = {
           p_last_name: trainerData.last_name,
           p_email: trainerData.email,
           p_phone: trainerData.phone || null,
+          p_date_of_birth: trainerData.date_of_birth || null,
           p_hourly_rate: trainerData.hourly_rate || null,
           p_commission_rate: trainerData.commission_rate || 0.15,
           p_max_clients_per_session: trainerData.max_clients_per_session || 1,
@@ -759,7 +763,7 @@ export const trainerUtils = {
         }
       }
 
-      // Update trainer record
+      // Update trainer record (including date_of_birth)
       return await supabase
         .from("trainers")
         .update({

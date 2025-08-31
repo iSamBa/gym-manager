@@ -194,14 +194,6 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                 Back to Members
               </Button>
             </Link>
-            <div>
-              <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-                {member.first_name} {member.last_name}
-                {isFetching && (
-                  <Clock className="text-muted-foreground h-4 w-4 animate-spin" />
-                )}
-              </h1>
-            </div>
           </div>
 
           <div className="flex items-center gap-2">

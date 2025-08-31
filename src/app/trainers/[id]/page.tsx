@@ -188,20 +188,6 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
                 Back to Trainers
               </Button>
             </Link>
-            <div>
-              <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-                {trainer.user_profile?.first_name || "Unknown"}{" "}
-                {trainer.user_profile?.last_name || "Trainer"}
-                {isFetching && (
-                  <Clock className="text-muted-foreground h-4 w-4 animate-spin" />
-                )}
-              </h1>
-              <p className="text-muted-foreground">
-                {trainer.years_experience
-                  ? `${trainer.years_experience} years experience`
-                  : "Experience not specified"}
-              </p>
-            </div>
           </div>
 
           <div className="flex items-center gap-2">

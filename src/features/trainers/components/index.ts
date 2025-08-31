@@ -4,7 +4,7 @@ export { TrainerCard } from "./TrainerCard";
 export { AdvancedTrainerTable } from "./AdvancedTrainerTable";
 export { TrainerForm } from "./TrainerForm";
 export { SimpleTrainerFilters } from "./SimpleTrainerFilters";
-export { AddTrainerDialog } from "./AddTrainerDialog";
+export { ProgressiveTrainerForm } from "./ProgressiveTrainerForm";
 export { EditTrainerDialog } from "./EditTrainerDialog";
 export { DeleteTrainerDialog } from "./DeleteTrainerDialog";
 export {

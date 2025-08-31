@@ -331,6 +331,7 @@ export interface TrainerSpecialization {
 
 export interface Trainer {
   id: string;
+  date_of_birth?: string;
   hourly_rate?: number;
   commission_rate: number;
   max_clients_per_session: number;

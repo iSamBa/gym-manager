@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   AdvancedTrainerTable,
-  AddTrainerDialog,
   EditTrainerDialog,
   SimpleTrainerFilters,
 } from "@/features/trainers/components";
@@ -22,7 +21,14 @@ import {
 } from "@/features/trainers/hooks";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { mapUserForLayout } from "@/lib/auth-utils";
-import { UserCheck, Users, Award, Calendar, Download } from "lucide-react";
+import {
+  UserCheck,
+  Users,
+  Award,
+  Calendar,
+  Download,
+  Plus,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function TrainersPage() {
@@ -137,7 +143,13 @@ export default function TrainersPage() {
               Manage your gym trainers and their specializations
             </p>
           </div>
-          <AddTrainerDialog />
+          <Button
+            onClick={() => router.push("/trainers/new")}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Trainer
+          </Button>
         </div>
 
         {/* Stats Cards */}
