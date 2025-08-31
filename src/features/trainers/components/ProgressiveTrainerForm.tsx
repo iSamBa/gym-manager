@@ -1080,21 +1080,22 @@ export function ProgressiveTrainerForm({
                     <FormLabel>Background Check Date</FormLabel>
                     <FormControl>
                       <DatePicker
-                        value={field.value ? new Date(field.value) : undefined}
+                        value={field.value ? new Date(field.value) : new Date()}
                         onChange={(date) =>
                           field.onChange(date ? format(date, "yyyy-MM-dd") : "")
                         }
-                        placeholder="Select date"
+                        placeholder="Select date (defaults to today)"
                         className="h-12 w-full"
                         showYearMonthPickers={true}
                         yearRange={{
-                          from: new Date().getFullYear(),
-                          to: new Date().getFullYear() + 10,
+                          from: 1990,
+                          to: new Date().getFullYear(),
                         }}
                       />
                     </FormControl>
                     <FormDescription>
-                      Date when background check was completed
+                      Date when background check was completed (defaults to
+                      today)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
