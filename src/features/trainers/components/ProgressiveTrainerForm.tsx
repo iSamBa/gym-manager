@@ -58,6 +58,7 @@ const personalInfoSchema = z.object({
     .string()
     .min(1, "Please enter your last name")
     .max(50, "Last name must be 50 characters or less"),
+  date_of_birth: z.string().min(1, "Please select your date of birth"),
   email: z
     .string()
     .email("Please enter a valid email address (e.g., john@example.com)"),
@@ -250,6 +251,7 @@ export function ProgressiveTrainerForm({
           // User profile data
           first_name: trainer.user_profile?.first_name || "",
           last_name: trainer.user_profile?.last_name || "",
+          date_of_birth: trainer.date_of_birth || "",
           email: trainer.user_profile?.email || "",
           phone: trainer.user_profile?.phone || "",
 
@@ -273,6 +275,7 @@ export function ProgressiveTrainerForm({
       : {
           first_name: "",
           last_name: "",
+          date_of_birth: "",
           email: "",
           phone: "",
           hourly_rate: undefined,
@@ -605,7 +608,38 @@ export function ProgressiveTrainerForm({
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
+              <FormField
+                control={form.control}
+                name="date_of_birth"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date of Birth *</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        value={field.value ? new Date(field.value) : undefined}
+                        onChange={(date) => {
+                          field.onChange(
+                            date ? format(date, "yyyy-MM-dd") : ""
+                          );
+                        }}
+                        placeholder="Select date of birth"
+                        format="PPP"
+                        className="h-12"
+                        showYearMonthPickers={true}
+                        yearRange={{
+                          from: 1930,
+                          to: new Date().getFullYear() - 18,
+                        }}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Trainer must be at least 18 years old
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 key="step1-email"
                 control={form.control}
@@ -633,33 +667,34 @@ export function ProgressiveTrainerForm({
                   </FormItem>
                 )}
               />
-              <FormField
-                key="step1-phone"
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        id="phone"
-                        placeholder="+1 (555) 123-4567"
-                        className="h-12"
-                        aria-describedby="phone-error phone-help"
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                      />
-                    </FormControl>
-                    <FormDescription id="phone-help" className="text-xs">
-                      Optional - for urgent communications and client contact
-                    </FormDescription>
-                    <FormMessage id="phone-error" />
-                  </FormItem>
-                )}
-              />
             </div>
+
+            <FormField
+              key="step1-phone"
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      id="phone"
+                      placeholder="+1 (555) 123-4567"
+                      className="h-12"
+                      aria-describedby="phone-error phone-help"
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                    />
+                  </FormControl>
+                  <FormDescription id="phone-help" className="text-xs">
+                    Optional - for urgent communications and client contact
+                  </FormDescription>
+                  <FormMessage id="phone-error" />
+                </FormItem>
+              )}
+            />
           </div>
         );
 
@@ -1028,6 +1063,11 @@ export function ProgressiveTrainerForm({
                         }
                         placeholder="Select date"
                         className="h-12 w-full"
+                        showYearMonthPickers={true}
+                        yearRange={{
+                          from: new Date().getFullYear(),
+                          to: new Date().getFullYear() + 10,
+                        }}
                       />
                     </FormControl>
                     <FormDescription>
