@@ -330,9 +330,7 @@ export function ProgressiveMemberForm({
       return true;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        (
-          error as unknown as { errors: { path: string[]; message: string }[] }
-        ).errors.forEach((err) => {
+        error.issues.forEach((err) => {
           const fieldName = err.path.join(".") as keyof MemberFormData;
           form.setError(fieldName as keyof MemberFormData, {
             message: err.message,

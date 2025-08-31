@@ -394,9 +394,7 @@ export function ProgressiveTrainerForm({
       return true;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        (
-          error as unknown as { errors: { path: string[]; message: string }[] }
-        ).errors.forEach((err) => {
+        error.issues.forEach((err) => {
           const fieldName = err.path.join(".") as keyof TrainerFormData;
           form.setError(fieldName as keyof TrainerFormData, {
             message: err.message,
