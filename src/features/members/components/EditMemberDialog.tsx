@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { MemberForm } from "./MemberForm";
+import { ProgressiveMemberForm } from "./ProgressiveMemberForm";
 import { useUpdateMember, useMemberCacheUtils } from "@/features/members/hooks";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -133,10 +133,12 @@ export function EditMemberDialog({
 
         {/* Member Form */}
         <div className="mt-4">
-          <MemberForm
+          <ProgressiveMemberForm
             member={member}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
+            isLoading={updateMemberMutation.isPending}
+            showHeader={false}
           />
         </div>
       </DialogContent>

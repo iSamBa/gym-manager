@@ -8,7 +8,7 @@ export { MemberFilters } from "./MemberFilters";
 export { SimpleMemberFilters } from "./SimpleMemberFilters";
 export { MemberDetailsModal } from "./MemberDetailsModal";
 export { MemberForm } from "./MemberForm";
-export { AddMemberDialog } from "./AddMemberDialog";
+export { ProgressiveMemberForm } from "./ProgressiveMemberForm";
 export { EditMemberDialog } from "./EditMemberDialog";
 export {
   MemberErrorBoundary,

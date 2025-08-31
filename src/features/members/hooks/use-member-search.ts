@@ -122,7 +122,7 @@ export function useMemberPrefetch() {
       });
 
       for (const [, members] of cachedMembers) {
-        if (members) {
+        if (members && Array.isArray(members)) {
           const currentIndex = members.findIndex(
             (m) => m.id === currentMemberId
           );
@@ -169,7 +169,7 @@ export function useMemberPrefetch() {
       });
 
       for (const [, members] of cachedMembers) {
-        if (members) {
+        if (members && Array.isArray(members)) {
           const currentIndex = members.findIndex(
             (m) => m.id === currentMemberId
           );
@@ -192,7 +192,7 @@ export function useMemberPrefetch() {
       });
 
       for (const [, members] of cachedMembers) {
-        if (members) {
+        if (members && Array.isArray(members)) {
           const currentIndex = members.findIndex(
             (m) => m.id === currentMemberId
           );
