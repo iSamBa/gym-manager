@@ -499,49 +499,55 @@ export function ProgressiveTrainerForm({
 
   // Helper functions for array field management
   const addSpecialization = (spec: string) => {
-    const current = form.getValues("specializations") || [];
-    if (!current.includes(spec)) {
-      form.setValue("specializations", [...current, spec]);
+    const current = form.getValues("specializations");
+    const currentArray = Array.isArray(current) ? current : [];
+    if (!currentArray.includes(spec)) {
+      form.setValue("specializations", [...currentArray, spec]);
     }
   };
 
   const removeSpecialization = (spec: string) => {
-    const current = form.getValues("specializations") || [];
+    const current = form.getValues("specializations");
+    const currentArray = Array.isArray(current) ? current : [];
     form.setValue(
       "specializations",
-      current.filter((s) => s !== spec)
+      currentArray.filter((s) => s !== spec)
     );
   };
 
   const addCertification = (cert: string) => {
-    const current = form.getValues("certifications") || [];
-    if (!current.includes(cert)) {
-      form.setValue("certifications", [...current, cert]);
+    const current = form.getValues("certifications");
+    const currentArray = Array.isArray(current) ? current : [];
+    if (!currentArray.includes(cert)) {
+      form.setValue("certifications", [...currentArray, cert]);
     }
   };
 
   const removeCertification = (cert: string) => {
-    const current = form.getValues("certifications") || [];
+    const current = form.getValues("certifications");
+    const currentArray = Array.isArray(current) ? current : [];
     form.setValue(
       "certifications",
-      current.filter((c) => c !== cert)
+      currentArray.filter((c) => c !== cert)
     );
   };
 
   const addLanguage = (lang: string) => {
-    const current = form.getValues("languages") || [];
-    if (!current.includes(lang)) {
-      form.setValue("languages", [...current, lang]);
+    const current = form.getValues("languages");
+    const currentArray = Array.isArray(current) ? current : [];
+    if (!currentArray.includes(lang)) {
+      form.setValue("languages", [...currentArray, lang]);
     }
   };
 
   const removeLanguage = (lang: string) => {
-    const current = form.getValues("languages") || [];
-    if (current.length > 1) {
+    const current = form.getValues("languages");
+    const currentArray = Array.isArray(current) ? current : [];
+    if (currentArray.length > 1) {
       // Keep at least one language
       form.setValue(
         "languages",
-        current.filter((l) => l !== lang)
+        currentArray.filter((l) => l !== lang)
       );
     }
   };
@@ -816,7 +822,12 @@ export function ProgressiveTrainerForm({
                     </FormControl>
                     <SelectContent>
                       {languageOptions
-                        .filter((lang) => !(field.value || []).includes(lang))
+                        .filter((lang) => {
+                          const currentLangs = Array.isArray(field.value)
+                            ? field.value
+                            : [];
+                          return !currentLangs.includes(lang);
+                        })
                         .map((lang) => (
                           <SelectItem key={lang} value={lang}>
                             {lang}
@@ -825,23 +836,25 @@ export function ProgressiveTrainerForm({
                     </SelectContent>
                   </Select>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {(field.value || []).map((lang) => (
-                      <Badge
-                        key={lang}
-                        variant="default"
-                        className={cn(
-                          "cursor-pointer",
-                          (field.value || []).length === 1
-                            ? "cursor-not-allowed opacity-50"
-                            : "hover:bg-destructive hover:text-destructive-foreground"
-                        )}
-                        onClick={() =>
-                          (field.value || []).length > 1 && removeLanguage(lang)
-                        }
-                      >
-                        {lang} {(field.value || []).length > 1 && "×"}
-                      </Badge>
-                    ))}
+                    {Array.isArray(field.value)
+                      ? field.value.map((lang) => (
+                          <Badge
+                            key={lang}
+                            variant="default"
+                            className={cn(
+                              "cursor-pointer",
+                              field.value.length === 1
+                                ? "cursor-not-allowed opacity-50"
+                                : "hover:bg-destructive hover:text-destructive-foreground"
+                            )}
+                            onClick={() =>
+                              field.value.length > 1 && removeLanguage(lang)
+                            }
+                          >
+                            {lang} {field.value.length > 1 && "×"}
+                          </Badge>
+                        ))
+                      : null}
                   </div>
                   <FormDescription>
                     At least one language is required for client communication
@@ -866,9 +879,12 @@ export function ProgressiveTrainerForm({
                     </FormControl>
                     <SelectContent>
                       {availableSpecializations
-                        .filter(
-                          (spec) => !(field.value || []).includes(spec.name)
-                        )
+                        .filter((spec) => {
+                          const currentSpecs = Array.isArray(field.value)
+                            ? field.value
+                            : [];
+                          return !currentSpecs.includes(spec.name);
+                        })
                         .map((spec) => (
                           <SelectItem key={spec.id} value={spec.name}>
                             {spec.name}
@@ -877,16 +893,18 @@ export function ProgressiveTrainerForm({
                     </SelectContent>
                   </Select>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {(field.value || []).map((spec) => (
-                      <Badge
-                        key={spec}
-                        variant="secondary"
-                        className="hover:bg-destructive hover:text-destructive-foreground cursor-pointer"
-                        onClick={() => removeSpecialization(spec)}
-                      >
-                        {spec} ×
-                      </Badge>
-                    ))}
+                    {Array.isArray(field.value)
+                      ? field.value.map((spec) => (
+                          <Badge
+                            key={spec}
+                            variant="secondary"
+                            className="hover:bg-destructive hover:text-destructive-foreground cursor-pointer"
+                            onClick={() => removeSpecialization(spec)}
+                          >
+                            {spec} ×
+                          </Badge>
+                        ))
+                      : null}
                   </div>
                   <FormDescription>
                     Optional - areas of fitness expertise and focus
@@ -911,7 +929,12 @@ export function ProgressiveTrainerForm({
                     </FormControl>
                     <SelectContent>
                       {certificationOptions
-                        .filter((cert) => !(field.value || []).includes(cert))
+                        .filter((cert) => {
+                          const currentCerts = Array.isArray(field.value)
+                            ? field.value
+                            : [];
+                          return !currentCerts.includes(cert);
+                        })
                         .map((cert) => (
                           <SelectItem key={cert} value={cert}>
                             {cert}
@@ -920,16 +943,18 @@ export function ProgressiveTrainerForm({
                     </SelectContent>
                   </Select>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {(field.value || []).map((cert) => (
-                      <Badge
-                        key={cert}
-                        variant="outline"
-                        className="hover:bg-destructive hover:text-destructive-foreground cursor-pointer"
-                        onClick={() => removeCertification(cert)}
-                      >
-                        {cert} ×
-                      </Badge>
-                    ))}
+                    {Array.isArray(field.value)
+                      ? field.value.map((cert) => (
+                          <Badge
+                            key={cert}
+                            variant="outline"
+                            className="hover:bg-destructive hover:text-destructive-foreground cursor-pointer"
+                            onClick={() => removeCertification(cert)}
+                          >
+                            {cert} ×
+                          </Badge>
+                        ))
+                      : null}
                   </div>
                   <FormDescription>
                     Optional - professional certifications and qualifications
