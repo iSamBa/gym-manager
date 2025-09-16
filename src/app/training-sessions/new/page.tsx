@@ -4,14 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ProgressiveTrainerForm } from "@/features/trainers/components/ProgressiveTrainerForm";
-import { useCreateTrainer } from "@/features/trainers/hooks";
+import { ProgressiveTrainingSessionForm } from "@/features/training-sessions/components";
+import { useCreateTrainingSession } from "@/features/training-sessions/hooks/use-training-sessions";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { mapUserForLayout } from "@/lib/auth-utils";
 import { AlertCircle, CheckCircle } from "lucide-react";
-import type { CreateTrainerData } from "@/features/database/lib/utils";
+import type { CreateSessionData } from "@/features/training-sessions/lib/validation";
 
-export default function AddTrainerPage() {
+export default function AddTrainingSessionPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const router = useRouter();
 
@@ -22,8 +22,8 @@ export default function AddTrainerPage() {
     hasRequiredRole,
   } = useRequireAdmin("/login");
 
-  // Create trainer mutation
-  const createTrainerMutation = useCreateTrainer();
+  // Create session mutation
+  const createSessionMutation = useCreateTrainingSession();
 
   if (isAuthLoading) {
     return (
@@ -39,29 +39,29 @@ export default function AddTrainerPage() {
     return null; // Will redirect to login
   }
 
-  const handleSubmit = async (data: CreateTrainerData) => {
+  const handleSubmit = async (data: CreateSessionData) => {
     try {
       setIsSubmitted(true);
 
-      // Create trainer
-      const newTrainer = await createTrainerMutation.mutateAsync(data);
+      // Create training session
+      await createSessionMutation.mutateAsync(data);
 
       // Show success state briefly before redirecting
       setTimeout(() => {
-        router.push(`/trainers/${newTrainer.id}`);
+        router.push(`/training-sessions`);
       }, 1500);
     } catch (error) {
       setIsSubmitted(false);
-      console.error("Failed to create trainer:", error);
+      console.error("Failed to create training session:", error);
     }
   };
 
   const handleCancel = () => {
-    router.push("/trainers");
+    router.push("/training-sessions");
   };
 
   // Show success state after submission
-  if (isSubmitted && createTrainerMutation.isSuccess) {
+  if (isSubmitted && createSessionMutation.isSuccess) {
     return (
       <MainLayout user={mapUserForLayout(user)}>
         <div className="container mx-auto py-4">
@@ -70,11 +70,11 @@ export default function AddTrainerPage() {
               <CheckCircle className="mx-auto h-16 w-16 text-green-600" />
               <div className="space-y-2">
                 <h1 className="text-2xl font-bold">
-                  Trainer Created Successfully!
+                  Training Session Created Successfully!
                 </h1>
                 <p className="text-muted-foreground">
-                  The new trainer has been added to your gym. You&apos;ll be
-                  redirected to their profile shortly.
+                  The new training session has been scheduled. You&apos;ll be
+                  redirected to the sessions list shortly.
                 </p>
               </div>
               <div className="text-muted-foreground animate-pulse text-sm">
@@ -91,24 +91,24 @@ export default function AddTrainerPage() {
     <MainLayout user={mapUserForLayout(user)}>
       <div className="container mx-auto py-4">
         {/* Error Display */}
-        {createTrainerMutation.error && (
+        {createSessionMutation.error && (
           <div className="mb-6">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                {createTrainerMutation.error instanceof Error
-                  ? createTrainerMutation.error.message
-                  : "Failed to create trainer. Please try again."}
+                {createSessionMutation.error instanceof Error
+                  ? createSessionMutation.error.message
+                  : "Failed to create training session. Please try again."}
               </AlertDescription>
             </Alert>
           </div>
         )}
 
-        {/* Progressive Trainer Form */}
-        <ProgressiveTrainerForm
+        {/* Progressive Training Session Form */}
+        <ProgressiveTrainingSessionForm
           onSubmit={handleSubmit}
           onCancel={handleCancel}
-          isLoading={createTrainerMutation.isPending}
+          isLoading={createSessionMutation.isPending}
         />
       </div>
     </MainLayout>
