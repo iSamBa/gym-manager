@@ -325,7 +325,7 @@ export const useTrainerAvailabilityCache = () => {
       trainer_id,
       start_time,
       end_time,
-      action: _action,
+      action: _action, // eslint-disable-line @typescript-eslint/no-unused-vars
     }: {
       trainer_id: string;
       start_time: string;

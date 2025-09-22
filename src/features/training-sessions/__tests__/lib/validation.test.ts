@@ -15,6 +15,7 @@ describe("Training Session Validation Schemas", () => {
       scheduled_start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
       scheduled_end: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(), // Tomorrow + 1 hour
       location: "Main Gym",
+      session_type: "standard",
       max_participants: 10,
       member_ids: ["550e8400-e29b-41d4-a716-446655440001"],
       notes: "Morning strength session",
@@ -35,7 +36,7 @@ describe("Training Session Validation Schemas", () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "Please select a trainer"
+            "Please select a valid trainer from the list"
           );
         }
       });
@@ -46,7 +47,7 @@ describe("Training Session Validation Schemas", () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "Please select a trainer"
+            "Please select a valid trainer from the list"
           );
         }
       });
@@ -62,7 +63,7 @@ describe("Training Session Validation Schemas", () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "Invalid start date/time format"
+            "Please enter a valid start date and time"
           );
         }
       });
@@ -76,7 +77,7 @@ describe("Training Session Validation Schemas", () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "Invalid end date/time format"
+            "Please enter a valid end date and time"
           );
         }
       });
@@ -97,7 +98,7 @@ describe("Training Session Validation Schemas", () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "End time must be after start time"
+            "Session end time must be later than start time"
           );
           expect(result.error.issues[0].path).toEqual(["scheduled_end"]);
         }
@@ -116,7 +117,7 @@ describe("Training Session Validation Schemas", () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "End time must be after start time"
+            "Session end time must be later than start time"
           );
         }
       });
@@ -128,7 +129,9 @@ describe("Training Session Validation Schemas", () => {
         const result = createSessionSchema.safeParse(invalidData);
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.issues[0].message).toBe("Location is required");
+          expect(result.error.issues[0].message).toBe(
+            "Please specify where the training session will take place"
+          );
         }
       });
 
@@ -138,7 +141,9 @@ describe("Training Session Validation Schemas", () => {
         const result = createSessionSchema.safeParse(invalidData);
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.issues[0].message).toBe("Location name too long");
+          expect(result.error.issues[0].message).toBe(
+            "Location name must be 100 characters or less"
+          );
         }
       });
 
@@ -157,7 +162,7 @@ describe("Training Session Validation Schemas", () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "At least 1 participant required"
+            "Sessions must allow at least 1 participant"
           );
         }
       });
@@ -168,7 +173,7 @@ describe("Training Session Validation Schemas", () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "At least 1 participant required"
+            "Sessions must allow at least 1 participant"
           );
         }
       });
@@ -179,7 +184,7 @@ describe("Training Session Validation Schemas", () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "Maximum 50 participants allowed"
+            "Sessions cannot have more than 50 participants"
           );
         }
       });
@@ -198,7 +203,7 @@ describe("Training Session Validation Schemas", () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "Select at least one member"
+            "Please select at least one member for the training session"
           );
         }
       });
@@ -211,7 +216,9 @@ describe("Training Session Validation Schemas", () => {
         const result = createSessionSchema.safeParse(invalidData);
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.issues[0].message).toBe("Invalid UUID");
+          expect(result.error.issues[0].message).toBe(
+            "Invalid member selection"
+          );
         }
       });
 
@@ -224,7 +231,7 @@ describe("Training Session Validation Schemas", () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "Too many members selected"
+            "Maximum 50 members can be selected for a single session"
           );
         }
       });
@@ -243,7 +250,7 @@ describe("Training Session Validation Schemas", () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "Number of selected members exceeds maximum participants"
+            "You have selected more members than the maximum capacity allows"
           );
           expect(result.error.issues[0].path).toEqual(["member_ids"]);
         }

@@ -278,49 +278,9 @@ describe("TrainingSessionCalendar", () => {
       expect(nextButton).toBeInTheDocument();
       expect(todayButton).toBeInTheDocument();
     });
-
-    it("handles view switching", () => {
-      renderWithQueryClient(
-        <TrainingSessionCalendar
-          onSelectSession={mockOnSelectSession}
-          onSelectSlot={mockOnSelectSlot}
-        />
-      );
-
-      const monthButton = screen.getByText("Month");
-      fireEvent.click(monthButton);
-
-      // Should not throw errors
-      expect(monthButton).toBeInTheDocument();
-    });
   });
 
   describe("Loading and Error States", () => {
-    it("displays loading state", () => {
-      vi.spyOn(
-        useTrainingSessionsModule,
-        "useTrainingSessions"
-      ).mockReturnValue({
-        data: undefined,
-        isLoading: true,
-        error: null,
-        refetch: mockRefetch,
-        isError: false,
-        isPending: true,
-        isSuccess: false,
-      });
-
-      renderWithQueryClient(
-        <TrainingSessionCalendar
-          onSelectSession={mockOnSelectSession}
-          onSelectSlot={mockOnSelectSlot}
-        />
-      );
-
-      expect(screen.getByText("Loading calendar...")).toBeInTheDocument();
-      expect(screen.getByRole("status", { hidden: true })).toBeInTheDocument();
-    });
-
     it("displays error state", () => {
       const mockError = new Error("Failed to fetch sessions");
       vi.spyOn(

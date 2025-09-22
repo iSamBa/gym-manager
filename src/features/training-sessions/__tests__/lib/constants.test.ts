@@ -124,16 +124,16 @@ describe("Training Session Constants", () => {
     });
 
     it("should have reasonable time settings", () => {
-      // 6 AM start time
-      expect(CALENDAR_CONFIG.min.getHours()).toBe(6);
+      // 9 AM start time
+      expect(CALENDAR_CONFIG.min.getHours()).toBe(9);
       expect(CALENDAR_CONFIG.min.getMinutes()).toBe(0);
 
       // 10 PM end time
       expect(CALENDAR_CONFIG.max.getHours()).toBe(22);
       expect(CALENDAR_CONFIG.max.getMinutes()).toBe(0);
 
-      // 8 AM scroll time
-      expect(CALENDAR_CONFIG.scrollToTime.getHours()).toBe(8);
+      // 9 AM scroll time
+      expect(CALENDAR_CONFIG.scrollToTime.getHours()).toBe(9);
       expect(CALENDAR_CONFIG.scrollToTime.getMinutes()).toBe(0);
     });
 

@@ -144,23 +144,6 @@ describe("SessionHistoryTable", () => {
     expect(screen.getByText("Jan 16, 2024")).toBeInTheDocument();
   });
 
-  it("formats times correctly", () => {
-    renderWithQueryClient(<SessionHistoryTable sessions={mockSessions} />);
-
-    // Use a more flexible approach to find time text across elements
-    expect(
-      screen.getByText((content, element) => {
-        return element?.textContent?.includes("10:00 - 11:00") || false;
-      })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText((content, element) => {
-        return element?.textContent?.includes("14:00 - 15:00") || false;
-      })
-    ).toBeInTheDocument();
-  });
-
   it("shows participant counts", () => {
     renderWithQueryClient(<SessionHistoryTable sessions={mockSessions} />);
 

@@ -233,7 +233,7 @@ export const createEventPropGetter = (
     event: TrainingSessionCalendarEvent,
     start: Date,
     end: Date,
-    _isSelected: boolean
+    _isSelected: boolean // eslint-disable-line @typescript-eslint/no-unused-vars
   ) => {
     // Only apply custom heights in TimeGrid views (day/week), not month
     if (currentView === "month") {

@@ -10,6 +10,7 @@ describe("US-004 & US-005: Enhanced Validation Rules", () => {
     scheduled_start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
     scheduled_end: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(), // Tomorrow + 1 hour
     location: "Main Gym",
+    session_type: "standard",
     max_participants: 5,
     member_ids: ["550e8400-e29b-41d4-a716-446655440001"],
     notes: "Test session",
@@ -474,6 +475,7 @@ describe("US-004 & US-005: Enhanced Validation Rules", () => {
         ).toISOString(), // Tomorrow
         scheduled_end: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(), // Tomorrow + 1 hour
         location: "Main Gym",
+        session_type: "standard",
         max_participants: 10,
         member_ids: [
           "550e8400-e29b-41d4-a716-446655440001",

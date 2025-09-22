@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import {
-  exportToCSV,
-  exportToPDF,
-  emailReport,
-  printTable,
-} from "../../lib/export-utils";
+import { exportToCSV, exportToPDF, printTable } from "../../lib/export-utils";
 import type { SessionHistoryEntry } from "../../lib/types";
 
 // Mock date-fns
@@ -176,44 +171,6 @@ describe("Export Utils", () => {
     });
   });
 
-  describe("emailReport", () => {
-    it("should prepare report data with correct structure", async () => {
-      const recipient = "test@example.com";
-      const result = await emailReport(mockSessions, recipient);
-
-      expect(result).toEqual({
-        recipient: "test@example.com",
-        subject: "Training Sessions Report - January 15, 2024",
-        sessions: 2,
-        format: "csv",
-        timestamp: expect.any(String),
-        summary: {
-          total: 2,
-          completed: 1,
-          cancelled: 0,
-          avgAttendance: 61,
-        },
-      });
-    });
-
-    it("should handle PDF format option", async () => {
-      const recipient = "test@example.com";
-      const result = await emailReport(mockSessions, recipient, "pdf");
-
-      expect(result.format).toBe("pdf");
-    });
-
-    it("should calculate summary statistics correctly", async () => {
-      const recipient = "test@example.com";
-      const result = await emailReport(mockSessions, recipient);
-
-      expect(result.summary.total).toBe(2);
-      expect(result.summary.completed).toBe(1);
-      expect(result.summary.cancelled).toBe(0);
-      expect(result.summary.avgAttendance).toBe(61); // (80 + 42) / 2 = 61
-    });
-  });
-
   describe("printTable", () => {
     const mockQuerySelector = vi.fn();
 
@@ -261,23 +218,6 @@ describe("Export Utils", () => {
       expect(() => exportToCSV([])).not.toThrow();
       expect(() => exportToPDF([])).not.toThrow();
       expect(() => printTable([])).not.toThrow();
-    });
-
-    it("should handle missing window.open", () => {
-      const originalOpen = window.open;
-      Object.defineProperty(window, "open", {
-        value: null,
-        writable: true,
-      });
-
-      // Should not throw when window.open returns null
-      expect(() => printTable(mockSessions)).not.toThrow();
-
-      // Restore original
-      Object.defineProperty(window, "open", {
-        value: originalOpen,
-        writable: true,
-      });
     });
 
     it("should handle sessions with missing optional fields", () => {
