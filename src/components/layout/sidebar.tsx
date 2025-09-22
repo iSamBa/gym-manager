@@ -4,6 +4,11 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Users,
   UserCheck,
   CreditCard,
@@ -12,9 +17,12 @@ import {
   Menu,
   Home,
   Dumbbell,
+  Calendar,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 interface SidebarProps {
   className?: string;
@@ -22,14 +30,39 @@ interface SidebarProps {
 }
 
 export function Sidebar({ className, onNavigate }: SidebarProps) {
+  const pathname = usePathname();
+  const [openItems, setOpenItems] = useState<string[]>([]);
+
   const navigation = [
     { name: "Dashboard", href: "/", icon: Home },
     { name: "Members", href: "/members", icon: Users },
     { name: "Trainers", href: "/trainers", icon: UserCheck },
+    { name: "Training Sessions", href: "/training-sessions", icon: Calendar },
     { name: "Memberships", href: "/memberships", icon: CreditCard },
     { name: "Payments", href: "/payments", icon: Receipt },
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
   ];
+
+  const toggleItem = (itemName: string) => {
+    setOpenItems((prev) =>
+      prev.includes(itemName)
+        ? prev.filter((name) => name !== itemName)
+        : [...prev, itemName]
+    );
+  };
+
+  const isActiveRoute = (
+    href: string,
+    subItems?: Array<{ href: string; name: string; description: string }>
+  ) => {
+    if (subItems) {
+      return (
+        subItems.some((subItem) => pathname.startsWith(subItem.href)) ||
+        pathname === href
+      );
+    }
+    return pathname === href || (href !== "/" && pathname.startsWith(href));
+  };
 
   return (
     <div className={cn("pb-12", className)}>
@@ -42,19 +75,72 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
             Gym Manager
           </h2>
           <div className="space-y-1">
-            {navigation.map((item) => (
-              <Button
-                key={item.name}
-                variant="ghost"
-                className="w-full justify-start"
-                asChild
-              >
-                <Link href={item.href} onClick={onNavigate}>
-                  <item.icon className="mr-2 h-4 w-4" />
-                  {item.name}
-                </Link>
-              </Button>
-            ))}
+            {navigation.map((item) => {
+              const isActive = isActiveRoute(item.href, item.subItems);
+              const isOpen = openItems.includes(item.name);
+
+              if (item.subItems) {
+                return (
+                  <Collapsible
+                    key={item.name}
+                    open={isOpen}
+                    onOpenChange={() => toggleItem(item.name)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        variant={isActive ? "secondary" : "ghost"}
+                        className={cn(
+                          "w-full justify-start gap-2",
+                          isActive && "bg-secondary"
+                        )}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.name}</span>
+                        <ChevronDown
+                          className={cn(
+                            "ml-auto h-4 w-4 transition-transform",
+                            isOpen && "rotate-180"
+                          )}
+                        />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="ml-4 space-y-1">
+                      {item.subItems.map((subItem) => (
+                        <Button
+                          key={subItem.href}
+                          variant={
+                            pathname === subItem.href ? "secondary" : "ghost"
+                          }
+                          className="h-8 w-full justify-start text-sm"
+                          asChild
+                        >
+                          <Link href={subItem.href} onClick={onNavigate}>
+                            <span>{subItem.name}</span>
+                          </Link>
+                        </Button>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              }
+
+              return (
+                <Button
+                  key={item.name}
+                  variant={isActive ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start",
+                    isActive && "bg-secondary"
+                  )}
+                  asChild
+                >
+                  <Link href={item.href} onClick={onNavigate}>
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {item.name}
+                  </Link>
+                </Button>
+              );
+            })}
           </div>
         </div>
       </div>

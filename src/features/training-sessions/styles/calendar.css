@@ -1,0 +1,296 @@
+/* Custom styles for react-big-calendar to match shadcn/ui theme */
+
+.rbc-calendar {
+  @apply bg-white text-gray-950 dark:bg-gray-950 dark:text-gray-50;
+}
+
+/* Month view styling */
+.rbc-month-view {
+  @apply border-border rounded-lg border;
+}
+
+.rbc-header {
+  @apply border-b border-gray-200 bg-gray-100 p-3 font-medium text-gray-600 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400;
+}
+
+.rbc-date-cell {
+  @apply border-r border-gray-200 p-2 dark:border-gray-800;
+}
+
+.rbc-today {
+  @apply bg-blue-50 dark:bg-blue-950;
+}
+
+.rbc-off-range-bg {
+  @apply bg-gray-50 dark:bg-gray-900;
+}
+
+/* Week/Day view styling */
+.rbc-time-view {
+  @apply overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800;
+}
+
+.rbc-time-header {
+  @apply border-b border-gray-200 dark:border-gray-800;
+}
+
+.rbc-time-content {
+  @apply border-0;
+}
+
+.rbc-time-gutter {
+  @apply border-r border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900;
+}
+
+.rbc-timeslot-group {
+  @apply border-b border-gray-100 dark:border-gray-800;
+  /* Scale to give each 15-minute slot the height of a full hour (4x scale) */
+  min-height: 200px !important;
+  height: 200px !important;
+}
+
+.rbc-time-slot {
+  @apply border-0;
+  /* Each 15-minute slot gets 50px height (200px ÷ 4 slots) */
+  height: 50px !important;
+  min-height: 50px !important;
+  flex: 1 1 50px;
+}
+
+.rbc-current-time-indicator {
+  @apply bg-blue-600;
+}
+
+/* Event styling */
+.rbc-event {
+  @apply rounded border-0 shadow-sm;
+}
+
+.rbc-event.rbc-selected {
+  @apply ring-2 ring-blue-600;
+}
+
+/* Agenda view styling */
+.rbc-agenda-view {
+  @apply rounded-lg border border-gray-200 dark:border-gray-800;
+}
+
+.rbc-agenda-table {
+  @apply w-full;
+}
+
+.rbc-agenda-view table.rbc-agenda-table {
+  @apply border-0;
+}
+
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th,
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  @apply border-b border-gray-200 p-3 dark:border-gray-800;
+}
+
+/* Buttons and controls */
+.rbc-btn {
+  @apply rounded border border-gray-200 bg-white px-3 py-1 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-gray-800;
+}
+
+.rbc-btn-group > .rbc-btn:first-child {
+  @apply rounded-r-none;
+}
+
+.rbc-btn-group > .rbc-btn:last-child {
+  @apply rounded-l-none;
+}
+
+.rbc-btn-group > .rbc-btn:not(:first-child):not(:last-child) {
+  @apply rounded-none;
+}
+
+.rbc-active {
+  @apply bg-blue-600 text-white;
+}
+
+/* Popup and overlay styling */
+.rbc-overlay {
+  @apply rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-950;
+}
+
+.rbc-overlay-header {
+  @apply border-b border-gray-200 p-3 font-medium dark:border-gray-800;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .rbc-calendar {
+    @apply text-sm;
+  }
+
+  .rbc-toolbar {
+    @apply flex-col gap-2;
+  }
+
+  .rbc-toolbar-label {
+    @apply text-center;
+  }
+}
+
+/* Custom session status colors */
+.rbc-event.session-trial {
+  @apply border-purple-200 bg-purple-100 text-purple-800;
+}
+
+.rbc-event.session-standard {
+  @apply border-blue-200 bg-blue-100 text-blue-800;
+}
+
+.rbc-event.session-cancelled {
+  @apply line-through opacity-60;
+}
+
+.rbc-event.session-in-progress {
+  @apply border-orange-200 bg-orange-100 text-orange-800;
+}
+
+.rbc-event.session-completed {
+  @apply border-green-200 bg-green-100 text-green-800;
+}
+
+/* Smart event display with dynamic heights - Target TimeGrid views specifically */
+.rbc-time-view .rbc-day-slot .rbc-event,
+.rbc-time-view .rbc-time-slot .rbc-event {
+  /* Base minimum height for time views - override react-big-calendar inline styles */
+  min-height: 45px !important;
+  height: auto !important;
+}
+
+/* Enhanced styling for different duration classes */
+.rbc-event .event-content.event-standard {
+  @apply flex h-full flex-col justify-start;
+  padding: 2px 4px !important;
+  gap: 2px;
+}
+
+.rbc-event .event-content.event-compact {
+  @apply flex h-full flex-col justify-start;
+  padding: 3px 5px !important;
+  gap: 3px;
+}
+
+/* Duration-specific styling with higher specificity for TimeGrid views */
+.rbc-time-view .rbc-day-slot .rbc-event.event-very-short,
+.rbc-time-view .rbc-time-slot .rbc-event.event-very-short {
+  min-height: 45px !important;
+}
+
+.rbc-time-view .rbc-day-slot .rbc-event.event-short,
+.rbc-time-view .rbc-time-slot .rbc-event.event-short {
+  min-height: 45px !important;
+}
+
+.rbc-time-view .rbc-day-slot .rbc-event.event-normal,
+.rbc-time-view .rbc-time-slot .rbc-event.event-normal {
+  min-height: auto !important;
+}
+
+/* View mode specific heights */
+.rbc-time-view .rbc-day-slot .rbc-event.event-compact.event-very-short,
+.rbc-time-view .rbc-time-slot .rbc-event.event-compact.event-very-short {
+  min-height: 60px !important;
+}
+
+.rbc-time-view .rbc-day-slot .rbc-event.event-compact.event-short,
+.rbc-time-view .rbc-time-slot .rbc-event.event-compact.event-short {
+  min-height: 50px !important;
+}
+
+.rbc-time-view .rbc-day-slot .rbc-event.event-compact.event-normal,
+.rbc-time-view .rbc-time-slot .rbc-event.event-compact.event-normal {
+  min-height: 40px !important;
+}
+
+/* Legacy duration-specific styling for content alignment */
+.rbc-event .event-content.event-very-short {
+  @apply justify-center;
+  gap: 1px !important;
+}
+
+.rbc-event .event-content.event-short {
+  @apply justify-start;
+  gap: 2px !important;
+}
+
+.rbc-event .event-content.event-normal {
+  @apply justify-start;
+  gap: 2px !important;
+}
+
+/* Base event content styling */
+.rbc-event .event-content {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  overflow: visible !important;
+}
+
+.rbc-event .event-content .trainer-name {
+  @apply text-xs font-semibold;
+  line-height: 1.2 !important;
+  margin-bottom: 2px !important;
+}
+
+.rbc-event .event-content .session-details {
+  @apply text-xs;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1px !important;
+}
+
+.rbc-event .event-content .session-details > div {
+  @apply flex items-center;
+  gap: 2px !important;
+  line-height: 1.1 !important;
+}
+
+.rbc-event .event-content .session-details-condensed {
+  @apply text-xs;
+  line-height: 1.1 !important;
+}
+
+/* Compact mode enhancements */
+.rbc-event .event-content.event-compact .trainer-name {
+  @apply text-sm font-semibold;
+  margin-bottom: 3px !important;
+}
+
+.rbc-event .event-content.event-compact .session-details {
+  gap: 2px !important;
+}
+
+.rbc-event .event-content.event-compact .session-details > div {
+  gap: 3px !important;
+  line-height: 1.2 !important;
+}
+
+/* Ensure event content is visible in week/day views */
+.rbc-day-slot .rbc-event,
+.rbc-time-slot .rbc-event {
+  @apply text-xs;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .rbc-event.session-trial {
+    @apply border-purple-800 bg-purple-900/20 text-purple-300;
+  }
+
+  .rbc-event.session-standard {
+    @apply border-blue-800 bg-blue-900/20 text-blue-300;
+  }
+
+  .rbc-event.session-in-progress {
+    @apply border-orange-800 bg-orange-900/20 text-orange-300;
+  }
+
+  .rbc-event.session-completed {
+    @apply border-green-800 bg-green-900/20 text-green-300;
+  }
+}
