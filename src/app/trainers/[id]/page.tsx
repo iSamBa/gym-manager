@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   TrainerAvatar,
   TrainerStatusBadge,
   EditTrainerDialog,
   DeleteTrainerDialog,
+  TrainerSessions,
 } from "@/features/trainers/components";
 import {
   useTrainerWithProfile,
@@ -25,13 +27,14 @@ import {
   Phone,
   Mail,
   User,
-  Clock,
   AlertCircle,
   Trash2,
   Award,
   Users,
   DollarSign,
   GraduationCap,
+  Activity,
+  UserCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -57,12 +60,7 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Real data hooks
-  const {
-    data: trainer,
-    isLoading,
-    error,
-    isFetching,
-  } = useTrainerWithProfile(id);
+  const { data: trainer, isLoading, error } = useTrainerWithProfile(id);
 
   const deleteTrainerMutation = useDeleteTrainer();
   const updateAvailabilityMutation = useUpdateTrainerAvailability();
@@ -188,6 +186,22 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
                 Back to Trainers
               </Button>
             </Link>
+            <div>
+              <h1 className="text-2xl font-bold">
+                {trainer.user_profile?.first_name || "Unknown"}{" "}
+                {trainer.user_profile?.last_name || "Trainer"}
+              </h1>
+              <div className="mt-1 flex items-center gap-2">
+                <TrainerStatusBadge
+                  isAcceptingNewClients={trainer.is_accepting_new_clients}
+                  trainerId={trainer.id}
+                  readonly={true}
+                />
+                <Badge variant="outline" className="text-xs">
+                  ${trainer.hourly_rate}/hour
+                </Badge>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -202,251 +216,277 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Main Trainer Information */}
-          <div className="space-y-6 lg:col-span-2">
-            {/* Basic Info Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Trainer Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <TrainerAvatar trainer={trainer} size="xl" showStatus />
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold">
-                        {trainer.user_profile?.first_name || "Unknown"}{" "}
-                        {trainer.user_profile?.last_name || "Trainer"}
-                      </h3>
-                      <TrainerStatusBadge
-                        isAcceptingNewClients={trainer.is_accepting_new_clients}
-                        trainerId={trainer.id}
-                        readonly={true}
-                      />
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <UserCircle className="h-4 w-4" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger value="sessions" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Training Sessions
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              {/* Main Trainer Information */}
+              <div className="space-y-6 lg:col-span-2">
+                {/* Basic Info Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      Trainer Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-start gap-4">
+                      <TrainerAvatar trainer={trainer} size="xl" showStatus />
+                      <div className="flex-1 space-y-2">
+                        <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+                          <div className="flex items-center gap-2">
+                            <Mail className="text-muted-foreground h-4 w-4" />
+                            <span>
+                              {trainer.user_profile?.email || "Not provided"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Phone className="text-muted-foreground h-4 w-4" />
+                            <span>
+                              {trainer.user_profile?.phone || "Not provided"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="text-muted-foreground h-4 w-4" />
+                            <span>${trainer.hourly_rate}/hour</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Users className="text-muted-foreground h-4 w-4" />
+                            <span>
+                              Max {trainer.max_clients_per_session}{" "}
+                              clients/session
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Status Actions */}
+                    <div className="flex gap-2 border-t pt-4">
+                      <Button
+                        variant={
+                          trainer.is_accepting_new_clients
+                            ? "default"
+                            : "outline"
+                        }
+                        size="sm"
+                        onClick={() => handleStatusChange("active")}
+                        disabled={updateAvailabilityMutation.isPending}
+                      >
+                        Mark Available
+                      </Button>
+                      <Button
+                        variant={
+                          !trainer.is_accepting_new_clients
+                            ? "default"
+                            : "outline"
+                        }
+                        size="sm"
+                        onClick={() => handleStatusChange("inactive")}
+                        disabled={updateAvailabilityMutation.isPending}
+                      >
+                        Mark Unavailable
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Professional Details Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <GraduationCap className="h-5 w-5" />
+                      Professional Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Specializations */}
+                    <div>
+                      <h4 className="mb-2 text-sm font-medium">
+                        Specializations
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {trainer.specializations?.map((spec, index) => (
+                          <Badge key={index} variant="secondary">
+                            {spec}
+                          </Badge>
+                        )) || (
+                          <span className="text-muted-foreground text-sm">
+                            None specified
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Certifications */}
+                    <div>
+                      <h4 className="mb-2 text-sm font-medium">
+                        Certifications
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {trainer.certifications?.map((cert, index) => (
+                          <Badge key={index} variant="outline">
+                            <Award className="mr-1 h-3 w-3" />
+                            {cert}
+                          </Badge>
+                        )) || (
+                          <span className="text-muted-foreground text-sm">
+                            None specified
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Languages */}
+                    <div>
+                      <h4 className="mb-2 text-sm font-medium">Languages</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {trainer.languages?.map((lang, index) => (
+                          <Badge key={index} variant="outline">
+                            {lang}
+                          </Badge>
+                        )) || (
+                          <span className="text-muted-foreground text-sm">
+                            None specified
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <Separator />
 
                     <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
-                      <div className="flex items-center gap-2">
-                        <Mail className="text-muted-foreground h-4 w-4" />
-                        <span>
-                          {trainer.user_profile?.email || "Not provided"}
+                      <div className="flex justify-between">
+                        <span>Experience</span>
+                        <span className="font-medium">
+                          {trainer.years_experience} years
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="text-muted-foreground h-4 w-4" />
-                        <span>
-                          {trainer.user_profile?.phone || "Not provided"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="text-muted-foreground h-4 w-4" />
-                        <span>${trainer.hourly_rate}/hour</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="text-muted-foreground h-4 w-4" />
-                        <span>
-                          Max {trainer.max_clients_per_session} clients/session
+                      <div className="flex justify-between">
+                        <span>Commission Rate</span>
+                        <span className="font-medium">
+                          {trainer.commission_rate}%
                         </span>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-                {/* Status Actions */}
-                <div className="flex gap-2 border-t pt-4">
-                  <Button
-                    variant={
-                      trainer.is_accepting_new_clients ? "default" : "outline"
-                    }
-                    size="sm"
-                    onClick={() => handleStatusChange("active")}
-                    disabled={updateAvailabilityMutation.isPending}
-                  >
-                    Mark Available
-                  </Button>
-                  <Button
-                    variant={
-                      !trainer.is_accepting_new_clients ? "default" : "outline"
-                    }
-                    size="sm"
-                    onClick={() => handleStatusChange("inactive")}
-                    disabled={updateAvailabilityMutation.isPending}
-                  >
-                    Mark Unavailable
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Professional Details Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5" />
-                  Professional Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Specializations */}
-                <div>
-                  <h4 className="mb-2 text-sm font-medium">Specializations</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {trainer.specializations?.map((spec, index) => (
-                      <Badge key={index} variant="secondary">
-                        {spec}
-                      </Badge>
-                    )) || (
-                      <span className="text-muted-foreground text-sm">
-                        None specified
+              {/* Sidebar - Status & Compliance */}
+              <div className="space-y-6">
+                {/* Details Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Session Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Hourly Rate</span>
+                      <span className="font-medium">
+                        ${trainer.hourly_rate}
                       </span>
-                    )}
-                  </div>
-                </div>
+                    </div>
 
-                {/* Certifications */}
-                <div>
-                  <h4 className="mb-2 text-sm font-medium">Certifications</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {trainer.certifications?.map((cert, index) => (
-                      <Badge key={index} variant="outline">
-                        <Award className="mr-1 h-3 w-3" />
-                        {cert}
-                      </Badge>
-                    )) || (
-                      <span className="text-muted-foreground text-sm">
-                        None specified
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Max Clients</span>
+                      <span className="font-medium">
+                        {trainer.max_clients_per_session}
                       </span>
-                    )}
-                  </div>
-                </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                {/* Languages */}
-                <div>
-                  <h4 className="mb-2 text-sm font-medium">Languages</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {trainer.languages?.map((lang, index) => (
-                      <Badge key={index} variant="outline">
-                        {lang}
-                      </Badge>
-                    )) || (
-                      <span className="text-muted-foreground text-sm">
-                        None specified
+                {/* Compliance Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Compliance & Certifications</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>CPR Expires</span>
+                        <span
+                          className={
+                            trainer.cpr_certification_expires &&
+                            new Date(trainer.cpr_certification_expires) <
+                              new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                              ? "font-medium text-yellow-600"
+                              : ""
+                          }
+                        >
+                          {trainer.cpr_certification_expires
+                            ? formatDate(
+                                new Date(trainer.cpr_certification_expires)
+                              )
+                            : "Not provided"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Background Check</span>
+                        <span>
+                          {trainer.background_check_date
+                            ? formatDate(
+                                new Date(trainer.background_check_date)
+                              )
+                            : "Not provided"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Insurance Policy</span>
+                        <span className="font-mono text-xs">
+                          {trainer.insurance_policy_number || "Not provided"}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Activity Summary */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Activity Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between text-sm">
+                      <span>Joined</span>
+                      <span className="text-muted-foreground">
+                        {formatDate(new Date(trainer.created_at))}
                       </span>
-                    )}
-                  </div>
-                </div>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Last Updated</span>
+                      <span className="text-muted-foreground">
+                        {formatDate(new Date(trainer.updated_at))}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
 
-                <Separator />
-
-                <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
-                  <div className="flex justify-between">
-                    <span>Experience</span>
-                    <span className="font-medium">
-                      {trainer.years_experience} years
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Commission Rate</span>
-                    <span className="font-medium">
-                      {trainer.commission_rate}%
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar - Status & Compliance */}
-          <div className="space-y-6">
-            {/* Details Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Session Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Hourly Rate</span>
-                  <span className="font-medium">${trainer.hourly_rate}</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Max Clients</span>
-                  <span className="font-medium">
-                    {trainer.max_clients_per_session}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Compliance Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Compliance & Certifications</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>CPR Expires</span>
-                    <span
-                      className={
-                        trainer.cpr_certification_expires &&
-                        new Date(trainer.cpr_certification_expires) <
-                          new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                          ? "font-medium text-yellow-600"
-                          : ""
-                      }
-                    >
-                      {trainer.cpr_certification_expires
-                        ? formatDate(
-                            new Date(trainer.cpr_certification_expires)
-                          )
-                        : "Not provided"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Background Check</span>
-                    <span>
-                      {trainer.background_check_date
-                        ? formatDate(new Date(trainer.background_check_date))
-                        : "Not provided"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Insurance Policy</span>
-                    <span className="font-mono text-xs">
-                      {trainer.insurance_policy_number || "Not provided"}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Activity Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Activity Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <span>Joined</span>
-                  <span className="text-muted-foreground">
-                    {formatDate(new Date(trainer.created_at))}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Last Updated</span>
-                  <span className="text-muted-foreground">
-                    {formatDate(new Date(trainer.updated_at))}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+          {/* Sessions Tab */}
+          <TabsContent value="sessions" className="space-y-6">
+            <TrainerSessions
+              trainerId={trainer.id}
+              trainerName={`${trainer.user_profile?.first_name || "Unknown"} ${trainer.user_profile?.last_name || "Trainer"}`}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Delete Confirmation Dialog */}

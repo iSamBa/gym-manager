@@ -11,3 +11,9 @@ export {
   TrainerErrorBoundary,
   withTrainerErrorBoundary,
 } from "./TrainerErrorBoundary";
+
+// Session-related components
+export { TrainerSessions } from "./TrainerSessions";
+export { TrainerAnalytics } from "./TrainerAnalytics";
+export { TrainerSessionsTable } from "./TrainerSessionsTable";
+export { TrainerCalendarView } from "./TrainerCalendarView";

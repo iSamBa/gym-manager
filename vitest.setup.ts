@@ -14,6 +14,19 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }));
 
+// Mock DOM methods that may not be available in jsdom
+Object.defineProperty(Element.prototype, "scrollIntoView", {
+  value: vi.fn(),
+  writable: true,
+});
+
+// Mock IntersectionObserver for components that use it
+global.IntersectionObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
 // Mock environment variables for tests with default values
 beforeEach(() => {
   // Reset environment variables before each test

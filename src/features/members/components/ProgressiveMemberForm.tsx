@@ -417,7 +417,7 @@ export function ProgressiveMemberForm({
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 key="step1-first-name"
@@ -532,7 +532,7 @@ export function ProgressiveMemberForm({
 
       case 2:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
               <FormField
                 key="step2-email"
@@ -621,7 +621,7 @@ export function ProgressiveMemberForm({
 
       case 3:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <FormField
               control={form.control}
               name="address.street"
@@ -691,7 +691,7 @@ export function ProgressiveMemberForm({
 
       case 4:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
               <p className="text-sm text-blue-800 dark:text-blue-200">
                 <strong>Optional:</strong> This information helps trainers
@@ -745,7 +745,7 @@ export function ProgressiveMemberForm({
 
       case 5:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <FormField
               control={form.control}
               name="status"
@@ -882,7 +882,7 @@ export function ProgressiveMemberForm({
 
   return (
     <div
-      className={cn("mx-auto max-w-2xl space-y-6", className)}
+      className={cn("mx-auto max-w-2xl space-y-4", className)}
       role="region"
       aria-label="Member registration form"
     >
@@ -1008,7 +1008,7 @@ export function ProgressiveMemberForm({
             <form
               ref={formRef}
               onSubmit={form.handleSubmit(handleSubmit)}
-              className="space-y-6"
+              className="space-y-4"
               noValidate
               aria-labelledby={
                 showHeader

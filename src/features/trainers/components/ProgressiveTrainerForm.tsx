@@ -556,7 +556,7 @@ export function ProgressiveTrainerForm({
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 key="step1-first-name"
@@ -704,7 +704,7 @@ export function ProgressiveTrainerForm({
 
       case 2:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
               <p className="text-sm text-blue-800 dark:text-blue-200">
                 <strong>Optional:</strong> Professional details help with
@@ -806,7 +806,7 @@ export function ProgressiveTrainerForm({
 
       case 3:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Languages - Required */}
             <FormField
               control={form.control}
@@ -968,7 +968,7 @@ export function ProgressiveTrainerForm({
 
       case 4:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
               <p className="text-sm text-blue-800 dark:text-blue-200">
                 <strong>Optional:</strong> Configure trainer capacity and
@@ -1042,7 +1042,7 @@ export function ProgressiveTrainerForm({
 
       case 5:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
               <p className="text-sm text-blue-800 dark:text-blue-200">
                 <strong>Optional:</strong> Safety compliance and additional
@@ -1157,7 +1157,7 @@ export function ProgressiveTrainerForm({
 
   return (
     <div
-      className={cn("mx-auto max-w-2xl space-y-6", className)}
+      className={cn("mx-auto max-w-2xl space-y-4", className)}
       role="region"
       aria-label="Trainer registration form"
     >
@@ -1283,7 +1283,7 @@ export function ProgressiveTrainerForm({
             <form
               ref={formRef}
               onSubmit={form.handleSubmit(handleSubmit)}
-              className="space-y-6"
+              className="space-y-4"
               noValidate
               aria-labelledby={
                 showHeader

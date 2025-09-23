@@ -64,7 +64,7 @@ export default function AddTrainerPage() {
   if (isSubmitted && createTrainerMutation.isSuccess) {
     return (
       <MainLayout user={mapUserForLayout(user)}>
-        <div className="container mx-auto py-6">
+        <div className="container mx-auto py-4">
           <div className="flex min-h-[60vh] items-center justify-center">
             <div className="max-w-md space-y-6 text-center">
               <CheckCircle className="mx-auto h-16 w-16 text-green-600" />
@@ -89,7 +89,7 @@ export default function AddTrainerPage() {
 
   return (
     <MainLayout user={mapUserForLayout(user)}>
-      <div className="container mx-auto py-6">
+      <div className="container mx-auto py-4">
         {/* Error Display */}
         {createTrainerMutation.error && (
           <div className="mb-6">

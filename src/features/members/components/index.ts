@@ -14,3 +14,8 @@ export {
   MemberErrorBoundary,
   withMemberErrorBoundary,
 } from "./MemberErrorBoundary";
+
+// Session-related components
+export { MemberSessions } from "./MemberSessions";
+export { MemberSessionStats } from "./MemberSessionStats";
+export { MemberSessionsTable } from "./MemberSessionsTable";

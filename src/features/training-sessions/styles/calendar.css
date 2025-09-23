@@ -1,0 +1,432 @@
+/* Custom styles for react-big-calendar to match shadcn/ui theme */
+
+.rbc-calendar {
+  background-color: white;
+  color: #0f0f0f;
+}
+
+.dark .rbc-calendar {
+  background-color: #0d1117;
+  color: #f0f6fc;
+}
+
+/* Month view styling */
+.rbc-month-view {
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .rbc-month-view {
+  border-color: #374151;
+}
+
+.rbc-header {
+  padding: 0.75rem;
+  font-weight: 500;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  color: #6b7280;
+}
+
+.dark .rbc-header {
+  border-bottom-color: #374151;
+  background-color: #1f2937;
+  color: #9ca3af;
+}
+
+.rbc-date-cell {
+  padding: 0.5rem;
+  border-right: 1px solid #e5e7eb;
+}
+
+.dark .rbc-date-cell {
+  border-right-color: #374151;
+}
+
+.rbc-today {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.rbc-off-range-bg {
+  background-color: rgba(243, 244, 246, 0.5);
+}
+
+.dark .rbc-off-range-bg {
+  background-color: rgba(31, 41, 55, 0.5);
+}
+
+/* Week/Day view styling */
+.rbc-time-view {
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .rbc-time-view {
+  border-color: #374151;
+}
+
+.rbc-time-header {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .rbc-time-header {
+  border-bottom-color: #374151;
+}
+
+.rbc-time-content {
+  border: 0;
+}
+
+.rbc-time-gutter {
+  border-right: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.dark .rbc-time-gutter {
+  border-right-color: #374151;
+  background-color: #1f2937;
+}
+
+.rbc-timeslot-group {
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+  /* Scale to give each 15-minute slot the height of a full hour (4x scale) */
+  min-height: 200px !important;
+  height: 200px !important;
+}
+
+.dark .rbc-timeslot-group {
+  border-bottom-color: rgba(55, 65, 81, 0.5);
+}
+
+.rbc-time-slot {
+  border: 0;
+  /* Each 15-minute slot gets 50px height (200px ÷ 4 slots) */
+  height: 50px !important;
+  min-height: 50px !important;
+  flex: 1 1 50px;
+}
+
+.rbc-current-time-indicator {
+  background-color: #3b82f6;
+}
+
+/* Event styling */
+.rbc-event {
+  border-radius: 0.25rem;
+  border: 0;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.rbc-event.rbc-selected {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+/* Agenda view styling */
+.rbc-agenda-view {
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .rbc-agenda-view {
+  border-color: #374151;
+}
+
+.rbc-agenda-table {
+  width: 100%;
+}
+
+.rbc-agenda-view table.rbc-agenda-table {
+  border: 0;
+}
+
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th,
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .rbc-agenda-view table.rbc-agenda-table thead > tr > th,
+.dark .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  border-bottom-color: #374151;
+}
+
+/* Buttons and controls */
+.rbc-btn {
+  border-radius: 0.25rem;
+  border: 1px solid #e5e7eb;
+  padding: 0.25rem 0.75rem;
+  transition-property:
+    color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  background-color: white;
+}
+
+.rbc-btn:hover {
+  background-color: #f9fafb;
+}
+
+.dark .rbc-btn {
+  border-color: #374151;
+  background-color: #0d1117;
+}
+
+.dark .rbc-btn:hover {
+  background-color: #1f2937;
+}
+
+.rbc-btn-group > .rbc-btn:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.rbc-btn-group > .rbc-btn:last-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.rbc-btn-group > .rbc-btn:not(:first-child):not(:last-child) {
+  border-radius: 0;
+}
+
+.rbc-active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* Popup and overlay styling */
+.rbc-overlay {
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  background-color: white;
+}
+
+.dark .rbc-overlay {
+  border-color: #374151;
+  background-color: #0d1117;
+}
+
+.rbc-overlay-header {
+  padding: 0.75rem;
+  font-weight: 500;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .rbc-overlay-header {
+  border-bottom-color: #374151;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .rbc-calendar {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .rbc-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .rbc-toolbar-label {
+    text-align: center;
+  }
+}
+
+/* Custom session status colors */
+.rbc-event.session-trial {
+  border-color: #e9d5ff;
+  background-color: #f3e8ff;
+  color: #6b21a8;
+}
+
+.rbc-event.session-standard {
+  border-color: #bfdbfe;
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.rbc-event.session-cancelled {
+  text-decoration-line: line-through;
+  opacity: 0.6;
+}
+
+.rbc-event.session-in-progress {
+  border-color: #fed7aa;
+  background-color: #ffedd5;
+  color: #ea580c;
+}
+
+.rbc-event.session-completed {
+  border-color: #bbf7d0;
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+/* Smart event display with dynamic heights - Target TimeGrid views specifically */
+.rbc-time-view .rbc-day-slot .rbc-event,
+.rbc-time-view .rbc-time-slot .rbc-event {
+  /* Base minimum height for time views - override react-big-calendar inline styles */
+  min-height: 45px !important;
+  height: auto !important;
+}
+
+/* Enhanced styling for different duration classes */
+.rbc-event .event-content.event-standard {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 2px 4px !important;
+  gap: 2px;
+}
+
+.rbc-event .event-content.event-compact {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 3px 5px !important;
+  gap: 3px;
+}
+
+/* Duration-specific styling with higher specificity for TimeGrid views */
+.rbc-time-view .rbc-day-slot .rbc-event.event-very-short,
+.rbc-time-view .rbc-time-slot .rbc-event.event-very-short {
+  min-height: 45px !important;
+}
+
+.rbc-time-view .rbc-day-slot .rbc-event.event-short,
+.rbc-time-view .rbc-time-slot .rbc-event.event-short {
+  min-height: 45px !important;
+}
+
+.rbc-time-view .rbc-day-slot .rbc-event.event-normal,
+.rbc-time-view .rbc-time-slot .rbc-event.event-normal {
+  min-height: auto !important;
+}
+
+/* View mode specific heights */
+.rbc-time-view .rbc-day-slot .rbc-event.event-compact.event-very-short,
+.rbc-time-view .rbc-time-slot .rbc-event.event-compact.event-very-short {
+  min-height: 60px !important;
+}
+
+.rbc-time-view .rbc-day-slot .rbc-event.event-compact.event-short,
+.rbc-time-view .rbc-time-slot .rbc-event.event-compact.event-short {
+  min-height: 50px !important;
+}
+
+.rbc-time-view .rbc-day-slot .rbc-event.event-compact.event-normal,
+.rbc-time-view .rbc-time-slot .rbc-event.event-compact.event-normal {
+  min-height: 40px !important;
+}
+
+/* Legacy duration-specific styling for content alignment */
+.rbc-event .event-content.event-very-short {
+  justify-content: center;
+  gap: 1px !important;
+}
+
+.rbc-event .event-content.event-short {
+  justify-content: flex-start;
+  gap: 2px !important;
+}
+
+.rbc-event .event-content.event-normal {
+  justify-content: flex-start;
+  gap: 2px !important;
+}
+
+/* Base event content styling */
+.rbc-event .event-content {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  overflow: visible !important;
+}
+
+.rbc-event .event-content .trainer-name {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  line-height: 1.2 !important;
+  margin-bottom: 2px !important;
+}
+
+.rbc-event .event-content .session-details {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1px !important;
+}
+
+.rbc-event .event-content .session-details > div {
+  display: flex;
+  align-items: center;
+  gap: 2px !important;
+  line-height: 1.1 !important;
+}
+
+.rbc-event .event-content .session-details-condensed {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  line-height: 1.1 !important;
+}
+
+/* Compact mode enhancements */
+.rbc-event .event-content.event-compact .trainer-name {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 3px !important;
+}
+
+.rbc-event .event-content.event-compact .session-details {
+  gap: 2px !important;
+}
+
+.rbc-event .event-content.event-compact .session-details > div {
+  gap: 3px !important;
+  line-height: 1.2 !important;
+}
+
+/* Ensure event content is visible in week/day views */
+.rbc-day-slot .rbc-event,
+.rbc-time-slot .rbc-event {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .rbc-event.session-trial {
+    border-color: #7c3aed;
+    background-color: rgba(88, 28, 135, 0.2);
+    color: #d8b4fe;
+  }
+
+  .rbc-event.session-standard {
+    border-color: #1e40af;
+    background-color: rgba(30, 58, 138, 0.2);
+    color: #93c5fd;
+  }
+
+  .rbc-event.session-in-progress {
+    border-color: #ea580c;
+    background-color: rgba(194, 65, 12, 0.2);
+    color: #fdba74;
+  }
+
+  .rbc-event.session-completed {
+    border-color: #16a34a;
+    background-color: rgba(21, 128, 61, 0.2);
+    color: #86efac;
+  }
+}

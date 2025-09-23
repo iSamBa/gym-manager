@@ -64,7 +64,7 @@ export default function AddMemberPage() {
   if (isSubmitted && createMemberMutation.isSuccess) {
     return (
       <MainLayout user={mapUserForLayout(user)}>
-        <div className="container mx-auto py-6">
+        <div className="container mx-auto py-4">
           <div className="flex min-h-[60vh] items-center justify-center">
             <div className="max-w-md space-y-6 text-center">
               <CheckCircle className="mx-auto h-16 w-16 text-green-600" />
@@ -89,7 +89,7 @@ export default function AddMemberPage() {
 
   return (
     <MainLayout user={mapUserForLayout(user)}>
-      <div className="container mx-auto py-6">
+      <div className="container mx-auto py-4">
         {/* Error Display */}
         {createMemberMutation.error && (
           <div className="mb-6">

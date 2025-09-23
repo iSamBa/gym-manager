@@ -155,15 +155,18 @@ describe("useAuth Hook", () => {
 
       renderHook(() => useAuth());
 
-      await waitFor(() => {
-        expect(consoleErrorMock).toHaveBeenCalledWith(
-          "Error initializing auth:",
-          expect.any(Error)
-        );
-      });
+      await waitFor(
+        () => {
+          expect(consoleErrorMock).toHaveBeenCalledWith(
+            "Error initializing auth:",
+            expect.any(Error)
+          );
+        },
+        { timeout: 1000 }
+      );
 
       expect(mockAuthStore.setIsLoading).toHaveBeenCalledWith(false);
-    });
+    }, 1500);
 
     it("should handle profile loading errors gracefully", async () => {
       const mockQueryBuilder = mockedSupabase.from();

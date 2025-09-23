@@ -12,9 +12,11 @@ import {
   Menu,
   Home,
   Dumbbell,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 interface SidebarProps {
   className?: string;
@@ -22,14 +24,21 @@ interface SidebarProps {
 }
 
 export function Sidebar({ className, onNavigate }: SidebarProps) {
+  const pathname = usePathname();
+
   const navigation = [
     { name: "Dashboard", href: "/", icon: Home },
     { name: "Members", href: "/members", icon: Users },
     { name: "Trainers", href: "/trainers", icon: UserCheck },
+    { name: "Training Sessions", href: "/training-sessions", icon: Calendar },
     { name: "Memberships", href: "/memberships", icon: CreditCard },
     { name: "Payments", href: "/payments", icon: Receipt },
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  ];
+  ] as const;
+
+  const isActiveRoute = (href: string) => {
+    return pathname === href || (href !== "/" && pathname.startsWith(href));
+  };
 
   return (
     <div className={cn("pb-12", className)}>
@@ -42,19 +51,26 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
             Gym Manager
           </h2>
           <div className="space-y-1">
-            {navigation.map((item) => (
-              <Button
-                key={item.name}
-                variant="ghost"
-                className="w-full justify-start"
-                asChild
-              >
-                <Link href={item.href} onClick={onNavigate}>
-                  <item.icon className="mr-2 h-4 w-4" />
-                  {item.name}
-                </Link>
-              </Button>
-            ))}
+            {navigation.map((item) => {
+              const isActive = isActiveRoute(item.href);
+
+              return (
+                <Button
+                  key={item.name}
+                  variant={isActive ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start",
+                    isActive && "bg-secondary"
+                  )}
+                  asChild
+                >
+                  <Link href={item.href} onClick={onNavigate}>
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {item.name}
+                  </Link>
+                </Button>
+              );
+            })}
           </div>
         </div>
       </div>

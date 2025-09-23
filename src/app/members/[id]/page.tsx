@@ -9,11 +9,13 @@ import { Separator } from "@/components/ui/separator";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   MemberAvatar,
   MemberStatusBadge,
   EditMemberDialog,
   withMemberErrorBoundary,
+  MemberSessions,
 } from "@/features/members/components";
 import {
   useMemberWithSubscription,
@@ -31,9 +33,10 @@ import {
   Calendar,
   MapPin,
   User,
-  Clock,
   AlertCircle,
   Trash2,
+  Activity,
+  UserCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -69,7 +72,6 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
     data: member,
     isLoading,
     error,
-    isFetching,
     refetch,
   } = useMemberWithSubscription(id, {
     refetchInterval: 60000, // Refresh every minute
@@ -194,6 +196,21 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                 Back to Members
               </Button>
             </Link>
+            <div>
+              <h1 className="text-2xl font-bold">
+                {member.first_name} {member.last_name}
+              </h1>
+              <div className="mt-1 flex items-center gap-2">
+                <MemberStatusBadge
+                  status={member.status}
+                  memberId={member.id}
+                  readonly={true}
+                />
+                <Badge variant="outline" className="text-xs">
+                  Member ID: {member.id.slice(-8)}
+                </Badge>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -212,227 +229,247 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Main Member Information */}
-          <div className="space-y-6 lg:col-span-2">
-            {/* Basic Info Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Member Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <MemberAvatar
-                    member={member}
-                    size="lg"
-                    className="flex-shrink-0"
-                  />
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold">
-                        {member.first_name} {member.last_name}
-                      </h3>
-                      <MemberStatusBadge
-                        status={member.status}
-                        memberId={member.id}
-                        readonly={true}
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <UserCircle className="h-4 w-4" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger value="sessions" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Training Sessions
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              {/* Main Member Information */}
+              <div className="space-y-6 lg:col-span-2">
+                {/* Basic Info Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      Member Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-start gap-4">
+                      <MemberAvatar
+                        member={member}
+                        size="lg"
+                        className="flex-shrink-0"
                       />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
-                      <div className="flex items-center gap-2">
-                        <Mail className="text-muted-foreground h-4 w-4" />
-                        <span>{member.email}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="text-muted-foreground h-4 w-4" />
-                        <span>{member.phone || "Not provided"}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="text-muted-foreground h-4 w-4" />
-                        <span>
-                          Joined {formatDate(new Date(member.created_at))}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="text-muted-foreground h-4 w-4" />
-                        <span>{formatAddress(member.address)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Status Actions */}
-                <div className="flex gap-2 border-t pt-4">
-                  <Button
-                    variant={member.status === "active" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleStatusChange("active")}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    Mark Active
-                  </Button>
-                  <Button
-                    variant={
-                      member.status === "inactive" ? "default" : "outline"
-                    }
-                    size="sm"
-                    onClick={() => handleStatusChange("inactive")}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    Mark Inactive
-                  </Button>
-                  <Button
-                    variant={
-                      member.status === "suspended" ? "default" : "outline"
-                    }
-                    size="sm"
-                    onClick={() => handleStatusChange("suspended")}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    Mark Suspended
-                  </Button>
-                  <Button
-                    variant={
-                      member.status === "pending" ? "default" : "outline"
-                    }
-                    size="sm"
-                    onClick={() => handleStatusChange("pending")}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    Mark Pending
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Emergency Contacts */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Emergency Contacts</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {member.emergency_contacts &&
-                member.emergency_contacts.length > 0 ? (
-                  <div className="space-y-4">
-                    {member.emergency_contacts.map((contact, index) => (
-                      <div
-                        key={index}
-                        className="bg-muted flex items-center justify-between rounded-lg p-3"
-                      >
-                        <div>
-                          <p className="font-medium">
-                            {contact.first_name} {contact.last_name}
-                          </p>
-                          <p className="text-muted-foreground text-sm">
-                            {contact.relationship}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm">{contact.phone}</p>
-                          {contact.email && (
-                            <p className="text-muted-foreground text-sm">
-                              {contact.email}
-                            </p>
-                          )}
+                      <div className="flex-1 space-y-2">
+                        <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+                          <div className="flex items-center gap-2">
+                            <Mail className="text-muted-foreground h-4 w-4" />
+                            <span>{member.email}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Phone className="text-muted-foreground h-4 w-4" />
+                            <span>{member.phone || "Not provided"}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="text-muted-foreground h-4 w-4" />
+                            <span>
+                              Joined {formatDate(new Date(member.created_at))}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="text-muted-foreground h-4 w-4" />
+                            <span>{formatAddress(member.address)}</span>
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">
-                    No emergency contacts provided
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar - Subscription Info */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Subscription Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {member.subscription ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Plan</span>
-                      <Badge variant="secondary">
-                        {member.subscription.plan?.name || "Unknown Plan"}
-                      </Badge>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Status</span>
-                      <Badge
+                    {/* Status Actions */}
+                    <div className="flex gap-2 border-t pt-4">
+                      <Button
                         variant={
-                          member.subscription.status === "active"
-                            ? "default"
-                            : "secondary"
+                          member.status === "active" ? "default" : "outline"
                         }
+                        size="sm"
+                        onClick={() => handleStatusChange("active")}
+                        disabled={updateStatusMutation.isPending}
                       >
-                        {member.subscription.status}
-                      </Badge>
+                        Mark Active
+                      </Button>
+                      <Button
+                        variant={
+                          member.status === "inactive" ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => handleStatusChange("inactive")}
+                        disabled={updateStatusMutation.isPending}
+                      >
+                        Mark Inactive
+                      </Button>
+                      <Button
+                        variant={
+                          member.status === "suspended" ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => handleStatusChange("suspended")}
+                        disabled={updateStatusMutation.isPending}
+                      >
+                        Mark Suspended
+                      </Button>
+                      <Button
+                        variant={
+                          member.status === "pending" ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => handleStatusChange("pending")}
+                        disabled={updateStatusMutation.isPending}
+                      >
+                        Mark Pending
+                      </Button>
                     </div>
+                  </CardContent>
+                </Card>
 
-                    <Separator />
+                {/* Emergency Contacts */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Emergency Contacts</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {member.emergency_contacts &&
+                    member.emergency_contacts.length > 0 ? (
+                      <div className="space-y-4">
+                        {member.emergency_contacts.map((contact, index) => (
+                          <div
+                            key={index}
+                            className="bg-muted flex items-center justify-between rounded-lg p-3"
+                          >
+                            <div>
+                              <p className="font-medium">
+                                {contact.first_name} {contact.last_name}
+                              </p>
+                              <p className="text-muted-foreground text-sm">
+                                {contact.relationship}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm">{contact.phone}</p>
+                              {contact.email && (
+                                <p className="text-muted-foreground text-sm">
+                                  {contact.email}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        No emergency contacts provided
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
 
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Start Date</span>
-                        <span>
-                          {formatDate(new Date(member.subscription.start_date))}
-                        </span>
+              {/* Sidebar - Subscription Info */}
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Subscription Status</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {member.subscription ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Plan</span>
+                          <Badge variant="secondary">
+                            {member.subscription.plan?.name || "Unknown Plan"}
+                          </Badge>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Status</span>
+                          <Badge
+                            variant={
+                              member.subscription.status === "active"
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
+                            {member.subscription.status}
+                          </Badge>
+                        </div>
+
+                        <Separator />
+
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span>Start Date</span>
+                            <span>
+                              {formatDate(
+                                new Date(member.subscription.start_date)
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>End Date</span>
+                            <span>
+                              {member.subscription.end_date
+                                ? formatDate(
+                                    new Date(member.subscription.end_date)
+                                  )
+                                : "No end date"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between font-medium">
+                            <span>Monthly Fee</span>
+                            <span>${member.subscription.price}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span>End Date</span>
-                        <span>
-                          {member.subscription.end_date
-                            ? formatDate(new Date(member.subscription.end_date))
-                            : "No end date"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between font-medium">
-                        <span>Monthly Fee</span>
-                        <span>${member.subscription.price}</span>
-                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        No active subscription
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Activity Summary */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Activity Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between text-sm">
+                      <span>Member Since</span>
+                      <span className="text-muted-foreground">
+                        {formatDate(new Date(member.join_date))}
+                      </span>
                     </div>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">
-                    No active subscription
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                    <div className="flex justify-between text-sm">
+                      <span>Account Created</span>
+                      <span className="text-muted-foreground">
+                        {formatDate(new Date(member.created_at))}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
 
-            {/* Activity Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Activity Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <span>Member Since</span>
-                  <span className="text-muted-foreground">
-                    {formatDate(new Date(member.join_date))}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Account Created</span>
-                  <span className="text-muted-foreground">
-                    {formatDate(new Date(member.created_at))}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+          {/* Training Sessions Tab */}
+          <TabsContent value="sessions" className="space-y-6">
+            <MemberSessions
+              memberId={member.id}
+              memberName={`${member.first_name} ${member.last_name}`}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Edit Member Dialog */}
