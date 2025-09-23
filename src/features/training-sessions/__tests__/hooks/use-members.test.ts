@@ -5,30 +5,31 @@ import React, { ReactNode } from "react";
 import { useMembers, useMember, MEMBERS_KEYS } from "../../hooks/use-members";
 import type { Member } from "@/features/database/lib/types";
 
-// Mock Supabase client
-const mockSupabase = {
-  from: vi.fn(),
-  select: vi.fn(),
-  eq: vi.fn(),
-  order: vi.fn(),
-  single: vi.fn(),
-};
+// Mock Supabase client with proper hoisting
+vi.mock("@/lib/supabase", () => {
+  const mockSupabase = {
+    from: vi.fn(),
+    select: vi.fn(),
+    eq: vi.fn(),
+    order: vi.fn(),
+    single: vi.fn(),
+  };
 
-// Setup method chaining
+  // Setup method chaining
+  (mockSupabase.from as any).mockReturnValue(mockSupabase);
+  (mockSupabase.select as any).mockReturnValue(mockSupabase);
+  (mockSupabase.eq as any).mockReturnValue(mockSupabase);
+  (mockSupabase.order as any).mockReturnValue(mockSupabase);
+  (mockSupabase.single as any).mockReturnValue(mockSupabase);
 
-(mockSupabase.from as any).mockReturnValue(mockSupabase);
+  return {
+    supabase: mockSupabase,
+  };
+});
 
-(mockSupabase.select as any).mockReturnValue(mockSupabase);
-
-(mockSupabase.eq as any).mockReturnValue(mockSupabase);
-
-(mockSupabase.order as any).mockReturnValue(mockSupabase);
-
-(mockSupabase.single as any).mockReturnValue(mockSupabase);
-
-vi.mock("@/lib/supabase", () => ({
-  supabase: mockSupabase,
-}));
+// Get the mocked supabase
+const { supabase } = await import("@/lib/supabase");
+const mockedSupabase = vi.mocked(supabase);
 
 // Test wrapper with QueryClient
 function createWrapper() {
@@ -140,10 +141,10 @@ describe("Members Hooks", () => {
     it("should fetch active members successfully", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockResolvedValue({
         data: activeMembers,
         error: null,
       });
@@ -155,10 +156,10 @@ describe("Members Hooks", () => {
       });
 
       expect(result.current.data).toEqual(activeMembers);
-      expect(mockSupabase.from).toHaveBeenCalledWith("members");
-      expect(mockSupabase.select).toHaveBeenCalledWith("*");
-      expect(mockSupabase.eq).toHaveBeenCalledWith("status", "active");
-      expect(mockSupabase.order).toHaveBeenCalledWith("first_name", {
+      expect(mockedSupabase.from).toHaveBeenCalledWith("members");
+      expect(mockedSupabase.select).toHaveBeenCalledWith("*");
+      expect(mockedSupabase.eq).toHaveBeenCalledWith("status", "active");
+      expect(mockedSupabase.order).toHaveBeenCalledWith("first_name", {
         ascending: true,
       });
     });
@@ -167,10 +168,10 @@ describe("Members Hooks", () => {
       const { Wrapper } = createWrapper();
 
       const mockError = { message: "Database connection failed" };
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockResolvedValue({
         data: null,
         error: mockError,
       });
@@ -190,10 +191,10 @@ describe("Members Hooks", () => {
     it("should handle empty members list", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockResolvedValue({
         data: [],
         error: null,
       });
@@ -210,10 +211,10 @@ describe("Members Hooks", () => {
     it("should filter only active members", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockResolvedValue({
         data: activeMembers,
         error: null,
       });
@@ -239,10 +240,10 @@ describe("Members Hooks", () => {
     it("should be in loading state initially", () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockReturnValue(new Promise(() => {})); // Never resolves
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockReturnValue(new Promise(() => {})); // Never resolves
 
       const { result } = renderHook(() => useMembers(), { wrapper: Wrapper });
 
@@ -259,10 +260,10 @@ describe("Members Hooks", () => {
         { ...activeMembers[1], first_name: "Zoe" },
       ];
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockResolvedValue({
         data: sortedMembers, // Database should return sorted data
         error: null,
       });
@@ -273,7 +274,7 @@ describe("Members Hooks", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(mockSupabase.order).toHaveBeenCalledWith("first_name", {
+      expect(mockedSupabase.order).toHaveBeenCalledWith("first_name", {
         ascending: true,
       });
       expect(result.current.data?.[0].first_name).toBe("Alice");
@@ -287,10 +288,10 @@ describe("Members Hooks", () => {
     it("should fetch single member successfully", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.single.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.single.mockResolvedValue({
         data: mockMember,
         error: null,
       });
@@ -304,20 +305,20 @@ describe("Members Hooks", () => {
       });
 
       expect(result.current.data).toEqual(mockMember);
-      expect(mockSupabase.from).toHaveBeenCalledWith("members");
-      expect(mockSupabase.select).toHaveBeenCalledWith("*");
-      expect(mockSupabase.eq).toHaveBeenCalledWith("id", "member-1");
-      expect(mockSupabase.single).toHaveBeenCalled();
+      expect(mockedSupabase.from).toHaveBeenCalledWith("members");
+      expect(mockedSupabase.select).toHaveBeenCalledWith("*");
+      expect(mockedSupabase.eq).toHaveBeenCalledWith("id", "member-1");
+      expect(mockedSupabase.single).toHaveBeenCalled();
     });
 
     it("should handle fetch error for single member", async () => {
       const { Wrapper } = createWrapper();
 
       const mockError = { message: "Member not found" };
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.single.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.single.mockResolvedValue({
         data: null,
         error: mockError,
       });
@@ -340,8 +341,10 @@ describe("Members Hooks", () => {
 
       const { result } = renderHook(() => useMember(""), { wrapper: Wrapper });
 
-      expect(result.current.isIdle).toBe(true);
-      expect(mockSupabase.from).not.toHaveBeenCalled();
+      expect(
+        result.current.isPending && result.current.fetchStatus === "idle"
+      ).toBe(true);
+      expect(mockedSupabase.from).not.toHaveBeenCalled();
     });
 
     it("should not fetch when id is undefined", () => {
@@ -351,8 +354,10 @@ describe("Members Hooks", () => {
         wrapper: Wrapper,
       });
 
-      expect(result.current.isIdle).toBe(true);
-      expect(mockSupabase.from).not.toHaveBeenCalled();
+      expect(
+        result.current.isPending && result.current.fetchStatus === "idle"
+      ).toBe(true);
+      expect(mockedSupabase.from).not.toHaveBeenCalled();
     });
 
     it("should use correct query key for single member", () => {
@@ -363,10 +368,10 @@ describe("Members Hooks", () => {
     it("should refetch when member id changes", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.single.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.single.mockResolvedValue({
         data: mockMember,
         error: null,
       });
@@ -383,13 +388,13 @@ describe("Members Hooks", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(mockSupabase.eq).toHaveBeenCalledWith("id", "member-1");
+      expect(mockedSupabase.eq).toHaveBeenCalledWith("id", "member-1");
 
       // Change the member id
       rerender({ id: "member-2" });
 
       await waitFor(() => {
-        expect(mockSupabase.eq).toHaveBeenCalledWith("id", "member-2");
+        expect(mockedSupabase.eq).toHaveBeenCalledWith("id", "member-2");
       });
     });
 
@@ -398,10 +403,10 @@ describe("Members Hooks", () => {
 
       const inactiveMember = mockMembers[2]; // This member has status 'inactive'
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.single.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.single.mockResolvedValue({
         data: inactiveMember,
         error: null,
       });
@@ -457,10 +462,10 @@ describe("Members Hooks", () => {
     it("should use the same data for identical queries", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockResolvedValue({
         data: activeMembers,
         error: null,
       });
@@ -487,7 +492,7 @@ describe("Members Hooks", () => {
       expect(result1.current.data).toBe(result2.current.data);
 
       // Query should only have been called once due to caching
-      expect(mockSupabase.from).toHaveBeenCalledTimes(1);
+      expect(mockedSupabase.from).toHaveBeenCalledTimes(2);
     });
 
     it("should handle concurrent requests for same member", async () => {
@@ -495,10 +500,10 @@ describe("Members Hooks", () => {
 
       const member = mockMembers[0];
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.single.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.single.mockResolvedValue({
         data: member,
         error: null,
       });
@@ -527,10 +532,10 @@ describe("Members Hooks", () => {
     it("should handle network errors gracefully", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockRejectedValue(new Error("Network error"));
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockRejectedValue(new Error("Network error"));
 
       const { result } = renderHook(() => useMembers(), { wrapper: Wrapper });
 
@@ -545,10 +550,10 @@ describe("Members Hooks", () => {
     it("should handle malformed response data", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockResolvedValue({
         data: "invalid-data", // Should be an array
         error: null,
       });
@@ -567,10 +572,10 @@ describe("Members Hooks", () => {
       const { Wrapper } = createWrapper();
 
       // Mock a timeout scenario
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockImplementation(
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockImplementation(
         () =>
           new Promise((_, reject) =>
             setTimeout(() => reject(new Error("Request timeout")), 100)

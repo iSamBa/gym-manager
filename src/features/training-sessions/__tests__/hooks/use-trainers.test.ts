@@ -9,30 +9,31 @@ import {
 } from "../../hooks/use-trainers";
 import type { TrainerWithProfile } from "@/features/database/lib/types";
 
-// Mock Supabase client
-const mockSupabase = {
-  from: vi.fn(),
-  select: vi.fn(),
-  eq: vi.fn(),
-  order: vi.fn(),
-  single: vi.fn(),
-};
+// Mock Supabase client with proper hoisting
+vi.mock("@/lib/supabase", () => {
+  const mockSupabase = {
+    from: vi.fn(),
+    select: vi.fn(),
+    eq: vi.fn(),
+    order: vi.fn(),
+    single: vi.fn(),
+  };
 
-// Setup method chaining
+  // Setup method chaining
+  (mockSupabase.from as any).mockReturnValue(mockSupabase);
+  (mockSupabase.select as any).mockReturnValue(mockSupabase);
+  (mockSupabase.eq as any).mockReturnValue(mockSupabase);
+  (mockSupabase.order as any).mockReturnValue(mockSupabase);
+  (mockSupabase.single as any).mockReturnValue(mockSupabase);
 
-(mockSupabase.from as any).mockReturnValue(mockSupabase);
+  return {
+    supabase: mockSupabase,
+  };
+});
 
-(mockSupabase.select as any).mockReturnValue(mockSupabase);
-
-(mockSupabase.eq as any).mockReturnValue(mockSupabase);
-
-(mockSupabase.order as any).mockReturnValue(mockSupabase);
-
-(mockSupabase.single as any).mockReturnValue(mockSupabase);
-
-vi.mock("@/lib/supabase", () => ({
-  supabase: mockSupabase,
-}));
+// Get the mocked supabase
+const { supabase } = await import("@/lib/supabase");
+const mockedSupabase = vi.mocked(supabase);
 
 // Test wrapper with QueryClient
 function createWrapper() {
@@ -40,6 +41,8 @@ function createWrapper() {
     defaultOptions: {
       queries: {
         retry: false,
+        staleTime: Infinity, // Make data immediately fresh for reuse
+        gcTime: Infinity, // Keep data in cache indefinitely
       },
       mutations: {
         retry: false,
@@ -119,9 +122,9 @@ describe("Trainers Hooks", () => {
     it("should fetch trainers successfully", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockResolvedValue({
         data: mockTrainers,
         error: null,
       });
@@ -133,24 +136,24 @@ describe("Trainers Hooks", () => {
       });
 
       expect(result.current.data).toEqual(mockTrainers);
-      expect(mockSupabase.from).toHaveBeenCalledWith("trainers");
-      expect(mockSupabase.select).toHaveBeenCalledWith(`
+      expect(mockedSupabase.from).toHaveBeenCalledWith("trainers");
+      expect(mockedSupabase.select).toHaveBeenCalledWith(`
           *,
           user_profile:user_profiles(*)
         `);
-      expect(mockSupabase.order).toHaveBeenCalledWith(
+      expect(mockedSupabase.order).toHaveBeenCalledWith(
         "user_profile.first_name",
         { ascending: true }
       );
-    });
+    }, 1000);
 
     it("should handle fetch error", async () => {
       const { Wrapper } = createWrapper();
 
       const mockError = { message: "Database connection failed" };
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockResolvedValue({
         data: null,
         error: mockError,
       });
@@ -170,9 +173,9 @@ describe("Trainers Hooks", () => {
     it("should handle empty trainers list", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockResolvedValue({
         data: [],
         error: null,
       });
@@ -184,7 +187,7 @@ describe("Trainers Hooks", () => {
       });
 
       expect(result.current.data).toEqual([]);
-    });
+    }, 1000);
 
     it("should use correct query key", () => {
       const expectedKey = TRAINERS_KEYS.list({});
@@ -194,9 +197,9 @@ describe("Trainers Hooks", () => {
     it("should be in loading state initially", () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockReturnValue(new Promise(() => {})); // Never resolves
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockReturnValue(new Promise(() => {})); // Never resolves
 
       const { result } = renderHook(() => useTrainers(), { wrapper: Wrapper });
 
@@ -211,10 +214,10 @@ describe("Trainers Hooks", () => {
     it("should fetch single trainer successfully", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.single.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.single.mockResolvedValue({
         data: mockTrainer,
         error: null,
       });
@@ -228,23 +231,23 @@ describe("Trainers Hooks", () => {
       });
 
       expect(result.current.data).toEqual(mockTrainer);
-      expect(mockSupabase.from).toHaveBeenCalledWith("trainers");
-      expect(mockSupabase.select).toHaveBeenCalledWith(`
+      expect(mockedSupabase.from).toHaveBeenCalledWith("trainers");
+      expect(mockedSupabase.select).toHaveBeenCalledWith(`
           *,
           user_profile:user_profiles(*)
         `);
-      expect(mockSupabase.eq).toHaveBeenCalledWith("id", "trainer-1");
-      expect(mockSupabase.single).toHaveBeenCalled();
+      expect(mockedSupabase.eq).toHaveBeenCalledWith("id", "trainer-1");
+      expect(mockedSupabase.single).toHaveBeenCalled();
     });
 
     it("should handle fetch error for single trainer", async () => {
       const { Wrapper } = createWrapper();
 
       const mockError = { message: "Trainer not found" };
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.single.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.single.mockResolvedValue({
         data: null,
         error: mockError,
       });
@@ -267,8 +270,10 @@ describe("Trainers Hooks", () => {
 
       const { result } = renderHook(() => useTrainer(""), { wrapper: Wrapper });
 
-      expect(result.current.isIdle).toBe(true);
-      expect(mockSupabase.from).not.toHaveBeenCalled();
+      expect(
+        result.current.isPending && result.current.fetchStatus === "idle"
+      ).toBe(true);
+      expect(mockedSupabase.from).not.toHaveBeenCalled();
     });
 
     it("should not fetch when id is undefined", () => {
@@ -278,8 +283,10 @@ describe("Trainers Hooks", () => {
         wrapper: Wrapper,
       });
 
-      expect(result.current.isIdle).toBe(true);
-      expect(mockSupabase.from).not.toHaveBeenCalled();
+      expect(
+        result.current.isPending && result.current.fetchStatus === "idle"
+      ).toBe(true);
+      expect(mockedSupabase.from).not.toHaveBeenCalled();
     });
 
     it("should use correct query key for single trainer", () => {
@@ -290,10 +297,10 @@ describe("Trainers Hooks", () => {
     it("should refetch when trainer id changes", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.eq.mockReturnValue(mockSupabase);
-      mockSupabase.single.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.eq.mockReturnValue(mockedSupabase);
+      mockedSupabase.single.mockResolvedValue({
         data: mockTrainer,
         error: null,
       });
@@ -310,13 +317,13 @@ describe("Trainers Hooks", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(mockSupabase.eq).toHaveBeenCalledWith("id", "trainer-1");
+      expect(mockedSupabase.eq).toHaveBeenCalledWith("id", "trainer-1");
 
       // Change the trainer id
       rerender({ id: "trainer-2" });
 
       await waitFor(() => {
-        expect(mockSupabase.eq).toHaveBeenCalledWith("id", "trainer-2");
+        expect(mockedSupabase.eq).toHaveBeenCalledWith("id", "trainer-2");
       });
     });
   });
@@ -352,9 +359,9 @@ describe("Trainers Hooks", () => {
     it("should use the same data for identical queries", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockResolvedValue({
         data: mockTrainers,
         error: null,
       });
@@ -381,17 +388,17 @@ describe("Trainers Hooks", () => {
       expect(result1.current.data).toBe(result2.current.data);
 
       // Query should only have been called once due to caching
-      expect(mockSupabase.from).toHaveBeenCalledTimes(1);
-    });
+      expect(mockedSupabase.from).toHaveBeenCalledTimes(1);
+    }, 1000);
   });
 
   describe("Error Handling", () => {
     it("should handle network errors gracefully", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockRejectedValue(new Error("Network error"));
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockRejectedValue(new Error("Network error"));
 
       const { result } = renderHook(() => useTrainers(), { wrapper: Wrapper });
 
@@ -406,9 +413,9 @@ describe("Trainers Hooks", () => {
     it("should handle malformed response data", async () => {
       const { Wrapper } = createWrapper();
 
-      mockSupabase.from.mockReturnValue(mockSupabase);
-      mockSupabase.select.mockReturnValue(mockSupabase);
-      mockSupabase.order.mockResolvedValue({
+      mockedSupabase.from.mockReturnValue(mockedSupabase);
+      mockedSupabase.select.mockReturnValue(mockedSupabase);
+      mockedSupabase.order.mockResolvedValue({
         data: "invalid-data", // Should be an array
         error: null,
       });
@@ -421,6 +428,6 @@ describe("Trainers Hooks", () => {
 
       // Hook should still succeed but data might be unexpected
       expect(result.current.data).toBe("invalid-data");
-    });
+    }, 1000);
   });
 });

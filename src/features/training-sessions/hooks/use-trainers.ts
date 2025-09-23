@@ -17,10 +17,15 @@ export const useTrainers = () => {
   return useQuery({
     queryKey: TRAINERS_KEYS.list({}),
     queryFn: async () => {
-      const { data, error } = await supabase.from("trainers").select(`
+      const { data, error } = await supabase
+        .from("trainers")
+        .select(
+          `
           *,
           user_profile:user_profiles(*)
-        `);
+        `
+        )
+        .order("user_profile.first_name", { ascending: true });
 
       if (error) {
         throw new Error(`Failed to fetch trainers: ${error.message}`);
