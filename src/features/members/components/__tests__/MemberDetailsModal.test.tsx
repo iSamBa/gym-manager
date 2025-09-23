@@ -59,8 +59,8 @@ describe("MemberDetailsModal", () => {
       { wrapper: createQueryWrapper() }
     );
 
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText("John Doe")).toBeInTheDocument();
-    // Member numbers no longer displayed in UI
     expect(screen.getByText("john.doe@example.com")).toBeInTheDocument();
     expect(screen.getByText("+1234567890")).toBeInTheDocument();
   });
@@ -71,7 +71,7 @@ describe("MemberDetailsModal", () => {
       { wrapper: createQueryWrapper() }
     );
 
-    expect(screen.queryByText("Contact Information")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("displays member avatar with initials", () => {
@@ -99,7 +99,7 @@ describe("MemberDetailsModal", () => {
       { wrapper: createQueryWrapper() }
     );
 
-    expect(screen.getByText("Edit")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /edit/i })).toBeInTheDocument();
   });
 
   it("hides edit button when onEdit is not provided", () => {
@@ -112,7 +112,9 @@ describe("MemberDetailsModal", () => {
       { wrapper: createQueryWrapper() }
     );
 
-    expect(screen.queryByText("Edit")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /edit/i })
+    ).not.toBeInTheDocument();
   });
 
   it("displays fitness goals when provided", () => {

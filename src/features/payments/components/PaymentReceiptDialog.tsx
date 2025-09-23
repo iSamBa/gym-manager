@@ -28,13 +28,47 @@ export function PaymentReceiptDialog({
   open,
   onOpenChange,
 }: PaymentReceiptDialogProps) {
+  // Handle null/undefined payment
+  if (!payment) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5" data-testid="receipt-icon" />
+              Payment Receipt
+            </DialogTitle>
+          </DialogHeader>
+          <div className="text-muted-foreground text-center">
+            <p>Payment information not available</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   const handlePrint = () => {
     window.print();
   };
 
   const handleDownload = () => {
     // Implementation for PDF generation would go here
-    console.log("Download receipt for:", payment.receipt_number);
+    console.log("Download receipt for:", payment?.receipt_number || "unknown");
+  };
+
+  // Safe date formatting function
+  const formatDate = (
+    dateString: string | null | undefined,
+    fallback = "N/A"
+  ) => {
+    if (!dateString) return fallback;
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return fallback;
+      return format(date, "EEEE, MMMM d, yyyy");
+    } catch {
+      return fallback;
+    }
   };
 
   return (
@@ -50,7 +84,6 @@ export function PaymentReceiptDialog({
         <Card className="border-2">
           <CardHeader className="bg-muted/50 text-center">
             <CardTitle className="text-lg">Gym Management System</CardTitle>
-            <p className="text-muted-foreground text-sm">Payment Receipt</p>
           </CardHeader>
 
           <CardContent className="space-y-4 pt-6">
@@ -58,14 +91,14 @@ export function PaymentReceiptDialog({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Receipt Number</p>
-                <p className="font-mono font-bold">{payment.receipt_number}</p>
+                <p className="font-mono font-bold">
+                  {payment.receipt_number || "N/A"}
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-muted-foreground text-sm">Payment Date</p>
                 <p className="font-medium">
-                  {payment.payment_date
-                    ? format(new Date(payment.payment_date), "PPP")
-                    : "N/A"}
+                  {formatDate(payment.payment_date)}
                 </p>
               </div>
             </div>
@@ -77,14 +110,18 @@ export function PaymentReceiptDialog({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Amount Paid:</span>
                 <span className="text-lg font-bold">
-                  ${payment.amount.toFixed(2)}
+                  $
+                  {(payment.amount || 0).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </div>
 
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Payment Method:</span>
                 <Badge variant="outline">
-                  {payment.payment_method.replace("_", " ")}
+                  {(payment.payment_method || "unknown").replace("_", " ")}
                 </Badge>
               </div>
 
@@ -106,7 +143,7 @@ export function PaymentReceiptDialog({
                       : "secondary"
                   }
                 >
-                  {payment.payment_status}
+                  {payment.payment_status || "unknown"}
                 </Badge>
               </div>
             </div>
@@ -122,14 +159,18 @@ export function PaymentReceiptDialog({
                   <div className="flex justify-between">
                     <span className="text-red-700">Refund Amount:</span>
                     <span className="font-bold text-red-800">
-                      -${payment.refund_amount.toFixed(2)}
+                      -$
+                      {(payment.refund_amount || 0).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </span>
                   </div>
                   {payment.refund_date && (
                     <div className="flex justify-between">
                       <span className="text-red-700">Refund Date:</span>
                       <span className="text-red-800">
-                        {format(new Date(payment.refund_date), "PPP")}
+                        {formatDate(payment.refund_date)}
                       </span>
                     </div>
                   )}
@@ -161,7 +202,7 @@ export function PaymentReceiptDialog({
             {/* Footer */}
             <div className="text-muted-foreground text-center text-xs">
               <p>Thank you for your payment!</p>
-              <p>Generated on {format(new Date(), "PPP")}</p>
+              <p>Generated on {format(new Date(), "EEEE, MMMM d, yyyy")}</p>
             </div>
           </CardContent>
         </Card>

@@ -89,14 +89,16 @@ describe("PaymentReceiptDialog", () => {
     it("should render dialog when open is true", () => {
       renderReceiptDialog();
 
-      expect(screen.getByText("Payment Receipt")).toBeInTheDocument();
+      expect(
+        screen.getByRole("dialog", { name: /payment receipt/i })
+      ).toBeInTheDocument();
       expect(screen.getByText("Gym Management System")).toBeInTheDocument();
     });
 
     it("should not render dialog when open is false", () => {
       renderReceiptDialog(mockPayment, false);
 
-      expect(screen.queryByText("Payment Receipt")).not.toBeInTheDocument();
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
 
     it("should call onOpenChange when dialog is closed", async () => {
@@ -116,17 +118,16 @@ describe("PaymentReceiptDialog", () => {
       renderReceiptDialog();
 
       expect(screen.getByText("Gym Management System")).toBeInTheDocument();
-      expect(screen.getByText("Payment Receipt")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /payment receipt/i })
+      ).toBeInTheDocument();
     });
 
     it("should display receipt icon", () => {
       renderReceiptDialog();
 
-      // Check for receipt icon (assuming it has proper accessibility)
-      const receiptIcon =
-        screen.getByTestId("receipt-icon") ||
-        document.querySelector('[data-lucide="receipt"]');
-      expect(receiptIcon).toBeDefined();
+      // Check for receipt icon with proper test id
+      expect(screen.getByTestId("receipt-icon")).toBeInTheDocument();
     });
   });
 
@@ -135,7 +136,7 @@ describe("PaymentReceiptDialog", () => {
       renderReceiptDialog();
 
       expect(screen.getByText("RCPT-2024-0001")).toBeInTheDocument();
-      expect(screen.getByText("Monday, January 15, 2024")).toBeInTheDocument(); // Formatted date
+      expect(screen.getByText("Monday, January 15, 2024")).toBeInTheDocument();
     });
 
     it("should display payment amount prominently", () => {
@@ -373,22 +374,24 @@ describe("PaymentReceiptDialog", () => {
   });
 
   describe("Accessibility", () => {
-    it("should have proper dialog structure", () => {
-      renderReceiptDialog();
-
-      expect(screen.getByRole("dialog")).toBeInTheDocument();
-    });
-
-    it("should have proper heading hierarchy", () => {
+    it("should have proper dialog structure with accessible name", () => {
       renderReceiptDialog();
 
       expect(
-        screen.getByRole("heading", { level: 1 }) ||
-          screen.getByRole("heading", { level: 2 })
+        screen.getByRole("dialog", { name: /payment receipt/i })
       ).toBeInTheDocument();
     });
 
-    it("should have proper button labels", () => {
+    it("should have proper heading hierarchy with dialog title", () => {
+      renderReceiptDialog();
+
+      expect(
+        screen.getByRole("heading", { name: /payment receipt/i })
+      ).toBeInTheDocument();
+      expect(screen.getByText("Gym Management System")).toBeInTheDocument();
+    });
+
+    it("should have properly labeled action buttons", () => {
       renderReceiptDialog();
 
       expect(
@@ -397,23 +400,51 @@ describe("PaymentReceiptDialog", () => {
       expect(
         screen.getByRole("button", { name: /download pdf/i })
       ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /close/i })
+      ).toBeInTheDocument();
     });
 
-    it("should support keyboard navigation", async () => {
+    it("should support keyboard navigation between interactive elements", async () => {
       const user = userEvent.setup();
       renderReceiptDialog();
 
+      const closeButton = screen.getByRole("button", { name: /close/i });
       const printButton = screen.getByRole("button", { name: /print/i });
       const downloadButton = screen.getByRole("button", {
         name: /download pdf/i,
       });
 
-      // Should be able to tab between buttons
-      printButton.focus();
+      // Focus should start on close button (first focusable element)
+      closeButton.focus();
+      expect(closeButton).toHaveFocus();
+
+      // Tab to print button
+      await user.tab();
       expect(printButton).toHaveFocus();
 
+      // Tab to download button
       await user.tab();
       expect(downloadButton).toHaveFocus();
+    });
+
+    it("should have proper ARIA attributes for receipt content", () => {
+      renderReceiptDialog();
+
+      // Dialog should have accessible name from title
+      const dialog = screen.getByRole("dialog");
+      expect(dialog).toHaveAccessibleName(/payment receipt/i);
+
+      // Receipt icon should have proper test id for identification
+      expect(screen.getByTestId("receipt-icon")).toBeInTheDocument();
+    });
+
+    it("should handle escape key to close dialog", async () => {
+      const user = userEvent.setup();
+      renderReceiptDialog();
+
+      await user.keyboard("{Escape}");
+      expect(mockOnOpenChange).toHaveBeenCalledWith(false);
     });
   });
 

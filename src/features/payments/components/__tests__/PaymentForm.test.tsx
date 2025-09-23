@@ -112,11 +112,21 @@ describe("PaymentForm", () => {
       expect(screen.getByText("$40.00")).toBeInTheDocument(); // Balance
 
       // Check form fields are present
-      expect(screen.getByLabelText("Payment Amount")).toBeInTheDocument();
-      expect(screen.getByLabelText("Payment Method")).toBeInTheDocument();
-      expect(screen.getByLabelText("Payment Date")).toBeInTheDocument();
-      expect(screen.getByLabelText("Reference Number")).toBeInTheDocument();
-      expect(screen.getByLabelText("Notes")).toBeInTheDocument();
+      expect(screen.getByText("Payment Amount")).toBeInTheDocument();
+      expect(screen.getByText("Payment Method")).toBeInTheDocument();
+      expect(screen.getByText("Payment Date")).toBeInTheDocument();
+      expect(screen.getByText("Reference Number")).toBeInTheDocument();
+      expect(screen.getByText("Notes")).toBeInTheDocument();
+
+      // Check form inputs are present using roles and placeholders
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument(); // Amount input (number type)
+      expect(screen.getByRole("combobox")).toBeInTheDocument(); // Payment method select
+      expect(
+        screen.getByPlaceholderText("Transaction ID, check number, etc.")
+      ).toBeInTheDocument(); // Reference
+      expect(
+        screen.getByPlaceholderText("Additional notes about this payment...")
+      ).toBeInTheDocument(); // Notes
 
       // Check submit button
       expect(
@@ -127,18 +137,14 @@ describe("PaymentForm", () => {
     it("should default payment amount to remaining balance", () => {
       renderPaymentForm();
 
-      const amountInput = screen.getByLabelText(
-        "Payment Amount"
-      ) as HTMLInputElement;
+      const amountInput = screen.getByRole("spinbutton") as HTMLInputElement;
       expect(amountInput.value).toBe("40"); // Remaining balance
     });
 
     it("should show zero amount for fully paid subscription", () => {
       renderPaymentForm(mockSubscriptionFullyPaid);
 
-      const amountInput = screen.getByLabelText(
-        "Payment Amount"
-      ) as HTMLInputElement;
+      const amountInput = screen.getByRole("spinbutton") as HTMLInputElement;
       expect(amountInput.value).toBe("0");
       expect(
         screen.getByText("Subscription is fully paid")
@@ -168,7 +174,7 @@ describe("PaymentForm", () => {
       const user = userEvent.setup();
       renderPaymentForm();
 
-      const amountInput = screen.getByLabelText("Payment Amount");
+      const amountInput = screen.getByRole("spinbutton");
       await user.clear(amountInput);
       await user.type(amountInput, "-10");
 
@@ -188,7 +194,7 @@ describe("PaymentForm", () => {
       const user = userEvent.setup();
       renderPaymentForm();
 
-      const amountInput = screen.getByLabelText("Payment Amount");
+      const amountInput = screen.getByRole("spinbutton");
       await user.clear(amountInput);
       await user.type(amountInput, "0");
 
@@ -208,7 +214,9 @@ describe("PaymentForm", () => {
       const user = userEvent.setup();
       renderPaymentForm();
 
-      const notesInput = screen.getByLabelText("Notes");
+      const notesInput = screen.getByPlaceholderText(
+        "Additional notes about this payment..."
+      );
       const longNotes = "a".repeat(501); // Exceeds 500 character limit
       await user.type(notesInput, longNotes);
 
@@ -231,14 +239,18 @@ describe("PaymentForm", () => {
       renderPaymentForm();
 
       // Fill form with valid data
-      const amountInput = screen.getByLabelText("Payment Amount");
+      const amountInput = screen.getByRole("spinbutton");
       await user.clear(amountInput);
       await user.type(amountInput, "40");
 
-      const notesInput = screen.getByLabelText("Notes");
+      const notesInput = screen.getByPlaceholderText(
+        "Additional notes about this payment..."
+      );
       await user.type(notesInput, "Test payment");
 
-      const referenceInput = screen.getByLabelText("Reference Number");
+      const referenceInput = screen.getByPlaceholderText(
+        "Transaction ID, check number, etc."
+      );
       await user.type(referenceInput, "TXN-12345");
 
       const submitButton = screen.getByRole("button", {
@@ -342,7 +354,7 @@ describe("PaymentForm", () => {
       const user = userEvent.setup();
       renderPaymentForm(); // Subscription has $40 remaining balance
 
-      const amountInput = screen.getByLabelText("Payment Amount");
+      const amountInput = screen.getByRole("spinbutton");
       await user.clear(amountInput);
       await user.type(amountInput, "50"); // Exceeds $40 balance
 
@@ -362,7 +374,7 @@ describe("PaymentForm", () => {
       const user = userEvent.setup();
       renderPaymentForm();
 
-      const amountInput = screen.getByLabelText("Payment Amount");
+      const amountInput = screen.getByRole("spinbutton");
       await user.clear(amountInput);
       await user.type(amountInput, "40"); // Exact balance
 
@@ -419,11 +431,13 @@ describe("PaymentForm", () => {
       renderPaymentForm();
 
       // Modify form values
-      const amountInput = screen.getByLabelText("Payment Amount");
+      const amountInput = screen.getByRole("spinbutton");
       await user.clear(amountInput);
       await user.type(amountInput, "25");
 
-      const notesInput = screen.getByLabelText("Notes");
+      const notesInput = screen.getByPlaceholderText(
+        "Additional notes about this payment..."
+      );
       await user.type(notesInput, "Test payment");
 
       const submitButton = screen.getByRole("button", {
@@ -433,12 +447,16 @@ describe("PaymentForm", () => {
 
       await waitFor(() => {
         // Form should be reset to default values
+        expect((screen.getByRole("spinbutton") as HTMLInputElement).value).toBe(
+          "40"
+        ); // Default balance
         expect(
-          (screen.getByLabelText("Payment Amount") as HTMLInputElement).value
-        ).toBe("40"); // Default balance
-        expect((screen.getByLabelText("Notes") as HTMLInputElement).value).toBe(
-          ""
-        );
+          (
+            screen.getByPlaceholderText(
+              "Additional notes about this payment..."
+            ) as HTMLInputElement
+          ).value
+        ).toBe("");
       });
     });
 
@@ -460,7 +478,7 @@ describe("PaymentForm", () => {
 
       // Form should remain populated for retry
       expect(
-        (screen.getByLabelText("Payment Amount") as HTMLInputElement).value
+        (screen.getByRole("spinbutton") as HTMLInputElement).value
       ).not.toBe("");
     });
   });
@@ -497,11 +515,15 @@ describe("PaymentForm", () => {
       renderPaymentForm();
 
       // Check that form fields have proper labels
-      expect(screen.getByLabelText("Payment Amount")).toBeInTheDocument();
-      expect(screen.getByLabelText("Payment Method")).toBeInTheDocument();
-      expect(screen.getByLabelText("Payment Date")).toBeInTheDocument();
-      expect(screen.getByLabelText("Reference Number")).toBeInTheDocument();
-      expect(screen.getByLabelText("Notes")).toBeInTheDocument();
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
+      expect(screen.getByText("Payment Method")).toBeInTheDocument();
+      expect(screen.getByText("Payment Date")).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText("Transaction ID, check number, etc.")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText("Additional notes about this payment...")
+      ).toBeInTheDocument();
     });
 
     it("should have proper form descriptions", () => {
@@ -565,7 +587,7 @@ describe("PaymentForm", () => {
 
       renderPaymentForm();
 
-      const amountInput = screen.getByLabelText("Payment Amount");
+      const amountInput = screen.getByRole("spinbutton");
       await user.clear(amountInput);
       await user.type(amountInput, "25.50");
 
@@ -589,7 +611,7 @@ describe("PaymentForm", () => {
 
       renderPaymentForm();
 
-      const amountInput = screen.getByLabelText("Payment Amount");
+      const amountInput = screen.getByRole("spinbutton");
       await user.clear(amountInput);
       await user.type(amountInput, "0.01"); // Minimum valid amount
 

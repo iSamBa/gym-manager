@@ -16,6 +16,8 @@ import {
   EditMemberDialog,
   withMemberErrorBoundary,
   MemberSessions,
+  MemberSubscriptions,
+  MemberPayments,
 } from "@/features/members/components";
 import {
   useMemberWithSubscription,
@@ -37,6 +39,8 @@ import {
   Trash2,
   Activity,
   UserCircle,
+  CreditCard,
+  Receipt,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -231,7 +235,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <UserCircle className="h-4 w-4" />
               Profile
@@ -239,6 +243,17 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
             <TabsTrigger value="sessions" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
               Training Sessions
+            </TabsTrigger>
+            <TabsTrigger
+              value="subscriptions"
+              className="flex items-center gap-2"
+            >
+              <CreditCard className="h-4 w-4" />
+              Subscriptions
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              Payments
             </TabsTrigger>
           </TabsList>
 
@@ -468,6 +483,16 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
               memberId={member.id}
               memberName={`${member.first_name} ${member.last_name}`}
             />
+          </TabsContent>
+
+          {/* Subscriptions Tab */}
+          <TabsContent value="subscriptions" className="space-y-6">
+            <MemberSubscriptions member={member} />
+          </TabsContent>
+
+          {/* Payments Tab */}
+          <TabsContent value="payments" className="space-y-6">
+            <MemberPayments member={member} />
           </TabsContent>
         </Tabs>
       </div>
