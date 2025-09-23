@@ -1,56 +1,106 @@
 /* Custom styles for react-big-calendar to match shadcn/ui theme */
 
 .rbc-calendar {
-  @apply bg-white text-gray-950 dark:bg-gray-950 dark:text-gray-50;
+  background-color: white;
+  color: #0f0f0f;
+}
+
+.dark .rbc-calendar {
+  background-color: #0d1117;
+  color: #f0f6fc;
 }
 
 /* Month view styling */
 .rbc-month-view {
-  @apply border-border rounded-lg border;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .rbc-month-view {
+  border-color: #374151;
 }
 
 .rbc-header {
-  @apply border-b border-gray-200 bg-gray-100 p-3 font-medium text-gray-600 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400;
+  padding: 0.75rem;
+  font-weight: 500;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  color: #6b7280;
+}
+
+.dark .rbc-header {
+  border-bottom-color: #374151;
+  background-color: #1f2937;
+  color: #9ca3af;
 }
 
 .rbc-date-cell {
-  @apply border-r border-gray-200 p-2 dark:border-gray-800;
+  padding: 0.5rem;
+  border-right: 1px solid #e5e7eb;
+}
+
+.dark .rbc-date-cell {
+  border-right-color: #374151;
 }
 
 .rbc-today {
-  @apply bg-blue-50 dark:bg-blue-950;
+  background-color: rgba(59, 130, 246, 0.1);
 }
 
 .rbc-off-range-bg {
-  @apply bg-gray-50 dark:bg-gray-900;
+  background-color: rgba(243, 244, 246, 0.5);
+}
+
+.dark .rbc-off-range-bg {
+  background-color: rgba(31, 41, 55, 0.5);
 }
 
 /* Week/Day view styling */
 .rbc-time-view {
-  @apply overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .rbc-time-view {
+  border-color: #374151;
 }
 
 .rbc-time-header {
-  @apply border-b border-gray-200 dark:border-gray-800;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .rbc-time-header {
+  border-bottom-color: #374151;
 }
 
 .rbc-time-content {
-  @apply border-0;
+  border: 0;
 }
 
 .rbc-time-gutter {
-  @apply border-r border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900;
+  border-right: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.dark .rbc-time-gutter {
+  border-right-color: #374151;
+  background-color: #1f2937;
 }
 
 .rbc-timeslot-group {
-  @apply border-b border-gray-100 dark:border-gray-800;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
   /* Scale to give each 15-minute slot the height of a full hour (4x scale) */
   min-height: 200px !important;
   height: 200px !important;
 }
 
+.dark .rbc-timeslot-group {
+  border-bottom-color: rgba(55, 65, 81, 0.5);
+}
+
 .rbc-time-slot {
-  @apply border-0;
+  border: 0;
   /* Each 15-minute slot gets 50px height (200px ÷ 4 slots) */
   height: 50px !important;
   min-height: 50px !important;
@@ -58,100 +108,164 @@
 }
 
 .rbc-current-time-indicator {
-  @apply bg-blue-600;
+  background-color: #3b82f6;
 }
 
 /* Event styling */
 .rbc-event {
-  @apply rounded border-0 shadow-sm;
+  border-radius: 0.25rem;
+  border: 0;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .rbc-event.rbc-selected {
-  @apply ring-2 ring-blue-600;
+  box-shadow: 0 0 0 2px #3b82f6;
 }
 
 /* Agenda view styling */
 .rbc-agenda-view {
-  @apply rounded-lg border border-gray-200 dark:border-gray-800;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .rbc-agenda-view {
+  border-color: #374151;
 }
 
 .rbc-agenda-table {
-  @apply w-full;
+  width: 100%;
 }
 
 .rbc-agenda-view table.rbc-agenda-table {
-  @apply border-0;
+  border: 0;
 }
 
 .rbc-agenda-view table.rbc-agenda-table thead > tr > th,
 .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
-  @apply border-b border-gray-200 p-3 dark:border-gray-800;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .rbc-agenda-view table.rbc-agenda-table thead > tr > th,
+.dark .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  border-bottom-color: #374151;
 }
 
 /* Buttons and controls */
 .rbc-btn {
-  @apply rounded border border-gray-200 bg-white px-3 py-1 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-gray-800;
+  border-radius: 0.25rem;
+  border: 1px solid #e5e7eb;
+  padding: 0.25rem 0.75rem;
+  transition-property:
+    color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  background-color: white;
+}
+
+.rbc-btn:hover {
+  background-color: #f9fafb;
+}
+
+.dark .rbc-btn {
+  border-color: #374151;
+  background-color: #0d1117;
+}
+
+.dark .rbc-btn:hover {
+  background-color: #1f2937;
 }
 
 .rbc-btn-group > .rbc-btn:first-child {
-  @apply rounded-r-none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .rbc-btn-group > .rbc-btn:last-child {
-  @apply rounded-l-none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 .rbc-btn-group > .rbc-btn:not(:first-child):not(:last-child) {
-  @apply rounded-none;
+  border-radius: 0;
 }
 
 .rbc-active {
-  @apply bg-blue-600 text-white;
+  background-color: #3b82f6;
+  color: white;
 }
 
 /* Popup and overlay styling */
 .rbc-overlay {
-  @apply rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-950;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  background-color: white;
+}
+
+.dark .rbc-overlay {
+  border-color: #374151;
+  background-color: #0d1117;
 }
 
 .rbc-overlay-header {
-  @apply border-b border-gray-200 p-3 font-medium dark:border-gray-800;
+  padding: 0.75rem;
+  font-weight: 500;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .rbc-overlay-header {
+  border-bottom-color: #374151;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .rbc-calendar {
-    @apply text-sm;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
 
   .rbc-toolbar {
-    @apply flex-col gap-2;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
   .rbc-toolbar-label {
-    @apply text-center;
+    text-align: center;
   }
 }
 
 /* Custom session status colors */
 .rbc-event.session-trial {
-  @apply border-purple-200 bg-purple-100 text-purple-800;
+  border-color: #e9d5ff;
+  background-color: #f3e8ff;
+  color: #6b21a8;
 }
 
 .rbc-event.session-standard {
-  @apply border-blue-200 bg-blue-100 text-blue-800;
+  border-color: #bfdbfe;
+  background-color: #dbeafe;
+  color: #1e40af;
 }
 
 .rbc-event.session-cancelled {
-  @apply line-through opacity-60;
+  text-decoration-line: line-through;
+  opacity: 0.6;
 }
 
 .rbc-event.session-in-progress {
-  @apply border-orange-200 bg-orange-100 text-orange-800;
+  border-color: #fed7aa;
+  background-color: #ffedd5;
+  color: #ea580c;
 }
 
 .rbc-event.session-completed {
-  @apply border-green-200 bg-green-100 text-green-800;
+  border-color: #bbf7d0;
+  background-color: #dcfce7;
+  color: #166534;
 }
 
 /* Smart event display with dynamic heights - Target TimeGrid views specifically */
@@ -164,13 +278,19 @@
 
 /* Enhanced styling for different duration classes */
 .rbc-event .event-content.event-standard {
-  @apply flex h-full flex-col justify-start;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: flex-start;
   padding: 2px 4px !important;
   gap: 2px;
 }
 
 .rbc-event .event-content.event-compact {
-  @apply flex h-full flex-col justify-start;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: flex-start;
   padding: 3px 5px !important;
   gap: 3px;
 }
@@ -209,17 +329,17 @@
 
 /* Legacy duration-specific styling for content alignment */
 .rbc-event .event-content.event-very-short {
-  @apply justify-center;
+  justify-content: center;
   gap: 1px !important;
 }
 
 .rbc-event .event-content.event-short {
-  @apply justify-start;
+  justify-content: flex-start;
   gap: 2px !important;
 }
 
 .rbc-event .event-content.event-normal {
-  @apply justify-start;
+  justify-content: flex-start;
   gap: 2px !important;
 }
 
@@ -232,32 +352,39 @@
 }
 
 .rbc-event .event-content .trainer-name {
-  @apply text-xs font-semibold;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
   line-height: 1.2 !important;
   margin-bottom: 2px !important;
 }
 
 .rbc-event .event-content .session-details {
-  @apply text-xs;
+  font-size: 0.75rem;
+  line-height: 1rem;
   display: flex !important;
   flex-direction: column !important;
   gap: 1px !important;
 }
 
 .rbc-event .event-content .session-details > div {
-  @apply flex items-center;
+  display: flex;
+  align-items: center;
   gap: 2px !important;
   line-height: 1.1 !important;
 }
 
 .rbc-event .event-content .session-details-condensed {
-  @apply text-xs;
+  font-size: 0.75rem;
+  line-height: 1rem;
   line-height: 1.1 !important;
 }
 
 /* Compact mode enhancements */
 .rbc-event .event-content.event-compact .trainer-name {
-  @apply text-sm font-semibold;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
   margin-bottom: 3px !important;
 }
 
@@ -273,24 +400,33 @@
 /* Ensure event content is visible in week/day views */
 .rbc-day-slot .rbc-event,
 .rbc-time-slot .rbc-event {
-  @apply text-xs;
+  font-size: 0.75rem;
+  line-height: 1rem;
 }
 
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
   .rbc-event.session-trial {
-    @apply border-purple-800 bg-purple-900/20 text-purple-300;
+    border-color: #7c3aed;
+    background-color: rgba(88, 28, 135, 0.2);
+    color: #d8b4fe;
   }
 
   .rbc-event.session-standard {
-    @apply border-blue-800 bg-blue-900/20 text-blue-300;
+    border-color: #1e40af;
+    background-color: rgba(30, 58, 138, 0.2);
+    color: #93c5fd;
   }
 
   .rbc-event.session-in-progress {
-    @apply border-orange-800 bg-orange-900/20 text-orange-300;
+    border-color: #ea580c;
+    background-color: rgba(194, 65, 12, 0.2);
+    color: #fdba74;
   }
 
   .rbc-event.session-completed {
-    @apply border-green-800 bg-green-900/20 text-green-300;
+    border-color: #16a34a;
+    background-color: rgba(21, 128, 61, 0.2);
+    color: #86efac;
   }
 }

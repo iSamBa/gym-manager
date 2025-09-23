@@ -46,7 +46,7 @@ const TrainingSessionsView: React.FC = () => {
           : 0,
       duration_minutes: durationMinutes,
       session_category: session.session_type || "standard",
-      notes: session.notes,
+      notes: session.notes || undefined,
     };
   };
 

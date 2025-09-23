@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTrainerAvailability } from "../../hooks/use-trainer-availability";
+import type { SessionAvailabilityCheck } from "../../lib/types";
 import { format } from "date-fns";
 
 interface TrainerAvailabilityCheckProps {
@@ -83,7 +84,8 @@ export const TrainerAvailabilityCheck: React.FC<
     return null;
   }
 
-  const { available, conflicts, message } = availability;
+  const { available, conflicts, message } =
+    availability as SessionAvailabilityCheck;
 
   // Format time for display
   const formatTime = (timeString: string) => {

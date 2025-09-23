@@ -164,7 +164,7 @@ export function TrainerCalendarView({
                             <div className="mb-1 flex items-center gap-1">
                               <User className="h-3 w-3" />
                               <span className="truncate">
-                                {session.member_name}
+                                {session.member_names}
                               </span>
                             </div>
 
@@ -225,7 +225,19 @@ export function TrainerCalendarView({
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">
-                  {new Set(sessions.map((s) => s.member_id)).size}
+                  {
+                    new Set(
+                      sessions
+                        .map(
+                          (s) =>
+                            s.member_names
+                              ?.split(",")
+                              .map((name) => name.trim())
+                              .filter(Boolean) || []
+                        )
+                        .flat()
+                    ).size
+                  }
                 </div>
                 <div className="text-muted-foreground text-sm">
                   Unique Clients

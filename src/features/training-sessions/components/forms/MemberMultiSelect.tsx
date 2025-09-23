@@ -76,7 +76,10 @@ export const MemberMultiSelect: React.FC<MemberMultiSelectProps> = ({
     }
   };
 
-  const handleRemoveMember = (memberId: string, event: React.MouseEvent) => {
+  const handleRemoveMember = (
+    memberId: string,
+    event: React.MouseEvent | React.KeyboardEvent
+  ) => {
     event.stopPropagation();
     onMemberIdsChange(selectedMemberIds.filter((id) => id !== memberId));
   };

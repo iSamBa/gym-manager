@@ -161,14 +161,16 @@ export function useTrainerPerformanceInsights(trainerId: string) {
 
     // Monthly comparison
     monthlyGrowthPercentage:
-      analytics?.monthly_trend.last_month > 0
+      analytics?.monthly_trend?.last_month &&
+      analytics.monthly_trend.last_month > 0
         ? Math.round(
             (analytics.monthly_trend.change /
               analytics.monthly_trend.last_month) *
               100 *
               10
           ) / 10
-        : analytics?.monthly_trend.this_month > 0
+        : analytics?.monthly_trend?.this_month &&
+            analytics.monthly_trend.this_month > 0
           ? 100
           : 0,
   };

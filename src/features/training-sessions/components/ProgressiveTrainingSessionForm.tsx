@@ -70,7 +70,7 @@ export const ProgressiveTrainingSessionForm: React.FC<
       scheduled_start: "",
       scheduled_end: "",
       location: "",
-      session_type: "",
+      session_type: undefined,
       max_participants: 1,
       member_ids: [],
       notes: "",

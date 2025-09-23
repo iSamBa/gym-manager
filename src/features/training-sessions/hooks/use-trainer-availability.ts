@@ -74,7 +74,7 @@ export const useTrainerAvailability = ({
     },
     enabled: enabled && !!trainer_id && !!start_time && !!end_time,
     staleTime: 30 * 1000, // 30 seconds - availability can change quickly
-    cacheTime: 5 * 60 * 1000, // 5 minutes - keep cached for reasonable time
+    gcTime: 5 * 60 * 1000, // 5 minutes - keep cached for reasonable time
     refetchOnWindowFocus: true,
     // Retry failed requests up to 2 times with exponential backoff
     retry: (failureCount, error) => {
@@ -171,7 +171,7 @@ export const useTrainerDayAvailability = ({
     },
     enabled: enabled && !!trainer_id && !!date,
     staleTime: 5 * 60 * 1000, // 5 minutes - day schedule is relatively stable
-    cacheTime: 15 * 60 * 1000, // 15 minutes - longer cache for day schedules
+    gcTime: 15 * 60 * 1000, // 15 minutes - longer cache for day schedules
     // Use background refetch to keep data fresh without showing loading states
     refetchOnWindowFocus: false,
     refetchInterval: 10 * 60 * 1000, // Background refresh every 10 minutes
@@ -213,7 +213,7 @@ export const useBulkAvailabilityCheck = ({
     },
     enabled: enabled && !!trainer_id && time_slots.length > 0,
     staleTime: 60 * 1000, // 1 minute - bulk checks are typically for immediate use
-    cacheTime: 3 * 60 * 1000, // 3 minutes - shorter cache for bulk checks
+    gcTime: 3 * 60 * 1000, // 3 minutes - shorter cache for bulk checks
     // Don't retry bulk checks automatically to avoid overwhelming the server
     retry: false,
   });

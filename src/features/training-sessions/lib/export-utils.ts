@@ -247,7 +247,7 @@ export const exportToPDF = async (sessions: SessionHistoryEntry[]) => {
 export const emailReport = async (
   sessions: SessionHistoryEntry[],
   recipient: string,
-  format: "csv" | "pdf" = "csv"
+  exportFormat: "csv" | "pdf" = "csv"
 ) => {
   // This would integrate with your email service
   // For now, just prepare the data
@@ -256,7 +256,7 @@ export const emailReport = async (
     recipient,
     subject: `Training Sessions Report - ${format(new Date(), "MMMM dd, yyyy")}`,
     sessions: sessions.length,
-    format,
+    format: exportFormat,
     timestamp: new Date().toISOString(),
     summary: {
       total: sessions.length,

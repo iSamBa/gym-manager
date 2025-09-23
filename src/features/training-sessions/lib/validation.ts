@@ -50,8 +50,7 @@ export const createSessionSchema = z
       })
       .max(100, "Location name must be 100 characters or less"),
     session_type: z.enum(["trail", "standard"], {
-      required_error: "Please select a session type",
-      invalid_type_error: "Session type must be either trail or standard",
+      message: "Session type must be either trail or standard",
     }),
     max_participants: z
       .number()

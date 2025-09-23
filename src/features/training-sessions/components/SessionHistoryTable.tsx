@@ -82,8 +82,9 @@ const SessionHistoryTable: React.FC<SessionHistoryTableProps> = ({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [globalFilter, setGlobalFilter] = useState("");
 
-  const columns = useMemo<ColumnDef<SessionHistoryEntry, unknown>[]>(() => {
-    const cols: ColumnDef<SessionHistoryEntry, unknown>[] = [];
+  const columns = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cols: ColumnDef<SessionHistoryEntry, any>[] = [];
 
     // Selection column
     if (showSelectionColumn) {
@@ -114,7 +115,7 @@ const SessionHistoryTable: React.FC<SessionHistoryTableProps> = ({
 
     // Date column
     cols.push(
-      columnHelper.accessor("scheduled_start", {
+      columnHelper.display({
         id: "date",
         header: ({ column }) => {
           const isSorted = column.getIsSorted();
@@ -137,20 +138,25 @@ const SessionHistoryTable: React.FC<SessionHistoryTableProps> = ({
             </Button>
           );
         },
-        cell: ({ getValue }) => {
-          const date = getValue();
+        cell: ({ row }) => {
+          const date = row.original.scheduled_start;
           return (
             <div className="font-medium">
               {format(new Date(date), "MMM dd, yyyy")}
             </div>
           );
         },
+        sortingFn: (rowA, rowB) => {
+          const dateA = new Date(rowA.original.scheduled_start);
+          const dateB = new Date(rowB.original.scheduled_start);
+          return dateA.getTime() - dateB.getTime();
+        },
       })
     );
 
     // Time column
     cols.push(
-      columnHelper.accessor("scheduled_start", {
+      columnHelper.display({
         id: "time",
         header: "Time",
         cell: ({ row }) => {
