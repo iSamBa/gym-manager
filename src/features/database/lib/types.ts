@@ -26,26 +26,13 @@ export type MaintenanceType =
   | "inspection"
   | "calibration"
   | "deep_clean";
-export type PlanType =
-  | "basic"
-  | "premium"
-  | "vip"
-  | "student"
-  | "senior"
-  | "corporate";
-export type BillingCycle =
-  | "daily"
-  | "weekly"
-  | "monthly"
-  | "quarterly"
-  | "semi_annual"
-  | "annual";
 export type SubscriptionStatus =
   | "active"
   | "paused"
   | "cancelled"
   | "expired"
-  | "pending";
+  | "pending"
+  | "completed";
 export type PaymentStatus =
   | "pending"
   | "completed"
@@ -96,7 +83,6 @@ export interface EmergencyContact {
   phone: string;
 }
 
-// Access hours interface for JSON field
 // Enhanced Subscription Types from Epic 1
 
 /**
@@ -142,6 +128,15 @@ export interface MemberSubscriptionWithSnapshot extends MemberSubscription {
   completion_percentage?: number;
   /** Days remaining in subscription */
   days_remaining?: number;
+
+  // Member information (when joined)
+  /** Member details when subscription is fetched with member info */
+  members?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
 }
 
 /**
@@ -171,6 +166,10 @@ export interface CreateSubscriptionInput {
   initial_payment_amount?: number;
   /** Payment method for initial payment */
   payment_method?: PaymentMethod;
+  /** Whether to include signup fees (for new subscriptions) */
+  include_signup_fee?: boolean;
+  /** Amount of signup fee paid */
+  signup_fee_paid?: number;
   /** Optional notes about the subscription */
   notes?: string;
 }
@@ -179,8 +178,10 @@ export interface CreateSubscriptionInput {
  * Input data for recording a payment
  */
 export interface RecordPaymentInput {
-  /** ID of the subscription being paid for */
-  subscription_id: string;
+  /** ID of the subscription being paid for (optional for standalone payments) */
+  subscription_id?: string;
+  /** ID of the member (required for standalone payments, optional if subscription_id provided) */
+  member_id?: string;
   /** Payment amount */
   amount: number;
   /** Method of payment */
@@ -205,12 +206,6 @@ export interface UpgradeSubscriptionInput {
   credit_amount: number;
   /** Optional effective date for upgrade */
   effective_date?: string;
-}
-
-export interface AccessHours {
-  all_day?: boolean;
-  from?: string; // "HH:MM" format
-  to?: string; // "HH:MM" format
 }
 
 // Member presence interface for real-time tracking
@@ -344,22 +339,10 @@ export interface SubscriptionPlan {
   id: string;
   name: string;
   description?: string;
-  plan_type: PlanType;
   price: number;
-  billing_cycle: BillingCycle;
-  currency: string;
-  features?: string[];
-  max_classes_per_month?: number;
-  max_personal_training_sessions?: number;
-  includes_guest_passes: number;
-  access_hours?: AccessHours;
   signup_fee: number;
-  cancellation_fee: number;
-  freeze_fee: number;
-  contract_length_months?: number;
-  auto_renew: boolean;
+  duration_months: number;
   is_active: boolean;
-  sort_order: number;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -372,12 +355,8 @@ export interface MemberSubscription {
   status: SubscriptionStatus;
   start_date: string;
   end_date?: string;
-  next_billing_date?: string;
-  billing_cycle: BillingCycle;
   price: number;
-  currency: string;
   signup_fee_paid: number;
-  auto_renew: boolean;
   renewal_count: number;
   pause_start_date?: string;
   pause_end_date?: string;
@@ -386,6 +365,20 @@ export interface MemberSubscription {
   cancellation_reason?: string;
   cancelled_by?: string;
   notes?: string;
+  current_session_credits?: number;
+  total_sessions_consumed?: number;
+  current_period_sessions_used?: number;
+  rollover_sessions_available?: number;
+  last_session_reset_date?: string;
+  session_tracking_enabled?: boolean;
+  plan_name_snapshot?: string;
+  total_sessions_snapshot?: number;
+  total_amount_snapshot?: number;
+  duration_days_snapshot?: number;
+  used_sessions?: number;
+  paid_amount?: number;
+  upgraded_to_id?: string;
+  remaining_sessions?: number;
   created_by?: string;
   created_at: string;
   updated_at: string;

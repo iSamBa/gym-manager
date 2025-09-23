@@ -31,7 +31,7 @@ export function AdvancedMemberSearch({
   onMemberSelect,
   placeholder = "Search members by name...",
   className,
-  showHistory = true,
+  showHistory = false,
   showSuggestions = true, // eslint-disable-line @typescript-eslint/no-unused-vars
 }: AdvancedMemberSearchProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -56,11 +56,12 @@ export function AdvancedMemberSearch({
       if (onMemberSelect) {
         onMemberSelect(member);
       }
-      addToHistory(query);
+      // Clear the search input after selection
+      clearQuery();
       setIsOpen(false);
       setSelectedIndex(-1);
     },
-    [onMemberSelect, addToHistory, query]
+    [onMemberSelect, clearQuery]
   );
 
   // Handle search from history
@@ -185,11 +186,10 @@ export function AdvancedMemberSearch({
                     >
                       <Users className="text-muted-foreground h-4 w-4" />
                       <div className="flex-1 space-y-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between">
                           <span className="font-medium">
                             {member.first_name} {member.last_name}
                           </span>
-                          {/* Member numbers no longer displayed */}
                           <Badge
                             variant={
                               member.status === "active"
@@ -200,10 +200,6 @@ export function AdvancedMemberSearch({
                           >
                             {member.status}
                           </Badge>
-                        </div>
-                        <div className="text-muted-foreground text-sm">
-                          {member.email}
-                          {member.phone && ` • ${member.phone}`}
                         </div>
                       </div>
                     </CommandItem>
