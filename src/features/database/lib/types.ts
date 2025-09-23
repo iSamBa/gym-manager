@@ -97,6 +97,116 @@ export interface EmergencyContact {
 }
 
 // Access hours interface for JSON field
+// Enhanced Subscription Types from Epic 1
+
+/**
+ * Enhanced subscription plan with session tracking capabilities
+ * Extends the base SubscriptionPlan with session count and duration type
+ */
+export interface SubscriptionPlanWithSessions extends SubscriptionPlan {
+  /** Number of sessions included in this plan */
+  sessions_count: number;
+  /** Whether session count is a hard constraint or informational */
+  duration_type: "constraint" | "informational";
+}
+
+/**
+ * Member subscription with snapshot data preserved from plan at time of purchase
+ * Includes tracking and computed fields for session management
+ */
+export interface MemberSubscriptionWithSnapshot extends MemberSubscription {
+  // Snapshot fields from plan at time of purchase
+  /** Plan name at time of purchase (preserved) */
+  plan_name_snapshot: string;
+  /** Total sessions at time of purchase (preserved) */
+  total_sessions_snapshot: number;
+  /** Total amount at time of purchase (preserved) */
+  total_amount_snapshot: number;
+  /** Duration in days at time of purchase (preserved) */
+  duration_days_snapshot: number;
+
+  // Tracking fields
+  /** Number of sessions used by the member */
+  used_sessions: number;
+  /** Amount paid so far */
+  paid_amount: number;
+  /** Reference to upgraded subscription if applicable */
+  upgraded_to_id?: string;
+
+  // Computed fields (from database or client-side)
+  /** Calculated remaining sessions (total - used) */
+  remaining_sessions?: number;
+  /** Amount still owed */
+  balance_due?: number;
+  /** Percentage of subscription completed */
+  completion_percentage?: number;
+  /** Days remaining in subscription */
+  days_remaining?: number;
+}
+
+/**
+ * Subscription payment with receipt tracking
+ * Extends SubscriptionPayment with auto-generated receipt numbers
+ */
+export interface SubscriptionPaymentWithReceipt extends SubscriptionPayment {
+  /** Auto-generated receipt number (format: RCPT-YYYY-XXXX) */
+  receipt_number: string;
+  /** Optional external reference number */
+  reference_number?: string;
+}
+
+// Form/Input types
+
+/**
+ * Input data for creating a new subscription
+ */
+export interface CreateSubscriptionInput {
+  /** ID of the member subscribing */
+  member_id: string;
+  /** ID of the subscription plan */
+  plan_id: string;
+  /** Optional custom start date (defaults to today) */
+  start_date?: string;
+  /** Optional initial payment amount */
+  initial_payment_amount?: number;
+  /** Payment method for initial payment */
+  payment_method?: PaymentMethod;
+  /** Optional notes about the subscription */
+  notes?: string;
+}
+
+/**
+ * Input data for recording a payment
+ */
+export interface RecordPaymentInput {
+  /** ID of the subscription being paid for */
+  subscription_id: string;
+  /** Payment amount */
+  amount: number;
+  /** Method of payment */
+  payment_method: PaymentMethod;
+  /** Optional payment date (defaults to today) */
+  payment_date?: string;
+  /** Optional external reference number */
+  reference_number?: string;
+  /** Optional payment notes */
+  notes?: string;
+}
+
+/**
+ * Input data for upgrading a subscription
+ */
+export interface UpgradeSubscriptionInput {
+  /** ID of the current subscription to upgrade */
+  current_subscription_id: string;
+  /** ID of the new plan to upgrade to */
+  new_plan_id: string;
+  /** Credit amount from current subscription */
+  credit_amount: number;
+  /** Optional effective date for upgrade */
+  effective_date?: string;
+}
+
 export interface AccessHours {
   all_day?: boolean;
   from?: string; // "HH:MM" format
