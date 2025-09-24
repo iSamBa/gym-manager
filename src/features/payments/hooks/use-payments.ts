@@ -4,10 +4,14 @@ import type { RecordPaymentInput } from "@/features/database/lib/types";
 import { subscriptionKeys } from "@/features/memberships/hooks/use-subscriptions";
 import { toast } from "sonner";
 
+type PaymentFilters = Record<string, unknown>;
+
 // Query key factory for payment-related queries
 export const paymentKeys = {
   all: ["payments"] as const,
   lists: () => [...paymentKeys.all, "list"] as const,
+  allPayments: (filters: PaymentFilters) =>
+    [...paymentKeys.lists(), "all", filters] as const,
   subscription: (subscriptionId: string) =>
     [...paymentKeys.all, "subscription", subscriptionId] as const,
   member: (memberId: string) =>
@@ -75,6 +79,11 @@ export function useRecordPayment() {
         });
       }
 
+      // Invalidate all payments queries
+      queryClient.invalidateQueries({
+        queryKey: paymentKeys.lists(),
+      });
+
       // Invalidate subscription queries to update paid amount
       queryClient.invalidateQueries({
         queryKey: subscriptionKeys.detail(variables.subscription_id),
@@ -119,6 +128,11 @@ export function useProcessRefund() {
 
       queryClient.invalidateQueries({
         queryKey: paymentKeys.member(data.member_id),
+      });
+
+      // Invalidate all payments queries
+      queryClient.invalidateQueries({
+        queryKey: paymentKeys.lists(),
       });
 
       // Invalidate subscription queries

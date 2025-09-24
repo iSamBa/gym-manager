@@ -30,37 +30,26 @@ export const subscriptionUtils = {
       plan_name_snapshot: plan.name,
       total_sessions_snapshot: plan.sessions_count,
       total_amount_snapshot: plan.price,
-      duration_days_snapshot: plan.contract_length_months
-        ? plan.contract_length_months * 30
-        : 30,
+      duration_days_snapshot: plan.duration_months * 30, // Calculate days from months
 
       // Set initial values
       start_date: input.start_date || new Date().toISOString(),
       end_date: input.start_date
         ? new Date(
-            new Date(input.start_date).getTime() +
-              (plan.contract_length_months
-                ? plan.contract_length_months * 30
-                : 30) *
-                24 *
-                60 *
-                60 *
-                1000
+            new Date(input.start_date).setMonth(
+              new Date(input.start_date).getMonth() + plan.duration_months
+            )
           ).toISOString()
         : new Date(
-            Date.now() +
-              (plan.contract_length_months
-                ? plan.contract_length_months * 30
-                : 30) *
-                24 *
-                60 *
-                60 *
-                1000
+            new Date().setMonth(new Date().getMonth() + plan.duration_months)
           ).toISOString(),
 
       status: "active" as const,
       used_sessions: 0,
       paid_amount: input.initial_payment_amount || 0,
+      signup_fee_paid: input.include_signup_fee
+        ? input.signup_fee_paid || 0
+        : 0,
       notes: input.notes,
       created_by: (await supabase.auth.getUser()).data.user?.id,
     };
@@ -168,12 +157,14 @@ export const subscriptionUtils = {
       throw new Error("Credit amount mismatch");
     }
 
-    // Create new subscription
+    // Create new subscription (upgrades don't include signup fees)
     const newSubscription = await this.createSubscriptionWithSnapshot({
       member_id: currentSub.data.member_id,
       plan_id: input.new_plan_id,
       start_date: input.effective_date || new Date().toISOString(),
       initial_payment_amount: Math.max(0, newPlan.price - credit),
+      include_signup_fee: false,
+      signup_fee_paid: 0,
       notes: `Upgraded from ${currentSub.data.plan_name_snapshot}. Credit applied: $${credit.toFixed(2)}`,
     });
 
@@ -235,17 +226,28 @@ export const subscriptionUtils = {
    * Record a payment for a subscription
    */
   async recordPayment(input: RecordPaymentInput) {
+    // Get the member_id from the subscription
+    const { data: subscription, error: subError } = await supabase
+      .from("member_subscriptions")
+      .select("member_id")
+      .eq("id", input.subscription_id)
+      .single();
+
+    if (subError) throw subError;
+
     const { data, error } = await supabase
       .from("subscription_payments")
       .insert({
         subscription_id: input.subscription_id,
+        member_id: subscription.member_id,
         amount: input.amount,
         payment_method: input.payment_method,
         payment_date: input.payment_date || new Date().toISOString(),
+        due_date: input.payment_date || new Date().toISOString(),
         payment_status: "completed",
         reference_number: input.reference_number,
         notes: input.notes,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
+        processed_by: (await supabase.auth.getUser()).data.user?.id,
       })
       .select()
       .single();

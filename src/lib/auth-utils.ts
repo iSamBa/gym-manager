@@ -24,14 +24,6 @@ export function mapUserForLayout(
         ? `${user.first_name} ${user.last_name}`
         : (user.email as string) || "Unknown User",
     email: (user.email as string) || "",
-    avatar:
-      (user.avatar_url as string) ||
-      (user.first_name && typeof user.first_name === "string"
-        ? user.first_name[0]
-        : "") ||
-      (user.email && typeof user.email === "string"
-        ? (user.email as string)[0]
-        : "") ||
-      "A",
+    avatar: (user.avatar_url as string) || undefined,
   };
 }

@@ -1,13 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { subscriptionUtils } from "../lib/subscription-utils";
 import {
+  getAllPlans,
   getActivePlans,
   getPlanById,
+  createSubscriptionPlan,
+  updateSubscriptionPlan,
+  deleteSubscriptionPlan,
 } from "@/features/database/lib/subscription-db-utils";
 import type {
   CreateSubscriptionInput,
   UpgradeSubscriptionInput,
   RecordPaymentInput,
+  SubscriptionPlan,
 } from "@/features/database/lib/types";
 import { toast } from "sonner";
 
@@ -28,11 +33,22 @@ export const subscriptionKeys = {
 };
 
 /**
- * Get all available subscription plans
+ * Get all subscription plans (active and inactive)
  */
 export function useSubscriptionPlans() {
   return useQuery({
     queryKey: subscriptionKeys.plans(),
+    queryFn: getAllPlans,
+    staleTime: 10 * 60 * 1000, // 10 minutes - plans don't change often
+  });
+}
+
+/**
+ * Get only active subscription plans
+ */
+export function useActiveSubscriptionPlans() {
+  return useQuery({
+    queryKey: [...subscriptionKeys.plans(), "active"],
     queryFn: getActivePlans,
     staleTime: 10 * 60 * 1000, // 10 minutes - plans don't change often
   });
@@ -100,6 +116,11 @@ export function useCreateSubscription() {
       // Invalidate member's subscription queries
       queryClient.invalidateQueries({
         queryKey: subscriptionKeys.memberSubscriptions(variables.member_id),
+      });
+
+      // Invalidate all subscriptions query for the management page
+      queryClient.invalidateQueries({
+        queryKey: ["all-subscriptions"],
       });
 
       toast.success("Subscription Created", {
@@ -171,6 +192,10 @@ export function usePauseSubscription() {
       queryClient.invalidateQueries({
         queryKey: subscriptionKeys.detail(data.id),
       });
+      // Invalidate all subscriptions query for the management page
+      queryClient.invalidateQueries({
+        queryKey: ["all-subscriptions"],
+      });
 
       toast.success("Subscription Paused", {
         description: "The subscription has been paused successfully.",
@@ -202,6 +227,10 @@ export function useResumeSubscription() {
       });
       queryClient.invalidateQueries({
         queryKey: subscriptionKeys.detail(data.id),
+      });
+      // Invalidate all subscriptions query for the management page
+      queryClient.invalidateQueries({
+        queryKey: ["all-subscriptions"],
       });
 
       toast.success("Subscription Resumed", {
@@ -277,6 +306,109 @@ export function useRecordPayment() {
 
     onError: (error) => {
       toast.error("Failed to Record Payment", {
+        description:
+          error instanceof Error ? error.message : "An error occurred",
+      });
+    },
+  });
+}
+
+/**
+ * Create a new subscription plan
+ */
+export function useCreateSubscriptionPlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (
+      planData: Omit<SubscriptionPlan, "id" | "created_at" | "updated_at">
+    ) => createSubscriptionPlan(planData),
+
+    onSuccess: (data) => {
+      // Invalidate plans cache
+      queryClient.invalidateQueries({
+        queryKey: subscriptionKeys.plans(),
+      });
+
+      toast.success("Plan Created", {
+        description: `${data.name} plan has been created successfully.`,
+      });
+    },
+
+    onError: (error) => {
+      toast.error("Failed to Create Plan", {
+        description:
+          error instanceof Error ? error.message : "An error occurred",
+      });
+    },
+  });
+}
+
+/**
+ * Update an existing subscription plan
+ */
+export function useUpdateSubscriptionPlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<SubscriptionPlan>;
+    }) => updateSubscriptionPlan(id, data),
+
+    onSuccess: (data) => {
+      // Invalidate plans cache
+      queryClient.invalidateQueries({
+        queryKey: subscriptionKeys.plans(),
+      });
+
+      // Update specific plan cache
+      queryClient.setQueryData([...subscriptionKeys.plans(), data.id], data);
+
+      toast.success("Plan Updated", {
+        description: `${data.name} plan has been updated successfully.`,
+      });
+    },
+
+    onError: (error) => {
+      toast.error("Failed to Update Plan", {
+        description:
+          error instanceof Error ? error.message : "An error occurred",
+      });
+    },
+  });
+}
+
+/**
+ * Delete a subscription plan
+ */
+export function useDeleteSubscriptionPlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (planId: string) => deleteSubscriptionPlan(planId),
+
+    onSuccess: (_, planId) => {
+      // Invalidate plans cache
+      queryClient.invalidateQueries({
+        queryKey: subscriptionKeys.plans(),
+      });
+
+      // Remove from cache
+      queryClient.removeQueries({
+        queryKey: [...subscriptionKeys.plans(), planId],
+      });
+
+      toast.success("Plan Deleted", {
+        description: "The subscription plan has been deleted successfully.",
+      });
+    },
+
+    onError: (error) => {
+      toast.error("Failed to Delete Plan", {
         description:
           error instanceof Error ? error.message : "An error occurred",
       });

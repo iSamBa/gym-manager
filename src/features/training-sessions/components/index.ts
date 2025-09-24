@@ -13,6 +13,7 @@ export { default as EditSessionDialog } from "./forms/EditSessionDialog";
 export { default as MemberMultiSelect } from "./forms/MemberMultiSelect";
 export { default as TrainerAvailabilityCheck } from "./forms/TrainerAvailabilityCheck";
 export { default as ProgressiveTrainingSessionForm } from "./ProgressiveTrainingSessionForm";
+export { SessionBookingForm } from "./forms/SessionBookingForm";
 
 // Analytics and reporting components
 export { default as SessionHistoryTable } from "./SessionHistoryTable";

@@ -62,11 +62,15 @@ type RecordPaymentFormData = z.infer<typeof recordPaymentSchema>;
 interface RecordPaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  preSelectedMember?: Member | null;
+  preSelectedSubscriptionId?: string | null;
 }
 
 export function RecordPaymentDialog({
   open,
   onOpenChange,
+  preSelectedMember,
+  preSelectedSubscriptionId,
 }: RecordPaymentDialogProps) {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -133,6 +137,21 @@ export function RecordPaymentDialog({
     setSelectedMember(member);
     form.setValue("member_id", member.id);
   };
+
+  // Handle pre-selected member
+  React.useEffect(() => {
+    if (preSelectedMember && open) {
+      setSelectedMember(preSelectedMember);
+      form.setValue("member_id", preSelectedMember.id);
+    }
+  }, [preSelectedMember, open, form]);
+
+  // Handle pre-selected subscription
+  React.useEffect(() => {
+    if (preSelectedSubscriptionId && open) {
+      form.setValue("subscription_id", preSelectedSubscriptionId);
+    }
+  }, [preSelectedSubscriptionId, open, form]);
 
   const handleDialogClose = () => {
     form.reset();

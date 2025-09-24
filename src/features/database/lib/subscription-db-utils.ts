@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import type {
+  SubscriptionPlan,
   SubscriptionPlanWithSessions,
   MemberSubscriptionWithSnapshot,
   SubscriptionPaymentWithReceipt,
@@ -12,7 +13,21 @@ import type {
 
 // Plan operations
 /**
- * Retrieves all active subscription plans ordered by sort_order
+ * Retrieves all subscription plans (both active and inactive) ordered by name
+ * @returns Promise<SubscriptionPlanWithSessions[]> Array of all plans
+ */
+export async function getAllPlans(): Promise<SubscriptionPlanWithSessions[]> {
+  const { data, error } = await supabase
+    .from("subscription_plans")
+    .select("*")
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return data as SubscriptionPlanWithSessions[];
+}
+
+/**
+ * Retrieves all active subscription plans ordered by name
  * @returns Promise<SubscriptionPlanWithSessions[]> Array of active plans
  */
 export async function getActivePlans(): Promise<
@@ -22,7 +37,7 @@ export async function getActivePlans(): Promise<
     .from("subscription_plans")
     .select("*")
     .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+    .order("name", { ascending: true });
 
   if (error) throw error;
   return data as SubscriptionPlanWithSessions[];
@@ -44,6 +59,59 @@ export async function getPlanById(
 
   if (error) throw error;
   return data as SubscriptionPlanWithSessions;
+}
+
+/**
+ * Creates a new subscription plan
+ * @param planData - The plan data to create
+ * @returns Promise<SubscriptionPlan> The created plan
+ */
+export async function createSubscriptionPlan(
+  planData: Omit<SubscriptionPlan, "id" | "created_at" | "updated_at">
+): Promise<SubscriptionPlan> {
+  const { data, error } = await supabase
+    .from("subscription_plans")
+    .insert([planData])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as SubscriptionPlan;
+}
+
+/**
+ * Updates an existing subscription plan
+ * @param planId - The ID of the plan to update
+ * @param planData - The plan data to update
+ * @returns Promise<SubscriptionPlan> The updated plan
+ */
+export async function updateSubscriptionPlan(
+  planId: string,
+  planData: Partial<SubscriptionPlan>
+): Promise<SubscriptionPlan> {
+  const { data, error } = await supabase
+    .from("subscription_plans")
+    .update({ ...planData, updated_at: new Date().toISOString() })
+    .eq("id", planId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as SubscriptionPlan;
+}
+
+/**
+ * Deletes a subscription plan
+ * @param planId - The ID of the plan to delete
+ * @returns Promise<void>
+ */
+export async function deleteSubscriptionPlan(planId: string): Promise<void> {
+  const { error } = await supabase
+    .from("subscription_plans")
+    .delete()
+    .eq("id", planId);
+
+  if (error) throw error;
 }
 
 // Subscription operations
@@ -82,6 +150,68 @@ export async function getMemberSubscriptionHistory(
 
   if (error) throw error;
   return data as MemberSubscriptionWithSnapshot[];
+}
+
+/**
+ * Retrieves all subscriptions across all members with filtering and pagination
+ * @param params - Filter and pagination parameters
+ * @returns Promise<{subscriptions: MemberSubscriptionWithSnapshot[], totalCount: number}> Paginated subscriptions
+ */
+export async function getAllSubscriptions({
+  search,
+  status,
+  page = 1,
+  limit = 20,
+}: {
+  search?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+} = {}): Promise<{
+  subscriptions: MemberSubscriptionWithSnapshot[];
+  totalCount: number;
+}> {
+  let query = supabase
+    .from("member_subscriptions")
+    .select(
+      `
+      *,
+      members!inner(
+        id,
+        first_name,
+        last_name,
+        email,
+        phone
+      )
+    `,
+      { count: "exact" }
+    )
+    .order("created_at", { ascending: false });
+
+  // Apply status filter
+  if (status) {
+    query = query.eq("status", status);
+  }
+
+  // Apply search filter (search in member name or plan name)
+  if (search) {
+    query = query.or(
+      `plan_name_snapshot.ilike.%${search}%,members.first_name.ilike.%${search}%,members.last_name.ilike.%${search}%`
+    );
+  }
+
+  // Apply pagination
+  const offset = (page - 1) * limit;
+  query = query.range(offset, offset + limit - 1);
+
+  const { data, error, count } = await query;
+
+  if (error) throw error;
+
+  return {
+    subscriptions: data as MemberSubscriptionWithSnapshot[],
+    totalCount: count || 0,
+  };
 }
 
 // Payment operations

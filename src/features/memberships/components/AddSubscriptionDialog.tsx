@@ -51,27 +51,29 @@ import {
   useSubscriptionPlans,
   useCreateSubscription,
 } from "@/features/memberships/hooks/use-subscriptions";
+import { AdvancedMemberSearch } from "@/features/members/components/AdvancedMemberSearch";
 import { cn } from "@/lib/utils";
-import type { Member, PaymentMethod } from "@/features/database/lib/types";
+import type { PaymentMethod, Member } from "@/features/database/lib/types";
 
-interface NewSubscriptionDialogProps {
-  member: Member;
+interface AddSubscriptionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function NewSubscriptionDialog({
-  member,
+export function AddSubscriptionDialog({
   open,
   onOpenChange,
-}: NewSubscriptionDialogProps) {
+}: AddSubscriptionDialogProps) {
   const { data: plans, isLoading: isLoadingPlans } = useSubscriptionPlans();
   const createSubscriptionMutation = useCreateSubscription();
+  const [selectedMember, setSelectedMember] = React.useState<Member | null>(
+    null
+  );
 
   const form = useForm({
     resolver: zodResolver(createSubscriptionSchema),
     defaultValues: {
-      member_id: member.id,
+      member_id: "",
       plan_id: "",
       start_date: new Date().toISOString(),
       initial_payment_amount: 0,
@@ -128,17 +130,23 @@ export function NewSubscriptionDialog({
 
   // Effect to auto-set signup fee paid when checkbox is checked
   React.useEffect(() => {
-    if (watchedIncludeSignupFee && selectedPlan && watchedSignupFeePaid === 0) {
+    if (watchedIncludeSignupFee && selectedPlan) {
       form.setValue("signup_fee_paid", selectedPlan.signup_fee);
-    } else if (!watchedIncludeSignupFee) {
+    } else {
       form.setValue("signup_fee_paid", 0);
     }
-  }, [watchedIncludeSignupFee, selectedPlan, watchedSignupFeePaid, form]);
+  }, [watchedIncludeSignupFee, selectedPlan, form]);
+
+  const handleMemberSelect = (member: Member) => {
+    setSelectedMember(member);
+    form.setValue("member_id", member.id);
+  };
 
   const onSubmit = async (data: CreateSubscriptionData) => {
     try {
       await createSubscriptionMutation.mutateAsync(data);
       form.reset();
+      setSelectedMember(null);
       onOpenChange(false);
     } catch {
       // Error handling is done in the mutation
@@ -151,7 +159,7 @@ export function NewSubscriptionDialog({
         <DialogHeader>
           <DialogTitle>Create New Subscription</DialogTitle>
           <DialogDescription>
-            Create a new subscription for {member.first_name} {member.last_name}
+            Create a new subscription for a member
           </DialogDescription>
         </DialogHeader>
 
@@ -161,6 +169,91 @@ export function NewSubscriptionDialog({
             className="space-y-6"
             role="form"
           >
+            {/* Member Selection */}
+            <FormField
+              control={form.control}
+              name="member_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Member</FormLabel>
+                  <FormControl>
+                    <div className="space-y-2">
+                      {!selectedMember ? (
+                        <AdvancedMemberSearch
+                          onMemberSelect={handleMemberSelect}
+                          placeholder="Search and select a member..."
+                        />
+                      ) : (
+                        <div className="bg-muted/50 rounded-lg border p-3">
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium">
+                              {selectedMember.first_name}{" "}
+                              {selectedMember.last_name}
+                            </p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedMember(null);
+                                field.onChange("");
+                              }}
+                            >
+                              Change
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    Select the member for this subscription
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Selected Member Info */}
+            {selectedMember && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground text-sm">
+                        Selected Member:
+                      </span>
+                      <span className="font-medium">
+                        {selectedMember.first_name} {selectedMember.last_name}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground text-sm">
+                        Email:
+                      </span>
+                      <span className="text-sm">{selectedMember.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground text-sm">
+                        Phone:
+                      </span>
+                      <span className="text-sm">
+                        {selectedMember.phone || "N/A"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground text-sm">
+                        Status:
+                      </span>
+                      <span className="text-sm capitalize">
+                        {selectedMember.status}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Plan Selection */}
             <FormField
               control={form.control}
@@ -273,34 +366,6 @@ export function NewSubscriptionDialog({
                     </FormItem>
                   )}
                 />
-
-                {watchedIncludeSignupFee && (
-                  <FormField
-                    control={form.control}
-                    name="signup_fee_paid"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Signup Fee Payment</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="0.00"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(parseFloat(e.target.value) || 0)
-                            }
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Amount of signup fee paid (max: $
-                          {selectedPlan.signup_fee.toFixed(2)})
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
               </div>
             )}
 
@@ -501,7 +566,11 @@ export function NewSubscriptionDialog({
             <div className="flex gap-2 pt-4">
               <Button
                 type="submit"
-                disabled={createSubscriptionMutation.isPending || !selectedPlan}
+                disabled={
+                  createSubscriptionMutation.isPending ||
+                  !selectedPlan ||
+                  !selectedMember
+                }
                 className="flex-1"
               >
                 {createSubscriptionMutation.isPending

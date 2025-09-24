@@ -64,6 +64,10 @@ global.DOMRect = class DOMRect {
   top: number;
   right: number;
   bottom: number;
+
+  static fromRect(other?: DOMRectInit): DOMRect {
+    return new DOMRect(other?.x, other?.y, other?.width, other?.height);
+  }
   toJSON() {
     return {
       x: this.x,
@@ -109,7 +113,7 @@ window.getComputedStyle = vi.fn((_element) => {
     fontFamily: "Arial",
     color: "rgb(0, 0, 0)",
     backgroundColor: "rgba(0, 0, 0, 0)",
-  } as CSSStyleDeclaration;
+  } as unknown as CSSStyleDeclaration;
 });
 
 // Mock matchMedia for responsive design tests
@@ -129,7 +133,7 @@ Object.defineProperty(window, "matchMedia", {
 
 // Mock window.requestAnimationFrame for animations
 window.requestAnimationFrame = vi.fn((callback) => {
-  return setTimeout(callback, 16);
+  return setTimeout(callback, 16) as unknown as number;
 });
 window.cancelAnimationFrame = vi.fn((id) => {
   clearTimeout(id);
@@ -147,6 +151,16 @@ HTMLElement.prototype.blur = vi.fn();
 
 // Mock Range and Selection APIs for text selection
 global.Range = class Range {
+  static readonly START_TO_START = 0;
+  static readonly START_TO_END = 1;
+  static readonly END_TO_END = 2;
+  static readonly END_TO_START = 3;
+
+  readonly START_TO_START = 0;
+  readonly START_TO_END = 1;
+  readonly END_TO_END = 2;
+  readonly END_TO_START = 3;
+
   startContainer: Node = document.createElement("div");
   endContainer: Node = document.createElement("div");
   startOffset: number = 0;

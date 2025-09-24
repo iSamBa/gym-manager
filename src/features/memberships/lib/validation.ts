@@ -11,6 +11,8 @@ export const createSubscriptionSchema = z.object({
   payment_method: z
     .enum(["cash", "card", "bank_transfer", "online", "check"])
     .optional(),
+  include_signup_fee: z.boolean().optional(),
+  signup_fee_paid: z.number().min(0, "Signup fee must be positive").optional(),
   notes: z
     .string()
     .max(500, "Notes must be less than 500 characters")

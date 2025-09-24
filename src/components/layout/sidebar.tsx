@@ -7,12 +7,13 @@ import {
   Users,
   UserCheck,
   CreditCard,
-  Receipt,
   BarChart3,
   Menu,
   Home,
   Dumbbell,
   Calendar,
+  Package,
+  DollarSign,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -31,8 +32,9 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
     { name: "Members", href: "/members", icon: Users },
     { name: "Trainers", href: "/trainers", icon: UserCheck },
     { name: "Training Sessions", href: "/training-sessions", icon: Calendar },
-    { name: "Memberships", href: "/memberships", icon: CreditCard },
-    { name: "Payments", href: "/payments", icon: Receipt },
+    { name: "Plans", href: "/plans", icon: Package },
+    { name: "Subscriptions", href: "/subscriptions", icon: CreditCard },
+    { name: "Payments", href: "/payments", icon: DollarSign },
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
   ] as const;
 

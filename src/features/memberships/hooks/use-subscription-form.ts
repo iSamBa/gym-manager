@@ -35,9 +35,7 @@ export function useSubscriptionForm(memberId: string) {
     return {
       totalSessions: selectedPlan.sessions_count,
       pricePerSession: selectedPlan.price / selectedPlan.sessions_count,
-      duration: selectedPlan.contract_length_months
-        ? selectedPlan.contract_length_months * 30
-        : 30,
+      duration: 30, // Default duration since billing cycle is removed
     };
   }, [selectedPlan]);
 

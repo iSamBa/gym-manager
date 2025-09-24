@@ -22,6 +22,7 @@ export { MemberSessionsTable } from "./MemberSessionsTable";
 
 // Subscription-related components
 export { MemberSubscriptions } from "./MemberSubscriptions";
+export { MemberSubscriptionTable } from "./MemberSubscriptionTable";
 export { ActiveSubscriptionCard } from "./ActiveSubscriptionCard";
 export { SubscriptionHistoryTable } from "./SubscriptionHistoryTable";
 export { NewSubscriptionDialog } from "./NewSubscriptionDialog";
