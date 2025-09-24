@@ -27,7 +27,7 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
       let query = supabase
         .from("training_sessions_calendar")
         .select("*")
-        .order("scheduled_start", { ascending: true });
+        .order("scheduled_start", { ascending: false });
 
       // Apply filters (simplified)
       if (filters?.trainer_id) {
@@ -137,15 +137,103 @@ export const useUpdateTrainingSession = () => {
       id: string;
       data: UpdateSessionData;
     }) => {
-      const { data: result, error } = await supabase
-        .from("training_sessions")
-        .update(data)
-        .eq("id", id)
-        .select()
-        .single();
+      // Separate member_ids from other update data
+      const { member_ids, ...sessionData } = data;
 
-      if (error) {
-        throw new Error(`Failed to update training session: ${error.message}`);
+      // Update session data if there are fields to update
+      let result = null;
+      if (Object.keys(sessionData).length > 0) {
+        const { data: updateResult, error: sessionError } = await supabase
+          .from("training_sessions")
+          .update(sessionData)
+          .eq("id", id)
+          .select()
+          .single();
+
+        if (sessionError) {
+          throw new Error(
+            `Failed to update training session: ${sessionError.message}`
+          );
+        }
+        result = updateResult;
+      }
+
+      // Handle member updates if member_ids is provided
+      if (member_ids !== undefined) {
+        // Get current confirmed members
+        const { data: currentMembers, error: currentMembersError } =
+          await supabase
+            .from("training_session_members")
+            .select("member_id")
+            .eq("session_id", id)
+            .eq("booking_status", "confirmed");
+
+        if (currentMembersError) {
+          throw new Error(
+            `Failed to get current members: ${currentMembersError.message}`
+          );
+        }
+
+        const currentMemberIds = currentMembers?.map((m) => m.member_id) || [];
+
+        // Find members to remove (in current but not in new list)
+        const membersToRemove = currentMemberIds.filter(
+          (memberId) => !member_ids.includes(memberId)
+        );
+
+        // Find members to add (in new list but not in current)
+        const membersToAdd = member_ids.filter(
+          (memberId) => !currentMemberIds.includes(memberId)
+        );
+
+        // Remove members
+        if (membersToRemove.length > 0) {
+          const { error: removeError } = await supabase
+            .from("training_session_members")
+            .delete()
+            .eq("session_id", id)
+            .in("member_id", membersToRemove)
+            .eq("booking_status", "confirmed");
+
+          if (removeError) {
+            throw new Error(`Failed to remove members: ${removeError.message}`);
+          }
+        }
+
+        // Add new members
+        if (membersToAdd.length > 0) {
+          const membersToInsert = membersToAdd.map((memberId) => ({
+            session_id: id,
+            member_id: memberId,
+            booking_status: "confirmed" as const,
+          }));
+
+          const { error: addError } = await supabase
+            .from("training_session_members")
+            .upsert(membersToInsert, {
+              onConflict: "session_id,member_id",
+            });
+
+          if (addError) {
+            throw new Error(`Failed to add members: ${addError.message}`);
+          }
+        }
+      }
+
+      // If we didn't update session data, fetch it for the result
+      if (!result) {
+        const { data: fetchResult, error: fetchError } = await supabase
+          .from("training_sessions")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (fetchError) {
+          throw new Error(
+            `Failed to fetch updated session: ${fetchError.message}`
+          );
+        }
+        result = fetchResult;
       }
 
       return result;
@@ -153,7 +241,7 @@ export const useUpdateTrainingSession = () => {
     onSuccess: (data) => {
       // Update specific session in cache
       queryClient.setQueryData(TRAINING_SESSIONS_KEYS.detail(data.id), data);
-      // Invalidate lists
+      // Invalidate lists to refresh data
       queryClient.invalidateQueries({
         queryKey: TRAINING_SESSIONS_KEYS.lists(),
       });

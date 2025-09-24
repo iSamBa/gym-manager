@@ -12,6 +12,7 @@ export interface TrainingSession {
   current_participants: number;
   location: string | null;
   notes: string | null;
+  trainer_name?: string; // From calendar view join
   created_at: string;
   updated_at: string;
 }

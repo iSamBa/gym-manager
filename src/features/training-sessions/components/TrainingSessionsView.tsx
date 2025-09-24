@@ -35,7 +35,7 @@ const TrainingSessionsView: React.FC = () => {
       scheduled_end: session.scheduled_end,
       status: session.status,
       location: session.location,
-      trainer_name: "Unknown Trainer", // TODO: This should come from trainer data
+      trainer_name: session.trainer_name || "Unknown Trainer",
       participant_count: session.current_participants,
       max_participants: session.max_participants,
       attendance_rate:
