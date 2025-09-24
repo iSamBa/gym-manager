@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { format } from "date-fns";
-import { MoreHorizontal, Receipt, Undo2, Download, Eye } from "lucide-react";
+import { Receipt, Undo2, Download, Eye } from "lucide-react";
 
 import {
   Table,
@@ -12,25 +12,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 
-import type { SubscriptionPaymentWithReceipt } from "@/features/database/lib/types";
+import type { SubscriptionPaymentWithReceiptAndPlan } from "@/features/database/lib/types";
 import { PaymentReceiptDialog } from "./PaymentReceiptDialog";
 import { RefundDialog } from "./RefundDialog";
 
 interface PaymentHistoryTableProps {
-  payments: SubscriptionPaymentWithReceipt[];
+  payments: SubscriptionPaymentWithReceiptAndPlan[];
   isLoading?: boolean;
   showMemberColumn?: boolean;
   showSubscriptionColumn?: boolean;
@@ -43,7 +36,7 @@ export function PaymentHistoryTable({
   showSubscriptionColumn = false,
 }: PaymentHistoryTableProps) {
   const [selectedPayment, setSelectedPayment] =
-    useState<SubscriptionPaymentWithReceipt | null>(null);
+    useState<SubscriptionPaymentWithReceiptAndPlan | null>(null);
   const [showReceiptDialog, setShowReceiptDialog] = useState(false);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
 
@@ -142,7 +135,7 @@ export function PaymentHistoryTable({
                   <TableHead>Amount</TableHead>
                   <TableHead>Method</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead className="w-[80px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -164,8 +157,8 @@ export function PaymentHistoryTable({
                     )}
                     {showSubscriptionColumn && (
                       <TableCell>
-                        {/* Plan name would come from subscription data */}
-                        Plan #{payment.subscription_id.slice(-8)}
+                        {payment.member_subscriptions?.plan_name_snapshot ||
+                          "N/A"}
                       </TableCell>
                     )}
                     <TableCell>
@@ -190,43 +183,22 @@ export function PaymentHistoryTable({
                       )}
                     </TableCell>
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            aria-label="More options"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleViewReceipt(payment)}
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Receipt
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleViewReceipt(payment)}
-                          >
-                            <Download className="mr-2 h-4 w-4" />
-                            Download Receipt
-                          </DropdownMenuItem>
-                          {payment.payment_status === "completed" && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleRefund(payment)}
-                                className="text-red-600"
-                              >
-                                <Undo2 className="mr-2 h-4 w-4" />
-                                Process Refund
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex gap-3">
+                        <Eye
+                          className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer"
+                          onClick={() => handleViewReceipt(payment)}
+                        />
+                        <Download
+                          className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer"
+                          onClick={() => handleViewReceipt(payment)}
+                        />
+                        {payment.payment_status === "completed" && (
+                          <Undo2
+                            className="h-4 w-4 cursor-pointer text-red-500 hover:text-red-600"
+                            onClick={() => handleRefund(payment)}
+                          />
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

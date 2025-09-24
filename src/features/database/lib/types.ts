@@ -150,6 +150,18 @@ export interface SubscriptionPaymentWithReceipt extends SubscriptionPayment {
   reference_number?: string;
 }
 
+/**
+ * Subscription payment with receipt and subscription details
+ * Used when displaying payments with plan information
+ */
+export interface SubscriptionPaymentWithReceiptAndPlan
+  extends SubscriptionPaymentWithReceipt {
+  /** Subscription details with plan name snapshot */
+  member_subscriptions?: {
+    plan_name_snapshot: string;
+  };
+}
+
 // Form/Input types
 
 /**

@@ -3,7 +3,14 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { Search, Download, Plus, Calendar as CalendarIcon } from "lucide-react";
+import {
+  Search,
+  Download,
+  Plus,
+  Calendar as CalendarIcon,
+  Eye,
+  Undo2,
+} from "lucide-react";
 
 import { MainLayout } from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
@@ -37,10 +44,13 @@ import { useAllPayments } from "@/features/payments/hooks/use-all-payments";
 import type {
   PaymentMethod,
   PaymentStatus,
+  SubscriptionPaymentWithReceipt,
 } from "@/features/database/lib/types";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { mapUserForLayout } from "@/lib/auth-utils";
 import { RecordPaymentDialog } from "@/features/payments/components/RecordPaymentDialog";
+import { PaymentReceiptDialog } from "@/features/payments/components/PaymentReceiptDialog";
+import { RefundDialog } from "@/features/payments/components/RefundDialog";
 
 export default function PaymentsManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,6 +63,10 @@ export default function PaymentsManagementPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
   const [isRecordDialogOpen, setIsRecordDialogOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] =
+    useState<SubscriptionPaymentWithReceipt | null>(null);
+  const [showReceiptDialog, setShowReceiptDialog] = useState(false);
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
   const pageSize = 50;
 
   // Require admin role for entire page
@@ -114,6 +128,17 @@ export default function PaymentsManagementPage() {
     totalRevenue: 0,
     totalRefunded: 0,
     paymentCount: 0,
+  };
+
+  // Action handlers
+  const handleViewReceipt = (payment: SubscriptionPaymentWithReceipt) => {
+    setSelectedPayment(payment);
+    setShowReceiptDialog(true);
+  };
+
+  const handleRefund = (payment: SubscriptionPaymentWithReceipt) => {
+    setSelectedPayment(payment);
+    setShowRefundDialog(true);
   };
 
   // Convert user object to expected format for MainLayout
@@ -264,11 +289,12 @@ export default function PaymentsManagementPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Receipt</TableHead>
+                  <TableHead>Name</TableHead>
                   <TableHead>Amount</TableHead>
-                  <TableHead>Method</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Method</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Member</TableHead>
+                  <TableHead className="w-[80px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -277,13 +303,13 @@ export default function PaymentsManagementPage() {
                     <TableCell className="font-mono text-sm">
                       {payment.receipt_number}
                     </TableCell>
+                    <TableCell>
+                      {payment.member
+                        ? `${payment.member.first_name} ${payment.member.last_name}`
+                        : "N/A"}
+                    </TableCell>
                     <TableCell className="font-medium">
                       ${payment.amount.toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {payment.payment_method.replace("_", " ")}
-                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -297,12 +323,30 @@ export default function PaymentsManagementPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
+                      <Badge variant="outline">
+                        {payment.payment_method.replace("_", " ")}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
                       {new Date(payment.payment_date).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      {payment.member
-                        ? `${payment.member.first_name} ${payment.member.last_name}`
-                        : "N/A"}
+                      <div className="flex gap-3">
+                        <Eye
+                          className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer"
+                          onClick={() => handleViewReceipt(payment)}
+                        />
+                        <Download
+                          className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer"
+                          onClick={() => handleViewReceipt(payment)}
+                        />
+                        {payment.payment_status === "completed" && (
+                          <Undo2
+                            className="h-4 w-4 cursor-pointer text-red-500 hover:text-red-600"
+                            onClick={() => handleRefund(payment)}
+                          />
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -345,6 +389,28 @@ export default function PaymentsManagementPage() {
           open={isRecordDialogOpen}
           onOpenChange={setIsRecordDialogOpen}
         />
+
+        {/* Receipt Dialog */}
+        {selectedPayment && (
+          <PaymentReceiptDialog
+            payment={selectedPayment}
+            open={showReceiptDialog}
+            onOpenChange={setShowReceiptDialog}
+          />
+        )}
+
+        {/* Refund Dialog */}
+        {selectedPayment && (
+          <RefundDialog
+            payment={selectedPayment}
+            open={showRefundDialog}
+            onOpenChange={setShowRefundDialog}
+            onSuccess={() => {
+              setShowRefundDialog(false);
+              setSelectedPayment(null);
+            }}
+          />
+        )}
       </div>
     </MainLayout>
   );
