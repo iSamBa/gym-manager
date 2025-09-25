@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import type { SubscriptionPaymentWithReceipt } from "@/features/database/lib/types";
 import type { AllPaymentsResponse } from "../hooks/use-all-payments";
 import { paymentUtils } from "../lib/payment-utils";
+import { generatePaymentReceiptPDF } from "../lib/pdf-generator";
 
 type PaymentDialogPayment =
   | SubscriptionPaymentWithReceipt
@@ -72,8 +73,12 @@ export function PaymentReceiptDialog({
   };
 
   const handleDownload = () => {
-    // Implementation for PDF generation would go here
-    console.log("Download receipt for:", payment?.receipt_number || "unknown");
+    if (!payment) return;
+
+    generatePaymentReceiptPDF({
+      payment,
+      originalPayment: originalPayment || undefined,
+    });
   };
 
   // Safe date formatting function
