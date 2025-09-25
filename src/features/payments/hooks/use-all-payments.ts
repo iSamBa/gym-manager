@@ -25,6 +25,9 @@ interface Payment {
   payment_status: PaymentStatus;
   receipt_number: string;
   payment_date: string;
+  is_refund: boolean;
+  refunded_payment_id?: string;
+  description?: string;
   member?: {
     first_name: string;
     last_name: string;

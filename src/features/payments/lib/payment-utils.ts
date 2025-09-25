@@ -17,6 +17,10 @@ type PaymentWithMember = {
   refund_amount?: number;
   member_id: string;
   subscription_id?: string;
+  is_refund: boolean;
+  refunded_payment_id?: string;
+  refund_metadata?: Record<string, unknown>;
+  description?: string;
   members?: {
     first_name: string;
     last_name: string;
@@ -174,41 +178,162 @@ export const paymentUtils = {
   },
 
   /**
-   * Process a refund for a payment
+   * Get total refund amount for a payment
+   */
+  async getPaymentRefundTotal(paymentId: string): Promise<number> {
+    const { data: refunds, error } = await supabase
+      .from("subscription_payments")
+      .select("amount")
+      .eq("refunded_payment_id", paymentId)
+      .eq("is_refund", true);
+
+    if (error) throw error;
+
+    return refunds.reduce(
+      (total, refund) => total + Math.abs(refund.amount),
+      0
+    );
+  },
+
+  /**
+   * Process a refund for a payment by creating a new negative amount entry
    */
   async processRefund(paymentId: string, refundAmount: number, reason: string) {
-    const { data: payment, error: fetchError } = await supabase
+    console.log("Processing refund:", { paymentId, refundAmount, reason });
+
+    // Get the original payment
+    const { data: originalPayment, error: fetchError } = await supabase
       .from("subscription_payments")
       .select("*")
       .eq("id", paymentId)
       .single();
 
-    if (fetchError) throw fetchError;
-
-    if (refundAmount > payment.amount) {
-      throw new Error("Refund amount cannot exceed original payment amount");
+    if (fetchError) {
+      console.error("Error fetching original payment:", fetchError);
+      throw fetchError;
     }
 
-    const { data, error } = await supabase
-      .from("subscription_payments")
-      .update({
-        refund_amount: refundAmount,
-        refund_date: new Date().toISOString(),
+    console.log("Original payment found:", originalPayment);
+
+    if (originalPayment.is_refund) {
+      throw new Error("Cannot refund a refund entry");
+    }
+
+    // Get total amount already refunded
+    const totalRefunded = await this.getPaymentRefundTotal(paymentId);
+    const maxRefundAmount = originalPayment.amount - totalRefunded;
+
+    console.log("Refund calculations:", {
+      originalAmount: originalPayment.amount,
+      totalRefunded,
+      maxRefundAmount,
+      requestedRefund: refundAmount,
+    });
+
+    if (refundAmount > maxRefundAmount) {
+      const error = `Refund amount cannot exceed remaining refundable amount: $${maxRefundAmount.toFixed(2)}`;
+      console.error("Validation error:", error);
+      throw new Error(error);
+    }
+
+    if (refundAmount <= 0) {
+      const error = "Refund amount must be greater than 0";
+      console.error("Validation error:", error);
+      throw new Error(error);
+    }
+
+    // Create a new refund entry with negative amount
+    const refundData = {
+      subscription_id: originalPayment.subscription_id,
+      member_id: originalPayment.member_id,
+      amount: -refundAmount, // Negative amount for refund
+      payment_method: originalPayment.payment_method,
+      payment_date: new Date().toISOString(),
+      payment_status: "completed" as const,
+      description: `Refund for payment ${originalPayment.receipt_number}`,
+      refund_reason: reason,
+      is_refund: true,
+      refunded_payment_id: paymentId,
+      refund_metadata: {
+        original_payment_id: paymentId,
+        original_receipt: originalPayment.receipt_number,
         refund_reason: reason,
-        payment_status:
-          refundAmount === payment.amount ? "refunded" : "completed",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", paymentId)
+        refunded_at: new Date().toISOString(),
+      },
+    };
+
+    console.log("Creating refund entry with data:", refundData);
+
+    const { data: refundEntry, error: refundError } = await supabase
+      .from("subscription_payments")
+      .insert(refundData)
       .select()
       .single();
 
+    if (refundError) {
+      console.error("Error creating refund entry:", refundError);
+      throw refundError;
+    }
+
+    console.log("Refund entry created:", refundEntry);
+
+    // Update subscription paid amount if this refund affects a subscription
+    if (originalPayment.subscription_id) {
+      await this.updateSubscriptionPaidAmount(originalPayment.subscription_id);
+    }
+
+    return refundEntry as SubscriptionPaymentWithReceipt;
+  },
+
+  /**
+   * Get refund information for a payment
+   */
+  async getPaymentRefundInfo(paymentId: string) {
+    const { data: refunds, error } = await supabase
+      .from("subscription_payments")
+      .select("id, amount, payment_date, refund_reason, receipt_number")
+      .eq("refunded_payment_id", paymentId)
+      .eq("is_refund", true)
+      .order("payment_date", { ascending: false });
+
     if (error) throw error;
 
-    // Update subscription paid amount
-    await this.updateSubscriptionPaidAmount(payment.subscription_id);
+    const totalRefunded = refunds.reduce(
+      (total, refund) => total + Math.abs(refund.amount),
+      0
+    );
 
-    return data as SubscriptionPaymentWithReceipt;
+    return {
+      refunds,
+      totalRefunded,
+      hasRefunds: refunds.length > 0,
+    };
+  },
+
+  /**
+   * Get payments with their associated refunds
+   */
+  async getPaymentWithRefunds(paymentId: string) {
+    const { data: payment, error: paymentError } = await supabase
+      .from("subscription_payments")
+      .select("*")
+      .eq("id", paymentId)
+      .single();
+
+    if (paymentError) throw paymentError;
+
+    const refundInfo = await this.getPaymentRefundInfo(paymentId);
+
+    return {
+      ...payment,
+      refunds: refundInfo.refunds,
+      totalRefunded: refundInfo.totalRefunded,
+      netAmount: payment.amount - refundInfo.totalRefunded,
+      isPartiallyRefunded:
+        refundInfo.totalRefunded > 0 &&
+        refundInfo.totalRefunded < payment.amount,
+      isFullyRefunded: refundInfo.totalRefunded >= payment.amount,
+    };
   },
 
   /**
@@ -246,6 +371,10 @@ export const paymentUtils = {
         refund_amount,
         member_id,
         subscription_id,
+        is_refund,
+        refunded_payment_id,
+        refund_metadata,
+        description,
         members!inner(
           first_name,
           last_name
@@ -296,6 +425,9 @@ export const paymentUtils = {
         payment_status: payment.payment_status,
         receipt_number: payment.receipt_number,
         payment_date: payment.payment_date,
+        is_refund: payment.is_refund,
+        refunded_payment_id: payment.refunded_payment_id,
+        description: payment.description,
         member: {
           first_name: payment.members?.first_name || "Unknown",
           last_name: payment.members?.last_name || "Member",
@@ -305,19 +437,24 @@ export const paymentUtils = {
     // Calculate summary
     const { data: summaryData, error: summaryError } = await supabase
       .from("subscription_payments")
-      .select("amount, refund_amount, payment_status");
+      .select("amount, refund_amount, payment_status, is_refund");
 
     if (summaryError) throw summaryError;
 
+    const originalPayments = summaryData.filter(
+      (p) => !p.is_refund && p.payment_status === "completed"
+    );
+    const refundPayments = summaryData.filter(
+      (p) => p.is_refund && p.payment_status === "completed"
+    );
+
     const summary = {
-      totalRevenue: summaryData
-        .filter((p) => p.payment_status === "completed")
-        .reduce((sum, p) => sum + p.amount, 0),
-      totalRefunded: summaryData.reduce(
-        (sum, p) => sum + (p.refund_amount || 0),
-        0
-      ),
-      paymentCount: summaryData.length,
+      totalRevenue: originalPayments.reduce((sum, p) => sum + p.amount, 0),
+      totalRefunded: Math.abs(
+        refundPayments.reduce((sum, p) => sum + p.amount, 0)
+      ), // abs because refunds are negative
+      paymentCount: originalPayments.length,
+      refundCount: refundPayments.length,
     };
 
     return {

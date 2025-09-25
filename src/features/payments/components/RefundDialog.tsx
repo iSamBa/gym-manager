@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -29,10 +29,17 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { useProcessRefund } from "../hooks/use-payments";
+import { paymentUtils } from "../lib/payment-utils";
 import type { SubscriptionPaymentWithReceipt } from "@/features/database/lib/types";
+import type { AllPaymentsResponse } from "../hooks/use-all-payments";
+import { useQuery } from "@tanstack/react-query";
+
+type PaymentDialogPayment =
+  | SubscriptionPaymentWithReceipt
+  | AllPaymentsResponse["payments"][0];
 
 interface RefundDialogProps {
-  payment: SubscriptionPaymentWithReceipt;
+  payment: PaymentDialogPayment;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
@@ -56,34 +63,65 @@ export function RefundDialog({
 }: RefundDialogProps) {
   const processRefundMutation = useProcessRefund();
 
-  const currentRefundAmount = payment.refund_amount || 0;
+  // Get current refund information using the new system
+  const { data: refundInfo, isLoading: isLoadingRefundInfo } = useQuery({
+    queryKey: ["payment-refunds", payment.id],
+    queryFn: () => paymentUtils.getPaymentRefundInfo(payment.id),
+    enabled: open, // Only fetch when dialog is open
+  });
+
+  const currentRefundAmount = refundInfo?.totalRefunded || 0;
   const maxRefundAmount = payment.amount - currentRefundAmount;
 
+  // Create dynamic validation schema that updates with maxRefundAmount
+  const dynamicRefundFormSchema = refundFormSchema.refine(
+    (data) => data.amount <= maxRefundAmount,
+    {
+      message: `Refund amount cannot exceed the remaining amount: $${maxRefundAmount.toFixed(2)}`,
+      path: ["amount"],
+    }
+  );
+
   const form = useForm<RefundFormData>({
-    resolver: zodResolver(
-      refundFormSchema.refine((data) => data.amount <= maxRefundAmount, {
-        message: "Refund amount cannot exceed the remaining amount",
-        path: ["amount"],
-      })
-    ),
+    resolver: zodResolver(dynamicRefundFormSchema),
     defaultValues: {
-      amount: maxRefundAmount,
+      amount: 0,
       reason: "",
     },
   });
 
+  // Update form values when refund info loads or dialog opens
+  useEffect(() => {
+    if (open && !isLoadingRefundInfo) {
+      form.reset({
+        amount: maxRefundAmount,
+        reason: "",
+      });
+    }
+  }, [open, maxRefundAmount, isLoadingRefundInfo, form]);
+
   const onSubmit = async (data: RefundFormData) => {
+    console.log("Submitting refund:", {
+      paymentId: payment.id,
+      refundAmount: data.amount,
+      reason: data.reason,
+      maxRefundAmount,
+      currentRefundAmount,
+    });
+
     try {
-      await processRefundMutation.mutateAsync({
+      const result = await processRefundMutation.mutateAsync({
         paymentId: payment.id,
         refundAmount: data.amount,
         reason: data.reason,
       });
 
+      console.log("Refund processed successfully:", result);
       form.reset();
       onSuccess?.();
-    } catch {
-      // Error handling is done in the mutation
+    } catch (error) {
+      console.error("Refund processing failed:", error);
+      // Error handling is done in the mutation, but log for debugging
     }
   };
 
@@ -125,7 +163,7 @@ export function RefundDialog({
                     {payment.payment_status}
                   </Badge>
                 </div>
-                {payment.reference_number && (
+                {"reference_number" in payment && payment.reference_number && (
                   <div className="col-span-2">
                     <span className="text-muted-foreground">Reference:</span>
                     <span className="ml-2 font-mono text-sm">
@@ -153,10 +191,48 @@ export function RefundDialog({
                   </span>
                 </div>
               </div>
+
+              {/* Previous refunds */}
+              {refundInfo?.refunds && refundInfo.refunds.length > 0 && (
+                <>
+                  <Separator className="my-3" />
+                  <div>
+                    <h5 className="mb-2 text-sm font-medium">
+                      Previous Refunds
+                    </h5>
+                    <div className="space-y-1 text-xs">
+                      {refundInfo.refunds.map((refund) => (
+                        <div
+                          key={refund.id}
+                          className="text-muted-foreground flex justify-between"
+                        >
+                          <span>
+                            {new Date(refund.payment_date).toLocaleDateString()}{" "}
+                            - {refund.receipt_number}
+                          </span>
+                          <span className="font-medium text-red-600">
+                            -${Math.abs(refund.amount).toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
+            {/* Loading state */}
+            {isLoadingRefundInfo && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Loading refund information...
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Warning for zero refund available */}
-            {maxRefundAmount === 0 && (
+            {!isLoadingRefundInfo && maxRefundAmount === 0 && (
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
@@ -183,6 +259,7 @@ export function RefundDialog({
                         className="pl-9"
                         disabled={
                           processRefundMutation.isPending ||
+                          isLoadingRefundInfo ||
                           maxRefundAmount === 0
                         }
                         {...field}
@@ -211,7 +288,9 @@ export function RefundDialog({
                     <Textarea
                       placeholder="Explain the reason for this refund..."
                       className="resize-none"
-                      disabled={processRefundMutation.isPending}
+                      disabled={
+                        processRefundMutation.isPending || isLoadingRefundInfo
+                      }
                       {...field}
                     />
                   </FormControl>
@@ -239,19 +318,25 @@ export function RefundDialog({
                 type="submit"
                 variant="destructive"
                 disabled={
-                  processRefundMutation.isPending || maxRefundAmount === 0
+                  processRefundMutation.isPending ||
+                  isLoadingRefundInfo ||
+                  maxRefundAmount === 0
                 }
                 className="flex-1"
               >
                 {processRefundMutation.isPending
                   ? "Processing..."
-                  : "Process Refund"}
+                  : isLoadingRefundInfo
+                    ? "Loading..."
+                    : "Process Refund"}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                disabled={processRefundMutation.isPending}
+                disabled={
+                  processRefundMutation.isPending || isLoadingRefundInfo
+                }
               >
                 Cancel
               </Button>

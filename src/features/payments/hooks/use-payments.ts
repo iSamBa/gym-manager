@@ -146,9 +146,13 @@ export function useProcessRefund() {
     },
 
     onError: (error) => {
+      console.error("Refund mutation error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to process refund";
+
       toast.error("Refund Failed", {
-        description:
-          error instanceof Error ? error.message : "Failed to process refund",
+        description: errorMessage,
+        duration: 5000, // Show error longer
       });
     },
   });

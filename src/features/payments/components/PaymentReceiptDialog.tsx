@@ -2,7 +2,8 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { Receipt, Download, Printer } from "lucide-react";
+import { Receipt, Download, Printer, ExternalLink } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   Dialog,
@@ -16,9 +17,15 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
 import type { SubscriptionPaymentWithReceipt } from "@/features/database/lib/types";
+import type { AllPaymentsResponse } from "../hooks/use-all-payments";
+import { paymentUtils } from "../lib/payment-utils";
+
+type PaymentDialogPayment =
+  | SubscriptionPaymentWithReceipt
+  | AllPaymentsResponse["payments"][0];
 
 interface PaymentReceiptDialogProps {
-  payment: SubscriptionPaymentWithReceipt;
+  payment: PaymentDialogPayment;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -28,6 +35,19 @@ export function PaymentReceiptDialog({
   open,
   onOpenChange,
 }: PaymentReceiptDialogProps) {
+  // Fetch original payment if this is a refund
+  const { data: originalPayment, isLoading: isLoadingOriginal } = useQuery({
+    queryKey: ["original-payment", payment?.refunded_payment_id],
+    queryFn: async () => {
+      if (!payment?.refunded_payment_id) return null;
+      const result = await paymentUtils.getPaymentWithRefunds(
+        payment.refunded_payment_id
+      );
+      return result;
+    },
+    enabled: open && !!payment?.is_refund && !!payment?.refunded_payment_id,
+  });
+
   // Handle null/undefined payment
   if (!payment) {
     return (
@@ -77,7 +97,7 @@ export function PaymentReceiptDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="h-5 w-5" data-testid="receipt-icon" />
-            Payment Receipt
+            {payment.is_refund ? "Refund Receipt" : "Payment Receipt"}
           </DialogTitle>
         </DialogHeader>
 
@@ -125,7 +145,7 @@ export function PaymentReceiptDialog({
                 </Badge>
               </div>
 
-              {payment.reference_number && (
+              {"reference_number" in payment && payment.reference_number && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Reference:</span>
                   <span className="font-mono text-sm">
@@ -148,46 +168,142 @@ export function PaymentReceiptDialog({
               </div>
             </div>
 
-            {/* Refund Information */}
-            {payment.refund_amount && payment.refund_amount > 0 && (
+            {/* Original Payment Information for Refunds */}
+            {payment.is_refund && originalPayment && (
               <>
                 <Separator />
-                <div className="space-y-2 rounded-lg bg-red-50 p-3">
-                  <h4 className="font-medium text-red-800">
-                    Refund Information
-                  </h4>
-                  <div className="flex justify-between">
-                    <span className="text-red-700">Refund Amount:</span>
-                    <span className="font-bold text-red-800">
-                      -$
-                      {(payment.refund_amount || 0).toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </span>
+                <div className="space-y-3 rounded-lg bg-blue-50 p-3 dark:bg-blue-950/20">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-blue-800 dark:text-blue-200">
+                      Original Payment Information
+                    </h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        // This would open the original payment receipt
+                        // For now, we'll just show the info inline
+                      }}
+                      className="h-6 px-2 text-blue-600 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-100"
+                    >
+                      <ExternalLink className="mr-1 h-3 w-3" />
+                      View Receipt
+                    </Button>
                   </div>
-                  {payment.refund_date && (
-                    <div className="flex justify-between">
-                      <span className="text-red-700">Refund Date:</span>
-                      <span className="text-red-800">
-                        {formatDate(payment.refund_date)}
+
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-blue-700 dark:text-blue-300">
+                        Receipt:
+                      </span>
+                      <span className="ml-2 font-mono">
+                        {originalPayment.receipt_number}
                       </span>
                     </div>
-                  )}
-                  {payment.refund_reason && (
                     <div>
-                      <span className="text-red-700">Reason:</span>
-                      <p className="mt-1 text-sm text-red-800">
-                        {payment.refund_reason}
-                      </p>
+                      <span className="text-blue-700 dark:text-blue-300">
+                        Amount:
+                      </span>
+                      <span className="ml-2 font-medium">
+                        ${originalPayment.amount.toFixed(2)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-blue-700 dark:text-blue-300">
+                        Date:
+                      </span>
+                      <span className="ml-2">
+                        {formatDate(originalPayment.payment_date)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-blue-700 dark:text-blue-300">
+                        Method:
+                      </span>
+                      <span className="ml-2">
+                        {originalPayment.payment_method?.replace("_", " ")}
+                      </span>
+                    </div>
+                  </div>
+
+                  {originalPayment.totalRefunded > 0 && (
+                    <div className="mt-2 border-t border-blue-200 pt-2 dark:border-blue-800">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-blue-700 dark:text-blue-300">
+                          Total Refunded:
+                        </span>
+                        <span className="font-medium text-red-600">
+                          -${originalPayment.totalRefunded.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-blue-700 dark:text-blue-300">
+                          Net Amount:
+                        </span>
+                        <span className="font-medium">
+                          ${originalPayment.netAmount.toFixed(2)}
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>
               </>
             )}
 
+            {/* Loading state for original payment */}
+            {payment.is_refund && isLoadingOriginal && (
+              <>
+                <Separator />
+                <div className="space-y-2 rounded-lg bg-blue-50 p-3 dark:bg-blue-950/20">
+                  <div className="text-sm text-blue-600 dark:text-blue-300">
+                    Loading original payment information...
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Refund Information */}
+            {"refund_amount" in payment &&
+              payment.refund_amount &&
+              payment.refund_amount > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-2 rounded-lg bg-red-50 p-3">
+                    <h4 className="font-medium text-red-800">
+                      Refund Information
+                    </h4>
+                    <div className="flex justify-between">
+                      <span className="text-red-700">Refund Amount:</span>
+                      <span className="font-bold text-red-800">
+                        -$
+                        {(payment.refund_amount || 0).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                    {"refund_date" in payment && payment.refund_date && (
+                      <div className="flex justify-between">
+                        <span className="text-red-700">Refund Date:</span>
+                        <span className="text-red-800">
+                          {formatDate(payment.refund_date)}
+                        </span>
+                      </div>
+                    )}
+                    {"refund_reason" in payment && payment.refund_reason && (
+                      <div>
+                        <span className="text-red-700">Reason:</span>
+                        <p className="mt-1 text-sm text-red-800">
+                          {payment.refund_reason}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
             {/* Notes */}
-            {payment.notes && (
+            {"notes" in payment && payment.notes && (
               <>
                 <Separator />
                 <div>

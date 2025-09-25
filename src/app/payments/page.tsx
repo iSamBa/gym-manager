@@ -44,8 +44,8 @@ import { useAllPayments } from "@/features/payments/hooks/use-all-payments";
 import type {
   PaymentMethod,
   PaymentStatus,
-  SubscriptionPaymentWithReceipt,
 } from "@/features/database/lib/types";
+import type { AllPaymentsResponse } from "@/features/payments/hooks/use-all-payments";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { mapUserForLayout } from "@/lib/auth-utils";
 import { RecordPaymentDialog } from "@/features/payments/components/RecordPaymentDialog";
@@ -63,8 +63,9 @@ export default function PaymentsManagementPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
   const [isRecordDialogOpen, setIsRecordDialogOpen] = useState(false);
-  const [selectedPayment, setSelectedPayment] =
-    useState<SubscriptionPaymentWithReceipt | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<
+    AllPaymentsResponse["payments"][0] | null
+  >(null);
   const [showReceiptDialog, setShowReceiptDialog] = useState(false);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
   const pageSize = 50;
@@ -131,12 +132,12 @@ export default function PaymentsManagementPage() {
   };
 
   // Action handlers
-  const handleViewReceipt = (payment: SubscriptionPaymentWithReceipt) => {
+  const handleViewReceipt = (payment: AllPaymentsResponse["payments"][0]) => {
     setSelectedPayment(payment);
     setShowReceiptDialog(true);
   };
 
-  const handleRefund = (payment: SubscriptionPaymentWithReceipt) => {
+  const handleRefund = (payment: AllPaymentsResponse["payments"][0]) => {
     setSelectedPayment(payment);
     setShowRefundDialog(true);
   };
@@ -299,17 +300,38 @@ export default function PaymentsManagementPage() {
               </TableHeader>
               <TableBody>
                 {payments.map((payment) => (
-                  <TableRow key={payment.id}>
+                  <TableRow
+                    key={payment.id}
+                    className={
+                      payment.is_refund ? "bg-red-50 dark:bg-red-950/20" : ""
+                    }
+                  >
                     <TableCell className="font-mono text-sm">
                       {payment.receipt_number}
+                      {payment.is_refund && (
+                        <Badge
+                          variant="outline"
+                          className="ml-2 border-red-200 text-xs text-red-600"
+                        >
+                          Refund
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       {payment.member
                         ? `${payment.member.first_name} ${payment.member.last_name}`
                         : "N/A"}
+                      {payment.description && (
+                        <div className="text-muted-foreground mt-1 text-xs">
+                          {payment.description}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="font-medium">
-                      ${payment.amount.toFixed(2)}
+                      <span className={payment.is_refund ? "text-red-600" : ""}>
+                        {payment.is_refund ? "-" : ""}$
+                        {Math.abs(payment.amount).toFixed(2)}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -340,12 +362,13 @@ export default function PaymentsManagementPage() {
                           className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer"
                           onClick={() => handleViewReceipt(payment)}
                         />
-                        {payment.payment_status === "completed" && (
-                          <Undo2
-                            className="h-4 w-4 cursor-pointer text-red-500 hover:text-red-600"
-                            onClick={() => handleRefund(payment)}
-                          />
-                        )}
+                        {payment.payment_status === "completed" &&
+                          !payment.is_refund && (
+                            <Undo2
+                              className="h-4 w-4 cursor-pointer text-red-500 hover:text-red-600"
+                              onClick={() => handleRefund(payment)}
+                            />
+                          )}
                       </div>
                     </TableCell>
                   </TableRow>

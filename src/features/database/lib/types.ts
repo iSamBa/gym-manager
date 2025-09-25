@@ -417,6 +417,10 @@ export interface SubscriptionPayment {
   refund_amount: number;
   refund_date?: string;
   refund_reason?: string;
+  // New refund system fields
+  refunded_payment_id?: string; // References original payment for refunds
+  is_refund: boolean; // True if this is a refund entry with negative amount
+  refund_metadata?: Record<string, unknown>; // Additional refund details
   notes?: string;
   processed_by?: string;
   created_at: string;
