@@ -50,6 +50,7 @@ import {
 } from "../../lib/validation";
 import {
   useUpdateTrainingSession,
+  useUpdateTrainingSessionStatus,
   useTrainingSession,
   useDeleteTrainingSession,
 } from "../../hooks/use-training-sessions";
@@ -87,6 +88,7 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
 
   // Mutations
   const updateSessionMutation = useUpdateTrainingSession();
+  const updateStatusMutation = useUpdateTrainingSessionStatus();
   const deleteSessionMutation = useDeleteTrainingSession();
 
   // Form setup with validation
@@ -145,13 +147,38 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
 
   // Handle form submission
   const onSubmit = async (data: UpdateSessionData) => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      return;
+    }
 
     try {
-      await updateSessionMutation.mutateAsync({
-        id: sessionId,
-        data: data,
+      // Determine if this is a status-only update
+      const changedFields = Object.keys(data).filter((key) => {
+        if (key === "member_ids") return false; // Always exclude member_ids for now
+        const originalValue = session?.[key as keyof typeof session];
+        const newValue = data[key as keyof typeof data];
+        return originalValue !== newValue;
       });
+
+      const isStatusOnlyUpdate =
+        changedFields.length === 1 && changedFields[0] === "status";
+
+      if (isStatusOnlyUpdate && data.status !== session?.status) {
+        // Use dedicated status update
+        await updateStatusMutation.mutateAsync({
+          id: sessionId,
+          status: data.status,
+        });
+      } else {
+        // For status-only updates, don't send member_ids to avoid unnecessary member processing
+        const { member_ids, ...sessionOnlyData } = data;
+        const updateData = sessionOnlyData;
+
+        await updateSessionMutation.mutateAsync({
+          id: sessionId,
+          data: updateData,
+        });
+      }
 
       // Close dialog and notify parent
       onOpenChange(false);
@@ -180,7 +207,11 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
 
   // Handle dialog close
   const handleClose = () => {
-    if (!isSubmitting && !deleteSessionMutation.isPending) {
+    if (
+      !isSubmitting &&
+      !deleteSessionMutation.isPending &&
+      !updateStatusMutation.isPending
+    ) {
       reset();
       setShowDeleteConfirm(false);
       onOpenChange(false);
@@ -668,8 +699,13 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting || !isDirty}>
-                  {isSubmitting && (
+                <Button
+                  type="submit"
+                  disabled={
+                    isSubmitting || updateStatusMutation.isPending || !isDirty
+                  }
+                >
+                  {(isSubmitting || updateStatusMutation.isPending) && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
                   Save Changes

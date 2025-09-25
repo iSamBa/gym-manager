@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { trainingSessionUtils } from "../lib/database-utils";
+import { subscriptionKeys } from "@/features/memberships/hooks/use-subscriptions";
 import type {
   TrainingSession,
   CreateSessionData,
@@ -137,6 +139,16 @@ export const useUpdateTrainingSession = () => {
       id: string;
       data: UpdateSessionData;
     }) => {
+      // Check authentication
+      const {
+        data: { session },
+        error: authError,
+      } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        throw new Error("User not authenticated");
+      }
+
       // Separate member_ids from other update data
       const { member_ids, ...sessionData } = data;
 
@@ -148,18 +160,26 @@ export const useUpdateTrainingSession = () => {
           .update(sessionData)
           .eq("id", id)
           .select()
-          .single();
+          .maybeSingle();
 
         if (sessionError) {
           throw new Error(
             `Failed to update training session: ${sessionError.message}`
           );
         }
+
+        if (!updateResult) {
+          throw new Error(
+            "Training session update was blocked. You may not have permission to update this session."
+          );
+        }
+
         result = updateResult;
       }
 
-      // Handle member updates if member_ids is provided
-      if (member_ids !== undefined) {
+      // Handle member updates ONLY if member_ids is provided AND different from current
+      // Skip member processing for simple status/field updates
+      if (member_ids !== undefined && Array.isArray(member_ids)) {
         // Get current confirmed members
         const { data: currentMembers, error: currentMembersError } =
           await supabase
@@ -226,13 +246,18 @@ export const useUpdateTrainingSession = () => {
           .from("training_sessions")
           .select("*")
           .eq("id", id)
-          .single();
+          .maybeSingle();
 
         if (fetchError) {
           throw new Error(
             `Failed to fetch updated session: ${fetchError.message}`
           );
         }
+
+        if (!fetchResult) {
+          throw new Error("Training session not found or access denied");
+        }
+
         result = fetchResult;
       }
 
@@ -245,6 +270,135 @@ export const useUpdateTrainingSession = () => {
       queryClient.invalidateQueries({
         queryKey: TRAINING_SESSIONS_KEYS.lists(),
       });
+    },
+  });
+};
+
+// Update training session status mutation - follows exact same pattern as member status update
+export const useUpdateTrainingSessionStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      status,
+    }: {
+      id: string;
+      status: TrainingSession["status"];
+    }) => trainingSessionUtils.updateTrainingSessionStatus(id, status),
+
+    onMutate: async ({ id, status }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: TRAINING_SESSIONS_KEYS.detail(id),
+      });
+
+      // Snapshot previous value
+      const previousSession = queryClient.getQueryData<TrainingSession>(
+        TRAINING_SESSIONS_KEYS.detail(id)
+      );
+
+      // Optimistically update individual session
+      if (previousSession) {
+        queryClient.setQueryData(TRAINING_SESSIONS_KEYS.detail(id), {
+          ...previousSession,
+          status,
+          updated_at: new Date().toISOString(),
+        });
+      }
+
+      // Update in all session lists (handle both regular arrays and infinite query structures)
+      queryClient.setQueriesData(
+        { queryKey: TRAINING_SESSIONS_KEYS.lists() },
+        (
+          oldData:
+            | TrainingSession[]
+            | { pages: TrainingSession[][] }
+            | undefined
+        ) => {
+          if (!oldData) return oldData;
+
+          // Handle infinite query structure
+          if ("pages" in oldData && Array.isArray(oldData.pages)) {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page) =>
+                page.map((session) =>
+                  session.id === id ? { ...session, status } : session
+                )
+              ),
+            };
+          }
+
+          // Handle regular array structure
+          if (Array.isArray(oldData)) {
+            return oldData.map((session) =>
+              session.id === id ? { ...session, status } : session
+            );
+          }
+
+          // Return unchanged if unknown structure
+          return oldData;
+        }
+      );
+
+      return { previousSession };
+    },
+
+    onError: (error, { id }, context) => {
+      // Rollback on error
+      if (context?.previousSession) {
+        queryClient.setQueryData(
+          TRAINING_SESSIONS_KEYS.detail(id),
+          context.previousSession
+        );
+      }
+      console.error("Failed to update training session status:", error);
+    },
+
+    onSettled: async (data, error, { id, status }) => {
+      // Refetch to ensure consistency
+      queryClient.invalidateQueries({
+        queryKey: TRAINING_SESSIONS_KEYS.detail(id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: TRAINING_SESSIONS_KEYS.lists(),
+      });
+
+      // When a session is completed, invalidate subscription queries as remaining_sessions may have changed
+      if (status === "completed") {
+        // Get session details to find which member(s) need subscription cache invalidation
+        try {
+          const { data: sessionData } = await supabase
+            .from("training_session_members")
+            .select("member_id")
+            .eq("session_id", id)
+            .eq("booking_status", "confirmed");
+
+          if (sessionData) {
+            // Invalidate subscription queries for all members in this session
+            sessionData.forEach(({ member_id }) => {
+              queryClient.invalidateQueries({
+                queryKey: subscriptionKeys.memberActive(member_id),
+              });
+              queryClient.invalidateQueries({
+                queryKey: subscriptionKeys.memberHistory(member_id),
+              });
+            });
+          }
+
+          // Also invalidate the all-subscriptions query used by the subscriptions management page
+          // This ensures real-time updates of session counts across all views
+          queryClient.invalidateQueries({
+            queryKey: ["all-subscriptions"],
+          });
+        } catch (error) {
+          console.warn(
+            "Failed to invalidate subscription cache after session completion:",
+            error
+          );
+        }
+      }
     },
   });
 };
