@@ -142,6 +142,7 @@ export const useUpdateTrainingSession = () => {
       // Check authentication
       const {
         data: { session },
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         error: authError,
       } = await supabase.auth.getSession();
 

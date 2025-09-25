@@ -294,10 +294,12 @@ export function useRecordPayment() {
       subscriptionUtils.recordPayment(input),
 
     onSuccess: (data, variables) => {
-      // Invalidate subscription details to refresh paid amount
-      queryClient.invalidateQueries({
-        queryKey: subscriptionKeys.detail(variables.subscription_id),
-      });
+      // Invalidate subscription details to refresh paid amount (only if subscription_id provided)
+      if (variables.subscription_id) {
+        queryClient.invalidateQueries({
+          queryKey: subscriptionKeys.detail(variables.subscription_id),
+        });
+      }
 
       toast.success("Payment Recorded", {
         description: `Payment of $${variables.amount.toFixed(2)} has been recorded. Receipt: ${data.receipt_number}`,

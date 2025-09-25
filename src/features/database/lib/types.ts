@@ -269,6 +269,18 @@ export interface Member {
   updated_at: string;
 }
 
+/**
+ * Partial Member interface matching the fields typically returned in subscription queries
+ * Used when only basic member information is needed for display/selection
+ */
+export interface PartialMember {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+}
+
 export interface MemberEmergencyContact {
   id: string;
   member_id: string;

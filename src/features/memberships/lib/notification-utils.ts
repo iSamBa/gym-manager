@@ -219,7 +219,7 @@ export const notificationUtils = {
       totalOutstandingAmount: totalOutstanding,
       outstandingBalances: outstandingBalances.map((sub) => ({
         memberId: sub.member_id,
-        memberName: `${sub.members.first_name} ${sub.members.last_name}`,
+        memberName: `${sub.members[0]?.first_name || ""} ${sub.members[0]?.last_name || ""}`,
         balance: sub.total_amount_snapshot - sub.paid_amount,
       })),
     };

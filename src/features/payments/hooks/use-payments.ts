@@ -67,10 +67,12 @@ export function useRecordPayment() {
       paymentUtils.recordPayment(input),
 
     onSuccess: (data, variables) => {
-      // Invalidate payment queries
-      queryClient.invalidateQueries({
-        queryKey: paymentKeys.subscription(variables.subscription_id),
-      });
+      // Invalidate payment queries (only if subscription_id provided)
+      if (variables.subscription_id) {
+        queryClient.invalidateQueries({
+          queryKey: paymentKeys.subscription(variables.subscription_id),
+        });
+      }
 
       // Get member_id from the returned data or fetch it
       if (data.member_id) {
@@ -84,10 +86,12 @@ export function useRecordPayment() {
         queryKey: paymentKeys.lists(),
       });
 
-      // Invalidate subscription queries to update paid amount
-      queryClient.invalidateQueries({
-        queryKey: subscriptionKeys.detail(variables.subscription_id),
-      });
+      // Invalidate subscription queries to update paid amount (only if subscription_id provided)
+      if (variables.subscription_id) {
+        queryClient.invalidateQueries({
+          queryKey: subscriptionKeys.detail(variables.subscription_id),
+        });
+      }
 
       toast.success("Payment Recorded", {
         description: `Payment of $${variables.amount.toFixed(2)} recorded successfully. Receipt: ${data.receipt_number}`,

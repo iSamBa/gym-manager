@@ -40,7 +40,7 @@ export function AdvancedMemberSearch({
   const { query, updateQuery, clearQuery, isSearching, results, error } =
     useDebouncedMemberSearch("", 300);
 
-  const { searchHistory, addToHistory, removeFromHistory, clearHistory } =
+  const { searchHistory, removeFromHistory, clearHistory } =
     useMemberSearchHistory();
 
   // Effect to notify parent of search results

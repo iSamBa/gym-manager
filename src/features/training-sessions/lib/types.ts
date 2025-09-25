@@ -73,6 +73,7 @@ export interface UpdateSessionData {
   max_participants?: number;
   notes?: string;
   status?: "scheduled" | "in_progress" | "completed" | "cancelled";
+  member_ids?: string[];
 }
 
 // Calendar view types

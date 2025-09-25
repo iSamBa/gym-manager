@@ -418,7 +418,7 @@ export const paymentUtils = {
 
     // Transform the data to match the expected interface
     const payments =
-      (data as PaymentWithMember[])?.map((payment) => ({
+      data?.map((payment) => ({
         id: payment.id,
         amount: payment.amount,
         payment_method: payment.payment_method,
@@ -429,8 +429,12 @@ export const paymentUtils = {
         refunded_payment_id: payment.refunded_payment_id,
         description: payment.description,
         member: {
-          first_name: payment.members?.first_name || "Unknown",
-          last_name: payment.members?.last_name || "Member",
+          first_name: Array.isArray(payment.members)
+            ? payment.members[0]?.first_name || "Unknown"
+            : "Unknown",
+          last_name: Array.isArray(payment.members)
+            ? payment.members[0]?.last_name || "Member"
+            : "Member",
         },
       })) || [];
 

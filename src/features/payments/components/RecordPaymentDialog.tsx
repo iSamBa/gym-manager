@@ -42,7 +42,11 @@ import { cn } from "@/lib/utils";
 import { AdvancedMemberSearch } from "@/features/members/components/AdvancedMemberSearch";
 import { useMemberSubscriptionHistory } from "@/features/memberships/hooks/use-subscriptions";
 import { paymentUtils } from "@/features/payments/lib/payment-utils";
-import type { Member, PaymentMethod } from "@/features/database/lib/types";
+import type {
+  Member,
+  PartialMember,
+  PaymentMethod,
+} from "@/features/database/lib/types";
 
 const recordPaymentSchema = z.object({
   member_id: z.string().min(1, "Please select a member"),
@@ -62,7 +66,7 @@ type RecordPaymentFormData = z.infer<typeof recordPaymentSchema>;
 interface RecordPaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  preSelectedMember?: Member | null;
+  preSelectedMember?: PartialMember | null;
   preSelectedSubscriptionId?: string | null;
 }
 
@@ -72,7 +76,9 @@ export function RecordPaymentDialog({
   preSelectedMember,
   preSelectedSubscriptionId,
 }: RecordPaymentDialogProps) {
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [selectedMember, setSelectedMember] = useState<PartialMember | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch member subscriptions when member is selected

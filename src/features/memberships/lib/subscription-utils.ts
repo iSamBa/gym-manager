@@ -254,8 +254,10 @@ export const subscriptionUtils = {
 
     if (error) throw error;
 
-    // Update subscription paid_amount
-    await this.updateSubscriptionPaidAmount(input.subscription_id);
+    // Update subscription paid_amount (only if subscription_id provided)
+    if (input.subscription_id) {
+      await this.updateSubscriptionPaidAmount(input.subscription_id);
+    }
 
     return data;
   },

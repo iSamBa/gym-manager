@@ -57,6 +57,7 @@ import {
 import { useTrainers } from "../../hooks/use-trainers";
 import { TrainerAvailabilityCheck } from "./TrainerAvailabilityCheck";
 import MemberMultiSelect from "./MemberMultiSelect";
+import type { TrainingSession } from "../../lib/types";
 
 interface EditSessionDialogProps {
   open: boolean;
@@ -163,7 +164,11 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
       const isStatusOnlyUpdate =
         changedFields.length === 1 && changedFields[0] === "status";
 
-      if (isStatusOnlyUpdate && data.status !== session?.status) {
+      if (
+        isStatusOnlyUpdate &&
+        data.status &&
+        data.status !== session?.status
+      ) {
         // Use dedicated status update
         await updateStatusMutation.mutateAsync({
           id: sessionId,
@@ -171,6 +176,7 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
         });
       } else {
         // For status-only updates, don't send member_ids to avoid unnecessary member processing
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { member_ids, ...sessionOnlyData } = data;
         const updateData = sessionOnlyData;
 
@@ -570,14 +576,18 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
             )}
 
             {/* Trainer Availability Check */}
-            {showAvailabilityCheck && isDirty && session && (
-              <TrainerAvailabilityCheck
-                trainerId={session.trainer_id}
-                startTime={scheduled_start}
-                endTime={scheduled_end}
-                excludeSessionId={sessionId}
-              />
-            )}
+            {showAvailabilityCheck &&
+              isDirty &&
+              session &&
+              scheduled_start &&
+              scheduled_end && (
+                <TrainerAvailabilityCheck
+                  trainerId={session.trainer_id}
+                  startTime={scheduled_start}
+                  endTime={scheduled_end}
+                  excludeSessionId={sessionId}
+                />
+              )}
 
             <Separator />
 

@@ -235,6 +235,15 @@ document.createRange = () => new Range();
 
 // Mock window.getSelection
 window.getSelection = vi.fn(() => ({
+  anchorNode: null,
+  anchorOffset: 0,
+  direction: "forward" as const,
+  focusNode: null,
+  focusOffset: 0,
+  baseNode: null,
+  baseOffset: 0,
+  extentNode: null,
+  extentOffset: 0,
   rangeCount: 0,
   isCollapsed: true,
   type: "None",
@@ -248,6 +257,12 @@ window.getSelection = vi.fn(() => ({
   collapseToEnd: vi.fn(),
   selectAllChildren: vi.fn(),
   deleteFromDocument: vi.fn(),
+  containsNode: vi.fn(() => false),
+  empty: vi.fn(),
+  getComposedRanges: vi.fn(() => []),
+  modify: vi.fn(),
+  setBaseAndExtent: vi.fn(),
+  setPosition: vi.fn(),
   toString: vi.fn(() => ""),
 }));
 

@@ -12,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -107,12 +106,14 @@ export function PaymentHistoryTable({
     return <Badge variant="secondary">{status}</Badge>;
   };
 
-  const handleViewReceipt = (payment: SubscriptionPaymentWithReceipt) => {
+  const handleViewReceipt = (
+    payment: SubscriptionPaymentWithReceiptAndPlan
+  ) => {
     setSelectedPayment(payment);
     setShowReceiptDialog(true);
   };
 
-  const handleRefund = (payment: SubscriptionPaymentWithReceipt) => {
+  const handleRefund = (payment: SubscriptionPaymentWithReceiptAndPlan) => {
     setSelectedPayment(payment);
     setShowRefundDialog(true);
   };
