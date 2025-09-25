@@ -562,6 +562,7 @@ describe("usePayments hooks", () => {
 
       expect(mockToast.error).toHaveBeenCalledWith("Refund Failed", {
         description: "Refund amount cannot exceed original payment amount",
+        duration: 5000,
       });
     });
 
@@ -586,6 +587,7 @@ describe("usePayments hooks", () => {
 
       expect(mockToast.error).toHaveBeenCalledWith("Refund Failed", {
         description: "Failed to process refund",
+        duration: 5000,
       });
     });
 

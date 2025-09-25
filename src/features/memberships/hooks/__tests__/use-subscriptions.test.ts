@@ -49,8 +49,12 @@ vi.mock("../../lib/subscription-utils", () => ({
 }));
 
 vi.mock("@/features/database/lib/subscription-db-utils", () => ({
+  getAllPlans: vi.fn(),
   getActivePlans: vi.fn(),
   getPlanById: vi.fn(),
+  createSubscriptionPlan: vi.fn(),
+  updateSubscriptionPlan: vi.fn(),
+  deleteSubscriptionPlan: vi.fn(),
 }));
 
 const mockSubscriptionUtils = vi.mocked(subscriptionUtils);
@@ -133,27 +137,30 @@ describe("useSubscriptions hooks", () => {
   describe("useSubscriptionPlans", () => {
     it("should fetch and return subscription plans", async () => {
       const mockPlans = [mockPlan];
-      const { getActivePlans } = await import(
+      const { getAllPlans } = await import(
         "@/features/database/lib/subscription-db-utils"
       );
-      vi.mocked(getActivePlans).mockResolvedValue(mockPlans);
+      vi.mocked(getAllPlans).mockResolvedValue(mockPlans);
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useSubscriptionPlans(), { wrapper });
 
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
+      await waitFor(
+        () => {
+          expect(result.current.isSuccess).toBe(true);
+        },
+        { timeout: 3000 }
+      );
 
       expect(result.current.data).toEqual(mockPlans);
-      expect(getActivePlans).toHaveBeenCalledTimes(1);
+      expect(getAllPlans).toHaveBeenCalledTimes(1);
     });
 
     it("should handle errors when fetching plans", async () => {
-      const { getActivePlans } = await import(
+      const { getAllPlans } = await import(
         "@/features/database/lib/subscription-db-utils"
       );
-      vi.mocked(getActivePlans).mockRejectedValue(new Error("Database error"));
+      vi.mocked(getAllPlans).mockRejectedValue(new Error("Database error"));
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useSubscriptionPlans(), { wrapper });

@@ -2,16 +2,26 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useSessionBookingWithCredits } from "../use-session-booking-with-credits";
-import { subscriptionUtils } from "@/features/memberships/lib/subscription-utils";
-import { notificationUtils } from "@/features/memberships/lib/notification-utils";
-import { supabase } from "@/lib/supabase";
+
+// Mock Supabase client creation
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: vi.fn(() => ({
+    rpc: vi.fn(),
+    from: vi.fn(),
+    auth: { getUser: vi.fn() },
+  })),
+}));
 
 // Mock dependencies
 vi.mock("@/features/memberships/lib/subscription-utils");
 vi.mock("@/features/memberships/lib/notification-utils");
 vi.mock("@/lib/supabase");
 vi.mock("sonner");
+
+import { useSessionBookingWithCredits } from "../use-session-booking-with-credits";
+import { subscriptionUtils } from "@/features/memberships/lib/subscription-utils";
+import { notificationUtils } from "@/features/memberships/lib/notification-utils";
+import { supabase } from "@/lib/supabase";
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
