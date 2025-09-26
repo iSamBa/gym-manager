@@ -1,5 +1,6 @@
-// Main trainer hooks
+// Main trainer hooks - consolidated and optimized
 export {
+  // Core CRUD operations
   useTrainers,
   useTrainer,
   useTrainerWithProfile,
@@ -16,10 +17,13 @@ export {
   useDeleteTrainer,
   useTrainersInfinite,
   useTrainersPrefetch,
+  // Export functionality (merged from use-export-trainers)
+  useExportTrainers,
+  // Query key factory
   trainerKeys,
 } from "./use-trainers";
 
-// Search and validation utilities
+// Core search functionality
 export {
   useDebouncedTrainerSearch,
   useTrainerValidation,
@@ -27,19 +31,8 @@ export {
   useTrainerCacheUtils,
 } from "./use-trainer-search";
 
-// Advanced filtering
-export {
-  useTrainerFilters,
-  trainerFilterPresets,
-  type TrainerFilterState,
-  type FilterPreset,
-} from "./use-trainer-filters";
-
-// Simple filtering for UI components
+// Simple filtering (used in pages)
 export {
   useSimpleTrainerFilters,
   type SimpleTrainerFilters,
 } from "./use-simple-trainer-filters";
-
-// CSV export functionality
-export { useExportTrainers } from "./use-export-trainers";
