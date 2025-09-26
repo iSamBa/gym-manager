@@ -1,5 +1,6 @@
-// Main member hooks
+// Main member hooks - consolidated and optimized
 export {
+  // Core CRUD operations
   useMembers,
   useMember,
   useMemberWithSubscription,
@@ -15,10 +16,16 @@ export {
   useDeleteMember,
   useMembersInfinite,
   useMembersPrefetch,
+  // Export functionality (merged from use-export-members)
+  useExportMembers,
+  // Simplified bulk operations (essential functionality only)
+  useBulkDeleteMembers,
+  type BulkOperationResult,
+  // Query key factory
   memberKeys,
 } from "./use-members";
 
-// Search and validation utilities
+// Core search functionality
 export {
   useDebouncedMemberSearch,
   useMemberValidation,
@@ -26,86 +33,5 @@ export {
   useMemberCacheUtils,
 } from "./use-member-search";
 
-// Advanced search and filtering
-export {
-  useMemberSearchHistory,
-  useAdvancedMemberSearch,
-  useMemberSearchSuggestions,
-  useSearchAnalytics,
-  useAdvancedDebouncedSearch,
-  type AdvancedMemberFilters,
-} from "./use-advanced-search";
-
-export {
-  useMemberFilters,
-  type MemberFilterState,
-  type FilterPreset,
-} from "./use-member-filters";
-
+// Simple filtering (used in pages)
 export { useSimpleMemberFilters } from "./use-simple-member-filters";
-
-export { useExportMembers } from "./use-export-members";
-
-// Bulk operations and selection
-export {
-  useBulkSelection,
-  useCrossPageSelection,
-  useSelectionAnalytics,
-  type BulkSelectionOptions,
-} from "./use-bulk-selection";
-
-export {
-  useBulkUpdateMembers,
-  useBulkDeleteMembers,
-  useBulkExportMembers,
-  useBulkUpdateMemberStatusEnhanced,
-  type BulkOperationResult,
-  type BulkOperationProgress,
-} from "./use-bulk-operations";
-
-// Real-time features and live updates
-export {
-  useRealtimeMembers,
-  useMemberConflictResolution,
-  useMemberPresence,
-  type RealtimeConnectionStatus,
-  type MemberChangeEvent,
-} from "./use-realtime-members";
-
-export {
-  useBackgroundSync,
-  useUserActivityTracking,
-  useSyncConflictResolution,
-  type NetworkStatus,
-  type BackgroundSyncConfig,
-  type SyncStatus,
-} from "./use-background-sync";
-
-export {
-  useMemberNotifications,
-  useNotificationPreferences,
-  useNotificationSounds,
-  type NotificationType,
-  type NotificationConfig,
-  type MemberNotification,
-} from "./use-member-notifications";
-
-// Advanced query patterns and composition
-export {
-  useMemberWithRelations,
-  useMemberAnalytics,
-  useMemberDashboard,
-  useDependentMemberQueries,
-  useMultipleMemberQueries,
-  useConditionalMemberQueries,
-  useOrchestatedMemberQueries,
-  type MemberWithRelations,
-  type MemberAnalytics,
-  type MemberDashboardData,
-} from "./use-composed-queries";
-
-// Route-based cache management
-export {
-  useRouteCacheManager,
-  usePageCacheStrategy,
-} from "./use-route-cache-manager";

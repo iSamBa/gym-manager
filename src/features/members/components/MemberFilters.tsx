@@ -31,10 +31,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { MemberStatus } from "@/features/database/lib/types";
-import {
-  useMemberFilters,
-  type MemberFilterState,
-} from "../hooks/use-member-filters";
+import { useSimpleMemberFilters } from "../hooks/use-simple-member-filters";
 
 // Filter configuration
 const STATUS_OPTIONS: Array<{ value: MemberStatus; label: string }> = [
@@ -71,19 +68,15 @@ export function MemberFilters({
 }: MemberFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const {
-    filters,
-    updateFilter,
-    removeFilter,
-    resetFilters,
-    getActiveFilterCount,
-    exportFilters, // eslint-disable-line @typescript-eslint/no-unused-vars
-    importFilters, // eslint-disable-line @typescript-eslint/no-unused-vars
-    presets,
-    savePreset,
-    loadPreset,
-    deletePreset,
-  } = useMemberFilters(onFiltersChange);
+  const { filters, updateFilters, databaseFilters } = useSimpleMemberFilters();
+
+  // Calculate active filters count
+  const activeFiltersCount = Object.values(filters).filter(Boolean).length;
+
+  const clearFilters = useCallback(() => {
+    updateFilters({ search: "", status: "", joinDate: "" });
+    onFiltersChange?.({});
+  }, [updateFilters, onFiltersChange]);
 
   const activeFilterCount = getActiveFilterCount();
 

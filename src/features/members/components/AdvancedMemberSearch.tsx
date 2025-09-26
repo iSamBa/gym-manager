@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Search, X, Clock, Users } from "lucide-react";
+import { Search, X, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Command,
   CommandEmpty,
@@ -14,34 +13,32 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useDebouncedMemberSearch } from "../hooks/use-member-search";
-import { useMemberSearchHistory } from "../hooks/use-advanced-search";
 import type { Member } from "@/features/database/lib/types";
 
 interface AdvancedMemberSearchProps {
-  onSearchResults?: (members: Member[]) => void;
-  onMemberSelect?: (member: Member) => void;
   placeholder?: string;
+  onMemberSelect?: (member: Member) => void;
+  onSearchResults?: (members: Member[]) => void;
+  maxResults?: number;
   className?: string;
-  showHistory?: boolean;
-  showSuggestions?: boolean;
+  disabled?: boolean;
+  autoFocus?: boolean;
 }
 
 export function AdvancedMemberSearch({
-  onSearchResults,
+  placeholder = "Search members...",
   onMemberSelect,
-  placeholder = "Search members by name...",
+  onSearchResults,
+  maxResults = 10,
   className,
-  showHistory = false,
-  showSuggestions = true, // eslint-disable-line @typescript-eslint/no-unused-vars
+  disabled = false,
+  autoFocus = false,
 }: AdvancedMemberSearchProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  const { query, updateQuery, clearQuery, isSearching, results, error } =
+  const { query, updateQuery, clearQuery, results, isLoading } =
     useDebouncedMemberSearch("", 300);
-
-  const { searchHistory, removeFromHistory, clearHistory } =
-    useMemberSearchHistory();
 
   // Effect to notify parent of search results
   useEffect(() => {
@@ -64,213 +61,138 @@ export function AdvancedMemberSearch({
     [onMemberSelect, clearQuery]
   );
 
-  // Handle search from history
-  const handleHistorySelect = useCallback(
-    (historyQuery: string) => {
-      updateQuery(historyQuery);
-      setIsOpen(false);
-    },
-    [updateQuery]
-  );
-
-  // Handle clear search
-  const handleClear = useCallback(() => {
-    clearQuery();
-    setSelectedIndex(-1);
-    if (onSearchResults) {
-      onSearchResults([]);
-    }
-  }, [clearQuery, onSearchResults]);
-
   // Handle keyboard navigation
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (!isOpen) return;
 
-      const totalItems =
-        results.length + (showHistory ? searchHistory.length : 0);
+      const memberResults = results.slice(0, maxResults);
 
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
-          setSelectedIndex((prev) => (prev < totalItems - 1 ? prev + 1 : 0));
+          setSelectedIndex((prev) =>
+            prev < memberResults.length - 1 ? prev + 1 : 0
+          );
           break;
+
         case "ArrowUp":
           e.preventDefault();
-          setSelectedIndex((prev) => (prev > 0 ? prev - 1 : totalItems - 1));
+          setSelectedIndex((prev) =>
+            prev > 0 ? prev - 1 : memberResults.length - 1
+          );
           break;
+
         case "Enter":
           e.preventDefault();
-          if (selectedIndex >= 0) {
-            if (selectedIndex < results.length) {
-              handleMemberSelect(results[selectedIndex]);
-            } else if (showHistory) {
-              const historyIndex = selectedIndex - results.length;
-              handleHistorySelect(searchHistory[historyIndex]);
-            }
+          if (selectedIndex >= 0 && memberResults[selectedIndex]) {
+            handleMemberSelect(memberResults[selectedIndex]);
           }
           break;
+
         case "Escape":
+          e.preventDefault();
           setIsOpen(false);
           setSelectedIndex(-1);
           break;
       }
     },
-    [
-      isOpen,
-      results,
-      searchHistory,
-      selectedIndex,
-      showHistory,
-      handleMemberSelect,
-      handleHistorySelect,
-    ]
+    [isOpen, results, maxResults, selectedIndex, handleMemberSelect]
   );
 
-  // Show dropdown when there are results or history
-  const shouldShowDropdown =
-    isOpen &&
-    (results.length > 0 ||
-      (query.length === 0 && showHistory && searchHistory.length > 0));
+  const memberResults = results.slice(0, maxResults);
+  const showResults =
+    isOpen && query.length > 0 && (memberResults.length > 0 || isLoading);
 
   return (
     <div className={cn("relative", className)}>
+      {/* Search Input */}
       <div className="relative">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
         <Input
           type="text"
           placeholder={placeholder}
           value={query}
-          onChange={(e) => updateQuery(e.target.value)}
+          onChange={(e) => {
+            updateQuery(e.target.value);
+            setIsOpen(true);
+            setSelectedIndex(-1);
+          }}
           onFocus={() => setIsOpen(true)}
+          onBlur={() => {
+            // Delay closing to allow for click events
+            setTimeout(() => setIsOpen(false), 200);
+          }}
           onKeyDown={handleKeyDown}
           className="pr-10 pl-10"
+          disabled={disabled}
+          autoFocus={autoFocus}
         />
         {query && (
           <Button
+            type="button"
             variant="ghost"
             size="sm"
-            onClick={handleClear}
-            className="hover:bg-muted absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 p-0"
+            onClick={() => {
+              clearQuery();
+              setIsOpen(false);
+              setSelectedIndex(-1);
+            }}
+            className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 transform p-0"
+            disabled={disabled}
           >
-            <X className="h-3 w-3" />
-            <span className="sr-only">Clear search</span>
+            <X className="h-4 w-4" />
           </Button>
         )}
       </div>
 
-      {/* Loading indicator */}
-      {isSearching && (
-        <div className="absolute top-1/2 right-10 -translate-y-1/2">
-          <div className="border-muted-foreground border-t-primary h-4 w-4 animate-spin rounded-full border-2" />
-        </div>
-      )}
-
-      {/* Search results dropdown */}
-      {shouldShowDropdown && (
-        <div className="bg-popover text-popover-foreground animate-in fade-in-0 zoom-in-95 absolute top-full z-50 mt-1 w-full rounded-md border p-0 shadow-md">
-          <Command className="max-h-80">
-            <CommandList>
-              {/* Search results */}
-              {results.length > 0 && (
-                <CommandGroup heading="Members">
-                  {results.map((member, index) => (
+      {/* Search Results */}
+      {showResults && (
+        <div className="bg-popover absolute top-full z-50 mt-1 w-full rounded-md border shadow-lg">
+          <Command className="border-0">
+            <CommandList className="max-h-[300px] overflow-y-auto">
+              {isLoading ? (
+                <div className="flex items-center justify-center p-4">
+                  <div className="text-muted-foreground flex items-center space-x-2 text-sm">
+                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-current"></div>
+                    <span>Searching...</span>
+                  </div>
+                </div>
+              ) : memberResults.length === 0 ? (
+                <CommandEmpty>No members found.</CommandEmpty>
+              ) : (
+                <CommandGroup>
+                  {memberResults.map((member, index) => (
                     <CommandItem
                       key={member.id}
                       value={member.id}
                       onSelect={() => handleMemberSelect(member)}
                       className={cn(
-                        "flex cursor-pointer items-center gap-3 p-3",
+                        "cursor-pointer",
                         selectedIndex === index && "bg-accent"
                       )}
                     >
-                      <Users className="text-muted-foreground h-4 w-4" />
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">
+                      <div className="flex items-center space-x-3">
+                        <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full">
+                          <Users className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium">
                             {member.first_name} {member.last_name}
-                          </span>
-                          <Badge
-                            variant={
-                              member.status === "active"
-                                ? "default"
-                                : "secondary"
-                            }
-                            className="text-xs"
-                          >
-                            {member.status}
-                          </Badge>
+                          </div>
+                          <div className="text-muted-foreground text-xs">
+                            {member.email}
+                          </div>
                         </div>
                       </div>
                     </CommandItem>
                   ))}
                 </CommandGroup>
               )}
-
-              {/* No results */}
-              {query.length >= 2 && results.length === 0 && !isSearching && (
-                <CommandEmpty className="py-6">
-                  No members found matching &quot;{query}&quot;
-                </CommandEmpty>
-              )}
-
-              {/* Search history */}
-              {showHistory &&
-                query.length === 0 &&
-                searchHistory.length > 0 && (
-                  <CommandGroup heading="Recent Searches">
-                    {searchHistory.map((historyQuery, index) => {
-                      const historyIndex = results.length + index;
-                      return (
-                        <CommandItem
-                          key={`history-${index}`}
-                          value={historyQuery}
-                          onSelect={() => handleHistorySelect(historyQuery)}
-                          className={cn(
-                            "flex cursor-pointer items-center gap-3 p-3",
-                            selectedIndex === historyIndex && "bg-accent"
-                          )}
-                        >
-                          <Clock className="text-muted-foreground h-4 w-4" />
-                          <span className="flex-1">{historyQuery}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeFromHistory(historyQuery);
-                            }}
-                            className="hover:bg-destructive hover:text-destructive-foreground h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </CommandItem>
-                      );
-                    })}
-
-                    {/* Clear history option */}
-                    <CommandItem
-                      onSelect={clearHistory}
-                      className="text-muted-foreground hover:text-foreground justify-center p-2 text-sm"
-                    >
-                      Clear search history
-                    </CommandItem>
-                  </CommandGroup>
-                )}
             </CommandList>
           </Command>
-        </div>
-      )}
-
-      {/* Error display */}
-      {error && (
-        <div className="border-destructive bg-destructive/10 text-destructive absolute top-full z-50 mt-1 w-full rounded-md border p-3 text-sm">
-          Search failed. Please try again.
         </div>
       )}
     </div>
   );
 }
-
-// Export for stories and tests
-export type { AdvancedMemberSearchProps };
