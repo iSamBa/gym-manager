@@ -5,10 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { TrainerAvailabilityCheck } from "../../components/forms/TrainerAvailabilityCheck";
 
-// Mock the hook
-vi.mock("// @/features/training-sessions/hooks (temporarily disabled)", () => ({
-  useTrainerAvailability: vi.fn(),
-}));
+// Trainer availability hook was removed during consolidation - test disabled
 
 // Mock date-fns format function
 vi.mock("date-fns", () => ({

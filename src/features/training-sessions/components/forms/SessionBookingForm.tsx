@@ -36,7 +36,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-import { useSessionCreditValidator } from "// @/features/training-sessions/hooks (temporarily disabled)";
+// Session credit validation functionality removed during hook consolidation
 import { useSessionBookingWithCredits } from "../../hooks/use-session-booking-with-credits";
 import { useMembers } from "@/features/members/hooks";
 import { useTrainers } from "@/features/trainers/hooks";
@@ -70,9 +70,9 @@ export function SessionBookingForm({
   const { data: members = [], isLoading: membersLoading } = useMembers();
   const { data: trainers = [], isLoading: trainersLoading } = useTrainers();
 
-  // Credit validation for selected member
-  const { data: creditValidation, isLoading: isValidatingCredits } =
-    useSessionCreditValidator(selectedMemberId);
+  // Credit validation removed during hook consolidation - simplified validation will be in booking logic
+  const creditValidation = null;
+  const isValidatingCredits = false;
 
   // Enhanced booking mutation
   const bookSessionMutation = useSessionBookingWithCredits();

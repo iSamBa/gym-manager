@@ -36,10 +36,14 @@ import {
   ChevronRight,
   Edit,
 } from "lucide-react";
-import {
-  useTrainerSessions,
-  type TrainerSessionFilters,
-} from "../hooks/use-trainer-sessions";
+import { useTrainers } from "@/features/trainers/hooks";
+import { useTrainingSessions } from "@/features/training-sessions/hooks";
+
+// Basic trainer session filters type
+type TrainerSessionFilters = {
+  status?: string;
+  dateRange?: { from: Date; to: Date };
+};
 import { format, isToday, isTomorrow, isYesterday } from "date-fns";
 
 interface TrainerSessionsTableProps {
@@ -70,13 +74,32 @@ export function TrainerSessionsTable({
     [filters, searchTerm]
   );
 
-  const {
-    data: sessions,
-    isLoading,
-    error,
-  } = useTrainerSessions(trainerId, {
-    filters: appliedFilters,
-  });
+  // Get all training sessions and filter by trainer
+  const { data: allSessions, isLoading, error } = useTrainingSessions();
+
+  // Filter sessions for this trainer and apply additional filters
+  const sessions = useMemo(() => {
+    if (!allSessions) return [];
+    let filtered = allSessions.filter(
+      (session) => session.trainer_id === trainerId
+    );
+
+    if (appliedFilters.status) {
+      filtered = filtered.filter(
+        (session) => session.status === appliedFilters.status
+      );
+    }
+
+    if (appliedFilters.dateRange) {
+      const { from, to } = appliedFilters.dateRange;
+      filtered = filtered.filter((session) => {
+        const sessionDate = new Date(session.start_time);
+        return sessionDate >= from && sessionDate <= to;
+      });
+    }
+
+    return filtered;
+  }, [allSessions, trainerId, appliedFilters]);
 
   // Pagination
   const paginatedSessions = useMemo(() => {

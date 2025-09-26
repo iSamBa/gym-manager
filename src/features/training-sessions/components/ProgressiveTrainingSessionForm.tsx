@@ -44,7 +44,7 @@ import { Separator } from "@/components/ui/separator";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 
 import { createSessionSchema, type CreateSessionData } from "../lib/validation";
-import { useTrainers } from "../hooks/use-trainers";
+import { useTrainers } from "@/features/trainers/hooks";
 import MemberMultiSelect from "./forms/MemberMultiSelect";
 import TrainerAvailabilityCheck from "./forms/TrainerAvailabilityCheck";
 

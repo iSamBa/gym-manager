@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import {
   MapPin,
   AlertCircle,
 } from "lucide-react";
-import { useWeeklyTrainerSessions } from "../hooks/use-trainer-sessions";
+import { useTrainingSessions } from "@/features/training-sessions/hooks";
 import { format, startOfWeek, addDays, isToday, isSameDay } from "date-fns";
 
 interface TrainerCalendarViewProps {
@@ -29,11 +29,14 @@ export function TrainerCalendarView({
 }: TrainerCalendarViewProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
 
-  const {
-    data: sessions,
-    isLoading,
-    error,
-  } = useWeeklyTrainerSessions(trainerId);
+  // Get all sessions and filter for this trainer
+  const { data: allSessions, isLoading, error } = useTrainingSessions();
+
+  // Filter sessions for this trainer
+  const sessions = useMemo(() => {
+    if (!allSessions) return [];
+    return allSessions.filter((session) => session.trainer_id === trainerId);
+  }, [allSessions, trainerId]);
 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 }); // Monday start
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));

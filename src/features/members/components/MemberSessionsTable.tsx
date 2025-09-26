@@ -35,10 +35,13 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import {
-  useMemberSessions,
-  type SessionFilters,
-} from "// Temporarily disabled";
+import { useMemberWithSubscription } from "@/features/members/hooks";
+
+// Basic session filters type
+type SessionFilters = {
+  status?: string;
+  dateRange?: { from: Date; to: Date };
+};
 import { format, isToday, isTomorrow, isYesterday } from "date-fns";
 
 interface MemberSessionsTableProps {
@@ -69,13 +72,34 @@ export function MemberSessionsTable({
     [filters, searchTerm]
   );
 
+  // Get member data including sessions
   const {
-    data: sessions,
+    data: memberData,
     isLoading,
     error,
-  } = useMemberSessions(memberId, {
-    filters: appliedFilters,
-  });
+  } = useMemberWithSubscription(memberId);
+
+  // Filter sessions based on applied filters
+  const sessions = useMemo(() => {
+    if (!memberData?.sessions) return [];
+    let filtered = memberData.sessions;
+
+    if (appliedFilters.status) {
+      filtered = filtered.filter(
+        (session) => session.status === appliedFilters.status
+      );
+    }
+
+    if (appliedFilters.dateRange) {
+      const { from, to } = appliedFilters.dateRange;
+      filtered = filtered.filter((session) => {
+        const sessionDate = new Date(session.start_time);
+        return sessionDate >= from && sessionDate <= to;
+      });
+    }
+
+    return filtered;
+  }, [memberData?.sessions, appliedFilters]);
 
   // Pagination
   const paginatedSessions = useMemo(() => {

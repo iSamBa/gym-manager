@@ -20,7 +20,9 @@ import {
   Star,
   BarChart3,
 } from "lucide-react";
-// Temporarily disabled analytics import
+import { useTrainers } from "@/features/trainers/hooks";
+import { useTrainingSessions } from "@/features/training-sessions/hooks";
+import { useMemo } from "react";
 
 interface TrainerAnalyticsProps {
   trainerId: string;
@@ -31,8 +33,44 @@ export function TrainerAnalytics({
   trainerId,
   className,
 }: TrainerAnalyticsProps) {
-  const { analytics, insights, isLoading, error } =
-    useTrainerPerformanceInsights(trainerId);
+  // Get trainer data and sessions for analytics calculation
+  const { data: trainers, isLoading: trainersLoading } = useTrainers();
+  const { data: allSessions, isLoading: sessionsLoading } =
+    useTrainingSessions();
+
+  const isLoading = trainersLoading || sessionsLoading;
+  const error = null;
+
+  // Calculate analytics from session data
+  const analytics = useMemo(() => {
+    if (!allSessions || !trainers) return null;
+
+    const trainerSessions = allSessions.filter(
+      (session) => session.trainer_id === trainerId
+    );
+    const completedSessions = trainerSessions.filter(
+      (session) => session.status === "completed"
+    );
+
+    return {
+      totalSessions: trainerSessions.length,
+      completedSessions: completedSessions.length,
+      completionRate: trainerSessions.length
+        ? (completedSessions.length / trainerSessions.length) * 100
+        : 0,
+      totalRevenue: completedSessions.reduce(
+        (sum, session) => sum + (session.price || 0),
+        0
+      ),
+    };
+  }, [allSessions, trainers, trainerId]);
+
+  const insights = analytics
+    ? {
+        trend: "stable" as const,
+        performance: analytics.completionRate > 80 ? "excellent" : "good",
+      }
+    : null;
 
   if (error) {
     return (

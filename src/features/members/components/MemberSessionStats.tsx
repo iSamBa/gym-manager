@@ -16,7 +16,7 @@ import {
   Activity,
   AlertCircle,
 } from "lucide-react";
-// Temporarily disabled: import { useMemberSessionInsights } from "// Temporarily disabled";
+import { useMemberWithSubscription } from "@/features/members/hooks";
 
 interface MemberSessionStatsProps {
   memberId: string;
@@ -27,12 +27,34 @@ export function MemberSessionStats({
   memberId,
   className,
 }: MemberSessionStatsProps) {
-  // Temporarily disabled hook usage
-  const stats = null;
-  const insights = null;
-  const isLoading = false;
-  const error = null;
-  // const { stats, insights, isLoading, error } = useMemberSessionInsights(memberId);
+  // Get member data with sessions for stats calculation
+  const {
+    data: memberData,
+    isLoading,
+    error,
+  } = useMemberWithSubscription(memberId);
+
+  // Calculate basic stats from member session data
+  const stats = memberData?.sessions
+    ? {
+        totalSessions: memberData.sessions.length,
+        completedSessions: memberData.sessions.filter(
+          (s) => s.status === "completed"
+        ).length,
+        cancelledSessions: memberData.sessions.filter(
+          (s) => s.status === "cancelled"
+        ).length,
+      }
+    : null;
+
+  const insights = stats
+    ? {
+        completionRate: stats.totalSessions
+          ? (stats.completedSessions / stats.totalSessions) * 100
+          : 0,
+        trend: "stable" as const,
+      }
+    : null;
 
   if (error) {
     return (

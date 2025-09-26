@@ -4,10 +4,31 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Users, MapPin } from "lucide-react";
-// Temporarily disabled quick stats import
+import { useTrainingSessions } from "@/features/training-sessions/hooks";
+import { useMemo } from "react";
 
 const SessionQuickStats: React.FC = () => {
-  const { data: stats, isLoading } = useSessionQuickStats();
+  // Get all sessions and calculate quick stats
+  const { data: allSessions, isLoading } = useTrainingSessions();
+
+  const stats = useMemo(() => {
+    if (!allSessions) return null;
+
+    const today = new Date();
+    const todaySessions = allSessions.filter((session) => {
+      const sessionDate = new Date(session.start_time);
+      return sessionDate.toDateString() === today.toDateString();
+    });
+
+    return {
+      totalToday: todaySessions.length,
+      completedToday: todaySessions.filter((s) => s.status === "completed")
+        .length,
+      upcomingToday: todaySessions.filter((s) => s.status === "scheduled")
+        .length,
+      totalThisWeek: allSessions.length, // simplified
+    };
+  }, [allSessions]);
 
   if (isLoading) {
     return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -99,8 +99,31 @@ export function AdvancedMemberTable({
     newStatus?: MemberStatus;
   }>({ isOpen: false, action: null });
 
+  // Enhanced filters with server-side sorting
+  const enhancedFilters = useMemo(() => {
+    const baseFilters = filters || {};
+
+    // Map sortConfig to database sorting parameters
+    const orderBy =
+      sortConfig.field === "join_date"
+        ? "join_date"
+        : sortConfig.field === "name"
+          ? "name"
+          : sortConfig.field === "email"
+            ? "email"
+            : sortConfig.field === "status"
+              ? "status"
+              : undefined;
+
+    return {
+      ...baseFilters,
+      orderBy,
+      orderDirection: sortConfig.direction,
+    };
+  }, [filters, sortConfig]);
+
   // Use infinite query when filters are provided, otherwise use passed props
-  const infiniteQuery = useMembersInfinite(filters || {}, 20);
+  const infiniteQuery = useMembersInfinite(enhancedFilters, 20);
 
   // Determine data source based on what's provided
   const data = propMembers ? { pages: [propMembers] } : infiniteQuery.data;
@@ -115,36 +138,13 @@ export function AdvancedMemberTable({
   const bulkUpdateMutation = useBulkUpdateMemberStatus();
   const deleteMemberMutation = useDeleteMember();
 
+  // Data is now sorted by the database, no need for client-side sorting
   const allMembers = data?.pages.flat() || [];
-  const sortedMembers = [...allMembers].sort((a, b) => {
-    const multiplier = sortConfig.direction === "asc" ? 1 : -1;
-
-    switch (sortConfig.field) {
-      case "name":
-        return (
-          multiplier *
-          `${a.first_name} ${a.last_name}`.localeCompare(
-            `${b.first_name} ${b.last_name}`
-          )
-        );
-      case "email":
-        return multiplier * a.email.localeCompare(b.email);
-      case "status":
-        return multiplier * a.status.localeCompare(b.status);
-      case "join_date":
-        return (
-          multiplier * new Date(a.join_date).getTime() -
-          new Date(b.join_date).getTime()
-        );
-      default:
-        return 0;
-    }
-  });
 
   const isAllSelected =
-    sortedMembers.length > 0 && selectedMembers.size === sortedMembers.length;
+    allMembers.length > 0 && selectedMembers.size === allMembers.length;
   const isPartiallySelected =
-    selectedMembers.size > 0 && selectedMembers.size < sortedMembers.length;
+    selectedMembers.size > 0 && selectedMembers.size < allMembers.length;
 
   const handleSort = (field: SortField) => {
     setSortConfig((prev) => ({
@@ -158,7 +158,7 @@ export function AdvancedMemberTable({
     if (isAllSelected) {
       setSelectedMembers(new Set());
     } else {
-      setSelectedMembers(new Set(sortedMembers.map((member) => member.id)));
+      setSelectedMembers(new Set(allMembers.map((member) => member.id)));
     }
   };
 
@@ -417,7 +417,7 @@ export function AdvancedMemberTable({
                   <p className="text-muted-foreground">Loading members...</p>
                 </TableCell>
               </TableRow>
-            ) : sortedMembers.length === 0 ? (
+            ) : allMembers.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={showActions ? 7 : 6}
@@ -427,7 +427,7 @@ export function AdvancedMemberTable({
                 </TableCell>
               </TableRow>
             ) : (
-              sortedMembers.map((member) => (
+              allMembers.map((member) => (
                 <TableRow
                   key={member.id}
                   className="hover:bg-muted/50 cursor-pointer"

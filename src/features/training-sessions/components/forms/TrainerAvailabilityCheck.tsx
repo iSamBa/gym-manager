@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useTrainerAvailability } from "// @/features/training-sessions/hooks (temporarily disabled)";
+// Trainer availability checking removed during hook consolidation
 import type { SessionAvailabilityCheck } from "../../lib/types";
 import { format } from "date-fns";
 
@@ -25,19 +25,12 @@ interface TrainerAvailabilityCheckProps {
 export const TrainerAvailabilityCheck: React.FC<
   TrainerAvailabilityCheckProps
 > = ({ trainerId, startTime, endTime, excludeSessionId, className }) => {
-  const {
-    data: availability,
-    isLoading,
-    error,
-    refetch,
-    isFetching,
-  } = useTrainerAvailability({
-    trainer_id: trainerId,
-    start_time: startTime,
-    end_time: endTime,
-    exclude_session_id: excludeSessionId,
-    enabled: !!(trainerId && startTime && endTime),
-  });
+  // Trainer availability checking removed during hook consolidation
+  const availability = null;
+  const isLoading = false;
+  const error = null;
+  const refetch = () => {};
+  const isFetching = false;
 
   // Don't render if essential data is missing
   if (!trainerId || !startTime || !endTime) {

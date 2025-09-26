@@ -29,6 +29,13 @@
 
 **Goal:** Reduce hooks by 70% (57 → 15-20)
 
+**🚨 CRITICAL:** After each consolidation, immediately perform cleanup:
+
+1. **Update all imports** in components using deleted hooks
+2. **Replace with consolidated equivalents** that provide same functionality
+3. **Test build** to ensure no broken imports remain
+4. **Maintain user functionality** - no features should be lost
+
 #### Members (22 → 6 hooks)
 
 - [ ] **Keep:** `use-members.ts`, `use-member-search.ts`, `use-member-filters.ts`
@@ -263,13 +270,18 @@
   - [x] Members: 22 → 4 hooks (82% reduction) ✅
   - [x] Trainers: 9 → 4 hooks (56% reduction) ✅
   - [x] Training Sessions: 9 → 4 hooks (56% reduction) ✅
-- [ ] **Phase 2:** Database Optimization (0/15 tasks)
+- [ ] **Phase 2:** Database Optimization (3/15 tasks) - **IN PROGRESS**
+  - [x] **HIGH PRIORITY:** Client-side sorting → SQL ORDER BY (3 files) ✅
+  - [ ] **HIGH PRIORITY:** Client-side filtering → SQL WHERE (4 files)
+  - [ ] **HIGH PRIORITY:** Status counting → SQL aggregations (2 files)
+  - [ ] **MEDIUM:** Search → PostgreSQL full-text search (1 file)
+  - [ ] **MEDIUM:** Analytics → SQL GROUP BY functions (2 files)
 - [ ] **Phase 3:** Eliminate Duplication (0/12 tasks)
 - [ ] **Phase 4:** Remove Premature Optimizations (0/10 tasks)
 - [ ] **Phase 5:** Bundle Optimization (0/8 tasks)
 - [ ] **Phase 6:** Component Memoization (0/6 tasks)
 
-**Overall Progress: 30/81 tasks (37%)**
+**Overall Progress: 33/81 tasks (41%)**
 
 ## 🎉 Phase 1 COMPLETE: Hook Consolidation Results
 
