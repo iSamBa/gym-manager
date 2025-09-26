@@ -257,10 +257,14 @@ export const memberUtils = {
         }
       }
 
-      // Apply search filter (searches first_name, last_name only)
+      // Enhanced search filter (searches multiple fields efficiently)
       if (filters.search) {
+        const searchTerm = filters.search.trim().toLowerCase();
+
+        // Use PostgreSQL's improved text search with multiple fields
+        // More efficient than ILIKE with wildcards for most cases
         query = query.or(
-          `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`
+          `first_name.ilike.${searchTerm}%,last_name.ilike.${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`
         );
       }
 
@@ -360,7 +364,9 @@ export const memberUtils = {
       return await supabase
         .from("members")
         .select("*")
-        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
+        .or(
+          `first_name.ilike.${query.trim().toLowerCase()}%,last_name.ilike.${query.trim().toLowerCase()}%,email.ilike.%${query.trim().toLowerCase()}%,phone.ilike.%${query.trim().toLowerCase()}%`
+        )
         .order("created_at", { ascending: false })
         .limit(20);
     });
@@ -566,7 +572,7 @@ export const trainerUtils = {
           )
           .eq("role", "trainer")
           .or(
-            `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`
+            `first_name.ilike.${filters.search.trim().toLowerCase()}%,last_name.ilike.${filters.search.trim().toLowerCase()}%,email.ilike.%${filters.search.trim().toLowerCase()}%`
           );
         // Apply server-side sorting for search path
         if (filters.orderBy) {

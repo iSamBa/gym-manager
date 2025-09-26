@@ -22,6 +22,7 @@ import {
   useMemberEvolution,
   useMemberStatusDistribution,
 } from "@/features/dashboard/hooks/use-member-analytics";
+import { useDashboardStats } from "@/features/database/hooks/use-analytics";
 
 export default function Home() {
   const { user, isLoading } = useRequireAdmin();
@@ -31,6 +32,9 @@ export default function Home() {
     useMemberEvolution(12);
   const { data: memberStatusData, isLoading: isStatusDistributionLoading } =
     useMemberStatusDistribution();
+
+  // Get dashboard stats using SQL aggregation (replaces mock data)
+  const { data: dashboardStats } = useDashboardStats();
 
   if (isLoading) {
     return <LoadingSkeleton variant="dashboard" />;
@@ -43,37 +47,81 @@ export default function Home() {
   // Convert user object to expected format for MainLayout
   const layoutUser = mapUserForLayout(user);
 
-  // Stats data
-  const stats = [
-    {
-      title: "Total Members",
-      value: "2,847",
-      description: "Active memberships",
-      icon: Users,
-      trend: { value: 12, label: "from last month" },
-    },
-    {
-      title: "Monthly Revenue",
-      value: "$23,580",
-      description: "Current month earnings",
-      icon: DollarSign,
-      trend: { value: 8, label: "from last month" },
-    },
-    {
-      title: "Classes Today",
-      value: "12",
-      description: "Scheduled sessions",
-      icon: Calendar,
-      trend: { value: 0, label: "same as yesterday" },
-    },
-    {
-      title: "Equipment Usage",
-      value: "78%",
-      description: "Peak hours utilization",
-      icon: Activity,
-      trend: { value: -5, label: "from last week" },
-    },
-  ];
+  // Stats data using real database analytics
+  const stats = dashboardStats
+    ? [
+        {
+          title: "Total Members",
+          value: dashboardStats.total_members.toLocaleString(),
+          description: `${dashboardStats.active_members} active`,
+          icon: Users,
+          trend: {
+            value: Math.round(
+              (dashboardStats.active_members / dashboardStats.total_members) *
+                100
+            ),
+            label: "active rate",
+          },
+        },
+        {
+          title: "Monthly Revenue",
+          value: `$${dashboardStats.monthly_revenue.toLocaleString()}`,
+          description: "Current month earnings",
+          icon: DollarSign,
+          trend: {
+            value: Math.round(dashboardStats.member_retention_rate),
+            label: "retention rate",
+          },
+        },
+        {
+          title: "Classes Today",
+          value: dashboardStats.sessions_today.toString(),
+          description: `${dashboardStats.sessions_this_week} this week`,
+          icon: Calendar,
+          trend: { value: 0, label: "today's sessions" },
+        },
+        {
+          title: "Total Revenue",
+          value: `$${dashboardStats.total_revenue.toLocaleString()}`,
+          description: "All time earnings",
+          icon: Activity,
+          trend: {
+            value: Math.round(dashboardStats.member_retention_rate),
+            label: "retention rate",
+          },
+        },
+      ]
+    : [
+        // Loading fallback stats
+        {
+          title: "Total Members",
+          value: "...",
+          description: "Loading...",
+          icon: Users,
+          trend: { value: 0, label: "loading" },
+        },
+        {
+          title: "Monthly Revenue",
+          value: "...",
+          description: "Loading...",
+          icon: DollarSign,
+          trend: { value: 0, label: "loading" },
+        },
+        {
+          title: "Classes Today",
+          value: "...",
+          description: "Loading...",
+          icon: Calendar,
+          trend: { value: 0, label: "loading" },
+        },
+        {
+          title: "Total Revenue",
+          value: "...",
+          description: "Loading...",
+          icon: Activity,
+          trend: { value: 0, label: "loading" },
+        },
+      ];
 
   // Recent activities
   const recentActivities = [
