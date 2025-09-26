@@ -1,21 +1,27 @@
-// Export training session hooks
-export * from "./use-training-sessions";
+// Training session hooks - consolidated and optimized
+export {
+  // Main session management
+  useTrainingSessions,
+  useTrainingSession,
+  useCreateTrainingSession,
+  useUpdateTrainingSession,
+  useDeleteTrainingSession,
+  useTrainingSessionsByTrainer,
+  useTrainingSessionsByMember,
+  useUpcomingTrainingSessions,
+  trainingSessionKeys,
+} from "./use-training-sessions";
 
-// Export trainer hooks
-export * from "./use-trainers";
+// Session booking with credits
+export {
+  useSessionBookingWithCredits,
+  useBookingValidation,
+  useCreditCalculation,
+} from "./use-session-booking-with-credits";
 
-// Export member hooks
-export * from "./use-members";
-
-// Export calendar hooks
-export * from "./use-calendar-events";
-
-// Export availability hooks
-export * from "./use-trainer-availability";
-
-// Export stats hooks
-export * from "./use-session-quick-stats";
-
-// Export Epic 5 hooks - session booking with credit validation
-export * from "./use-session-credit-validator";
-export * from "./use-session-booking-with-credits";
+// Calendar integration
+export {
+  useCalendarEvents,
+  useCalendarView,
+  useEventFiltering,
+} from "./use-calendar-events";
