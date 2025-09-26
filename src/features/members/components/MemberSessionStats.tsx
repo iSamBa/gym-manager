@@ -16,7 +16,7 @@ import {
   Activity,
   AlertCircle,
 } from "lucide-react";
-import { useMemberSessionInsights } from "../hooks/use-member-session-stats";
+// Temporarily disabled: import { useMemberSessionInsights } from "../hooks/use-member-session-stats";
 
 interface MemberSessionStatsProps {
   memberId: string;
@@ -27,8 +27,12 @@ export function MemberSessionStats({
   memberId,
   className,
 }: MemberSessionStatsProps) {
-  const { stats, insights, isLoading, error } =
-    useMemberSessionInsights(memberId);
+  // Temporarily disabled hook usage
+  const stats = null;
+  const insights = null;
+  const isLoading = false;
+  const error = null;
+  // const { stats, insights, isLoading, error } = useMemberSessionInsights(memberId);
 
   if (error) {
     return (
