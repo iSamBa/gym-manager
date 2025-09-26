@@ -23,6 +23,7 @@ import {
   useMemberStatusDistribution,
 } from "@/features/dashboard/hooks/use-member-analytics";
 import { useDashboardStats } from "@/features/database/hooks/use-analytics";
+import { useRecentActivities } from "@/features/dashboard/hooks/use-recent-activities";
 
 export default function Home() {
   const { user, isLoading } = useRequireAdmin();
@@ -35,6 +36,10 @@ export default function Home() {
 
   // Get dashboard stats using SQL aggregation (replaces mock data)
   const { data: dashboardStats } = useDashboardStats();
+
+  // Get real recent activities data (replaces mock data)
+  const { data: recentActivities, isLoading: isActivitiesLoading } =
+    useRecentActivities(4);
 
   if (isLoading) {
     return <LoadingSkeleton variant="dashboard" />;
@@ -123,33 +128,8 @@ export default function Home() {
         },
       ];
 
-  // Recent activities
-  const recentActivities = [
-    {
-      id: 1,
-      member: "Alice Johnson",
-      action: "Checked in",
-      time: "2 minutes ago",
-    },
-    {
-      id: 2,
-      member: "Bob Smith",
-      action: "Booked yoga class",
-      time: "5 minutes ago",
-    },
-    {
-      id: 3,
-      member: "Carol Davis",
-      action: "Updated payment method",
-      time: "12 minutes ago",
-    },
-    {
-      id: 4,
-      member: "David Wilson",
-      action: "Completed workout",
-      time: "18 minutes ago",
-    },
-  ];
+  // Use real recent activities data or show loading placeholder
+  const activitiesData = recentActivities || [];
 
   return (
     <MainLayout user={layoutUser}>
@@ -216,22 +196,43 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {recentActivities.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">{activity.member}</p>
-                      <p className="text-muted-foreground text-xs">
-                        {activity.action}
-                      </p>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {activity.time}
-                    </Badge>
+                {isActivitiesLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="space-y-1">
+                          <div className="h-4 w-24 animate-pulse rounded bg-gray-200"></div>
+                          <div className="h-3 w-32 animate-pulse rounded bg-gray-100"></div>
+                        </div>
+                        <div className="h-5 w-16 animate-pulse rounded bg-gray-200"></div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : activitiesData.length > 0 ? (
+                  activitiesData.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{activity.member}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {activity.action}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {activity.time}
+                      </Badge>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground py-4 text-center text-sm">
+                    No recent activities found
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

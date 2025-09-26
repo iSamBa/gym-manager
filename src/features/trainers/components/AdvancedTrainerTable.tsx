@@ -109,7 +109,13 @@ export function AdvancedTrainerTable({
     const baseFilters = filters || {};
 
     // Map sortConfig to database sorting parameters
-    const orderBy =
+    const orderBy:
+      | "name"
+      | "email"
+      | "hourly_rate"
+      | "years_experience"
+      | "is_accepting_new_clients"
+      | undefined =
       sortConfig.field === "name"
         ? "name"
         : sortConfig.field === "hourly_rate"

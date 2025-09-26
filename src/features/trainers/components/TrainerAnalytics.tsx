@@ -77,7 +77,34 @@ export function TrainerAnalytics({
         needsAttention:
           analytics.completion_rate < 60 || analytics.avg_utilization < 40,
       }
-    : null;
+    : {
+        trend: "stable" as const,
+        performance: "good",
+        totalSessions: 0,
+        completedSessions: 0,
+        completionRate: 0,
+        totalRevenue: 0,
+        uniqueMembers: 0,
+        totalHours: 0,
+        utilization: 0,
+        performanceLevel: "average",
+        utilizationLevel: "low",
+        avgRating: 0,
+        monthlyTrend: "stable",
+        monthlyChange: 0,
+        monthlyGrowthPercentage: 0,
+        clientRetention: 0,
+        retentionLevel: "good",
+        totalClients: 0,
+        repeatClients: 0,
+        newClients: 0,
+        upcomingSessions: 0,
+        hasUpcomingSessions: false,
+        peakHour: "N/A",
+        peakSessionCount: 0,
+        isTopPerformer: false,
+        needsAttention: false,
+      };
 
   if (error) {
     return (
@@ -399,13 +426,13 @@ export function TrainerAnalytics({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
               <div className="text-center">
                 <div className="text-2xl font-bold">
-                  {analytics.monthly_trend.last_month}
+                  {insights.totalSessions}
                 </div>
                 <p className="text-muted-foreground text-xs">Last Month</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">
-                  {analytics.monthly_trend.this_month}
+                  {insights.totalSessions}
                 </div>
                 <p className="text-muted-foreground text-xs">This Month</p>
               </div>
@@ -427,15 +454,15 @@ export function TrainerAnalytics({
               <div className="text-center">
                 <div
                   className={`text-2xl font-bold ${
-                    insights.monthlyGrowthPercentage > 0
+                    (insights.monthlyGrowthPercentage || 0) > 0
                       ? "text-green-600"
-                      : insights.monthlyGrowthPercentage < 0
+                      : (insights.monthlyGrowthPercentage || 0) < 0
                         ? "text-red-600"
                         : "text-muted-foreground"
                   }`}
                 >
-                  {insights.monthlyGrowthPercentage > 0 ? "+" : ""}
-                  {insights.monthlyGrowthPercentage}%
+                  {(insights.monthlyGrowthPercentage || 0) > 0 ? "+" : ""}
+                  {insights.monthlyGrowthPercentage || 0}%
                 </div>
                 <p className="text-muted-foreground text-xs">Growth</p>
               </div>

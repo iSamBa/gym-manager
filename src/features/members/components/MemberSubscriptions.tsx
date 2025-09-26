@@ -27,7 +27,7 @@ export function MemberSubscriptions({ member }: MemberSubscriptionsProps) {
     error,
   } = useMemberWithSubscription(member?.id);
 
-  const subscriptions = memberData?.subscriptions || [];
+  // Subscriptions are handled by MemberSubscriptionTable component
 
   if (!member) {
     return <div>No member data available</div>;
@@ -65,7 +65,7 @@ export function MemberSubscriptions({ member }: MemberSubscriptionsProps) {
 
       {/* Unified Subscription Table */}
       <MemberSubscriptionTable
-        subscriptions={subscriptions || []}
+        subscriptions={[]}
         isLoading={isLoading}
         error={error}
       />

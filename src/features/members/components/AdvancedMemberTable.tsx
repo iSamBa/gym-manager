@@ -49,7 +49,7 @@ import { cn } from "@/lib/utils";
 import type { Member, MemberStatus } from "@/features/database/lib/types";
 import type { MemberFilters } from "@/features/database/lib/utils";
 
-type SortField = "name" | "email" | "status" | "join_date";
+type SortField = "name" | "email" | "status" | "join_date" | "phone";
 type SortDirection = "asc" | "desc";
 
 interface AdvancedMemberTableProps {
@@ -104,7 +104,13 @@ export function AdvancedMemberTable({
     const baseFilters = filters || {};
 
     // Map sortConfig to database sorting parameters
-    const orderBy =
+    const orderBy:
+      | "name"
+      | "email"
+      | "status"
+      | "join_date"
+      | "phone"
+      | undefined =
       sortConfig.field === "join_date"
         ? "join_date"
         : sortConfig.field === "name"
@@ -113,7 +119,9 @@ export function AdvancedMemberTable({
             ? "email"
             : sortConfig.field === "status"
               ? "status"
-              : undefined;
+              : sortConfig.field === "phone"
+                ? "phone"
+                : undefined;
 
     return {
       ...baseFilters,

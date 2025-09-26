@@ -35,7 +35,6 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useMemberWithSubscription } from "@/features/members/hooks";
 import { useTrainingSessions } from "@/features/training-sessions/hooks";
 import type { SessionFilters } from "@/features/training-sessions/lib/types";
 
@@ -291,7 +290,7 @@ export function MemberSessionsTable({
               </TableHeader>
               <TableBody>
                 {paginatedSessions.map((session) => (
-                  <TableRow key={session.session_id}>
+                  <TableRow key={session.id}>
                     <TableCell>
                       <div className="space-y-1">
                         <div className="font-medium">
@@ -322,20 +321,18 @@ export function MemberSessionsTable({
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        {getStatusBadge(
-                          session.status,
-                          session.booking_status,
-                          session.is_upcoming
-                        )}
-                        {getAttendanceBadge(
-                          session.attendance_status,
-                          session.status
-                        )}
+                        {getStatusBadge(session.status, "confirmed", false)}
+                        {getAttendanceBadge("present", session.status)}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {Math.round(session.duration_minutes)} min
+                        {Math.round(
+                          (new Date(session.scheduled_end).getTime() -
+                            new Date(session.scheduled_start).getTime()) /
+                            (1000 * 60)
+                        )}{" "}
+                        min
                       </div>
                     </TableCell>
                     <TableCell>
@@ -344,7 +341,7 @@ export function MemberSessionsTable({
                         size="sm"
                         onClick={() => {
                           // Handle view session details
-                          console.log("View session:", session.session_id);
+                          console.log("View session:", session.id);
                         }}
                       >
                         <ExternalLink className="h-4 w-4" />

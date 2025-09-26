@@ -37,7 +37,7 @@ export function AdvancedMemberSearch({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  const { query, updateQuery, clearQuery, results, isLoading } =
+  const { query, updateQuery, clearQuery, results, isSearching } =
     useDebouncedMemberSearch("", 300);
 
   // Effect to notify parent of search results
@@ -102,7 +102,7 @@ export function AdvancedMemberSearch({
 
   const memberResults = results.slice(0, maxResults);
   const showResults =
-    isOpen && query.length > 0 && (memberResults.length > 0 || isLoading);
+    isOpen && query.length > 0 && (memberResults.length > 0 || isSearching);
 
   return (
     <div className={cn("relative", className)}>
@@ -151,7 +151,7 @@ export function AdvancedMemberSearch({
         <div className="bg-popover absolute top-full z-50 mt-1 w-full rounded-md border shadow-lg">
           <Command className="border-0">
             <CommandList className="max-h-[300px] overflow-y-auto">
-              {isLoading ? (
+              {isSearching ? (
                 <div className="flex items-center justify-center p-4">
                   <div className="text-muted-foreground flex items-center space-x-2 text-sm">
                     <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-current"></div>
