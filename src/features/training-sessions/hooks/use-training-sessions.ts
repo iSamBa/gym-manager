@@ -36,6 +36,10 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
         query = query.eq("trainer_id", filters.trainer_id);
       }
 
+      if (filters?.member_id) {
+        query = query.eq("member_id", filters.member_id);
+      }
+
       if (filters?.status && filters.status !== "all") {
         query = query.eq("status", filters.status);
       }

@@ -102,6 +102,7 @@ export interface BulkSessionOperationResult {
 // Simplified filter and search types
 export interface SessionFilters {
   trainer_id?: string;
+  member_id?: string; // NEW: Support filtering by member
   status?: "scheduled" | "completed" | "cancelled" | "all";
   date_range?: {
     start: Date;

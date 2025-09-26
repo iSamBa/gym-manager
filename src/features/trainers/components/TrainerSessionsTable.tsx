@@ -38,9 +38,10 @@ import {
 } from "lucide-react";
 import { useTrainers } from "@/features/trainers/hooks";
 import { useTrainingSessions } from "@/features/training-sessions/hooks";
+import type { SessionFilters } from "@/features/training-sessions/lib/types";
 
-// Basic trainer session filters type
-type TrainerSessionFilters = {
+// Basic trainer session filters type for this component
+type LocalTrainerSessionFilters = {
   status?: string;
   dateRange?: { from: Date; to: Date };
 };
@@ -50,7 +51,7 @@ interface TrainerSessionsTableProps {
   trainerId: string;
   className?: string;
   showFilters?: boolean;
-  initialFilters?: TrainerSessionFilters;
+  initialFilters?: LocalTrainerSessionFilters;
   pageSize?: number;
 }
 
@@ -61,7 +62,8 @@ export function TrainerSessionsTable({
   initialFilters = {},
   pageSize = 10,
 }: TrainerSessionsTableProps) {
-  const [filters, setFilters] = useState<TrainerSessionFilters>(initialFilters);
+  const [filters, setFilters] =
+    useState<LocalTrainerSessionFilters>(initialFilters);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -74,32 +76,35 @@ export function TrainerSessionsTable({
     [filters, searchTerm]
   );
 
-  // Get all training sessions and filter by trainer
-  const { data: allSessions, isLoading, error } = useTrainingSessions();
-
-  // Filter sessions for this trainer and apply additional filters
-  const sessions = useMemo(() => {
-    if (!allSessions) return [];
-    let filtered = allSessions.filter(
-      (session) => session.trainer_id === trainerId
-    );
+  // Convert local filters to database filters
+  const databaseFilters = useMemo((): SessionFilters => {
+    const dbFilters: SessionFilters = {
+      trainer_id: trainerId,
+    };
 
     if (appliedFilters.status) {
-      filtered = filtered.filter(
-        (session) => session.status === appliedFilters.status
-      );
+      dbFilters.status = appliedFilters.status as
+        | "scheduled"
+        | "completed"
+        | "cancelled";
     }
 
     if (appliedFilters.dateRange) {
-      const { from, to } = appliedFilters.dateRange;
-      filtered = filtered.filter((session) => {
-        const sessionDate = new Date(session.start_time);
-        return sessionDate >= from && sessionDate <= to;
-      });
+      dbFilters.date_range = {
+        start: appliedFilters.dateRange.from,
+        end: appliedFilters.dateRange.to,
+      };
     }
 
-    return filtered;
-  }, [allSessions, trainerId, appliedFilters]);
+    return dbFilters;
+  }, [trainerId, appliedFilters]);
+
+  // Get sessions from database with server-side filtering
+  const {
+    data: sessions = [],
+    isLoading,
+    error,
+  } = useTrainingSessions(databaseFilters);
 
   // Pagination
   const paginatedSessions = useMemo(() => {

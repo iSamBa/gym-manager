@@ -36,9 +36,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useMemberWithSubscription } from "@/features/members/hooks";
+import { useTrainingSessions } from "@/features/training-sessions/hooks";
+import type { SessionFilters } from "@/features/training-sessions/lib/types";
 
-// Basic session filters type
-type SessionFilters = {
+// Basic session filters type for this component
+type LocalSessionFilters = {
   status?: string;
   dateRange?: { from: Date; to: Date };
 };
@@ -48,7 +50,7 @@ interface MemberSessionsTableProps {
   memberId: string;
   className?: string;
   showFilters?: boolean;
-  initialFilters?: SessionFilters;
+  initialFilters?: LocalSessionFilters;
   pageSize?: number;
 }
 
@@ -59,7 +61,7 @@ export function MemberSessionsTable({
   initialFilters = {},
   pageSize = 10,
 }: MemberSessionsTableProps) {
-  const [filters, setFilters] = useState<SessionFilters>(initialFilters);
+  const [filters, setFilters] = useState<LocalSessionFilters>(initialFilters);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -72,34 +74,35 @@ export function MemberSessionsTable({
     [filters, searchTerm]
   );
 
-  // Get member data including sessions
-  const {
-    data: memberData,
-    isLoading,
-    error,
-  } = useMemberWithSubscription(memberId);
-
-  // Filter sessions based on applied filters
-  const sessions = useMemo(() => {
-    if (!memberData?.sessions) return [];
-    let filtered = memberData.sessions;
+  // Convert local filters to database filters
+  const databaseFilters = useMemo((): SessionFilters => {
+    const dbFilters: SessionFilters = {
+      member_id: memberId,
+    };
 
     if (appliedFilters.status) {
-      filtered = filtered.filter(
-        (session) => session.status === appliedFilters.status
-      );
+      dbFilters.status = appliedFilters.status as
+        | "scheduled"
+        | "completed"
+        | "cancelled";
     }
 
     if (appliedFilters.dateRange) {
-      const { from, to } = appliedFilters.dateRange;
-      filtered = filtered.filter((session) => {
-        const sessionDate = new Date(session.start_time);
-        return sessionDate >= from && sessionDate <= to;
-      });
+      dbFilters.date_range = {
+        start: appliedFilters.dateRange.from,
+        end: appliedFilters.dateRange.to,
+      };
     }
 
-    return filtered;
-  }, [memberData?.sessions, appliedFilters]);
+    return dbFilters;
+  }, [memberId, appliedFilters]);
+
+  // Get sessions from database with server-side filtering
+  const {
+    data: sessions = [],
+    isLoading,
+    error,
+  } = useTrainingSessions(databaseFilters);
 
   // Pagination
   const paginatedSessions = useMemo(() => {
