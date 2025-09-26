@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
 import {
   Table,
   TableBody,
@@ -78,7 +78,7 @@ interface SortConfig {
   direction: SortDirection;
 }
 
-export function AdvancedTrainerTable({
+const AdvancedTrainerTable = memo(function AdvancedTrainerTable({
   filters,
   trainers: propTrainers,
   isLoading: propIsLoading,
@@ -150,60 +150,76 @@ export function AdvancedTrainerTable({
   const deleteTrainerMutation = useDeleteTrainer();
 
   // Data is now sorted by the database, no need for client-side sorting
-  const allTrainers = data?.pages.flat() || [];
+  const allTrainers = useMemo(() => {
+    if (!data) return [];
+    return data.pages.flat();
+  }, [data]);
 
-  const isAllSelected =
-    allTrainers.length > 0 && selectedTrainers.size === allTrainers.length;
-  const isPartiallySelected =
-    selectedTrainers.size > 0 && selectedTrainers.size < allTrainers.length;
+  const isAllSelected = useMemo(
+    () =>
+      allTrainers.length > 0 && selectedTrainers.size === allTrainers.length,
+    [allTrainers.length, selectedTrainers.size]
+  );
+  const isPartiallySelected = useMemo(
+    () =>
+      selectedTrainers.size > 0 && selectedTrainers.size < allTrainers.length,
+    [selectedTrainers.size, allTrainers.length]
+  );
 
-  const handleSort = (field: SortField) => {
+  const handleSort = useCallback((field: SortField) => {
     setSortConfig((prev) => ({
       field,
       direction:
         prev.field === field && prev.direction === "asc" ? "desc" : "asc",
     }));
-  };
+  }, []);
 
-  const handleSelectAll = () => {
+  const handleSelectAll = useCallback(() => {
     if (isAllSelected) {
       setSelectedTrainers(new Set());
     } else {
       setSelectedTrainers(new Set(allTrainers.map((trainer) => trainer.id)));
     }
-  };
+  }, [isAllSelected, allTrainers]);
 
-  const handleSelectTrainer = (trainerId: string, checked: boolean) => {
-    const newSelected = new Set(selectedTrainers);
-    if (checked) {
-      newSelected.add(trainerId);
-    } else {
-      newSelected.delete(trainerId);
-    }
-    setSelectedTrainers(newSelected);
-  };
+  const handleSelectTrainer = useCallback(
+    (trainerId: string, checked: boolean) => {
+      const newSelected = new Set(selectedTrainers);
+      if (checked) {
+        newSelected.add(trainerId);
+      } else {
+        newSelected.delete(trainerId);
+      }
+      setSelectedTrainers(newSelected);
+    },
+    [selectedTrainers]
+  );
 
-  const handleBulkAvailabilityUpdate = async (isAccepting: boolean) => {
-    try {
-      await bulkUpdateAvailabilityMutation.mutateAsync({
-        trainerIds: Array.from(selectedTrainers),
-        isAccepting: isAccepting,
-      });
+  const handleBulkAvailabilityUpdate = useCallback(
+    async (isAccepting: boolean) => {
+      try {
+        await bulkUpdateAvailabilityMutation.mutateAsync({
+          trainerIds: Array.from(selectedTrainers),
+          isAccepting: isAccepting,
+        });
 
-      setSelectedTrainers(new Set());
-      setBulkActionDialog({ isOpen: false, action: null });
+        setSelectedTrainers(new Set());
+        setBulkActionDialog({ isOpen: false, action: null });
 
-      toast.success("Availability Updated", {
-        description: `${selectedTrainers.size} trainers marked as ${isAccepting ? "accepting" : "not accepting"} new clients`,
-      });
-    } catch {
-      toast.error("Update Failed", {
-        description: "Failed to update trainer availability. Please try again.",
-      });
-    }
-  };
+        toast.success("Availability Updated", {
+          description: `${selectedTrainers.size} trainers marked as ${isAccepting ? "accepting" : "not accepting"} new clients`,
+        });
+      } catch {
+        toast.error("Update Failed", {
+          description:
+            "Failed to update trainer availability. Please try again.",
+        });
+      }
+    },
+    [selectedTrainers, bulkUpdateAvailabilityMutation]
+  );
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = useCallback(async () => {
     try {
       // Delete trainers one by one (could be optimized with batch delete)
       await Promise.all(
@@ -223,28 +239,31 @@ export function AdvancedTrainerTable({
         description: "Failed to delete trainers. Please try again.",
       });
     }
-  };
+  }, [selectedTrainers, deleteTrainerMutation]);
 
-  const getSortIcon = (field: SortField) => {
-    if (sortConfig.field !== field) {
-      return <ArrowUpDown className="h-4 w-4" />;
-    }
-    return sortConfig.direction === "asc" ? (
-      <ArrowUp className="h-4 w-4" />
-    ) : (
-      <ArrowDown className="h-4 w-4" />
-    );
-  };
+  const getSortIcon = useCallback(
+    (field: SortField) => {
+      if (sortConfig.field !== field) {
+        return <ArrowUpDown className="h-4 w-4" />;
+      }
+      return sortConfig.direction === "asc" ? (
+        <ArrowUp className="h-4 w-4" />
+      ) : (
+        <ArrowDown className="h-4 w-4" />
+      );
+    },
+    [sortConfig.field, sortConfig.direction]
+  );
 
-  const formatHourlyRate = (rate?: number) => {
+  const formatHourlyRate = useCallback((rate?: number) => {
     if (!rate) return "-";
     return `$${rate}`;
-  };
+  }, []);
 
-  const formatExperience = (years?: number) => {
+  const formatExperience = useCallback((years?: number) => {
     if (!years) return "-";
     return `${years}y`;
-  };
+  }, []);
 
   // Auto-load more data when reaching bottom of table
   useEffect(() => {
@@ -633,4 +652,6 @@ export function AdvancedTrainerTable({
       </AlertDialog>
     </>
   );
-}
+});
+
+export { AdvancedTrainerTable };
