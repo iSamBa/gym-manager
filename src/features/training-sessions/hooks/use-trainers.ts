@@ -17,21 +17,34 @@ export const useTrainers = () => {
   return useQuery({
     queryKey: TRAINERS_KEYS.list({}),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("trainers")
-        .select(
-          `
+      const { data, error } = await supabase.from("trainers").select(`
           *,
-          user_profile:user_profiles(*)
-        `
-        )
-        .order("user_profile.first_name", { ascending: true });
+          user_profile:user_profiles (
+            id,
+            first_name,
+            last_name,
+            email,
+            role,
+            is_active
+          )
+        `);
 
       if (error) {
         throw new Error(`Failed to fetch trainers: ${error.message}`);
       }
 
-      return data as TrainerWithProfile[];
+      if (!data) {
+        return [];
+      }
+
+      // Sort by first name
+      const sortedData = (data as TrainerWithProfile[]).sort((a, b) => {
+        const aName = a.user_profile?.first_name || "";
+        const bName = b.user_profile?.first_name || "";
+        return aName.localeCompare(bName);
+      });
+
+      return sortedData;
     },
   });
 };

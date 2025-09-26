@@ -12,6 +12,7 @@ export interface TrainingSession {
   current_participants: number;
   location: string | null;
   notes: string | null;
+  trainer_name?: string; // From calendar view join
   created_at: string;
   updated_at: string;
 }
@@ -72,6 +73,7 @@ export interface UpdateSessionData {
   max_participants?: number;
   notes?: string;
   status?: "scheduled" | "in_progress" | "completed" | "cancelled";
+  member_ids?: string[];
 }
 
 // Calendar view types

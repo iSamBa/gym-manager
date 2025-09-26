@@ -287,6 +287,112 @@ export const createTestData = {
 };
 
 /**
+ * Cleanup dialog and modal state for Radix UI components
+ */
+export function cleanupDialogState() {
+  if (typeof document === "undefined") return;
+
+  // Remove all Radix UI portals
+  const portals = document.querySelectorAll("[data-radix-portal]");
+  portals.forEach((portal) => portal.remove());
+
+  // Remove any overlays that might be left behind
+  const overlays = document.querySelectorAll("[data-radix-dialog-overlay]");
+  overlays.forEach((overlay) => overlay.remove());
+
+  // Remove any content containers
+  const contents = document.querySelectorAll("[data-radix-dialog-content]");
+  contents.forEach((content) => content.remove());
+
+  // Reset body classes that dialogs might have added
+  document.body.className = document.body.className
+    .split(" ")
+    .filter(
+      (className) =>
+        !className.includes("radix") && !className.includes("dialog")
+    )
+    .join(" ");
+
+  // Reset body styles that might prevent scrolling
+  document.body.style.overflow = "";
+  document.body.style.paddingRight = "";
+  document.body.style.pointerEvents = "";
+
+  // Remove any aria-hidden attributes
+  document.body.removeAttribute("aria-hidden");
+
+  // Reset any inert attributes
+  document.body.removeAttribute("inert");
+
+  // Clear any focus traps or focus management
+  const activeElement = document.activeElement as HTMLElement;
+  if (activeElement && activeElement.blur) {
+    activeElement.blur();
+  }
+}
+
+/**
+ * Setup Radix UI testing environment
+ */
+export function setupRadixUITestEnvironment() {
+  // Mock Radix UI's focus management
+  const originalFocus = HTMLElement.prototype.focus;
+  const originalBlur = HTMLElement.prototype.blur;
+
+  HTMLElement.prototype.focus = vi.fn(function (
+    this: HTMLElement,
+    options?: FocusOptions
+  ) {
+    // Call the original focus method if it exists
+    if (originalFocus) {
+      originalFocus.call(this, options);
+    }
+    // Simulate focus event
+    this.dispatchEvent(new Event("focus", { bubbles: true }));
+  });
+
+  HTMLElement.prototype.blur = vi.fn(function (this: HTMLElement) {
+    // Call the original blur method if it exists
+    if (originalBlur) {
+      originalBlur.call(this);
+    }
+    // Simulate blur event
+    this.dispatchEvent(new Event("blur", { bubbles: true }));
+  });
+
+  // Mock document.activeElement management
+  let mockActiveElement: Element | null = document.body;
+  Object.defineProperty(document, "activeElement", {
+    get: () => mockActiveElement,
+    set: (element: Element | null) => {
+      mockActiveElement = element;
+    },
+    configurable: true,
+  });
+
+  // Return cleanup function
+  return () => {
+    HTMLElement.prototype.focus = originalFocus;
+    HTMLElement.prototype.blur = originalBlur;
+    cleanupDialogState();
+  };
+}
+
+/**
+ * Wait for Radix UI animations and state changes to complete
+ */
+export async function waitForRadixUITransitions() {
+  // Wait for any pending microtasks (React state updates)
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  // Wait for any CSS transitions/animations
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  // Wait for any additional async operations
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+/**
  * Global test cleanup function for comprehensive reset
  */
 export function globalTestCleanup() {
@@ -302,6 +408,9 @@ export function globalTestCleanup() {
   // Reset environment variables
   vi.unstubAllEnvs();
 
+  // Clean up dialog state
+  cleanupDialogState();
+
   // Clear any global variables that might have been set
   if (typeof window !== "undefined") {
     // Clear any test-specific window properties
@@ -316,6 +425,7 @@ export function setupTestEnvironment() {
   const { mockSupabaseClient, mockChannel } = setupSupabaseMocks();
   const localStorageCleanup = setupLocalStorageMocks();
   const timerCleanup = setupTimerMocks();
+  const radixUICleanup = setupRadixUITestEnvironment();
   setupDOMMocks();
   setupNextRouterMocks();
 
@@ -324,6 +434,7 @@ export function setupTestEnvironment() {
     cleanup: () => {
       localStorageCleanup();
       timerCleanup();
+      radixUICleanup();
       globalTestCleanup();
     },
     mockSupabaseClient,

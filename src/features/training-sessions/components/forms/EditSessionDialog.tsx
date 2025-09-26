@@ -9,6 +9,7 @@ import {
   Clock,
   User,
   AlertTriangle,
+  Star,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -34,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
@@ -43,16 +45,19 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import {
-  createSessionSchema,
-  type CreateSessionData,
+  updateSessionSchema,
+  type UpdateSessionData,
 } from "../../lib/validation";
 import {
   useUpdateTrainingSession,
+  useUpdateTrainingSessionStatus,
   useTrainingSession,
   useDeleteTrainingSession,
 } from "../../hooks/use-training-sessions";
 import { useTrainers } from "../../hooks/use-trainers";
 import { TrainerAvailabilityCheck } from "./TrainerAvailabilityCheck";
+import MemberMultiSelect from "./MemberMultiSelect";
+import type { TrainingSession } from "../../lib/types";
 
 interface EditSessionDialogProps {
   open: boolean;
@@ -84,13 +89,13 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
 
   // Mutations
   const updateSessionMutation = useUpdateTrainingSession();
+  const updateStatusMutation = useUpdateTrainingSessionStatus();
   const deleteSessionMutation = useDeleteTrainingSession();
 
   // Form setup with validation
-  const form = useForm<CreateSessionData>({
-    resolver: zodResolver(createSessionSchema),
+  const form = useForm<UpdateSessionData>({
+    resolver: zodResolver(updateSessionSchema),
     defaultValues: {
-      trainer_id: "",
       scheduled_start: "",
       scheduled_end: "",
       location: "",
@@ -98,6 +103,7 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
       max_participants: 1,
       member_ids: [],
       notes: "",
+      status: "scheduled",
     },
   });
 
@@ -106,50 +112,79 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
 
   // Watch form fields for real-time validation and availability checking
   const watchedFields = watch();
-  const { trainer_id, scheduled_start, scheduled_end } = watchedFields;
+  const { scheduled_start, scheduled_end } = watchedFields;
 
   // Populate form when session data loads
   useEffect(() => {
     if (session && open) {
-      setValue("trainer_id", session.trainer_id);
       setValue("scheduled_start", session.scheduled_start);
       setValue("scheduled_end", session.scheduled_end);
       setValue("location", session.location || "");
       setValue("session_type", session.session_type || "standard");
       setValue("max_participants", session.max_participants);
       setValue("notes", session.notes || "");
+      setValue("status", session.status);
 
-      // TODO: Load existing member IDs from session members
-      // This would require fetching session members from the database
-      setValue("member_ids", []);
+      // Extract member IDs from participants array
+      const sessionWithParticipants = session as TrainingSession & {
+        participants?: Array<{ id: string; name: string; email: string }>;
+      };
+      const memberIds = sessionWithParticipants.participants
+        ? sessionWithParticipants.participants.map((p) => p.id)
+        : [];
+      setValue("member_ids", memberIds);
     }
   }, [session, open, setValue]);
 
   // Show availability check when all required fields are present
   useEffect(() => {
-    const shouldShowCheck = !!(trainer_id && scheduled_start && scheduled_end);
+    const shouldShowCheck = !!(
+      session?.trainer_id &&
+      scheduled_start &&
+      scheduled_end
+    );
     setShowAvailabilityCheck(shouldShowCheck);
-  }, [trainer_id, scheduled_start, scheduled_end]);
+  }, [session?.trainer_id, scheduled_start, scheduled_end]);
 
   // Handle form submission
-  const onSubmit = async (data: CreateSessionData) => {
-    if (!sessionId) return;
+  const onSubmit = async (data: UpdateSessionData) => {
+    if (!sessionId) {
+      return;
+    }
 
     try {
-      // Extract only the fields that can be updated
-      const updateData = {
-        scheduled_start: data.scheduled_start,
-        scheduled_end: data.scheduled_end,
-        location: data.location,
-        session_type: data.session_type,
-        max_participants: data.max_participants,
-        notes: data.notes,
-      };
-
-      await updateSessionMutation.mutateAsync({
-        id: sessionId,
-        data: updateData,
+      // Determine if this is a status-only update
+      const changedFields = Object.keys(data).filter((key) => {
+        if (key === "member_ids") return false; // Always exclude member_ids for now
+        const originalValue = session?.[key as keyof typeof session];
+        const newValue = data[key as keyof typeof data];
+        return originalValue !== newValue;
       });
+
+      const isStatusOnlyUpdate =
+        changedFields.length === 1 && changedFields[0] === "status";
+
+      if (
+        isStatusOnlyUpdate &&
+        data.status &&
+        data.status !== session?.status
+      ) {
+        // Use dedicated status update
+        await updateStatusMutation.mutateAsync({
+          id: sessionId,
+          status: data.status,
+        });
+      } else {
+        // For status-only updates, don't send member_ids to avoid unnecessary member processing
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { member_ids, ...sessionOnlyData } = data;
+        const updateData = sessionOnlyData;
+
+        await updateSessionMutation.mutateAsync({
+          id: sessionId,
+          data: updateData,
+        });
+      }
 
       // Close dialog and notify parent
       onOpenChange(false);
@@ -178,7 +213,11 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
 
   // Handle dialog close
   const handleClose = () => {
-    if (!isSubmitting && !deleteSessionMutation.isPending) {
+    if (
+      !isSubmitting &&
+      !deleteSessionMutation.isPending &&
+      !updateStatusMutation.isPending
+    ) {
       reset();
       setShowDeleteConfirm(false);
       onOpenChange(false);
@@ -353,40 +392,61 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
               </div>
             </div>
 
-            {/* Trainer Selection - Read-only for existing sessions */}
+            {/* Status Change */}
             <FormField
               control={form.control}
-              name="trainer_id"
+              name="status"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Trainer
+                    <Badge className="h-4 w-4" />
+                    Session Status *
                   </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    disabled={true} // Trainer cannot be changed after creation
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a trainer" />
+                        <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {trainers.map((trainer) => (
-                        <SelectItem key={trainer.id} value={trainer.id}>
-                          {formatTrainerName(trainer)}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="scheduled">Scheduled</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormMessage />
                   <p className="text-muted-foreground text-xs">
-                    Trainer cannot be changed after session creation
+                    Change the session status to reflect its current state
                   </p>
                 </FormItem>
               )}
             />
+
+            {/* Trainer Information - Display only */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <User className="h-4 w-4" />
+                Trainer
+              </label>
+              <div className="bg-muted flex items-center justify-between rounded p-3">
+                <div className="flex items-center gap-2">
+                  <User className="text-muted-foreground h-4 w-4" />
+                  <span className="font-medium">
+                    {session.trainer_name ||
+                      formatTrainerName(
+                        trainers.find((t) => t.id === session.trainer_id) || {
+                          id: session.trainer_id,
+                        }
+                      )}
+                  </span>
+                </div>
+                <Badge variant="outline">Assigned</Badge>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Trainer cannot be changed after session creation
+              </p>
+            </div>
 
             {/* Session Type Selection */}
             <FormField
@@ -395,20 +455,63 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2">
-                    <Badge className="h-4 w-4" />
+                    <Star className="h-4 w-4" />
                     Session Type *
                   </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select session type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="standard">Standard Session</SelectItem>
-                      <SelectItem value="trail">Trail Session</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      className="flex max-w-2xl gap-3"
+                    >
+                      <label
+                        htmlFor="trail-edit"
+                        className={`hover:border-primary/50 min-w-0 cursor-pointer rounded-lg border-2 p-4 transition-all duration-200 ${
+                          field.value === "trail"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-muted-foreground"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <RadioGroupItem
+                            value="trail"
+                            id="trail-edit"
+                            className="mt-1"
+                          />
+                          <div className="flex flex-col space-y-1">
+                            <span className="font-semibold">Trail Session</span>
+                            <p className="text-muted-foreground text-sm">
+                              Try-out session for new members
+                            </p>
+                          </div>
+                        </div>
+                      </label>
+                      <label
+                        htmlFor="standard-edit"
+                        className={`hover:border-primary/50 min-w-0 cursor-pointer rounded-lg border-2 p-4 transition-all duration-200 ${
+                          field.value === "standard"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-muted-foreground"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <RadioGroupItem
+                            value="standard"
+                            id="standard-edit"
+                            className="mt-1"
+                          />
+                          <div className="flex flex-col space-y-1">
+                            <span className="font-semibold">
+                              Standard Session
+                            </span>
+                            <p className="text-muted-foreground text-sm">
+                              Regular training session
+                            </p>
+                          </div>
+                        </div>
+                      </label>
+                    </RadioGroup>
+                  </FormControl>
                   <FormMessage />
                   <p className="text-muted-foreground text-xs">
                     Change the session type (Trail for prospective members,
@@ -473,14 +576,18 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
             )}
 
             {/* Trainer Availability Check */}
-            {showAvailabilityCheck && isDirty && (
-              <TrainerAvailabilityCheck
-                trainerId={trainer_id}
-                startTime={scheduled_start}
-                endTime={scheduled_end}
-                excludeSessionId={sessionId}
-              />
-            )}
+            {showAvailabilityCheck &&
+              isDirty &&
+              session &&
+              scheduled_start &&
+              scheduled_end && (
+                <TrainerAvailabilityCheck
+                  trainerId={session.trainer_id}
+                  startTime={scheduled_start}
+                  endTime={scheduled_end}
+                  excludeSessionId={sessionId}
+                />
+              )}
 
             <Separator />
 
@@ -536,21 +643,31 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
               />
             </div>
 
-            {/* Member Management - Simplified for edit mode */}
-            <div className="space-y-2">
-              <FormLabel className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Current Members
-              </FormLabel>
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Member management for existing sessions is not yet
-                  implemented. Use the session management interface to
-                  add/remove participants.
-                </AlertDescription>
-              </Alert>
-            </div>
+            {/* Member Selection */}
+            <FormField
+              control={form.control}
+              name="member_ids"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Current Members
+                  </FormLabel>
+                  <FormControl>
+                    <MemberMultiSelect
+                      selectedMemberIds={field.value || []}
+                      onMemberIdsChange={field.onChange}
+                      maxMembers={watchedFields.max_participants}
+                      error={formState.errors.member_ids?.message}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                  <p className="text-muted-foreground text-xs">
+                    Add or remove members from this training session
+                  </p>
+                </FormItem>
+              )}
+            />
 
             {/* Notes */}
             <FormField
@@ -592,8 +709,13 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting || !isDirty}>
-                  {isSubmitting && (
+                <Button
+                  type="submit"
+                  disabled={
+                    isSubmitting || updateStatusMutation.isPending || !isDirty
+                  }
+                >
+                  {(isSubmitting || updateStatusMutation.isPending) && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
                   Save Changes

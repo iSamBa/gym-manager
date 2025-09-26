@@ -32,11 +32,11 @@ describe("mapUserForLayout", () => {
     expect(result).toEqual({
       name: "john@example.com",
       email: "john@example.com",
-      avatar: "j",
+      avatar: undefined,
     });
   });
 
-  it("should use first letter of first_name as avatar when no avatar_url", () => {
+  it("should use undefined as avatar when no avatar_url", () => {
     const user = {
       first_name: "John",
       last_name: "Doe",
@@ -47,11 +47,11 @@ describe("mapUserForLayout", () => {
     expect(result).toEqual({
       name: "John Doe",
       email: "john@example.com",
-      avatar: "J",
+      avatar: undefined,
     });
   });
 
-  it("should use first letter of email as avatar when no other options", () => {
+  it("should use undefined as avatar when no avatar_url provided", () => {
     const user = {
       email: "john@example.com",
     };
@@ -60,18 +60,18 @@ describe("mapUserForLayout", () => {
     expect(result).toEqual({
       name: "john@example.com",
       email: "john@example.com",
-      avatar: "j",
+      avatar: undefined,
     });
   });
 
-  it("should use 'A' as fallback avatar", () => {
+  it("should use undefined as fallback avatar", () => {
     const user = {};
 
     const result = mapUserForLayout(user);
     expect(result).toEqual({
       name: "Unknown User",
       email: "",
-      avatar: "A",
+      avatar: undefined,
     });
   });
 
@@ -87,7 +87,7 @@ describe("mapUserForLayout", () => {
     expect(result).toEqual({
       name: "Unknown User",
       email: "",
-      avatar: "A",
+      avatar: undefined,
     });
   });
 });

@@ -35,6 +35,23 @@ export default defineConfig({
           setupFiles: ["./vitest.setup.ts"],
           include: ["src/**/*.{test,spec}.{js,ts,tsx}"],
           exclude: ["src/stories/**"],
+          // Increase timeout for Radix UI components that may have animations
+          testTimeout: 1000,
+          // Configure jsdom environment with better Radix UI support
+          environmentOptions: {
+            jsdom: {
+              // Enable more realistic browser behavior
+              pretendToBeVisual: true,
+              // Support for CSS-in-JS and viewport queries
+              resources: "usable",
+              // Better URL support for testing
+              url: "http://localhost:3000",
+            },
+          },
+          // Better handling of async operations in tests
+          pool: "forks",
+          // Isolate tests to prevent state leaks between tests
+          isolate: true,
         },
       },
       // Storybook tests project

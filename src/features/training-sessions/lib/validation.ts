@@ -185,6 +185,10 @@ export const updateSessionSchema = z.object({
     .min(1, "At least 1 participant required")
     .max(50, "Maximum 50 participants allowed")
     .optional(),
+  member_ids: z
+    .array(z.string().uuid("Invalid member selection"))
+    .max(50, "Maximum 50 members can be selected for a single session")
+    .optional(),
   notes: z.string().optional(),
   status: z
     .enum(["scheduled", "in_progress", "completed", "cancelled"])

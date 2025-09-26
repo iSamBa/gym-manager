@@ -15,3 +15,7 @@ export * from "./use-trainer-availability";
 
 // Export stats hooks
 export * from "./use-session-quick-stats";
+
+// Export Epic 5 hooks - session booking with credit validation
+export * from "./use-session-credit-validator";
+export * from "./use-session-booking-with-credits";
