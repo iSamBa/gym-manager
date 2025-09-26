@@ -25,3 +25,10 @@ export {
   useCalendarView,
   useEventFiltering,
 } from "./use-calendar-events";
+
+// Session statistics with SQL aggregation
+export {
+  useSessionStats,
+  sessionStatsKeys,
+  type SessionStats,
+} from "./use-session-stats";

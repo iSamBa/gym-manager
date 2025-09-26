@@ -9,7 +9,7 @@ import { Calendar, History, BarChart3, Users, Clock } from "lucide-react";
 import TrainingSessionCalendar from "./TrainingSessionCalendar";
 import SessionHistoryTable from "./SessionHistoryTable";
 import { EditSessionDialog } from "./forms/EditSessionDialog";
-import { useTrainingSessions } from "../hooks/use-training-sessions";
+import { useTrainingSessions, useSessionStats } from "../hooks";
 import type { TrainingSession, SessionHistoryEntry } from "../lib/types";
 
 const TrainingSessionsView: React.FC = () => {
@@ -64,6 +64,15 @@ const TrainingSessionsView: React.FC = () => {
     isLoading,
     error,
   } = useTrainingSessions({
+    date_range: dateRange,
+  });
+
+  // Fetch session statistics with SQL aggregation (much more efficient)
+  const {
+    data: sessionStats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useSessionStats({
     date_range: dateRange,
   });
 
@@ -213,12 +222,7 @@ const TrainingSessionsView: React.FC = () => {
                     <h3 className="font-medium">Active Sessions</h3>
                   </div>
                   <p className="mt-2 text-2xl font-bold">
-                    {
-                      sessions.filter(
-                        (s) =>
-                          s.status === "scheduled" || s.status === "in_progress"
-                      ).length
-                    }
+                    {statsLoading ? "..." : sessionStats?.active || 0}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
                     Currently active
@@ -231,7 +235,7 @@ const TrainingSessionsView: React.FC = () => {
                     <h3 className="font-medium">Completed</h3>
                   </div>
                   <p className="mt-2 text-2xl font-bold">
-                    {sessions.filter((s) => s.status === "completed").length}
+                    {statsLoading ? "..." : sessionStats?.completed || 0}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
                     Sessions completed
@@ -244,20 +248,9 @@ const TrainingSessionsView: React.FC = () => {
                     <h3 className="font-medium">Average Utilization</h3>
                   </div>
                   <p className="mt-2 text-2xl font-bold">
-                    {sessions.length > 0
-                      ? Math.round(
-                          (sessions.reduce(
-                            (acc, s) =>
-                              acc +
-                              (s.current_participants || 0) /
-                                s.max_participants,
-                            0
-                          ) /
-                            sessions.length) *
-                            100
-                        )
-                      : 0}
-                    %
+                    {statsLoading
+                      ? "..."
+                      : `${sessionStats?.average_utilization || 0}%`}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
                     Capacity utilization
