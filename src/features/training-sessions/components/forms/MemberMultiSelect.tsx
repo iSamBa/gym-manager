@@ -17,7 +17,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { Member } from "@/features/database/lib/types";
-import { useMembers } from "../../hooks/use-members";
+import { useMembers } from "@/features/members/hooks";
 
 interface MemberMultiSelectProps {
   selectedMemberIds: string[];

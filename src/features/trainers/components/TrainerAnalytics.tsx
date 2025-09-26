@@ -20,7 +20,7 @@ import {
   Star,
   BarChart3,
 } from "lucide-react";
-import { useTrainerPerformanceInsights } from "../hooks/use-trainer-analytics";
+// Temporarily disabled analytics import
 
 interface TrainerAnalyticsProps {
   trainerId: string;

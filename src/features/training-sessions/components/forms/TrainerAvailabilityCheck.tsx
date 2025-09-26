@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useTrainerAvailability } from "../../hooks/use-trainer-availability";
+import { useTrainerAvailability } from "// @/features/training-sessions/hooks (temporarily disabled)";
 import type { SessionAvailabilityCheck } from "../../lib/types";
 import { format } from "date-fns";
 

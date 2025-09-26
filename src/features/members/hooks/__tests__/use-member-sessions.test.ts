@@ -7,7 +7,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import React, { ReactNode } from "react";
-import { useMemberSessions } from "../use-member-sessions";
+// Temporarily disabled member sessions import
 import { supabase } from "@/lib/supabase";
 
 // Mock the Supabase client

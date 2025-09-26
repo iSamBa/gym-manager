@@ -36,10 +36,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-import { useSessionCreditValidator } from "../../hooks/use-session-credit-validator";
+import { useSessionCreditValidator } from "// @/features/training-sessions/hooks (temporarily disabled)";
 import { useSessionBookingWithCredits } from "../../hooks/use-session-booking-with-credits";
-import { useMembers } from "../../hooks/use-members";
-import { useTrainers } from "../../hooks/use-trainers";
+import { useMembers } from "@/features/members/hooks";
+import { useTrainers } from "@/features/trainers/hooks";
 
 // Validation schema for session booking
 const sessionBookingSchema = z.object({

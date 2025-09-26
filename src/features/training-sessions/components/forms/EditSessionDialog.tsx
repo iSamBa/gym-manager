@@ -54,7 +54,7 @@ import {
   useTrainingSession,
   useDeleteTrainingSession,
 } from "../../hooks/use-training-sessions";
-import { useTrainers } from "../../hooks/use-trainers";
+import { useTrainers } from "@/features/trainers/hooks";
 import { TrainerAvailabilityCheck } from "./TrainerAvailabilityCheck";
 import MemberMultiSelect from "./MemberMultiSelect";
 import type { TrainingSession } from "../../lib/types";

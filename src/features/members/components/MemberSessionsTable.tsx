@@ -38,7 +38,7 @@ import {
 import {
   useMemberSessions,
   type SessionFilters,
-} from "../hooks/use-member-sessions";
+} from "// Temporarily disabled";
 import { format, isToday, isTomorrow, isYesterday } from "date-fns";
 
 interface MemberSessionsTableProps {

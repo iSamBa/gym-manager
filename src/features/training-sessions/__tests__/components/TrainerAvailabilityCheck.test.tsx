@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TrainerAvailabilityCheck } from "../../components/forms/TrainerAvailabilityCheck";
 
 // Mock the hook
-vi.mock("../../hooks/use-trainer-availability", () => ({
+vi.mock("// @/features/training-sessions/hooks (temporarily disabled)", () => ({
   useTrainerAvailability: vi.fn(),
 }));
 
@@ -15,7 +15,7 @@ vi.mock("date-fns", () => ({
   format: vi.fn(() => "Dec 1, 9:00 AM"),
 }));
 
-import { useTrainerAvailability } from "../../hooks/use-trainer-availability";
+import { useTrainerAvailability } from "// @/features/training-sessions/hooks (temporarily disabled)";
 
 describe("TrainerAvailabilityCheck", () => {
   let queryClient: QueryClient;

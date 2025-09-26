@@ -16,7 +16,7 @@ import {
   Activity,
   AlertCircle,
 } from "lucide-react";
-// Temporarily disabled: import { useMemberSessionInsights } from "../hooks/use-member-session-stats";
+// Temporarily disabled: import { useMemberSessionInsights } from "// Temporarily disabled";
 
 interface MemberSessionStatsProps {
   memberId: string;

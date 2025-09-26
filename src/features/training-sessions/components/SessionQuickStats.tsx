@@ -4,7 +4,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Users, MapPin } from "lucide-react";
-import { useSessionQuickStats } from "../hooks/use-session-quick-stats";
+// Temporarily disabled quick stats import
 
 const SessionQuickStats: React.FC = () => {
   const { data: stats, isLoading } = useSessionQuickStats();
