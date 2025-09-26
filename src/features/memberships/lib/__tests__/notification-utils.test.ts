@@ -69,14 +69,14 @@ describe("notificationUtils", () => {
           member_id: "member-1",
           total_amount_snapshot: 200,
           paid_amount: 150,
-          members: { first_name: "John", last_name: "Doe" },
+          members: [{ first_name: "John", last_name: "Doe" }],
         },
         {
           id: "sub-2",
           member_id: "member-2",
           total_amount_snapshot: 300,
           paid_amount: 200,
-          members: { first_name: "Jane", last_name: "Smith" },
+          members: [{ first_name: "Jane", last_name: "Smith" }],
         },
       ];
 
