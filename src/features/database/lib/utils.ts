@@ -697,13 +697,13 @@ export const trainerUtils = {
         switch (filters.orderBy) {
           case "name":
             // For trainers, we need to sort by user_profile fields
-            // Note: This might require adjustment based on PostgREST capabilities
+            // PostgREST syntax for ordering by related table fields
             query = query
-              .order("user_profile.first_name", { ascending })
-              .order("user_profile.last_name", { ascending });
+              .order("user_profile(first_name)", { ascending })
+              .order("user_profile(last_name)", { ascending });
             break;
           case "email":
-            query = query.order("user_profile.email", { ascending });
+            query = query.order("user_profile(email)", { ascending });
             break;
           case "hourly_rate":
             query = query.order("hourly_rate", { ascending });

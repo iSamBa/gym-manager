@@ -199,11 +199,11 @@ export function TrainerCalendarView({
                                 }
                                 className="text-xs"
                               >
-                                {session.session_status === "completed"
+                                {session.status === "completed"
                                   ? "Done"
-                                  : session.is_upcoming
+                                  : session.status === "scheduled"
                                     ? "Upcoming"
-                                    : session.session_status}
+                                    : session.status}
                               </Badge>
                             </div>
                           </div>
@@ -239,9 +239,9 @@ export function TrainerCalendarView({
                       sessions
                         .map(
                           (s) =>
-                            s.member_names
+                            (s as { member_names?: string }).member_names
                               ?.split(",")
-                              .map((name) => name.trim())
+                              .map((name: string) => name.trim())
                               .filter(Boolean) || []
                         )
                         .flat()

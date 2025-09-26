@@ -56,7 +56,7 @@ export const useRecentActivities = (limit = 4) => {
           "created_at",
           new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
         )
-        .eq("status", "completed")
+        .eq("payment_status", "completed")
         .order("created_at", { ascending: false })
         .limit(3);
 
@@ -93,7 +93,7 @@ export const useRecentActivities = (limit = 4) => {
           "created_at",
           new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
         )
-        .eq("status", "confirmed")
+        .eq("booking_status", "confirmed")
         .order("created_at", { ascending: false })
         .limit(3);
 

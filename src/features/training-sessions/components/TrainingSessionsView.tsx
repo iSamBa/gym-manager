@@ -1,12 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, History, BarChart3, Users, Clock } from "lucide-react";
-import TrainingSessionCalendar from "./TrainingSessionCalendar";
+
+// Lazy load heavy calendar component to reduce initial bundle size
+const TrainingSessionCalendar = lazy(() => import("./TrainingSessionCalendar"));
 import SessionHistoryTable from "./SessionHistoryTable";
 import { EditSessionDialog } from "./forms/EditSessionDialog";
 import { useTrainingSessions, useSessionStats } from "../hooks";
@@ -68,11 +71,7 @@ const TrainingSessionsView: React.FC = () => {
   });
 
   // Fetch session statistics with SQL aggregation (much more efficient)
-  const {
-    data: sessionStats,
-    isLoading: statsLoading,
-    error: statsError,
-  } = useSessionStats({
+  const { data: sessionStats, isLoading: statsLoading } = useSessionStats({
     date_range: dateRange,
   });
 
@@ -169,10 +168,14 @@ const TrainingSessionsView: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex min-h-0 flex-1 flex-col">
-                  <TrainingSessionCalendar
-                    onSelectSession={handleSessionClick}
-                    onSelectSlot={handleSlotSelect}
-                  />
+                  <Suspense
+                    fallback={<Skeleton className="h-[400px] w-full" />}
+                  >
+                    <TrainingSessionCalendar
+                      onSelectSession={handleSessionClick}
+                      onSelectSlot={handleSlotSelect}
+                    />
+                  </Suspense>
                 </div>
               )}
             </TabsContent>

@@ -16,8 +16,25 @@ import {
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { mapUserForLayout } from "@/lib/auth-utils";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
-import { MemberEvolutionChart } from "@/features/dashboard/components/member-evolution-chart";
-import { MemberStatusDistributionChart } from "@/features/dashboard/components/member-status-distribution-chart";
+import { lazy, Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy load heavy chart components to reduce initial bundle size
+const MemberEvolutionChart = lazy(() =>
+  import("@/features/dashboard/components/member-evolution-chart").then(
+    (module) => ({
+      default: module.MemberEvolutionChart,
+    })
+  )
+);
+
+const MemberStatusDistributionChart = lazy(() =>
+  import(
+    "@/features/dashboard/components/member-status-distribution-chart"
+  ).then((module) => ({
+    default: module.MemberStatusDistributionChart,
+  }))
+);
 import {
   useMemberEvolution,
   useMemberStatusDistribution,
@@ -287,14 +304,18 @@ export default function Home() {
 
         {/* Analytics Charts */}
         <div className="flex gap-6">
-          <MemberEvolutionChart
-            data={memberEvolutionData}
-            isLoading={isEvolutionLoading}
-          />
-          <MemberStatusDistributionChart
-            data={memberStatusData}
-            isLoading={isStatusDistributionLoading}
-          />
+          <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+            <MemberEvolutionChart
+              data={memberEvolutionData}
+              isLoading={isEvolutionLoading}
+            />
+          </Suspense>
+          <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+            <MemberStatusDistributionChart
+              data={memberStatusData}
+              isLoading={isStatusDistributionLoading}
+            />
+          </Suspense>
         </div>
       </div>
     </MainLayout>
