@@ -54,6 +54,7 @@ export default function MembersPage() {
   } = useMembers({
     search: searchQuery,
     ...databaseFilters,
+    // No limit - fetch all members
   });
 
   // Member count for stats

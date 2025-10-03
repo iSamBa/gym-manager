@@ -432,9 +432,6 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
               <TableHead className="min-w-[200px]">
                 <SortButton field="name">Member</SortButton>
               </TableHead>
-              <TableHead className="min-w-[200px]">
-                <SortButton field="email">Email</SortButton>
-              </TableHead>
               <TableHead>Phone</TableHead>
 
               {/* NEW COLUMNS - Gender & DOB */}
@@ -485,7 +482,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
             {isLoading ? (
               <TableRow>
                 <TableCell
-                  colSpan={showActions ? 17 : 16}
+                  colSpan={showActions ? 16 : 15}
                   className="py-12 text-center"
                 >
                   <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" />
@@ -495,7 +492,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
             ) : allMembers.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={showActions ? 17 : 16}
+                  colSpan={showActions ? 16 : 15}
                   className="py-12 text-center"
                 >
                   <p className="text-muted-foreground">No members found</p>
@@ -527,9 +524,6 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                         {member.first_name} {member.last_name}
                       </span>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">{member.email}</div>
                   </TableCell>
                   <TableCell>
                     <div className="text-muted-foreground text-sm">
