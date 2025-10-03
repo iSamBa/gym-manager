@@ -633,3 +633,44 @@ export interface EquipmentStats {
   equipment_out_of_order: number;
   upcoming_maintenance: EquipmentMaintenanceLog[];
 }
+
+// Enhanced Member Types for Members Table Rework (US-002)
+
+/**
+ * Subscription details for enhanced member view
+ * Aggregated from active member_subscriptions
+ */
+export interface MemberSubscriptionDetails {
+  /** Subscription end date */
+  end_date: string;
+  /** Remaining sessions from subscription */
+  remaining_sessions: number;
+  /** Outstanding balance (total_amount_snapshot - paid_amount) */
+  balance_due: number;
+}
+
+/**
+ * Session statistics for enhanced member view
+ * Aggregated from training_session_members and training_sessions
+ */
+export interface MemberSessionStats {
+  /** Date of last completed/attended session */
+  last_session_date: string | null;
+  /** Date of next scheduled session */
+  next_session_date: string | null;
+  /** Count of upcoming confirmed/waitlisted sessions */
+  scheduled_sessions_count: number;
+}
+
+/**
+ * Enhanced member data with subscription, session, and payment info
+ * Used for comprehensive member table display
+ */
+export interface MemberWithEnhancedDetails extends Member {
+  /** Active subscription details (null if no active subscription) */
+  active_subscription?: MemberSubscriptionDetails | null;
+  /** Session statistics (null if no sessions) */
+  session_stats?: MemberSessionStats | null;
+  /** Date of last completed payment (null if no payments) */
+  last_payment_date: string | null;
+}

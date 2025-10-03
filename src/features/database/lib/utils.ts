@@ -87,16 +87,29 @@ export async function executeQuery<T>(
 }
 
 // Enhanced member utilities for TanStack Query integration
+/**
+ * Enhanced member filters with new capabilities (US-002)
+ */
 export interface MemberFilters {
+  // Existing filters
   status?: MemberStatus | MemberStatus[];
   search?: string;
   joinDateFrom?: string;
   joinDateTo?: string;
   limit?: number;
   offset?: number;
-  // NEW: Server-side sorting support
   orderBy?: "name" | "email" | "status" | "join_date" | "phone";
   orderDirection?: "asc" | "desc";
+
+  // NEW: Enhanced filters (US-002)
+  /** Filter members with active subscriptions */
+  hasActiveSubscription?: boolean;
+  /** Filter members with upcoming sessions */
+  hasUpcomingSessions?: boolean;
+  /** Filter members with outstanding balance */
+  hasOutstandingBalance?: boolean;
+  /** Filter by member type */
+  memberType?: "full" | "trial";
 }
 
 export interface CreateMemberData {
