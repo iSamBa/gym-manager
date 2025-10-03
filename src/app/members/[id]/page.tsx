@@ -24,8 +24,6 @@ import {
   useUpdateMemberStatus,
   useDeleteMember,
   useMemberPrefetch,
-  useRouteCacheManager,
-  usePageCacheStrategy,
 } from "@/features/members/hooks";
 import {
   Edit,
@@ -91,9 +89,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
   // Prefetch related members for navigation
   const { prefetchAdjacentMembers } = useMemberPrefetch();
 
-  // Route-based cache management
-  useRouteCacheManager();
-  usePageCacheStrategy("detail");
+  // Page cache strategy temporarily disabled
 
   // Prefetch adjacent members when the component loads
   useEffect(() => {

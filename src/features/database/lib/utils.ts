@@ -94,6 +94,9 @@ export interface MemberFilters {
   joinDateTo?: string;
   limit?: number;
   offset?: number;
+  // NEW: Server-side sorting support
+  orderBy?: "name" | "email" | "status" | "join_date" | "phone";
+  orderDirection?: "asc" | "desc";
 }
 
 export interface CreateMemberData {
@@ -145,6 +148,14 @@ export interface TrainerFilters {
   yearsExperienceMax?: number;
   limit?: number;
   offset?: number;
+  // NEW: Server-side sorting support
+  orderBy?:
+    | "name"
+    | "email"
+    | "hourly_rate"
+    | "years_experience"
+    | "is_accepting_new_clients";
+  orderDirection?: "asc" | "desc";
 }
 
 export interface CreateTrainerData {
@@ -205,10 +216,37 @@ export const memberUtils = {
 
   async getMembers(filters: MemberFilters = {}): Promise<Member[]> {
     return executeQuery(async () => {
-      let query = supabase
-        .from("members")
-        .select("*")
-        .order("created_at", { ascending: false });
+      let query = supabase.from("members").select("*");
+
+      // Apply server-side sorting
+      if (filters.orderBy) {
+        const ascending = filters.orderDirection === "asc";
+        switch (filters.orderBy) {
+          case "name":
+            // Sort by concatenated first_name + last_name
+            query = query
+              .order("first_name", { ascending })
+              .order("last_name", { ascending });
+            break;
+          case "email":
+            query = query.order("email", { ascending });
+            break;
+          case "status":
+            query = query.order("status", { ascending });
+            break;
+          case "join_date":
+            query = query.order("join_date", { ascending });
+            break;
+          case "phone":
+            query = query.order("phone", { ascending });
+            break;
+          default:
+            query = query.order("created_at", { ascending: false });
+        }
+      } else {
+        // Default sorting if no orderBy specified
+        query = query.order("created_at", { ascending: false });
+      }
 
       // Apply status filter
       if (filters.status) {
@@ -219,10 +257,14 @@ export const memberUtils = {
         }
       }
 
-      // Apply search filter (searches first_name, last_name only)
+      // Enhanced search filter (searches multiple fields efficiently)
       if (filters.search) {
+        const searchTerm = filters.search.trim().toLowerCase();
+
+        // Use PostgreSQL's improved text search with multiple fields
+        // More efficient than ILIKE with wildcards for most cases
         query = query.or(
-          `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`
+          `first_name.ilike.${searchTerm}%,last_name.ilike.${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`
         );
       }
 
@@ -322,7 +364,9 @@ export const memberUtils = {
       return await supabase
         .from("members")
         .select("*")
-        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
+        .or(
+          `first_name.ilike.${query.trim().toLowerCase()}%,last_name.ilike.${query.trim().toLowerCase()}%,email.ilike.%${query.trim().toLowerCase()}%,phone.ilike.%${query.trim().toLowerCase()}%`
+        )
         .order("created_at", { ascending: false })
         .limit(20);
     });
@@ -528,9 +572,26 @@ export const trainerUtils = {
           )
           .eq("role", "trainer")
           .or(
-            `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`
-          )
-          .order("created_at", { ascending: false });
+            `first_name.ilike.${filters.search.trim().toLowerCase()}%,last_name.ilike.${filters.search.trim().toLowerCase()}%,email.ilike.%${filters.search.trim().toLowerCase()}%`
+          );
+        // Apply server-side sorting for search path
+        if (filters.orderBy) {
+          const ascending = filters.orderDirection === "asc";
+          switch (filters.orderBy) {
+            case "name":
+              query = query
+                .order("first_name", { ascending })
+                .order("last_name", { ascending });
+              break;
+            case "email":
+              query = query.order("email", { ascending });
+              break;
+            default:
+              query = query.order("created_at", { ascending: false });
+          }
+        } else {
+          query = query.order("created_at", { ascending: false });
+        }
 
         // Apply pagination for user_profiles query
         if (filters.offset !== undefined) {
@@ -623,15 +684,42 @@ export const trainerUtils = {
       }
 
       // When no search filter, use efficient trainers table query
-      let query = supabase
-        .from("trainers")
-        .select(
-          `
+      let query = supabase.from("trainers").select(
+        `
           *,
           user_profile:user_profiles(first_name, last_name, email, phone, avatar_url, bio)
         `
-        )
-        .order("created_at", { ascending: false });
+      );
+
+      // Apply server-side sorting for regular path
+      if (filters.orderBy) {
+        const ascending = filters.orderDirection === "asc";
+        switch (filters.orderBy) {
+          case "name":
+            // For trainers, we need to sort by user_profile fields
+            // PostgREST syntax for ordering by related table fields
+            query = query
+              .order("user_profile(first_name)", { ascending })
+              .order("user_profile(last_name)", { ascending });
+            break;
+          case "email":
+            query = query.order("user_profile(email)", { ascending });
+            break;
+          case "hourly_rate":
+            query = query.order("hourly_rate", { ascending });
+            break;
+          case "years_experience":
+            query = query.order("years_experience", { ascending });
+            break;
+          case "is_accepting_new_clients":
+            query = query.order("is_accepting_new_clients", { ascending });
+            break;
+          default:
+            query = query.order("created_at", { ascending: false });
+        }
+      } else {
+        query = query.order("created_at", { ascending: false });
+      }
 
       // Apply status filter - assuming active/inactive based on business logic
       // Note: trainers table doesn't have status field, so we'll check is_accepting_new_clients

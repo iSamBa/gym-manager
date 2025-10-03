@@ -17,8 +17,6 @@ import {
   useMemberCount,
   useMemberCountByStatus,
   useMemberPrefetch,
-  useRouteCacheManager,
-  usePageCacheStrategy,
   useSimpleMemberFilters,
   useExportMembers,
 } from "@/features/members/hooks";
@@ -64,10 +62,6 @@ export default function MembersPage() {
 
   // Prefetching utilities
   const { prefetchOnHover } = useMemberPrefetch();
-
-  // Route-based cache management
-  useRouteCacheManager();
-  usePageCacheStrategy("list");
 
   if (isAuthLoading) {
     return (

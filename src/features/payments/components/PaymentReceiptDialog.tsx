@@ -19,7 +19,6 @@ import { Badge } from "@/components/ui/badge";
 import type { SubscriptionPaymentWithReceipt } from "@/features/database/lib/types";
 import type { AllPaymentsResponse } from "../hooks/use-all-payments";
 import { paymentUtils } from "../lib/payment-utils";
-import { generatePaymentReceiptPDF } from "../lib/pdf-generator";
 
 type PaymentDialogPayment =
   | SubscriptionPaymentWithReceipt
@@ -72,8 +71,11 @@ export function PaymentReceiptDialog({
     window.print();
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!payment) return;
+
+    // Dynamically import PDF generator to reduce initial bundle size
+    const { generatePaymentReceiptPDF } = await import("../lib/pdf-generator");
 
     generatePaymentReceiptPDF({
       payment,

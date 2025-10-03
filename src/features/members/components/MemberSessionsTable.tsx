@@ -35,17 +35,21 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import {
-  useMemberSessions,
-  type SessionFilters,
-} from "../hooks/use-member-sessions";
+import { useTrainingSessions } from "@/features/training-sessions/hooks";
+import type { SessionFilters } from "@/features/training-sessions/lib/types";
+
+// Basic session filters type for this component
+type LocalSessionFilters = {
+  status?: string;
+  dateRange?: { from: Date; to: Date };
+};
 import { format, isToday, isTomorrow, isYesterday } from "date-fns";
 
 interface MemberSessionsTableProps {
   memberId: string;
   className?: string;
   showFilters?: boolean;
-  initialFilters?: SessionFilters;
+  initialFilters?: LocalSessionFilters;
   pageSize?: number;
 }
 
@@ -56,7 +60,7 @@ export function MemberSessionsTable({
   initialFilters = {},
   pageSize = 10,
 }: MemberSessionsTableProps) {
-  const [filters, setFilters] = useState<SessionFilters>(initialFilters);
+  const [filters, setFilters] = useState<LocalSessionFilters>(initialFilters);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -69,13 +73,35 @@ export function MemberSessionsTable({
     [filters, searchTerm]
   );
 
+  // Convert local filters to database filters
+  const databaseFilters = useMemo((): SessionFilters => {
+    const dbFilters: SessionFilters = {
+      member_id: memberId,
+    };
+
+    if (appliedFilters.status) {
+      dbFilters.status = appliedFilters.status as
+        | "scheduled"
+        | "completed"
+        | "cancelled";
+    }
+
+    if (appliedFilters.dateRange) {
+      dbFilters.date_range = {
+        start: appliedFilters.dateRange.from,
+        end: appliedFilters.dateRange.to,
+      };
+    }
+
+    return dbFilters;
+  }, [memberId, appliedFilters]);
+
+  // Get sessions from database with server-side filtering
   const {
-    data: sessions,
+    data: sessions = [],
     isLoading,
     error,
-  } = useMemberSessions(memberId, {
-    filters: appliedFilters,
-  });
+  } = useTrainingSessions(databaseFilters);
 
   // Pagination
   const paginatedSessions = useMemo(() => {
@@ -264,7 +290,7 @@ export function MemberSessionsTable({
               </TableHeader>
               <TableBody>
                 {paginatedSessions.map((session) => (
-                  <TableRow key={session.session_id}>
+                  <TableRow key={session.id}>
                     <TableCell>
                       <div className="space-y-1">
                         <div className="font-medium">
@@ -295,20 +321,18 @@ export function MemberSessionsTable({
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        {getStatusBadge(
-                          session.status,
-                          session.booking_status,
-                          session.is_upcoming
-                        )}
-                        {getAttendanceBadge(
-                          session.attendance_status,
-                          session.status
-                        )}
+                        {getStatusBadge(session.status, "confirmed", false)}
+                        {getAttendanceBadge("present", session.status)}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {Math.round(session.duration_minutes)} min
+                        {Math.round(
+                          (new Date(session.scheduled_end).getTime() -
+                            new Date(session.scheduled_start).getTime()) /
+                            (1000 * 60)
+                        )}{" "}
+                        min
                       </div>
                     </TableCell>
                     <TableCell>
@@ -317,7 +341,7 @@ export function MemberSessionsTable({
                         size="sm"
                         onClick={() => {
                           // Handle view session details
-                          console.log("View session:", session.session_id);
+                          console.log("View session:", session.id);
                         }}
                       >
                         <ExternalLink className="h-4 w-4" />

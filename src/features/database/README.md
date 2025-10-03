@@ -35,12 +35,20 @@ src/features/database/
 7. **subscription_plans** - Available membership plans
 8. **member_subscriptions** - Member subscription records
 9. **subscription_payments** - Payment tracking
-10. **trainers** - Trainer profiles and information
-11. **class_types** - Available class types
-12. **classes** - Scheduled classes
-13. **class_bookings** - Class reservations
-14. **trainer_sessions** - Personal training sessions
-15. **attendance_logs** - Member attendance tracking
+10. **payment_reminders** - Payment reminder system
+11. **trainers** - Trainer profiles and information
+12. **trainer_specializations** - Trainer specialization categories
+13. **class_types** - Available class types
+14. **classes** - Scheduled classes
+15. **class_bookings** - Class reservations
+16. **trainer_sessions** - Personal training sessions
+17. **attendance_logs** - Member attendance tracking
+18. **training_sessions** - Group training sessions
+19. **training_session_members** - Training session participants
+20. **notifications** - In-app notifications
+21. **notification_logs** - Notification delivery tracking
+22. **realtime_notifications** - Real-time notification system
+23. **session_credit_history** - Session credit usage history
 
 ### Security
 

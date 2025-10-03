@@ -191,6 +191,9 @@ describe("usePayments hooks", () => {
 
     it("should use correct stale time", () => {
       const subscriptionId = "sub-123";
+      const mockPayments = [mockPayment];
+      mockPaymentUtils.getSubscriptionPayments.mockResolvedValue(mockPayments);
+
       const wrapper = createWrapper();
 
       renderHook(() => useSubscriptionPayments(subscriptionId), { wrapper });
@@ -318,6 +321,8 @@ describe("usePayments hooks", () => {
     it("should use correct stale time for stats", () => {
       const startDate = "2024-01-01";
       const endDate = "2024-01-31";
+      mockPaymentUtils.getPaymentStats.mockResolvedValue(mockPaymentStats);
+
       const wrapper = createWrapper();
 
       renderHook(() => usePaymentStats(startDate, endDate), { wrapper });

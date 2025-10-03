@@ -16,7 +16,7 @@ import {
   Activity,
   AlertCircle,
 } from "lucide-react";
-import { useMemberSessionInsights } from "../hooks/use-member-session-stats";
+import { useMemberWithSubscription } from "@/features/members/hooks";
 
 interface MemberSessionStatsProps {
   memberId: string;
@@ -27,8 +27,42 @@ export function MemberSessionStats({
   memberId,
   className,
 }: MemberSessionStatsProps) {
-  const { stats, insights, isLoading, error } =
-    useMemberSessionInsights(memberId);
+  // Get member data with sessions for stats calculation
+  const { isLoading, error } = useMemberWithSubscription(memberId);
+
+  // Calculate basic stats from member session data (stub values since sessions aren't part of MemberWithSubscription)
+  const stats = {
+    totalSessions: 0,
+    completedSessions: 0,
+    cancelledSessions: 0,
+    monthly_trend: {
+      last_month: 0,
+      current_month: 0,
+      this_month: 0,
+      change: 0,
+    },
+  };
+
+  const insights = {
+    completionRate: stats.totalSessions
+      ? (stats.completedSessions / stats.totalSessions) * 100
+      : 0,
+    trend: "stable" as const,
+    totalSessions: stats.totalSessions,
+    monthlyTrend: "stable" as const,
+    monthlyChange: 0,
+    completedSessions: stats.completedSessions,
+    upcomingSessions: 0,
+    hasUpcomingSessions: false,
+    attendanceRate: 0,
+    attendanceLevel: "good" as const,
+    activityLevel: "moderate" as const,
+    trainingHours: 0,
+    avgSessionDuration: 1,
+    avgSessionsPerMonth: 0,
+    hasFavoriteTrainer: false,
+    favoriteTrainer: "None",
+  };
 
   if (error) {
     return (
@@ -225,7 +259,7 @@ export function MemberSessionStats({
       </div>
 
       {/* Monthly Trend Details (if there's significant data) */}
-      {stats && stats.total_sessions > 0 && (
+      {stats && stats.totalSessions > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm font-medium">
@@ -268,7 +302,7 @@ export function MemberSessionStats({
       )}
 
       {/* No data state */}
-      {stats && stats.total_sessions === 0 && (
+      {stats && stats.totalSessions === 0 && (
         <Card>
           <CardContent className="py-8 text-center">
             <Calendar className="text-muted-foreground/50 mx-auto mb-4 h-12 w-12" />

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback, memo } from "react";
 import {
   Table,
   TableBody,
@@ -92,7 +92,9 @@ type SortConfig<T> = {
   direction: "asc" | "desc";
 } | null;
 
-export function EnhancedDataTable<T extends { id: string | number }>({
+const EnhancedDataTable = memo(function EnhancedDataTable<
+  T extends { id: string | number },
+>({
   data,
   columns,
   actions = [],
@@ -155,57 +157,77 @@ export function EnhancedDataTable<T extends { id: string | number }>({
   }, [data, searchTerm, sortConfig, searchable]);
 
   // Pagination
-  const totalPages = pagination
-    ? Math.ceil(processedData.length / pageSize)
-    : 1;
-  const paginatedData = pagination
-    ? processedData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-    : processedData;
+  const totalPages = useMemo(
+    () => (pagination ? Math.ceil(processedData.length / pageSize) : 1),
+    [pagination, processedData.length, pageSize]
+  );
+  const paginatedData = useMemo(
+    () =>
+      pagination
+        ? processedData.slice(
+            (currentPage - 1) * pageSize,
+            currentPage * pageSize
+          )
+        : processedData,
+    [pagination, processedData, currentPage, pageSize]
+  );
 
   // Handlers
-  const handleSort = (key: keyof T | string) => {
-    const column = columns.find((col) => col.key === key);
-    if (!column?.sortable) return;
+  const handleSort = useCallback(
+    (key: keyof T | string) => {
+      const column = columns.find((col) => col.key === key);
+      if (!column?.sortable) return;
 
-    setSortConfig((current) => {
-      if (current?.key === key) {
-        if (current.direction === "asc") {
-          return { key, direction: "desc" };
+      setSortConfig((current) => {
+        if (current?.key === key) {
+          if (current.direction === "asc") {
+            return { key, direction: "desc" };
+          } else {
+            return null; // Clear sort
+          }
         } else {
-          return null; // Clear sort
+          return { key, direction: "asc" };
         }
+      });
+    },
+    [columns]
+  );
+
+  const handleSelectAll = useCallback(
+    (checked: boolean) => {
+      if (checked) {
+        const allIds = paginatedData.map((item) => item.id);
+        setSelectedIds(allIds);
+        onSelectionChange?.(allIds);
       } else {
-        return { key, direction: "asc" };
+        setSelectedIds([]);
+        onSelectionChange?.([]);
       }
-    });
-  };
+    },
+    [paginatedData, onSelectionChange]
+  );
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const allIds = paginatedData.map((item) => item.id);
-      setSelectedIds(allIds);
-      onSelectionChange?.(allIds);
-    } else {
-      setSelectedIds([]);
-      onSelectionChange?.([]);
-    }
-  };
+  const handleSelectItem = useCallback(
+    (id: string | number, checked: boolean) => {
+      const newSelected = checked
+        ? [...selectedIds, id]
+        : selectedIds.filter((selectedId) => selectedId !== id);
 
-  const handleSelectItem = (id: string | number, checked: boolean) => {
-    const newSelected = checked
-      ? [...selectedIds, id]
-      : selectedIds.filter((selectedId) => selectedId !== id);
+      setSelectedIds(newSelected);
+      onSelectionChange?.(newSelected);
+    },
+    [selectedIds, onSelectionChange]
+  );
 
-    setSelectedIds(newSelected);
-    onSelectionChange?.(newSelected);
-  };
-
-  const getSortIcon = (key: keyof T | string) => {
-    if (sortConfig?.key === key) {
-      return sortConfig.direction === "asc" ? ArrowUp : ArrowDown;
-    }
-    return ArrowUpDown;
-  };
+  const getSortIcon = useCallback(
+    (key: keyof T | string) => {
+      if (sortConfig?.key === key) {
+        return sortConfig.direction === "asc" ? ArrowUp : ArrowDown;
+      }
+      return ArrowUpDown;
+    },
+    [sortConfig]
+  );
 
   const renderTableView = () => (
     <div className="rounded-md border">
@@ -652,4 +674,8 @@ export function EnhancedDataTable<T extends { id: string | number }>({
       )}
     </div>
   );
-}
+}) as <T extends { id: string | number }>(
+  props: EnhancedDataTableProps<T>
+) => React.ReactElement;
+
+export { EnhancedDataTable };

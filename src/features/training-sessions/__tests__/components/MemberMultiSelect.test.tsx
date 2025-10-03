@@ -7,11 +7,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemberMultiSelect } from "../../components/forms/MemberMultiSelect";
 
 // Mock the hook
-vi.mock("../../hooks/use-members", () => ({
+vi.mock("@/features/members/hooks", () => ({
   useMembers: vi.fn(),
 }));
 
-import { useMembers } from "../../hooks/use-members";
+import { useMembers } from "@/features/members/hooks";
 
 describe("MemberMultiSelect", () => {
   let queryClient: QueryClient;

@@ -5,9 +5,12 @@ import {
   useInfiniteQuery,
 } from "@tanstack/react-query";
 import { keepPreviousData } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import { memberUtils, type MemberFilters } from "@/features/database/lib/utils";
 import type { Member, MemberStatus } from "@/features/database/lib/types";
 import { useAuth } from "@/hooks/use-auth";
+import { exportMembersToCSV } from "../lib/csv-utils";
 
 // Query key factory for consistent cache management
 export const memberKeys = {
@@ -479,4 +482,141 @@ export function useMembersPrefetch() {
   };
 
   return { prefetchPage };
+}
+
+// Export functionality
+interface UseExportMembersReturn {
+  isExporting: boolean;
+  exportMembers: (members: Member[]) => Promise<void>;
+  exportCount: number;
+}
+
+/**
+ * Hook for exporting members to CSV with loading states and error handling
+ */
+export function useExportMembers(): UseExportMembersReturn {
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
+
+  const exportMembers = useCallback(
+    async (members: Member[]) => {
+      if (isExporting) return; // Prevent multiple simultaneous exports
+
+      if (!members || members.length === 0) {
+        toast.error("No members to export", {
+          description:
+            "The member list is empty or no members match your current filters.",
+        });
+        return;
+      }
+
+      setIsExporting(true);
+      setExportCount(members.length);
+
+      try {
+        // Add a small delay to show loading state for better UX
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        // Perform the CSV export
+        exportMembersToCSV(members);
+
+        // Show success notification
+        toast.success("Export completed successfully", {
+          description: `${members.length} member${
+            members.length !== 1 ? "s" : ""
+          } exported to CSV file.`,
+        });
+      } catch (error) {
+        console.error("Export failed:", error);
+
+        toast.error("Export failed", {
+          description:
+            error instanceof Error
+              ? error.message
+              : "An unexpected error occurred while exporting members.",
+        });
+      } finally {
+        setIsExporting(false);
+      }
+    },
+    [isExporting]
+  );
+
+  return {
+    isExporting,
+    exportMembers,
+    exportCount,
+  };
+}
+
+// Simplified bulk operations (essential functionality only)
+export interface BulkOperationResult {
+  successful: string[];
+  failed: Array<{ id: string; error: string }>;
+  totalProcessed: number;
+  totalSuccessful: number;
+  totalFailed: number;
+}
+
+/**
+ * Simplified bulk delete members hook
+ */
+export function useBulkDeleteMembers() {
+  const queryClient = useQueryClient();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const bulkDelete = useCallback(
+    async (memberIds: string[]): Promise<BulkOperationResult> => {
+      if (isDeleting || memberIds.length === 0) {
+        return {
+          successful: [],
+          failed: [],
+          totalProcessed: 0,
+          totalSuccessful: 0,
+          totalFailed: 0,
+        };
+      }
+
+      setIsDeleting(true);
+      const result: BulkOperationResult = {
+        successful: [],
+        failed: [],
+        totalProcessed: 0,
+        totalSuccessful: 0,
+        totalFailed: 0,
+      };
+
+      try {
+        // Process deletions sequentially to avoid overwhelming the database
+        for (const id of memberIds) {
+          try {
+            await memberUtils.deleteMember(id);
+            result.successful.push(id);
+          } catch (error) {
+            result.failed.push({
+              id,
+              error: error instanceof Error ? error.message : "Unknown error",
+            });
+          }
+          result.totalProcessed++;
+        }
+
+        result.totalSuccessful = result.successful.length;
+        result.totalFailed = result.failed.length;
+
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: memberKeys.all });
+
+        return result;
+      } finally {
+        setIsDeleting(false);
+      }
+    },
+    [isDeleting, queryClient]
+  );
+
+  return {
+    bulkDelete,
+    isDeleting,
+  };
 }

@@ -2,12 +2,49 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Users, MapPin } from "lucide-react";
-import { useSessionQuickStats } from "../hooks/use-session-quick-stats";
+import { useSessionStats } from "@/features/training-sessions/hooks";
+import { useMemo } from "react";
 
 const SessionQuickStats: React.FC = () => {
-  const { data: stats, isLoading } = useSessionQuickStats();
+  // Create today's date range for filtering
+  const todayRange = useMemo(() => {
+    const today = new Date();
+    const startOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const endOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      23,
+      59,
+      59
+    );
+    return { start: startOfDay, end: endOfDay };
+  }, []);
+
+  // Get today's stats with SQL aggregation
+  const { data: todayStats, isLoading } = useSessionStats({
+    date_range: todayRange,
+  });
+
+  // Get this week's total (simplified)
+  const weekRange = useMemo(() => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59);
+    return { start: startOfWeek, end: endOfWeek };
+  }, []);
+
+  const { data: weekStats } = useSessionStats({
+    date_range: weekRange,
+  });
 
   if (isLoading) {
     return (
@@ -27,38 +64,34 @@ const SessionQuickStats: React.FC = () => {
     );
   }
 
-  if (!stats) return null;
-
   const statCards = [
     {
       title: "Today's Sessions",
-      value: stats.today_sessions,
-      change: stats.today_change,
+      value: todayStats?.total || 0,
       icon: Calendar,
       color: "text-blue-600",
-      description: `${stats.today_completed} completed`,
+      description: `${todayStats?.completed || 0} completed`,
     },
     {
       title: "This Week",
-      value: stats.week_sessions,
-      change: stats.week_change,
+      value: weekStats?.total || 0,
       icon: Clock,
       color: "text-green-600",
-      description: `${stats.week_upcoming} upcoming`,
+      description: `${weekStats?.scheduled || 0} upcoming`,
     },
     {
-      title: "Active Trainers",
-      value: stats.active_trainers,
+      title: "Active Today",
+      value: todayStats?.active || 0,
       icon: Users,
       color: "text-purple-600",
-      description: `${stats.total_trainers} total`,
+      description: "Currently active",
     },
     {
-      title: "Active Locations",
-      value: stats.active_locations || 0,
+      title: "Utilization",
+      value: `${todayStats?.average_utilization || 0}%`,
       icon: MapPin,
       color: "text-orange-600",
-      description: "In use this week",
+      description: "Today's average",
     },
   ];
 
@@ -74,19 +107,7 @@ const SessionQuickStats: React.FC = () => {
                 </p>
                 <p className="text-2xl font-bold">{stat.value}</p>
                 <div className="flex items-center gap-2">
-                  {stat.change !== undefined && (
-                    <Badge
-                      variant={stat.change >= 0 ? "default" : "secondary"}
-                      className={`text-xs ${
-                        stat.change >= 0
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {stat.change >= 0 ? "+" : ""}
-                      {Math.round(stat.change)}%
-                    </Badge>
-                  )}
+                  {/* Change tracking disabled */}
                   <span className="text-muted-foreground text-xs">
                     {stat.description}
                   </span>

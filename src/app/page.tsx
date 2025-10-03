@@ -16,12 +16,31 @@ import {
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { mapUserForLayout } from "@/lib/auth-utils";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
-import { MemberEvolutionChart } from "@/features/dashboard/components/member-evolution-chart";
-import { MemberStatusDistributionChart } from "@/features/dashboard/components/member-status-distribution-chart";
+import { lazy, Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy load heavy chart components to reduce initial bundle size
+const MemberEvolutionChart = lazy(() =>
+  import("@/features/dashboard/components/member-evolution-chart").then(
+    (module) => ({
+      default: module.MemberEvolutionChart,
+    })
+  )
+);
+
+const MemberStatusDistributionChart = lazy(() =>
+  import(
+    "@/features/dashboard/components/member-status-distribution-chart"
+  ).then((module) => ({
+    default: module.MemberStatusDistributionChart,
+  }))
+);
 import {
   useMemberEvolution,
   useMemberStatusDistribution,
 } from "@/features/dashboard/hooks/use-member-analytics";
+import { useDashboardStats } from "@/features/database/hooks/use-analytics";
+import { useRecentActivities } from "@/features/dashboard/hooks/use-recent-activities";
 
 export default function Home() {
   const { user, isLoading } = useRequireAdmin();
@@ -31,6 +50,13 @@ export default function Home() {
     useMemberEvolution(12);
   const { data: memberStatusData, isLoading: isStatusDistributionLoading } =
     useMemberStatusDistribution();
+
+  // Get dashboard stats using SQL aggregation (replaces mock data)
+  const { data: dashboardStats } = useDashboardStats();
+
+  // Get real recent activities data (replaces mock data)
+  const { data: recentActivities, isLoading: isActivitiesLoading } =
+    useRecentActivities(4);
 
   if (isLoading) {
     return <LoadingSkeleton variant="dashboard" />;
@@ -43,65 +69,84 @@ export default function Home() {
   // Convert user object to expected format for MainLayout
   const layoutUser = mapUserForLayout(user);
 
-  // Stats data
-  const stats = [
-    {
-      title: "Total Members",
-      value: "2,847",
-      description: "Active memberships",
-      icon: Users,
-      trend: { value: 12, label: "from last month" },
-    },
-    {
-      title: "Monthly Revenue",
-      value: "$23,580",
-      description: "Current month earnings",
-      icon: DollarSign,
-      trend: { value: 8, label: "from last month" },
-    },
-    {
-      title: "Classes Today",
-      value: "12",
-      description: "Scheduled sessions",
-      icon: Calendar,
-      trend: { value: 0, label: "same as yesterday" },
-    },
-    {
-      title: "Equipment Usage",
-      value: "78%",
-      description: "Peak hours utilization",
-      icon: Activity,
-      trend: { value: -5, label: "from last week" },
-    },
-  ];
+  // Stats data using real database analytics
+  const stats = dashboardStats
+    ? [
+        {
+          title: "Total Members",
+          value: dashboardStats.total_members.toLocaleString(),
+          description: `${dashboardStats.active_members} active`,
+          icon: Users,
+          trend: {
+            value: Math.round(
+              (dashboardStats.active_members / dashboardStats.total_members) *
+                100
+            ),
+            label: "active rate",
+          },
+        },
+        {
+          title: "Monthly Revenue",
+          value: `$${dashboardStats.monthly_revenue.toLocaleString()}`,
+          description: "Current month earnings",
+          icon: DollarSign,
+          trend: {
+            value: Math.round(dashboardStats.member_retention_rate),
+            label: "retention rate",
+          },
+        },
+        {
+          title: "Classes Today",
+          value: dashboardStats.sessions_today.toString(),
+          description: `${dashboardStats.sessions_this_week} this week`,
+          icon: Calendar,
+          trend: { value: 0, label: "today's sessions" },
+        },
+        {
+          title: "Total Revenue",
+          value: `$${dashboardStats.total_revenue.toLocaleString()}`,
+          description: "All time earnings",
+          icon: Activity,
+          trend: {
+            value: Math.round(dashboardStats.member_retention_rate),
+            label: "retention rate",
+          },
+        },
+      ]
+    : [
+        // Loading fallback stats
+        {
+          title: "Total Members",
+          value: "...",
+          description: "Loading...",
+          icon: Users,
+          trend: { value: 0, label: "loading" },
+        },
+        {
+          title: "Monthly Revenue",
+          value: "...",
+          description: "Loading...",
+          icon: DollarSign,
+          trend: { value: 0, label: "loading" },
+        },
+        {
+          title: "Classes Today",
+          value: "...",
+          description: "Loading...",
+          icon: Calendar,
+          trend: { value: 0, label: "loading" },
+        },
+        {
+          title: "Total Revenue",
+          value: "...",
+          description: "Loading...",
+          icon: Activity,
+          trend: { value: 0, label: "loading" },
+        },
+      ];
 
-  // Recent activities
-  const recentActivities = [
-    {
-      id: 1,
-      member: "Alice Johnson",
-      action: "Checked in",
-      time: "2 minutes ago",
-    },
-    {
-      id: 2,
-      member: "Bob Smith",
-      action: "Booked yoga class",
-      time: "5 minutes ago",
-    },
-    {
-      id: 3,
-      member: "Carol Davis",
-      action: "Updated payment method",
-      time: "12 minutes ago",
-    },
-    {
-      id: 4,
-      member: "David Wilson",
-      action: "Completed workout",
-      time: "18 minutes ago",
-    },
-  ];
+  // Use real recent activities data or show loading placeholder
+  const activitiesData = recentActivities || [];
 
   return (
     <MainLayout user={layoutUser}>
@@ -168,22 +213,43 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {recentActivities.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">{activity.member}</p>
-                      <p className="text-muted-foreground text-xs">
-                        {activity.action}
-                      </p>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {activity.time}
-                    </Badge>
+                {isActivitiesLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="space-y-1">
+                          <div className="h-4 w-24 animate-pulse rounded bg-gray-200"></div>
+                          <div className="h-3 w-32 animate-pulse rounded bg-gray-100"></div>
+                        </div>
+                        <div className="h-5 w-16 animate-pulse rounded bg-gray-200"></div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : activitiesData.length > 0 ? (
+                  activitiesData.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{activity.member}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {activity.action}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {activity.time}
+                      </Badge>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground py-4 text-center text-sm">
+                    No recent activities found
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -238,14 +304,18 @@ export default function Home() {
 
         {/* Analytics Charts */}
         <div className="flex gap-6">
-          <MemberEvolutionChart
-            data={memberEvolutionData}
-            isLoading={isEvolutionLoading}
-          />
-          <MemberStatusDistributionChart
-            data={memberStatusData}
-            isLoading={isStatusDistributionLoading}
-          />
+          <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+            <MemberEvolutionChart
+              data={memberEvolutionData}
+              isLoading={isEvolutionLoading}
+            />
+          </Suspense>
+          <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+            <MemberStatusDistributionChart
+              data={memberStatusData}
+              isLoading={isStatusDistributionLoading}
+            />
+          </Suspense>
         </div>
       </div>
     </MainLayout>

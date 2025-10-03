@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
 import {
   Table,
   TableBody,
@@ -49,7 +49,7 @@ import { cn } from "@/lib/utils";
 import type { Member, MemberStatus } from "@/features/database/lib/types";
 import type { MemberFilters } from "@/features/database/lib/utils";
 
-type SortField = "name" | "email" | "status" | "join_date";
+type SortField = "name" | "email" | "status" | "join_date" | "phone";
 type SortDirection = "asc" | "desc";
 
 interface AdvancedMemberTableProps {
@@ -72,7 +72,7 @@ interface SortConfig {
   direction: SortDirection;
 }
 
-export function AdvancedMemberTable({
+const AdvancedMemberTable = memo(function AdvancedMemberTable({
   filters,
   members: propMembers,
   isLoading: propIsLoading,
@@ -99,11 +99,41 @@ export function AdvancedMemberTable({
     newStatus?: MemberStatus;
   }>({ isOpen: false, action: null });
 
+  // Enhanced filters with server-side sorting
+  const enhancedFilters = useMemo(() => {
+    const baseFilters = filters || {};
+
+    // Map sortConfig to database sorting parameters
+    const orderBy:
+      | "name"
+      | "email"
+      | "status"
+      | "join_date"
+      | "phone"
+      | undefined =
+      sortConfig.field === "join_date"
+        ? "join_date"
+        : sortConfig.field === "name"
+          ? "name"
+          : sortConfig.field === "email"
+            ? "email"
+            : sortConfig.field === "status"
+              ? "status"
+              : sortConfig.field === "phone"
+                ? "phone"
+                : undefined;
+
+    return {
+      ...baseFilters,
+      orderBy,
+      orderDirection: sortConfig.direction,
+    };
+  }, [filters, sortConfig]);
+
   // Use infinite query when filters are provided, otherwise use passed props
-  const infiniteQuery = useMembersInfinite(filters || {}, 20);
+  const infiniteQuery = useMembersInfinite(enhancedFilters, 20);
 
   // Determine data source based on what's provided
-  const data = propMembers ? { pages: [propMembers] } : infiniteQuery.data;
   const fetchNextPage = infiniteQuery.fetchNextPage;
   const hasNextPage = enableInfiniteScroll && infiniteQuery.hasNextPage;
   const isFetchingNextPage = infiniteQuery.isFetchingNextPage;
@@ -115,84 +145,77 @@ export function AdvancedMemberTable({
   const bulkUpdateMutation = useBulkUpdateMemberStatus();
   const deleteMemberMutation = useDeleteMember();
 
-  const allMembers = data?.pages.flat() || [];
-  const sortedMembers = [...allMembers].sort((a, b) => {
-    const multiplier = sortConfig.direction === "asc" ? 1 : -1;
+  // Data is now sorted by the database, no need for client-side sorting
+  const allMembers = useMemo(() => {
+    const currentData = propMembers
+      ? { pages: [propMembers] }
+      : infiniteQuery.data;
+    if (!currentData) return [];
+    return currentData.pages.flat();
+  }, [propMembers, infiniteQuery.data]);
 
-    switch (sortConfig.field) {
-      case "name":
-        return (
-          multiplier *
-          `${a.first_name} ${a.last_name}`.localeCompare(
-            `${b.first_name} ${b.last_name}`
-          )
-        );
-      case "email":
-        return multiplier * a.email.localeCompare(b.email);
-      case "status":
-        return multiplier * a.status.localeCompare(b.status);
-      case "join_date":
-        return (
-          multiplier * new Date(a.join_date).getTime() -
-          new Date(b.join_date).getTime()
-        );
-      default:
-        return 0;
-    }
-  });
+  const isAllSelected = useMemo(
+    () => allMembers.length > 0 && selectedMembers.size === allMembers.length,
+    [allMembers.length, selectedMembers.size]
+  );
+  const isPartiallySelected = useMemo(
+    () => selectedMembers.size > 0 && selectedMembers.size < allMembers.length,
+    [selectedMembers.size, allMembers.length]
+  );
 
-  const isAllSelected =
-    sortedMembers.length > 0 && selectedMembers.size === sortedMembers.length;
-  const isPartiallySelected =
-    selectedMembers.size > 0 && selectedMembers.size < sortedMembers.length;
-
-  const handleSort = (field: SortField) => {
+  const handleSort = useCallback((field: SortField) => {
     setSortConfig((prev) => ({
       field,
       direction:
         prev.field === field && prev.direction === "asc" ? "desc" : "asc",
     }));
-  };
+  }, []);
 
-  const handleSelectAll = () => {
+  const handleSelectAll = useCallback(() => {
     if (isAllSelected) {
       setSelectedMembers(new Set());
     } else {
-      setSelectedMembers(new Set(sortedMembers.map((member) => member.id)));
+      setSelectedMembers(new Set(allMembers.map((member) => member.id)));
     }
-  };
+  }, [isAllSelected, allMembers]);
 
-  const handleSelectMember = (memberId: string, checked: boolean) => {
-    const newSelected = new Set(selectedMembers);
-    if (checked) {
-      newSelected.add(memberId);
-    } else {
-      newSelected.delete(memberId);
-    }
-    setSelectedMembers(newSelected);
-  };
+  const handleSelectMember = useCallback(
+    (memberId: string, checked: boolean) => {
+      const newSelected = new Set(selectedMembers);
+      if (checked) {
+        newSelected.add(memberId);
+      } else {
+        newSelected.delete(memberId);
+      }
+      setSelectedMembers(newSelected);
+    },
+    [selectedMembers]
+  );
 
-  const handleBulkStatusUpdate = async (newStatus: MemberStatus) => {
-    try {
-      await bulkUpdateMutation.mutateAsync({
-        memberIds: Array.from(selectedMembers),
-        status: newStatus,
-      });
+  const handleBulkStatusUpdate = useCallback(
+    async (newStatus: MemberStatus) => {
+      try {
+        await bulkUpdateMutation.mutateAsync({
+          memberIds: Array.from(selectedMembers),
+          status: newStatus,
+        });
 
-      setSelectedMembers(new Set());
-      setBulkActionDialog({ isOpen: false, action: null });
+        setSelectedMembers(new Set());
+        setBulkActionDialog({ isOpen: false, action: null });
 
-      toast.success("Status Updated", {
-        description: `${selectedMembers.size} members updated to ${newStatus}`,
-      });
-    } catch {
-      toast.error("Update Failed", {
-        description: "Failed to update member statuses. Please try again.",
-      });
-    }
-  };
+        toast.success("Status Updated", {
+          description: `${selectedMembers.size} members updated to ${newStatus}`,
+        });
+      } catch {
+        toast.error("Update Failed", {
+          description: "Failed to update member statuses. Please try again.",
+        });
+      }
+    },
+    [selectedMembers, bulkUpdateMutation]
+  );
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = useCallback(async () => {
     try {
       // Delete members one by one (could be optimized with batch delete)
       await Promise.all(
@@ -212,13 +235,13 @@ export function AdvancedMemberTable({
         description: "Failed to delete members. Please try again.",
       });
     }
-  };
+  }, [selectedMembers, deleteMemberMutation]);
 
-  const handleSingleDelete = (member: Member) => {
+  const handleSingleDelete = useCallback((member: Member) => {
     setMemberToDelete(member);
-  };
+  }, []);
 
-  const handleConfirmSingleDelete = async () => {
+  const handleConfirmSingleDelete = useCallback(async () => {
     if (!memberToDelete) return;
 
     try {
@@ -238,15 +261,15 @@ export function AdvancedMemberTable({
         description: "Failed to delete member. Please try again.",
       });
     }
-  };
+  }, [memberToDelete, deleteMemberMutation, selectedMembers]);
 
-  const formatJoinDate = (dateString: string) => {
+  const formatJoinDate = useCallback((dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
-  };
+  }, []);
 
   // Infinite scroll handler
   useEffect(() => {
@@ -265,33 +288,35 @@ export function AdvancedMemberTable({
     return () => window.removeEventListener("scroll", handleScroll);
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const SortButton = ({
+  const SortButton = memo(function SortButton({
     field,
     children,
   }: {
     field: SortField;
     children: React.ReactNode;
-  }) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-auto p-0 font-medium hover:bg-transparent"
-      onClick={() => handleSort(field)}
-    >
-      <span className="flex items-center gap-1">
-        {children}
-        {sortConfig.field === field ? (
-          sortConfig.direction === "asc" ? (
-            <ArrowUp className="h-3 w-3" />
+  }) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-auto p-0 font-medium hover:bg-transparent"
+        onClick={() => handleSort(field)}
+      >
+        <span className="flex items-center gap-1">
+          {children}
+          {sortConfig.field === field ? (
+            sortConfig.direction === "asc" ? (
+              <ArrowUp className="h-3 w-3" />
+            ) : (
+              <ArrowDown className="h-3 w-3" />
+            )
           ) : (
-            <ArrowDown className="h-3 w-3" />
-          )
-        ) : (
-          <ArrowUpDown className="h-3 w-3 opacity-50" />
-        )}
-      </span>
-    </Button>
-  );
+            <ArrowUpDown className="h-3 w-3 opacity-50" />
+          )}
+        </span>
+      </Button>
+    );
+  });
 
   if (isError) {
     return (
@@ -417,7 +442,7 @@ export function AdvancedMemberTable({
                   <p className="text-muted-foreground">Loading members...</p>
                 </TableCell>
               </TableRow>
-            ) : sortedMembers.length === 0 ? (
+            ) : allMembers.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={showActions ? 7 : 6}
@@ -427,7 +452,7 @@ export function AdvancedMemberTable({
                 </TableCell>
               </TableRow>
             ) : (
-              sortedMembers.map((member) => (
+              allMembers.map((member) => (
                 <TableRow
                   key={member.id}
                   className="hover:bg-muted/50 cursor-pointer"
@@ -634,4 +659,6 @@ export function AdvancedMemberTable({
       />
     </div>
   );
-}
+});
+
+export { AdvancedMemberTable };

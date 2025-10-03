@@ -41,10 +41,18 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import type { Member, MemberStatus } from "@/features/database/lib/types";
-import type {
-  BulkOperationProgress,
-  BulkOperationResult,
-} from "../hooks/use-bulk-operations";
+import type { BulkOperationResult } from "../hooks";
+
+// Progress tracking interface for bulk operations
+export interface BulkOperationProgress {
+  current: number;
+  total: number;
+  percentage: number;
+  currentBatch?: number;
+  totalBatches?: number;
+  estimatedTimeRemaining?: number;
+  processingRate?: number;
+}
 
 export interface BulkActionToolbarProps {
   selectedMembers: Member[];

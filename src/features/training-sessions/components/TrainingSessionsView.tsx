@@ -1,15 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, History, BarChart3, Users, Clock } from "lucide-react";
-import TrainingSessionCalendar from "./TrainingSessionCalendar";
+
+// Lazy load heavy calendar component to reduce initial bundle size
+const TrainingSessionCalendar = lazy(() => import("./TrainingSessionCalendar"));
 import SessionHistoryTable from "./SessionHistoryTable";
 import { EditSessionDialog } from "./forms/EditSessionDialog";
-import { useTrainingSessions } from "../hooks/use-training-sessions";
+import { useTrainingSessions, useSessionStats } from "../hooks";
 import type { TrainingSession, SessionHistoryEntry } from "../lib/types";
 
 const TrainingSessionsView: React.FC = () => {
@@ -64,6 +67,11 @@ const TrainingSessionsView: React.FC = () => {
     isLoading,
     error,
   } = useTrainingSessions({
+    date_range: dateRange,
+  });
+
+  // Fetch session statistics with SQL aggregation (much more efficient)
+  const { data: sessionStats, isLoading: statsLoading } = useSessionStats({
     date_range: dateRange,
   });
 
@@ -160,10 +168,14 @@ const TrainingSessionsView: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex min-h-0 flex-1 flex-col">
-                  <TrainingSessionCalendar
-                    onSelectSession={handleSessionClick}
-                    onSelectSlot={handleSlotSelect}
-                  />
+                  <Suspense
+                    fallback={<Skeleton className="h-[400px] w-full" />}
+                  >
+                    <TrainingSessionCalendar
+                      onSelectSession={handleSessionClick}
+                      onSelectSlot={handleSlotSelect}
+                    />
+                  </Suspense>
                 </div>
               )}
             </TabsContent>
@@ -213,12 +225,7 @@ const TrainingSessionsView: React.FC = () => {
                     <h3 className="font-medium">Active Sessions</h3>
                   </div>
                   <p className="mt-2 text-2xl font-bold">
-                    {
-                      sessions.filter(
-                        (s) =>
-                          s.status === "scheduled" || s.status === "in_progress"
-                      ).length
-                    }
+                    {statsLoading ? "..." : sessionStats?.active || 0}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
                     Currently active
@@ -231,7 +238,7 @@ const TrainingSessionsView: React.FC = () => {
                     <h3 className="font-medium">Completed</h3>
                   </div>
                   <p className="mt-2 text-2xl font-bold">
-                    {sessions.filter((s) => s.status === "completed").length}
+                    {statsLoading ? "..." : sessionStats?.completed || 0}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
                     Sessions completed
@@ -244,20 +251,9 @@ const TrainingSessionsView: React.FC = () => {
                     <h3 className="font-medium">Average Utilization</h3>
                   </div>
                   <p className="mt-2 text-2xl font-bold">
-                    {sessions.length > 0
-                      ? Math.round(
-                          (sessions.reduce(
-                            (acc, s) =>
-                              acc +
-                              (s.current_participants || 0) /
-                                s.max_participants,
-                            0
-                          ) /
-                            sessions.length) *
-                            100
-                        )
-                      : 0}
-                    %
+                    {statsLoading
+                      ? "..."
+                      : `${sessionStats?.average_utilization || 0}%`}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
                     Capacity utilization

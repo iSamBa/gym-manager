@@ -7,26 +7,6 @@ import type {
   PaymentStatus,
 } from "@/features/database/lib/types";
 
-type PaymentWithMember = {
-  id: string;
-  amount: number;
-  payment_method: PaymentMethod;
-  payment_status: PaymentStatus;
-  receipt_number: string;
-  payment_date: string;
-  refund_amount?: number;
-  member_id: string;
-  subscription_id?: string;
-  is_refund: boolean;
-  refunded_payment_id?: string;
-  refund_metadata?: Record<string, unknown>;
-  description?: string;
-  members?: {
-    first_name: string;
-    last_name: string;
-  };
-};
-
 export const paymentUtils = {
   /**
    * Record a payment for a subscription or standalone payment
