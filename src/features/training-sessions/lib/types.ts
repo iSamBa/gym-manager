@@ -1,26 +1,36 @@
 import type { Member, TrainerWithProfile } from "@/features/database/lib/types";
 
-// Simplified training session type
+// Participant in training session (from database view)
+export interface SessionParticipant {
+  id: string;
+  name: string;
+  email: string;
+}
+
+// Training session type matching database view
 export interface TrainingSession {
   id: string;
   trainer_id: string;
   scheduled_start: string; // ISO string
   scheduled_end: string; // ISO string
   status: "scheduled" | "in_progress" | "completed" | "cancelled";
-  session_type: "trail" | "standard";
+  session_type?: "trail" | "standard"; // Optional, may not be in all views
   max_participants: number;
   current_participants: number;
   location: string | null;
   notes: string | null;
+  trainer_user_id?: string; // From calendar view
   trainer_name?: string; // From calendar view join
-  created_at: string;
-  updated_at: string;
+  participants?: SessionParticipant[]; // From calendar view (array of participants)
+  created_at?: string;
+  updated_at?: string;
 }
 
 // No separate progress notes - using simple notes field instead
 
-// Extended session with relationships
-export interface TrainingSessionWithDetails extends TrainingSession {
+// Extended session with relationships (overrides participants type)
+export interface TrainingSessionWithDetails
+  extends Omit<TrainingSession, "participants"> {
   trainer?: TrainerWithProfile;
   participants?: TrainingSessionMember[];
 }
@@ -165,4 +175,22 @@ export interface SessionAnalytics {
     attendance_rate: number;
     revenue: number;
   }>;
+}
+
+// Utility functions for computed properties
+export function getSessionDurationMinutes(session: TrainingSession): number {
+  const start = new Date(session.scheduled_start);
+  const end = new Date(session.scheduled_end);
+  return Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+}
+
+export function getSessionMemberNames(session: TrainingSession): string {
+  if (!session.participants || session.participants.length === 0) {
+    return "No members";
+  }
+  return session.participants.map((p) => p.name).join(", ");
+}
+
+export function getSessionMemberCount(session: TrainingSession): number {
+  return session.participants?.length || 0;
 }

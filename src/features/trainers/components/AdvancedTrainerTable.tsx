@@ -137,7 +137,6 @@ const AdvancedTrainerTable = memo(function AdvancedTrainerTable({
   const infiniteQuery = useTrainersInfinite(enhancedFilters, 20);
 
   // Determine data source based on what's provided
-  const data = propTrainers ? { pages: [propTrainers] } : infiniteQuery.data;
   const fetchNextPage = infiniteQuery.fetchNextPage;
   const hasNextPage = enableInfiniteScroll && infiniteQuery.hasNextPage;
   const isFetchingNextPage = infiniteQuery.isFetchingNextPage;
@@ -151,9 +150,12 @@ const AdvancedTrainerTable = memo(function AdvancedTrainerTable({
 
   // Data is now sorted by the database, no need for client-side sorting
   const allTrainers = useMemo(() => {
-    if (!data) return [];
-    return data.pages.flat();
-  }, [data]);
+    const currentData = propTrainers
+      ? { pages: [propTrainers] }
+      : infiniteQuery.data;
+    if (!currentData) return [];
+    return currentData.pages.flat();
+  }, [propTrainers, infiniteQuery.data]);
 
   const isAllSelected = useMemo(
     () =>
@@ -294,7 +296,7 @@ const AdvancedTrainerTable = memo(function AdvancedTrainerTable({
     fetchNextPage,
   ]);
 
-  if (isLoading && !data) {
+  if (isLoading && !propTrainers && !infiniteQuery.data) {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin" />

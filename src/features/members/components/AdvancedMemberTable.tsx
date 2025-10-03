@@ -134,7 +134,6 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
   const infiniteQuery = useMembersInfinite(enhancedFilters, 20);
 
   // Determine data source based on what's provided
-  const data = propMembers ? { pages: [propMembers] } : infiniteQuery.data;
   const fetchNextPage = infiniteQuery.fetchNextPage;
   const hasNextPage = enableInfiniteScroll && infiniteQuery.hasNextPage;
   const isFetchingNextPage = infiniteQuery.isFetchingNextPage;
@@ -148,9 +147,12 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
 
   // Data is now sorted by the database, no need for client-side sorting
   const allMembers = useMemo(() => {
-    if (!data) return [];
-    return data.pages.flat();
-  }, [data]);
+    const currentData = propMembers
+      ? { pages: [propMembers] }
+      : infiniteQuery.data;
+    if (!currentData) return [];
+    return currentData.pages.flat();
+  }, [propMembers, infiniteQuery.data]);
 
   const isAllSelected = useMemo(
     () => allMembers.length > 0 && selectedMembers.size === allMembers.length,

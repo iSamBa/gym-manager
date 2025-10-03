@@ -2,12 +2,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  AlertTriangle,
-  CheckCircle,
-  CalendarPlus,
-  Loader2,
-} from "lucide-react";
+import { CalendarPlus, Loader2 } from "lucide-react";
 
 import {
   Card,
@@ -34,7 +29,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Session credit validation functionality removed during hook consolidation
 import { useSessionBookingWithCredits } from "../../hooks/use-session-booking-with-credits";
@@ -164,38 +158,16 @@ export function SessionBookingForm({
               )}
             />
 
-            {/* Credit Validation Alerts */}
-            {selectedMemberId && !isValidatingCredits && creditValidation && (
-              <div className="space-y-2">
-                {/* Error alerts */}
-                {creditValidation.errors.map((error, index) => (
-                  <Alert key={`error-${index}`} variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                ))}
-
-                {/* Warning alerts */}
-                {creditValidation.warnings.map((warning, index) => (
-                  <Alert key={`warning-${index}`}>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>{warning}</AlertDescription>
-                  </Alert>
-                ))}
-
-                {/* Success state */}
-                {creditValidation.canBook &&
-                  creditValidation.warnings.length === 0 && (
-                    <Alert>
-                      <CheckCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        ✓ {creditValidation.remainingSessions} session(s)
-                        available
-                      </AlertDescription>
-                    </Alert>
-                  )}
-              </div>
-            )}
+            {/* Credit Validation Alerts - Disabled during consolidation */}
+            {/* Credit validation removed during hook consolidation - simplified validation will be in booking logic */}
+            {false &&
+              selectedMemberId &&
+              !isValidatingCredits &&
+              creditValidation && (
+                <div className="space-y-2">
+                  {/* Placeholder - validation removed */}
+                </div>
+              )}
 
             {/* Trainer Selection */}
             <FormField
@@ -315,20 +287,14 @@ export function SessionBookingForm({
               )}
               <Button
                 type="submit"
-                disabled={
-                  bookSessionMutation.isPending ||
-                  isValidatingCredits ||
-                  (creditValidation && !creditValidation.canBook)
-                }
+                disabled={bookSessionMutation.isPending || isValidatingCredits}
               >
                 {bookSessionMutation.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
                 {bookSessionMutation.isPending
                   ? "Booking Session..."
-                  : creditValidation && !creditValidation.canBook
-                    ? "Cannot Book Session"
-                    : "Book Session"}
+                  : "Book Session"}
               </Button>
             </div>
           </form>

@@ -2,7 +2,6 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Users, MapPin } from "lucide-react";
 import { useSessionStats } from "@/features/training-sessions/hooks";
 import { useMemo } from "react";
@@ -108,19 +107,7 @@ const SessionQuickStats: React.FC = () => {
                 </p>
                 <p className="text-2xl font-bold">{stat.value}</p>
                 <div className="flex items-center gap-2">
-                  {stat.change !== undefined && (
-                    <Badge
-                      variant={stat.change >= 0 ? "default" : "secondary"}
-                      className={`text-xs ${
-                        stat.change >= 0
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {stat.change >= 0 ? "+" : ""}
-                      {Math.round(stat.change)}%
-                    </Badge>
-                  )}
+                  {/* Change tracking disabled */}
                   <span className="text-muted-foreground text-xs">
                     {stat.description}
                   </span>

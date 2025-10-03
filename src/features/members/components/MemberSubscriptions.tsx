@@ -21,11 +21,7 @@ export function MemberSubscriptions({ member }: MemberSubscriptionsProps) {
   const [showNewSubscriptionDialog, setShowNewSubscriptionDialog] =
     useState(false);
 
-  const {
-    data: memberData,
-    isLoading,
-    error,
-  } = useMemberWithSubscription(member?.id);
+  const { isLoading, error } = useMemberWithSubscription(member?.id);
 
   // Subscriptions are handled by MemberSubscriptionTable component
 

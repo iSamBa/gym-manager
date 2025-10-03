@@ -676,6 +676,6 @@ const EnhancedDataTable = memo(function EnhancedDataTable<
   );
 }) as <T extends { id: string | number }>(
   props: EnhancedDataTableProps<T>
-) => JSX.Element;
+) => React.ReactElement;
 
 export { EnhancedDataTable };

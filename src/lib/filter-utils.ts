@@ -258,8 +258,8 @@ export const filterUtils = {
    * Merges multiple filter objects
    */
   mergeFilters: <T extends BaseFilters>(...filters: Partial<T>[]): T => {
-    return filters.reduce((merged, current) => {
-      return { ...merged, ...current };
+    return filters.reduce<T>((merged, current) => {
+      return { ...merged, ...current } as T;
     }, {} as T);
   },
 

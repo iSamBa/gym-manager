@@ -36,9 +36,12 @@ import {
   ChevronRight,
   Edit,
 } from "lucide-react";
-import { useTrainers } from "@/features/trainers/hooks";
 import { useTrainingSessions } from "@/features/training-sessions/hooks";
 import type { SessionFilters } from "@/features/training-sessions/lib/types";
+import {
+  getSessionDurationMinutes,
+  getSessionMemberNames,
+} from "@/features/training-sessions/lib/types";
 
 // Basic trainer session filters type for this component
 type LocalTrainerSessionFilters = {
@@ -268,7 +271,7 @@ export function TrainerSessionsTable({
               </TableHeader>
               <TableBody>
                 {paginatedSessions.map((session) => (
-                  <TableRow key={session.session_id}>
+                  <TableRow key={session.id}>
                     <TableCell>
                       <div className="space-y-1">
                         <div className="font-medium">
@@ -287,7 +290,7 @@ export function TrainerSessionsTable({
                       <div className="flex items-center gap-2">
                         <User className="text-muted-foreground h-4 w-4" />
                         <span className="font-medium">
-                          {session.member_names || "No members"}
+                          {getSessionMemberNames(session)}
                         </span>
                       </div>
                     </TableCell>
@@ -299,29 +302,30 @@ export function TrainerSessionsTable({
                     </TableCell>
                     <TableCell>
                       {getStatusBadge(
-                        session.session_status,
-                        session.is_upcoming
+                        session.status,
+                        new Date(session.scheduled_start) > new Date()
                       )}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {Math.round(session.duration_minutes)} min
+                        {getSessionDurationMinutes(session)} min
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {session.member_count || 0}/{session.max_participants}
+                        {session.participants?.length || 0}/
+                        {session.max_participants}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        {session.is_upcoming && (
+                        {new Date(session.scheduled_start) > new Date() && (
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => {
                               // Handle edit session
-                              console.log("Edit session:", session.session_id);
+                              console.log("Edit session:", session.id);
                             }}
                           >
                             <Edit className="h-4 w-4" />
@@ -332,7 +336,7 @@ export function TrainerSessionsTable({
                           size="sm"
                           onClick={() => {
                             // Handle view session details
-                            console.log("View session:", session.session_id);
+                            console.log("View session:", session.id);
                           }}
                         >
                           <ExternalLink className="h-4 w-4" />

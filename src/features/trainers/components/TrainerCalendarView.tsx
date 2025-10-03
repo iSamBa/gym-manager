@@ -17,6 +17,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useTrainingSessions } from "@/features/training-sessions/hooks";
+import { getSessionMemberNames } from "@/features/training-sessions/lib/types";
 import { format, startOfWeek, addDays, isToday, isSameDay } from "date-fns";
 
 interface TrainerCalendarViewProps {
@@ -170,8 +171,7 @@ export function TrainerCalendarView({
                             <div className="mb-1 flex items-center gap-1">
                               <User className="h-3 w-3" />
                               <span className="truncate">
-                                {/* @ts-expect-error - Stub component with placeholder data */}
-                                {session.member_names}
+                                {getSessionMemberNames(session)}
                               </span>
                             </div>
 
@@ -236,15 +236,9 @@ export function TrainerCalendarView({
                 <div className="text-2xl font-bold">
                   {
                     new Set(
-                      sessions
-                        .map(
-                          (s) =>
-                            (s as { member_names?: string }).member_names
-                              ?.split(",")
-                              .map((name: string) => name.trim())
-                              .filter(Boolean) || []
-                        )
-                        .flat()
+                      sessions.flatMap(
+                        (s) => s.participants?.map((p) => p.name) || []
+                      )
                     ).size
                   }
                 </div>
@@ -255,8 +249,13 @@ export function TrainerCalendarView({
               <div className="text-center">
                 <div className="text-2xl font-bold">
                   {Math.round(
-                    sessions.reduce((sum, s) => sum + s.duration_minutes, 0) /
-                      60
+                    sessions.reduce((sum, s) => {
+                      const start = new Date(s.scheduled_start);
+                      const end = new Date(s.scheduled_end);
+                      const durationMinutes =
+                        (end.getTime() - start.getTime()) / (1000 * 60);
+                      return sum + durationMinutes;
+                    }, 0) / 60
                   )}
                   h
                 </div>

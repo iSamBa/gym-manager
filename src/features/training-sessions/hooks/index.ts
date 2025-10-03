@@ -6,25 +6,11 @@ export {
   useCreateTrainingSession,
   useUpdateTrainingSession,
   useDeleteTrainingSession,
-  useTrainingSessionsByTrainer,
-  useTrainingSessionsByMember,
-  useUpcomingTrainingSessions,
-  trainingSessionKeys,
+  TRAINING_SESSIONS_KEYS as trainingSessionKeys,
 } from "./use-training-sessions";
 
 // Session booking with credits
-export {
-  useSessionBookingWithCredits,
-  useBookingValidation,
-  useCreditCalculation,
-} from "./use-session-booking-with-credits";
-
-// Calendar integration
-export {
-  useCalendarEvents,
-  useCalendarView,
-  useEventFiltering,
-} from "./use-calendar-events";
+export { useSessionBookingWithCredits } from "./use-session-booking-with-credits";
 
 // Session statistics with SQL aggregation
 export {

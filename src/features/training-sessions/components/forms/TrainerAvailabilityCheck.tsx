@@ -24,6 +24,7 @@ interface TrainerAvailabilityCheckProps {
 
 export const TrainerAvailabilityCheck: React.FC<
   TrainerAvailabilityCheckProps
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
 > = ({ trainerId, startTime, endTime, excludeSessionId, className }) => {
   // Trainer availability checking removed during hook consolidation
   const availability = null;
