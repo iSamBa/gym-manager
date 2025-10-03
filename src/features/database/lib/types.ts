@@ -257,6 +257,7 @@ export interface Member {
   profile_picture_url?: string;
   status: MemberStatus;
   join_date: string;
+  member_type: string; // "full" | "trial" or other custom types
   notes?: string;
   medical_conditions?: string;
   fitness_goals?: string;

@@ -40,28 +40,48 @@ import {
 import { MemberAvatar } from "./MemberAvatar";
 import { MemberStatusBadge } from "./MemberStatusBadge";
 import {
+  DateCell,
+  SessionCountBadge,
+  BalanceBadge,
+  MemberTypeBadge,
+} from "./cells";
+import {
   useMembersInfinite,
   useBulkUpdateMemberStatus,
   useDeleteMember,
 } from "@/features/members/hooks";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { Member, MemberStatus } from "@/features/database/lib/types";
+import type {
+  MemberStatus,
+  MemberWithEnhancedDetails,
+} from "@/features/database/lib/types";
 import type { MemberFilters } from "@/features/database/lib/utils";
 
-type SortField = "name" | "email" | "status" | "join_date" | "phone";
+type SortField =
+  | "name"
+  | "email"
+  | "status"
+  | "join_date"
+  | "phone"
+  | "gender"
+  | "date_of_birth"
+  | "member_type"
+  | "subscription_end_date"
+  | "balance_due"
+  | "last_payment_date";
 type SortDirection = "asc" | "desc";
 
 interface AdvancedMemberTableProps {
   // Support both filtering and direct member list approaches
   filters?: MemberFilters;
-  members?: Member[];
+  members?: MemberWithEnhancedDetails[];
   isLoading?: boolean;
   error?: Error | null;
-  onEdit?: (member: Member) => void;
-  onView?: (member: Member) => void;
-  onMemberClick?: (member: Member) => void;
-  onMemberHover?: (member: Member) => void;
+  onEdit?: (member: MemberWithEnhancedDetails) => void;
+  onView?: (member: MemberWithEnhancedDetails) => void;
+  onMemberClick?: (member: MemberWithEnhancedDetails) => void;
+  onMemberHover?: (member: MemberWithEnhancedDetails) => void;
   enableInfiniteScroll?: boolean;
   showActions?: boolean;
   className?: string;
@@ -88,7 +108,8 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
     new Set()
   );
-  const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
+  const [memberToDelete, setMemberToDelete] =
+    useState<MemberWithEnhancedDetails | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     field: "name",
     direction: "asc",
@@ -237,9 +258,12 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
     }
   }, [selectedMembers, deleteMemberMutation]);
 
-  const handleSingleDelete = useCallback((member: Member) => {
-    setMemberToDelete(member);
-  }, []);
+  const handleSingleDelete = useCallback(
+    (member: MemberWithEnhancedDetails) => {
+      setMemberToDelete(member);
+    },
+    []
+  );
 
   const handleConfirmSingleDelete = useCallback(async () => {
     if (!memberToDelete) return;
@@ -262,14 +286,6 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
       });
     }
   }, [memberToDelete, deleteMemberMutation, selectedMembers]);
-
-  const formatJoinDate = useCallback((dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  }, []);
 
   // Infinite scroll handler
   useEffect(() => {
@@ -413,16 +429,50 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                   />
                 </TableHead>
               )}
-              <TableHead>
+              <TableHead className="min-w-[200px]">
                 <SortButton field="name">Member</SortButton>
               </TableHead>
-              <TableHead>
+              <TableHead className="min-w-[200px]">
                 <SortButton field="email">Email</SortButton>
               </TableHead>
               <TableHead>Phone</TableHead>
+
+              {/* NEW COLUMNS - Gender & DOB */}
+              <TableHead className="hidden xl:table-cell">
+                <SortButton field="gender">Gender</SortButton>
+              </TableHead>
+              <TableHead className="hidden xl:table-cell">
+                <SortButton field="date_of_birth">DOB</SortButton>
+              </TableHead>
+
+              {/* NEW COLUMN - Member Type */}
+              <TableHead>
+                <SortButton field="member_type">Type</SortButton>
+              </TableHead>
+
               <TableHead>
                 <SortButton field="status">Status</SortButton>
               </TableHead>
+
+              {/* NEW COLUMNS - Subscription & Sessions */}
+              <TableHead className="hidden lg:table-cell">
+                <SortButton field="subscription_end_date">Sub End</SortButton>
+              </TableHead>
+              <TableHead className="hidden lg:table-cell">
+                Last Session
+              </TableHead>
+              <TableHead className="hidden lg:table-cell">
+                Next Session
+              </TableHead>
+              <TableHead className="hidden lg:table-cell">Remaining</TableHead>
+              <TableHead className="hidden lg:table-cell">Scheduled</TableHead>
+              <TableHead className="hidden lg:table-cell">
+                <SortButton field="balance_due">Balance</SortButton>
+              </TableHead>
+              <TableHead className="hidden xl:table-cell">
+                <SortButton field="last_payment_date">Last Payment</SortButton>
+              </TableHead>
+
               <TableHead>
                 <SortButton field="join_date">Join Date</SortButton>
               </TableHead>
@@ -435,7 +485,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
             {isLoading ? (
               <TableRow>
                 <TableCell
-                  colSpan={showActions ? 7 : 6}
+                  colSpan={showActions ? 17 : 16}
                   className="py-12 text-center"
                 >
                   <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" />
@@ -445,7 +495,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
             ) : allMembers.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={showActions ? 7 : 6}
+                  colSpan={showActions ? 17 : 16}
                   className="py-12 text-center"
                 >
                   <p className="text-muted-foreground">No members found</p>
@@ -483,9 +533,30 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                   </TableCell>
                   <TableCell>
                     <div className="text-muted-foreground text-sm">
-                      {member.phone || "Not provided"}
+                      {member.phone || "-"}
                     </div>
                   </TableCell>
+
+                  {/* Gender */}
+                  <TableCell className="hidden xl:table-cell">
+                    <span className="text-sm capitalize">
+                      {member.gender || "-"}
+                    </span>
+                  </TableCell>
+
+                  {/* Date of Birth */}
+                  <TableCell className="hidden xl:table-cell">
+                    <DateCell date={member.date_of_birth || null} />
+                  </TableCell>
+
+                  {/* Member Type */}
+                  <TableCell>
+                    <MemberTypeBadge
+                      type={member.member_type as "full" | "trial"}
+                    />
+                  </TableCell>
+
+                  {/* Status */}
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <MemberStatusBadge
                       status={member.status}
@@ -493,8 +564,63 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                       readonly={!showActions}
                     />
                   </TableCell>
+
+                  {/* Subscription End Date */}
+                  <TableCell className="hidden lg:table-cell">
+                    <DateCell
+                      date={member.active_subscription?.end_date || null}
+                    />
+                  </TableCell>
+
+                  {/* Last Session */}
+                  <TableCell className="hidden lg:table-cell">
+                    <DateCell
+                      date={member.session_stats?.last_session_date || null}
+                      format="short"
+                    />
+                  </TableCell>
+
+                  {/* Next Session */}
+                  <TableCell className="hidden lg:table-cell">
+                    <DateCell
+                      date={member.session_stats?.next_session_date || null}
+                      format="relative"
+                    />
+                  </TableCell>
+
+                  {/* Remaining Sessions */}
+                  <TableCell className="hidden lg:table-cell">
+                    <SessionCountBadge
+                      count={
+                        member.active_subscription?.remaining_sessions || 0
+                      }
+                    />
+                  </TableCell>
+
+                  {/* Scheduled Sessions */}
+                  <TableCell className="hidden lg:table-cell">
+                    <SessionCountBadge
+                      count={
+                        member.session_stats?.scheduled_sessions_count || 0
+                      }
+                    />
+                  </TableCell>
+
+                  {/* Balance Due */}
+                  <TableCell className="hidden lg:table-cell">
+                    <BalanceBadge
+                      amount={member.active_subscription?.balance_due || 0}
+                    />
+                  </TableCell>
+
+                  {/* Last Payment */}
+                  <TableCell className="hidden xl:table-cell">
+                    <DateCell date={member.last_payment_date} />
+                  </TableCell>
+
+                  {/* Join Date */}
                   <TableCell className="text-sm">
-                    {formatJoinDate(member.join_date)}
+                    <DateCell date={member.join_date} />
                   </TableCell>
                   {showActions && (
                     <TableCell onClick={(e) => e.stopPropagation()}>
