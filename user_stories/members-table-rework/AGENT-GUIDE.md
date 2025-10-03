@@ -49,15 +49,39 @@ Before starting ANY user story, verify:
 4. Follow the code snippets in Technical Implementation section
 ```
 
-### Step 4: Test
+### Step 4: Test (MANDATORY - Run ALL Tests from User Story)
+
+**CRITICAL**: Every user story has a "Testing Criteria" section. You MUST run ALL tests mentioned.
 
 ```markdown
-1. Run unit tests: `npm test`
-2. Run integration tests if applicable
-3. Check TypeScript: `npx tsc --noEmit`
-4. Run linter: `npm run lint`
-5. Manual testing (see user story's Testing Criteria)
+1. Read the "Testing Criteria" section in the user story
+2. Run EVERY test listed (unit tests, integration tests, performance tests, etc.)
+3. Create test files if they don't exist (e.g., for type safety tests)
+4. Verify ALL tests pass before proceeding
+5. Check TypeScript: `npx tsc --noEmit`
+6. Run linter: `npm run lint`
+7. Document test results with actual numbers (e.g., "9/9 tests passed")
 ```
+
+**Common Test Types:**
+
+- **Database Tests**: SQL queries from Testing Criteria
+- **Type Safety Tests**: TypeScript compilation tests
+- **Unit Tests**: `npm test -- <test-file>`
+- **Performance Tests**: EXPLAIN ANALYZE queries, timing measurements
+- **Integration Tests**: End-to-end workflows
+
+**Example:**
+
+```bash
+# For US-002, you would create and run:
+npm test -- src/features/database/lib/__tests__/enhanced-member-types.test.ts
+
+# For US-001, you would run SQL tests:
+SELECT * FROM get_members_with_details(p_limit := 10);
+```
+
+**⚠️ NEVER skip to Step 6 without running ALL tests from the user story!**
 
 ### Step 5: Verify Definition of Done
 
@@ -75,7 +99,9 @@ Before starting ANY user story, verify:
 ```markdown
 1. ✓ Verify all Acceptance Criteria and Tests are fulfilled
    - Review each AC in the user story
-   - Ensure all tests pass (unit, integration, performance)
+   - **CRITICAL**: Run ALL tests from "Testing Criteria" section
+   - Ensure all tests pass (unit, integration, performance, type safety)
+   - Document test results with actual numbers (e.g., "9/9 passed")
    - Verify no regression in existing functionality
 
 2. ✓ Update the User Story Document
