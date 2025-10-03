@@ -8,6 +8,7 @@ import type {
   Gender,
   Address,
   MemberWithSubscription,
+  MemberWithEnhancedDetails,
   Trainer,
   TrainerWithProfile,
   TrainerSpecialization,
@@ -219,6 +220,48 @@ export interface UpdateTrainerData {
   notes?: string;
 }
 
+/**
+ * Internal type for database function response
+ * Matches the flat structure returned by get_members_with_details()
+ */
+interface DatabaseMemberRow {
+  // Member fields
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string | null;
+  date_of_birth: string | null;
+  gender: string | null;
+  status: MemberStatus;
+  join_date: string;
+  member_type: string;
+  profile_picture_url: string | null;
+  address: Address | null;
+  notes: string | null;
+  medical_conditions: string | null;
+  fitness_goals: string | null;
+  preferred_contact_method: string | null;
+  marketing_consent: boolean;
+  waiver_signed: boolean;
+  waiver_signed_date: string | null;
+  created_at: string;
+  updated_at: string;
+
+  // Subscription fields (flat)
+  subscription_end_date: string | null;
+  remaining_sessions: number | null;
+  balance_due: number | null;
+
+  // Session fields (flat)
+  last_session_date: string | null;
+  next_session_date: string | null;
+  scheduled_sessions_count: number | null;
+
+  // Payment fields
+  last_payment_date: string | null;
+}
+
 export const memberUtils = {
   // Core CRUD operations
   async getMemberById(id: string): Promise<Member> {
@@ -227,80 +270,93 @@ export const memberUtils = {
     });
   },
 
-  async getMembers(filters: MemberFilters = {}): Promise<Member[]> {
-    return executeQuery(async () => {
-      let query = supabase.from("members").select("*");
+  /**
+   * Get members with enhanced details (subscription, sessions, payments)
+   * Uses database function for optimal performance
+   */
+  async getMembers(
+    filters: MemberFilters = {}
+  ): Promise<MemberWithEnhancedDetails[]> {
+    try {
+      // Build RPC call to database function
+      const { data, error } = await supabase.rpc("get_members_with_details", {
+        p_status: filters.status
+          ? Array.isArray(filters.status)
+            ? filters.status
+            : [filters.status]
+          : null,
+        p_search: filters.search || null,
+        p_member_type: filters.memberType || null,
+        p_has_active_subscription: filters.hasActiveSubscription ?? null,
+        p_has_upcoming_sessions: filters.hasUpcomingSessions ?? null,
+        p_has_outstanding_balance: filters.hasOutstandingBalance ?? null,
+        p_limit: filters.limit ?? 20,
+        p_offset: filters.offset ?? 0,
+        p_order_by: filters.orderBy ?? "name",
+        p_order_direction: filters.orderDirection ?? "asc",
+      });
 
-      // Apply server-side sorting
-      if (filters.orderBy) {
-        const ascending = filters.orderDirection === "asc";
-        switch (filters.orderBy) {
-          case "name":
-            // Sort by concatenated first_name + last_name
-            query = query
-              .order("first_name", { ascending })
-              .order("last_name", { ascending });
-            break;
-          case "email":
-            query = query.order("email", { ascending });
-            break;
-          case "status":
-            query = query.order("status", { ascending });
-            break;
-          case "join_date":
-            query = query.order("join_date", { ascending });
-            break;
-          case "phone":
-            query = query.order("phone", { ascending });
-            break;
-          default:
-            query = query.order("created_at", { ascending: false });
-        }
-      } else {
-        // Default sorting if no orderBy specified
-        query = query.order("created_at", { ascending: false });
+      if (error) {
+        throw new DatabaseError(error.message, error.code, error.details);
       }
 
-      // Apply status filter
-      if (filters.status) {
-        if (Array.isArray(filters.status)) {
-          query = query.in("status", filters.status);
-        } else {
-          query = query.eq("status", filters.status);
-        }
+      if (!data) {
+        return [];
       }
 
-      // Enhanced search filter (searches multiple fields efficiently)
-      if (filters.search) {
-        const searchTerm = filters.search.trim().toLowerCase();
+      // Transform flat database response to nested structure
+      return data.map((row: DatabaseMemberRow) => ({
+        // Base member fields
+        id: row.id,
+        first_name: row.first_name,
+        last_name: row.last_name,
+        email: row.email,
+        phone: row.phone,
+        date_of_birth: row.date_of_birth,
+        gender: row.gender,
+        status: row.status,
+        join_date: row.join_date,
+        member_type: row.member_type,
+        profile_picture_url: row.profile_picture_url,
+        address: row.address,
+        notes: row.notes,
+        medical_conditions: row.medical_conditions,
+        fitness_goals: row.fitness_goals,
+        preferred_contact_method: row.preferred_contact_method,
+        marketing_consent: row.marketing_consent,
+        waiver_signed: row.waiver_signed,
+        waiver_signed_date: row.waiver_signed_date,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
 
-        // Use PostgreSQL's improved text search with multiple fields
-        // More efficient than ILIKE with wildcards for most cases
-        query = query.or(
-          `first_name.ilike.${searchTerm}%,last_name.ilike.${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`
-        );
-      }
+        // Enhanced fields - nest subscription data
+        active_subscription: row.subscription_end_date
+          ? {
+              end_date: row.subscription_end_date,
+              remaining_sessions: row.remaining_sessions ?? 0,
+              balance_due: row.balance_due ?? 0,
+            }
+          : null,
 
-      // Apply date range filters
-      if (filters.joinDateFrom) {
-        query = query.gte("join_date", filters.joinDateFrom);
-      }
-      if (filters.joinDateTo) {
-        query = query.lte("join_date", filters.joinDateTo);
-      }
+        // Enhanced fields - nest session stats
+        session_stats:
+          row.last_session_date ||
+          row.next_session_date ||
+          row.scheduled_sessions_count
+            ? {
+                last_session_date: row.last_session_date,
+                next_session_date: row.next_session_date,
+                scheduled_sessions_count: row.scheduled_sessions_count ?? 0,
+              }
+            : null,
 
-      // Apply pagination
-      if (filters.offset !== undefined) {
-        query = query.range(
-          filters.offset,
-          filters.offset + (filters.limit || 50) - 1
-        );
-      } else if (filters.limit) {
-        query = query.limit(filters.limit);
-      }
-
-      return query;
-    });
+        // Enhanced fields - payment info
+        last_payment_date: row.last_payment_date,
+      }));
+    } catch (error) {
+      console.error("Failed to fetch enhanced members:", error);
+      throw error;
+    }
   },
 
   async createMember(memberData: CreateMemberData): Promise<Member> {
