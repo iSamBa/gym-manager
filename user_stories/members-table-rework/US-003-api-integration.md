@@ -406,10 +406,10 @@ it("should fetch real data from database", async () => {
 - [x] `DatabaseMemberRow` internal type defined
 - [x] Error handling implemented
 - [x] All unit tests pass (8/8 - created additional tests for better coverage)
-- [ ] Integration test passes (requires live database - will be tested in US-007)
+- [x] Integration test passes (5/5 tests - verified with live Supabase database)
 - [x] TypeScript compilation succeeds with no errors (build passes)
 - [x] Backward compatibility verified (existing components work - MemberWithEnhancedDetails extends Member)
-- [ ] Performance meets requirements (< 500ms for 1000+ members - will be tested in US-007)
+- [ ] Performance meets requirements (< 500ms for 1000+ members - will be tested in US-007 with production dataset)
 - [x] Code review completed (self-review)
 - [x] Documentation updated (JSDoc comments added)
 
