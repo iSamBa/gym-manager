@@ -68,6 +68,38 @@ Before starting ANY user story, verify:
 4. Only consider user story complete when ALL items are checked
 ```
 
+### Step 6: Complete User Story (MANDATORY)
+
+**When all Definition of Done items are checked, you MUST complete these 4 steps:**
+
+```markdown
+1. ✓ Verify all Acceptance Criteria and Tests are fulfilled
+   - Review each AC in the user story
+   - Ensure all tests pass (unit, integration, performance)
+   - Verify no regression in existing functionality
+
+2. ✓ Update the User Story Document
+   - Mark all Definition of Done checkboxes as [x]
+   - Add notes with actual results (e.g., "207ms" instead of just "passes")
+   - Document any important decisions or deviations
+
+3. ✓ Update STATUS.md
+   - Change user story status from ⚪ to 🟢
+   - Update "Completed" date
+   - Update progress bars
+   - Update overall completion percentage
+   - Mark all Definition of Done items as [x]
+
+4. ✓ Commit Changes
+   - Stage all changes: user story docs, STATUS.md, code changes
+   - Write detailed commit message following project format
+   - Include performance metrics, test results, migrations
+   - Add co-authorship: "Co-Authored-By: Claude <noreply@anthropic.com>"
+   - Commit with: git commit -m "feat(scope): Title\n\nDetails..."
+```
+
+**IMPORTANT**: A user story is NOT complete until all 4 steps are done!
+
 ---
 
 ## User Story Quick Reference
