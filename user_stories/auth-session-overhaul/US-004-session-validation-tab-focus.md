@@ -280,6 +280,7 @@ describe("useSessionValidator", () => {
 - [ ] Switch to another tab briefly
 - [ ] Return to app tab
 - [ ] User automatically logged out
+
 - [ ] Redirected to login page
 
 #### Test 3: Throttling
@@ -296,6 +297,7 @@ describe("useSessionValidator", () => {
 - [ ] Open DevTools → Network → Throttle to "Offline"
 - [ ] Switch tabs and return
 - [ ] Validation fails gracefully (logged, not logged out)
+
 - [ ] User remains logged in
 - [ ] Re-enable network, next validation works
 
@@ -321,11 +323,13 @@ describe("useSessionValidator", () => {
 
 - Refresh token expires eventually
 - Next time tab becomes visible → validation fails
+
 - ✅ User logged out
 
 ### 3. Multiple Tabs Open
 
 - Each tab validates independently
+
 - If one tab's session expires, user logged out
 - Other tabs will also detect expired session on next focus
 - ✅ Consistent behavior
