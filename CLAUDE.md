@@ -362,11 +362,79 @@ import * as _ from 'lodash'; // Imports everything
 
 ## Testing
 
+### Test Framework
+
 - **Vitest** with jsdom environment and Testing Library
 - **Storybook** integration for component testing
 - Unit tests: `src/**/*.{test,spec}.{ts,tsx}`
 - Use `vi.mocked()`, `vi.stubEnv()`, dynamic imports for testing
 - Clean up with `vi.resetModules()` and `vi.unstubAllEnvs()` in beforeEach/afterEach
+
+### Running Tests (IMPORTANT: Process Cleanup)
+
+**⚠️ CRITICAL**: Always ensure test processes are cleaned up to prevent memory leaks
+
+**DO NOT** pipe test output directly (causes hanging processes):
+
+```bash
+# ❌ BAD - Can leave zombie processes
+npm test | head -100
+npm test | grep "passing"
+```
+
+**DO** use one of these approaches:
+
+**Option 1: Use the safe test runner script (RECOMMENDED)**
+
+```bash
+# Run tests with automatic cleanup (shows summary only)
+./scripts/run-tests-safe.sh
+
+# Show full test output
+./scripts/run-tests-safe.sh --full
+
+# Run with coverage
+./scripts/run-tests-safe.sh --coverage
+```
+
+**Option 2: Manual safe test run**
+
+```bash
+# Run tests fully, save output to temp file
+npm test > /tmp/test-output.txt 2>&1
+EXIT_CODE=$?
+
+# Read what you need
+tail -30 /tmp/test-output.txt
+
+# Clean up
+rm -f /tmp/test-output.txt
+
+# Verify no hanging processes
+pgrep -f "vitest" > /dev/null && pkill -f "vitest" || true
+
+exit $EXIT_CODE
+```
+
+**Option 3: Simple with cleanup verification**
+
+```bash
+# Run tests
+npm test
+
+# Check for hanging processes
+if pgrep -f "vitest" > /dev/null; then
+  echo "⚠️ Cleaning up vitest processes..."
+  pkill -f vitest
+fi
+```
+
+### Test Best Practices
+
+- Always run full test suite before commits
+- Use `npm run test:watch` for local development only
+- Run `npm run test:coverage` to check coverage thresholds
+- Verify no processes remain: `ps aux | grep vitest | grep -v grep`
 
 ## Quality Control
 
