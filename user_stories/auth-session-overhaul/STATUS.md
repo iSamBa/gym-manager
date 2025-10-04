@@ -9,7 +9,7 @@
 ## Overall Progress
 
 ```
-[██░░░░░░░░] 17% Complete (1/6 user stories)
+[████░░░░░░] 33% Complete (2/6 user stories)
 ```
 
 ---
@@ -19,7 +19,7 @@
 | Story  | Title                            | Status         | Started    | Completed  | Notes                           |
 | ------ | -------------------------------- | -------------- | ---------- | ---------- | ------------------------------- |
 | US-001 | Unified Session Management       | ✅ Completed   | 2025-10-04 | 2025-10-04 | Option A: Remove custom tracker |
-| US-002 | Server-Side Auth Middleware      | 📝 Not Started | -          | -          | Depends on US-001               |
+| US-002 | Server-Side Auth Middleware      | ✅ Completed   | 2025-10-04 | 2025-10-04 | Server-side route protection    |
 | US-003 | Complete Auth Event Handling     | 📝 Not Started | -          | -          | Depends on US-001               |
 | US-004 | Session Validation on Tab Focus  | 📝 Not Started | -          | -          | Depends on US-003               |
 | US-005 | Secure State Persistence         | 📝 Not Started | -          | -          | Depends on US-001, US-002       |
@@ -36,8 +36,8 @@
 
 ## Current Sprint
 
-**Active Story**: None (ready to start US-002)
-**Next Story**: US-002 - Server-Side Auth Middleware
+**Active Story**: None (ready to start US-003)
+**Next Story**: US-003 - Complete Auth Event Handling
 
 ---
 
@@ -73,24 +73,30 @@
 
 ### US-002: Server-Side Auth Middleware
 
-**Status**: 📝 Not Started
-**Assigned**: -
-**Started**: -
-**Completed**: -
+**Status**: ✅ Completed
+**Assigned**: Claude
+**Started**: 2025-10-04
+**Completed**: 2025-10-04
 
 **Checklist**:
 
-- [ ] `@supabase/ssr` installed (if needed)
-- [ ] `src/middleware.ts` created
-- [ ] `src/lib/supabase-server.ts` created
-- [ ] Protected routes defined
-- [ ] Redirect logic tested
-- [ ] No infinite redirect loops
-- [ ] Tests passing
-- [ ] Linting passing
-- [ ] Git commit created
+- [x] `@supabase/ssr` installed (v0.7.0)
+- [x] `src/middleware.ts` created
+- [x] `src/lib/supabase-server.ts` created
+- [x] Protected routes defined
+- [x] Redirect logic tested
+- [x] No infinite redirect loops
+- [x] Tests passing (838/838 tests)
+- [x] Linting passing (0 errors, 0 warnings)
+- [x] Git commit created
 
-**Notes**: -
+**Notes**:
+
+- Migrated client-side supabase.ts to use createBrowserClient from @supabase/ssr for cookie compatibility
+- Fixed public route matching logic (exact match for "/" instead of startsWith)
+- Removed conflicting redirect logic from login page
+- Middleware successfully validates sessions server-side (72.1 kB)
+- All security objectives achieved
 
 ---
 

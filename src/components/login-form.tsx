@@ -39,9 +39,9 @@ export function LoginForm({
     }
 
     if (user) {
-      // Check if there's a redirect URL in session storage
-      const redirectTo = sessionStorage.getItem("auth-redirect") || "/";
-      sessionStorage.removeItem("auth-redirect");
+      // Check for redirect parameter from middleware
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectTo = searchParams.get("redirect") || "/";
       router.push(redirectTo);
     }
   };
