@@ -5,8 +5,10 @@ import { persist, createJSONStorage } from "zustand/middleware";
 interface AuthState {
   user: Record<string, unknown> | null;
   isLoading: boolean;
+  authError: string | null;
   setUser: (user: Record<string, unknown> | null) => void;
   setIsLoading: (loading: boolean) => void;
+  setAuthError: (error: string | null) => void;
   logout: () => void;
 }
 
@@ -15,9 +17,11 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       isLoading: true,
+      authError: null,
       setUser: (user) => set({ user }),
       setIsLoading: (loading) => set({ isLoading: loading }),
-      logout: () => set({ user: null }),
+      setAuthError: (error) => set({ authError: error }),
+      logout: () => set({ user: null, authError: null }),
     }),
     {
       name: "auth-storage",

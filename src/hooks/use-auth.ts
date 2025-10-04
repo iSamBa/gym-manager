@@ -1,83 +1,41 @@
-import { useEffect, useCallback } from "react";
-import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/store";
 
+/**
+ * Retry token refresh with exponential backoff
+ * Exported for use in error recovery scenarios
+ */
+export const retryTokenRefresh = async (
+  attempt: number = 1,
+  maxAttempts: number = 3
+): Promise<boolean> => {
+  if (attempt > maxAttempts) {
+    return false;
+  }
+
+  try {
+    const { error } = await supabase.auth.refreshSession();
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error(`Token refresh attempt ${attempt} failed:`, error);
+
+    // Exponential backoff: 1s, 2s, 4s
+    const delay = Math.pow(2, attempt - 1) * 1000;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+
+    return retryTokenRefresh(attempt + 1, maxAttempts);
+  }
+};
+
+/**
+ * useAuth Hook
+ *
+ * Provides access to authentication state and actions.
+ * Auth event handling is done in AuthProvider to avoid duplicate listeners.
+ */
 export function useAuth() {
-  const {
-    user,
-    isLoading,
-    setUser,
-    setIsLoading,
-    logout: clearUser,
-  } = useAuthStore();
-
-  const loadUserProfile = useCallback(
-    async (authUser: User) => {
-      try {
-        const { data: profile, error } = await supabase
-          .from("user_profiles")
-          .select("*")
-          .eq("id", authUser.id)
-          .single();
-
-        if (error) {
-          console.error("Error loading user profile:", error);
-          return;
-        }
-
-        if (profile) {
-          setUser({
-            id: profile.id,
-            email: profile.email,
-            role: profile.role,
-            first_name: profile.first_name,
-            last_name: profile.last_name,
-            avatar_url: profile.avatar_url,
-            is_active: profile.is_active,
-          });
-        }
-      } catch (error) {
-        console.error("Error loading user profile:", error);
-      }
-    },
-    [setUser]
-  );
-
-  useEffect(() => {
-    // Initialize auth state
-    const initializeAuth = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session?.user) {
-          await loadUserProfile(session.user);
-        }
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        await loadUserProfile(session.user);
-      } else if (event === "SIGNED_OUT") {
-        setUser(null);
-      }
-    });
-
-    initializeAuth();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [setUser, setIsLoading, loadUserProfile]);
+  const { user, isLoading, setIsLoading, logout: clearUser } = useAuthStore();
 
   const signIn = async (email: string, password: string) => {
     try {

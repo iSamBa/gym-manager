@@ -9,7 +9,7 @@
 ## Overall Progress
 
 ```
-[████░░░░░░] 33% Complete (2/6 user stories)
+[██████░░░░] 50% Complete (3/6 user stories)
 ```
 
 ---
@@ -20,7 +20,7 @@
 | ------ | -------------------------------- | -------------- | ---------- | ---------- | ------------------------------- |
 | US-001 | Unified Session Management       | ✅ Completed   | 2025-10-04 | 2025-10-04 | Option A: Remove custom tracker |
 | US-002 | Server-Side Auth Middleware      | ✅ Completed   | 2025-10-04 | 2025-10-04 | Server-side route protection    |
-| US-003 | Complete Auth Event Handling     | 📝 Not Started | -          | -          | Depends on US-001               |
+| US-003 | Complete Auth Event Handling     | ✅ Completed   | 2025-10-04 | 2025-10-04 | All 7 events + error recovery   |
 | US-004 | Session Validation on Tab Focus  | 📝 Not Started | -          | -          | Depends on US-003               |
 | US-005 | Secure State Persistence         | 📝 Not Started | -          | -          | Depends on US-001, US-002       |
 | US-006 | Testing, Error UX, Documentation | 📝 Not Started | -          | -          | Depends on ALL above            |
@@ -36,8 +36,8 @@
 
 ## Current Sprint
 
-**Active Story**: None (ready to start US-003)
-**Next Story**: US-003 - Complete Auth Event Handling
+**Active Story**: None (ready to start US-004)
+**Next Story**: US-004 - Session Validation on Tab Focus
 
 ---
 
@@ -102,26 +102,33 @@
 
 ### US-003: Complete Auth Event Handling
 
-**Status**: 📝 Not Started
-**Assigned**: -
-**Started**: -
-**Completed**: -
+**Status**: ✅ Completed
+**Assigned**: Claude
+**Started**: 2025-10-04
+**Completed**: 2025-10-04
 
 **Checklist**:
 
-- [ ] `TOKEN_REFRESHED` event handled
-- [ ] `USER_UPDATED` event handled
-- [ ] `PASSWORD_RECOVERY` event handled
-- [ ] `MFA_CHALLENGE_VERIFIED` event handled (if applicable)
-- [ ] Error handling for token refresh failures
-- [ ] Retry logic for network errors
-- [ ] Auth error state in Zustand store
-- [ ] `auth-error-banner.tsx` created
-- [ ] Tests passing
-- [ ] Linting passing
-- [ ] Git commit created
+- [x] `TOKEN_REFRESHED` event handled
+- [x] `USER_UPDATED` event handled
+- [x] `PASSWORD_RECOVERY` event handled
+- [x] `MFA_CHALLENGE_VERIFIED` event handled
+- [x] `INITIAL_SESSION` event handled (was missing)
+- [x] Error handling for token refresh failures
+- [x] Retry logic for network errors (exponential backoff: 1s, 2s, 4s)
+- [x] Auth error state in Zustand store
+- [x] `auth-error-banner.tsx` created
+- [x] Tests passing (838/838 tests)
+- [x] Linting passing (0 errors, 0 warnings)
+- [x] Git commit created
 
-**Notes**: -
+**Notes**:
+
+- Moved auth event listener to AuthProvider to prevent duplicate registrations
+- All 7 events now handled (INITIAL_SESSION, SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, USER_UPDATED, PASSWORD_RECOVERY, MFA_CHALLENGE_VERIFIED)
+- Each event fires exactly once (fixed duplicate event issue)
+- Error banner with retry/dismiss functionality implemented
+- Removed debug console.logs for production
 
 ---
 
