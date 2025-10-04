@@ -533,13 +533,13 @@ export const memberUtils = {
 
   // Member with relations
   async getMemberWithSubscription(id: string): Promise<MemberWithSubscription> {
-    return executeQuery(async () => {
+    const result = await executeQuery(async () => {
       return await supabase
         .from("members")
         .select(
           `
           *,
-          subscription:member_subscriptions(
+          subscriptions:member_subscriptions(
             *,
             plan:subscription_plans(*)
           ),
@@ -549,6 +549,22 @@ export const memberUtils = {
         .eq("id", id)
         .single();
     });
+
+    // Transform the data: get the first active subscription
+    if (!result) {
+      throw new Error("Member not found");
+    }
+
+    const memberData = result as Member & {
+      subscriptions?: Array<{ status: string }>;
+    };
+    const activeSubscription =
+      memberData.subscriptions?.find((sub) => sub.status === "active") || null;
+
+    return {
+      ...(result as Member),
+      subscription: activeSubscription,
+    } as MemberWithSubscription;
   },
 };
 

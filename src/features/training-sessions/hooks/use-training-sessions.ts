@@ -7,6 +7,7 @@ import type {
   CreateSessionData,
   UpdateSessionData,
   SessionFilters,
+  SessionParticipant,
 } from "../lib/types";
 
 // Query keys
@@ -36,9 +37,8 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
         query = query.eq("trainer_id", filters.trainer_id);
       }
 
-      if (filters?.member_id) {
-        query = query.eq("member_id", filters.member_id);
-      }
+      // Note: member_id filtering removed as training_sessions_calendar view doesn't have member_id column
+      // Member filtering should be done by checking the participants array after fetching
 
       if (filters?.status && filters.status !== "all") {
         query = query.eq("status", filters.status);
@@ -60,7 +60,17 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
         throw new Error(`Failed to fetch training sessions: ${error.message}`);
       }
 
-      return data as TrainingSession[];
+      let sessions = data as TrainingSession[];
+
+      // Filter by member_id if specified (check participants array)
+      if (filters?.member_id && sessions) {
+        sessions = sessions.filter((session) => {
+          const participants = session.participants as SessionParticipant[];
+          return participants?.some((p) => p.id === filters.member_id);
+        });
+      }
+
+      return sessions;
     },
   });
 };
