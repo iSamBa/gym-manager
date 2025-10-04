@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -9,14 +10,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { RotateCcw } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { X, Filter } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { MemberStatus } from "@/features/database/lib/types";
 
 // Simple filter state - only the essentials
 export interface SimpleMemberFilters {
   status?: MemberStatus | "all";
   dateRange?: "all" | "this-month" | "last-3-months" | "this-year";
+  memberType?: "full" | "trial";
+  hasActiveSubscription?: boolean;
+  hasUpcomingSessions?: boolean;
+  hasOutstandingBalance?: boolean;
 }
 
 // Predefined date filter options
@@ -41,101 +46,193 @@ interface SimpleMemberFiltersProps {
   className?: string;
 }
 
-export function SimpleMemberFilters({
+export const SimpleMemberFilters = memo(function SimpleMemberFilters({
   filters,
   onFiltersChange,
   className,
 }: SimpleMemberFiltersProps) {
-  const updateFilter = <K extends keyof SimpleMemberFilters>(
-    key: K,
-    value: SimpleMemberFilters[K]
-  ) => {
-    onFiltersChange({ ...filters, [key]: value });
-  };
+  const activeFilterCount = Object.values(filters).filter(
+    (v) => v !== undefined && v !== null && v !== "all"
+  ).length;
 
-  const resetFilters = () => {
-    onFiltersChange({ status: "all", dateRange: "all" });
-  };
-
-  const getActiveFilterCount = () => {
-    let count = 0;
-    if (filters.status && filters.status !== "all") count++;
-    if (filters.dateRange && filters.dateRange !== "all") count++;
-    return count;
-  };
-
-  const activeFilterCount = getActiveFilterCount();
+  const handleClearFilters = useCallback(() => {
+    onFiltersChange({
+      status: "all",
+      dateRange: "all",
+      memberType: undefined,
+      hasActiveSubscription: undefined,
+      hasUpcomingSessions: undefined,
+      hasOutstandingBalance: undefined,
+    });
+  }, [onFiltersChange]);
 
   return (
-    <div className={className}>
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Status Filter */}
-        <div className="flex items-center gap-2">
-          <Label className="text-sm font-medium whitespace-nowrap">
-            Status:
-          </Label>
-          <Select
-            value={filters.status || "all"}
-            onValueChange={(value) =>
-              updateFilter("status", value as MemberStatus | "all")
-            }
-          >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+    <div className={cn("flex flex-wrap items-center gap-3", className)}>
+      {/* Status Filter (Existing) */}
+      <Select
+        value={filters.status || "all"}
+        onValueChange={(value) =>
+          onFiltersChange({
+            ...filters,
+            status: value === "all" ? "all" : (value as MemberStatus),
+          })
+        }
+      >
+        <SelectTrigger className="w-[140px]">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          {STATUS_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-        {/* Date Range Filter */}
-        <div className="flex items-center gap-2">
-          <Label className="text-sm font-medium whitespace-nowrap">
-            Joined:
-          </Label>
-          <Select
-            value={filters.dateRange || "all"}
-            onValueChange={(value) =>
-              updateFilter(
-                "dateRange",
-                value as SimpleMemberFilters["dateRange"]
-              )
-            }
-          >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DATE_RANGE_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Date Range Filter (Existing) */}
+      <Select
+        value={filters.dateRange || "all"}
+        onValueChange={(value) =>
+          onFiltersChange({
+            ...filters,
+            dateRange: value as SimpleMemberFilters["dateRange"],
+          })
+        }
+      >
+        <SelectTrigger className="w-[140px]">
+          <SelectValue placeholder="Joined" />
+        </SelectTrigger>
+        <SelectContent>
+          {DATE_RANGE_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-        {/* Reset Button */}
-        {activeFilterCount > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={resetFilters}
-            className="text-muted-foreground hover:text-foreground gap-1"
-          >
-            <RotateCcw className="h-3 w-3" />
-            Reset
-            <Badge variant="secondary" className="ml-1 h-4 px-1 text-xs">
-              {activeFilterCount}
-            </Badge>
-          </Button>
-        )}
-      </div>
+      {/* NEW: Member Type Filter */}
+      <Select
+        value={filters.memberType || "all"}
+        onValueChange={(value) =>
+          onFiltersChange({
+            ...filters,
+            memberType:
+              value === "all" ? undefined : (value as "full" | "trial"),
+          })
+        }
+      >
+        <SelectTrigger className="w-[140px]">
+          <SelectValue placeholder="Member Type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Types</SelectItem>
+          <SelectItem value="full">Full Members</SelectItem>
+          <SelectItem value="trial">Trial Members</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {/* NEW: Has Active Subscription Filter */}
+      <Select
+        value={
+          filters.hasActiveSubscription === undefined
+            ? "all"
+            : filters.hasActiveSubscription
+              ? "yes"
+              : "no"
+        }
+        onValueChange={(value) =>
+          onFiltersChange({
+            ...filters,
+            hasActiveSubscription:
+              value === "all" ? undefined : value === "yes",
+          })
+        }
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Subscription" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Subscriptions</SelectItem>
+          <SelectItem value="yes">Active Subscription</SelectItem>
+          <SelectItem value="no">No Subscription</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {/* NEW: Has Upcoming Sessions Filter */}
+      <Select
+        value={
+          filters.hasUpcomingSessions === undefined
+            ? "all"
+            : filters.hasUpcomingSessions
+              ? "yes"
+              : "no"
+        }
+        onValueChange={(value) =>
+          onFiltersChange({
+            ...filters,
+            hasUpcomingSessions: value === "all" ? undefined : value === "yes",
+          })
+        }
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Sessions" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Sessions</SelectItem>
+          <SelectItem value="yes">Has Upcoming</SelectItem>
+          <SelectItem value="no">No Upcoming</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {/* NEW: Has Outstanding Balance Filter */}
+      <Select
+        value={
+          filters.hasOutstandingBalance === undefined
+            ? "all"
+            : filters.hasOutstandingBalance
+              ? "yes"
+              : "no"
+        }
+        onValueChange={(value) =>
+          onFiltersChange({
+            ...filters,
+            hasOutstandingBalance:
+              value === "all" ? undefined : value === "yes",
+          })
+        }
+      >
+        <SelectTrigger className="w-[160px]">
+          <SelectValue placeholder="Balance" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Balances</SelectItem>
+          <SelectItem value="yes">Has Balance Due</SelectItem>
+          <SelectItem value="no">Fully Paid</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {/* Active Filter Count Badge */}
+      {activeFilterCount > 0 && (
+        <Badge variant="secondary" className="gap-1">
+          <Filter className="h-3 w-3" />
+          {activeFilterCount} active
+        </Badge>
+      )}
+
+      {/* Clear Filters Button */}
+      {activeFilterCount > 0 && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleClearFilters}
+          className="h-9 gap-1"
+        >
+          <X className="h-4 w-4" />
+          Clear
+        </Button>
+      )}
     </div>
   );
-}
+});

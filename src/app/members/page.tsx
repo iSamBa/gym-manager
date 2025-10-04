@@ -10,6 +10,7 @@ import {
   AdvancedMemberTable,
   EditMemberDialog,
   SimpleMemberFilters,
+  ColumnVisibilityToggle,
 } from "@/features/members/components";
 import type { Member } from "@/features/database/lib/types";
 import {
@@ -194,8 +195,11 @@ export default function MembersPage() {
             />
           </div>
 
-          {/* Export and Status Indicators */}
+          {/* Export, Column Visibility, and Status Indicators */}
           <div className="flex items-center gap-3">
+            {/* Column Visibility Toggle */}
+            <ColumnVisibilityToggle />
+
             {/* Export Button */}
             <Button
               variant="outline"
