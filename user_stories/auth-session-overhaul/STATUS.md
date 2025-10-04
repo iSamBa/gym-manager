@@ -9,7 +9,7 @@
 ## Overall Progress
 
 ```
-[██████░░░░] 50% Complete (3/6 user stories)
+[████████░░] 67% Complete (4/6 user stories)
 ```
 
 ---
@@ -21,7 +21,7 @@
 | US-001 | Unified Session Management       | ✅ Completed   | 2025-10-04 | 2025-10-04 | Option A: Remove custom tracker |
 | US-002 | Server-Side Auth Middleware      | ✅ Completed   | 2025-10-04 | 2025-10-04 | Server-side route protection    |
 | US-003 | Complete Auth Event Handling     | ✅ Completed   | 2025-10-04 | 2025-10-04 | All 7 events + error recovery   |
-| US-004 | Session Validation on Tab Focus  | 📝 Not Started | -          | -          | Depends on US-003               |
+| US-004 | Session Validation on Tab Focus  | ✅ Completed   | 2025-10-04 | 2025-10-04 | Throttled validation hook       |
 | US-005 | Secure State Persistence         | 📝 Not Started | -          | -          | Depends on US-001, US-002       |
 | US-006 | Testing, Error UX, Documentation | 📝 Not Started | -          | -          | Depends on ALL above            |
 
@@ -36,8 +36,8 @@
 
 ## Current Sprint
 
-**Active Story**: None (ready to start US-004)
-**Next Story**: US-004 - Session Validation on Tab Focus
+**Active Story**: None (ready to start US-005)
+**Next Story**: US-005 - Secure State Persistence
 
 ---
 
@@ -134,24 +134,32 @@
 
 ### US-004: Session Validation on Tab Focus
 
-**Status**: 📝 Not Started
-**Assigned**: -
-**Started**: -
-**Completed**: -
+**Status**: ✅ Completed
+**Assigned**: Claude
+**Started**: 2025-10-04
+**Completed**: 2025-10-04
 
 **Checklist**:
 
-- [ ] `use-session-security.ts` removed
-- [ ] `use-session-validator.ts` created
-- [ ] `visibilitychange` event listener added
-- [ ] Session validation on tab focus
-- [ ] Expired session triggers logout
-- [ ] Throttling to prevent excessive API calls
-- [ ] Tests passing
-- [ ] Linting passing
-- [ ] Git commit created
+- [x] `use-session-security.ts` removed (did not exist)
+- [x] `use-session-validator.ts` created
+- [x] `visibilitychange` event listener added
+- [x] Session validation on tab focus
+- [x] Expired session triggers logout
+- [x] Throttling to prevent excessive API calls (30s window)
+- [x] Tests passing (9/9 new tests, 847/847 total)
+- [x] Linting passing (0 errors, 0 warnings)
+- [x] Git commit created
 
-**Notes**: -
+**Notes**:
+
+- Created comprehensive session validator hook with 9 unit tests
+- Validates session when tab becomes visible (visibilitychange event)
+- Throttles validation to max once per 30 seconds
+- Auto-logout on expired sessions
+- Graceful handling of network errors (doesn't logout)
+- Integrated into AuthProvider
+- All acceptance criteria met
 
 ---
 

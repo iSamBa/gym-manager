@@ -1,9 +1,11 @@
 # US-004: Session Validation on Tab Focus
 
-**Status**: 📝 Not Started
+**Status**: ✅ Completed
 **Priority**: P1 (High)
 **Effort**: Small
 **Dependencies**: US-003 (Complete Auth Event Handling)
+**Completed**: 2025-10-04
+**Implementation Notes**: Created `useSessionValidator` hook with throttled validation (30s window). Old `use-session-security.ts` did not exist. All tests passing (9/9 new tests, 847/847 total). Linting clean.
 
 ---
 

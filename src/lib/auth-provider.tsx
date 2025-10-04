@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
 import { useAuth } from "@/hooks/use-auth";
+import { useSessionValidator } from "@/hooks/use-session-validator";
 import { useAuthStore } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import { AuthErrorBanner } from "@/components/feedback/auth-error-banner";
@@ -27,6 +28,9 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const { authError, setAuthError, setUser, setIsLoading } = useAuthStore();
+
+  // Enable session validation on tab focus
+  useSessionValidator();
 
   // Load user profile from database
   const loadUserProfile = useCallback(
