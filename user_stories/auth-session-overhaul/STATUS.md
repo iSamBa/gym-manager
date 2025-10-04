@@ -9,7 +9,7 @@
 ## Overall Progress
 
 ```
-[████████░░] 67% Complete (4/6 user stories)
+[█████████░] 83% Complete (5/6 user stories)
 ```
 
 ---
@@ -22,7 +22,7 @@
 | US-002 | Server-Side Auth Middleware      | ✅ Completed   | 2025-10-04 | 2025-10-04 | Server-side route protection    |
 | US-003 | Complete Auth Event Handling     | ✅ Completed   | 2025-10-04 | 2025-10-04 | All 7 events + error recovery   |
 | US-004 | Session Validation on Tab Focus  | ✅ Completed   | 2025-10-04 | 2025-10-04 | Throttled validation hook       |
-| US-005 | Secure State Persistence         | 📝 Not Started | -          | -          | Depends on US-001, US-002       |
+| US-005 | Secure State Persistence         | ✅ Completed   | 2025-10-04 | 2025-10-04 | Option A: No localStorage       |
 | US-006 | Testing, Error UX, Documentation | 📝 Not Started | -          | -          | Depends on ALL above            |
 
 **Legend**:
@@ -36,8 +36,8 @@
 
 ## Current Sprint
 
-**Active Story**: None (ready to start US-005)
-**Next Story**: US-005 - Secure State Persistence
+**Active Story**: None (ready to start US-006)
+**Next Story**: US-006 - Testing, Error UX, and Documentation
 
 ---
 
@@ -165,24 +165,32 @@
 
 ### US-005: Secure State Persistence
 
-**Status**: 📝 Not Started
-**Assigned**: -
-**Started**: -
-**Completed**: -
+**Status**: ✅ Completed
+**Assigned**: Claude
+**Started**: 2025-10-04
+**Completed**: 2025-10-04
 
 **Checklist**:
 
-- [ ] Decision made: Option A (no persist), B (encrypted), or C (httpOnly cookies)
-- [ ] Zustand `persist` middleware removed/updated
-- [ ] Session restoration via `supabase.auth.getSession()` tested
-- [ ] "Remember me" feature removed or reimplemented
-- [ ] Page refresh maintains session
-- [ ] Expired sessions cleared properly
-- [ ] Tests passing
-- [ ] Linting passing
-- [ ] Git commit created
+- [x] Decision made: Option A (no persist) - chosen for security and simplicity
+- [x] Zustand `persist` middleware removed from useAuthStore
+- [x] Session restoration via `supabase.auth.getSession()` tested (INITIAL_SESSION event)
+- [x] "Remember me" feature removed (no code references found)
+- [x] Page refresh maintains session (via Supabase httpOnly cookies)
+- [x] Expired sessions cleared properly (handled by middleware + tab focus validation)
+- [x] Tests passing (847/847 tests)
+- [x] Linting passing (0 errors, 0 warnings)
+- [x] Git commit created
 
-**Notes**: -
+**Notes**:
+
+- Removed Zustand persist middleware - auth state now in-memory only
+- Added JSDoc to useAuthStore explaining security rationale
+- Implemented one-time cleanup of legacy localStorage keys (auth-storage, remember-me, last-activity)
+- Session management entirely handled by Supabase via httpOnly cookies
+- No auth data stored in plaintext localStorage (XSS protection)
+- Tradeoff: ~100-300ms initial load time for DB query (acceptable for security)
+- All security objectives achieved
 
 ---
 

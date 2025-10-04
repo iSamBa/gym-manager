@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/store";
 
@@ -36,6 +37,15 @@ export const retryTokenRefresh = async (
  */
 export function useAuth() {
   const { user, isLoading, setIsLoading, logout: clearUser } = useAuthStore();
+
+  // One-time cleanup of legacy localStorage keys (migration from US-005)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("auth-storage");
+      localStorage.removeItem("remember-me");
+      localStorage.removeItem("last-activity");
+    }
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     try {

@@ -12,24 +12,22 @@ interface AuthState {
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      isLoading: true,
-      authError: null,
-      setUser: (user) => set({ user }),
-      setIsLoading: (loading) => set({ isLoading: loading }),
-      setAuthError: (error) => set({ authError: error }),
-      logout: () => set({ user: null, authError: null }),
-    }),
-    {
-      name: "auth-storage",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ user: state.user }),
-    }
-  )
-);
+/**
+ * Auth Store - In-Memory Only
+ *
+ * Security: No localStorage persistence to prevent XSS attacks and state manipulation.
+ * Session management is handled entirely by Supabase via httpOnly cookies.
+ * User profile data is fetched from the database on page load via supabase.auth.getSession().
+ */
+export const useAuthStore = create<AuthState>()((set) => ({
+  user: null,
+  isLoading: true,
+  authError: null,
+  setUser: (user) => set({ user }),
+  setIsLoading: (loading) => set({ isLoading: loading }),
+  setAuthError: (error) => set({ authError: error }),
+  logout: () => set({ user: null, authError: null }),
+}));
 
 // UI State
 interface UIState {
