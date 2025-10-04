@@ -120,6 +120,177 @@ When customizing Dialog component widths, custom classes may not apply due to CS
 
 **Why:** The `sm:` prefix creates a media query with higher CSS specificity than plain utility classes. Always use responsive prefixes when overriding shadcn/ui responsive defaults.
 
+## Authentication Architecture
+
+### Overview
+
+This application uses **Supabase Auth** with server-side validation for secure, reliable session management. The auth system was overhauled to eliminate security vulnerabilities and provide a robust foundation for user authentication.
+
+### Key Components
+
+| Component             | File                                 | Purpose                        |
+| --------------------- | ------------------------------------ | ------------------------------ |
+| **Supabase Client**   | `src/lib/supabase.ts`                | Client-side auth operations    |
+| **Supabase Server**   | `src/lib/supabase-server.ts`         | Server-side session validation |
+| **Auth Middleware**   | `src/middleware.ts`                  | Server-side route protection   |
+| **Auth Provider**     | `src/lib/auth-provider.tsx`          | React context for auth state   |
+| **useAuth Hook**      | `src/hooks/use-auth.ts`              | Auth state and actions         |
+| **Session Validator** | `src/hooks/use-session-validator.ts` | Tab focus validation           |
+| **Auth Store**        | `src/lib/store.ts`                   | In-memory auth state (Zustand) |
+
+### Session Management
+
+**How Sessions Work:**
+
+1. **Login**: User credentials validated by Supabase
+2. **Token Storage**: Supabase stores session tokens in httpOnly cookies
+3. **Auto-Refresh**: Access tokens (1hr expiry) auto-refresh before expiration
+4. **Server Validation**: Middleware validates session on every protected route
+5. **Client Validation**: Session validated when tab regains focus
+6. **Logout**: Tokens cleared from cookies, user state cleared from memory
+
+**Session Lifecycle:**
+
+```
+Login → Session Token (httpOnly cookie) → Auto-Refresh (~55min)
+  ↓
+Protected Route → Middleware Validates → Allow/Redirect
+  ↓
+Tab Focus → Session Validator Checks → Continue/Logout
+```
+
+### Security Features
+
+✅ **Server-Side Route Protection** - Middleware validates all protected routes
+✅ **httpOnly Cookies** - Session tokens immune to XSS attacks
+✅ **No localStorage Auth Data** - Prevents client-side manipulation
+✅ **Automatic Token Refresh** - Seamless session extension
+✅ **Session Expiry Handling** - Auto-logout on expired sessions
+✅ **Multi-Tab Synchronization** - Logout in one tab logs out all tabs
+✅ **Tab Focus Validation** - Validates session when user returns to tab
+
+### Auth State Management
+
+**In-Memory Only** (No Persistence):
+
+```typescript
+// src/lib/store.ts
+export const useAuthStore = create<AuthState>()((set) => ({
+  user: null,
+  isLoading: true,
+  authError: null,
+  // ... actions
+}));
+// ✅ No persist middleware = no localStorage
+```
+
+**Why No Persistence?**
+
+- **Security**: Prevents XSS attacks from accessing user data
+- **Freshness**: Always fetches latest user profile on page load
+- **Simplicity**: Supabase manages session persistence via cookies
+- **Tradeoff**: ~100-300ms initial load time (acceptable for security)
+
+### Common Auth Patterns
+
+**Protecting a Route:**
+
+```typescript
+// src/middleware.ts already handles this
+// All routes except /login and / require authentication
+```
+
+**Using Auth in Components:**
+
+```typescript
+import { useAuth } from '@/hooks/use-auth';
+
+function MyComponent() {
+  const { user, isAuthenticated, signIn, signOut } = useAuth();
+
+  if (!isAuthenticated) {
+    return <LoginForm onSubmit={signIn} />;
+  }
+
+  return <div>Welcome, {user.email}</div>;
+}
+```
+
+**Server-Side Auth (API Routes, Server Components):**
+
+```typescript
+import { createClient } from "@/lib/supabase-server";
+
+export async function GET(request: Request) {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // User is authenticated
+  return Response.json({ user: session.user });
+}
+```
+
+### Auth Events Handled
+
+| Event                    | Handler      | Action                          |
+| ------------------------ | ------------ | ------------------------------- |
+| `INITIAL_SESSION`        | AuthProvider | Load user profile on page load  |
+| `SIGNED_IN`              | AuthProvider | Load user profile, clear errors |
+| `SIGNED_OUT`             | AuthProvider | Clear user state                |
+| `TOKEN_REFRESHED`        | AuthProvider | Reload user profile             |
+| `USER_UPDATED`           | AuthProvider | Reload user profile             |
+| `PASSWORD_RECOVERY`      | AuthProvider | Log event                       |
+| `MFA_CHALLENGE_VERIFIED` | AuthProvider | Load user profile               |
+
+### Error Handling
+
+**User-Friendly Error Messages:**
+
+- Invalid credentials → "The email or password you entered is incorrect"
+- Session expired → "Your session has expired. Please log in again"
+- Network error → "Unable to connect to the server. Please check your internet connection"
+- Token refresh failed → Auto-retry with exponential backoff (1s, 2s, 4s)
+
+**Error Recovery:**
+
+```typescript
+// Automatic retry for network errors
+const { error } = await supabase.auth.refreshSession();
+if (error) {
+  // Retry with exponential backoff
+  await retryTokenRefresh(attempt + 1);
+}
+```
+
+### Troubleshooting
+
+**"Session expired" errors:**
+
+- Check Supabase session duration settings
+- Verify cookies are not being blocked
+- Ensure httpOnly cookies are enabled
+
+**Multi-tab logout not working:**
+
+- Check that `useSessionValidator` is integrated in AuthProvider
+- Verify Supabase client is using `createBrowserClient` from `@supabase/ssr`
+
+**Token refresh failing:**
+
+- Check network connection
+- Verify Supabase project is active
+- Check browser console for detailed error messages
+
+For comprehensive auth documentation, see [`docs/AUTH.md`](./docs/AUTH.md).
+
+---
+
 ## Hook Organization
 
 ### `src/hooks/` - Shared/Global Hooks
