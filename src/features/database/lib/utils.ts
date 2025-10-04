@@ -290,7 +290,7 @@ export const memberUtils = {
         p_has_active_subscription: filters.hasActiveSubscription ?? null,
         p_has_upcoming_sessions: filters.hasUpcomingSessions ?? null,
         p_has_outstanding_balance: filters.hasOutstandingBalance ?? null,
-        p_limit: filters.limit ?? 10000, // High default limit (effectively unlimited for most cases)
+        p_limit: filters.limit ?? 20, // Default page size for pagination
         p_offset: filters.offset ?? 0,
         p_order_by: filters.orderBy ?? "name",
         p_order_direction: filters.orderDirection ?? "asc",

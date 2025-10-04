@@ -21,6 +21,7 @@ import {
   useSimpleMemberFilters,
   useExportMembers,
 } from "@/features/members/hooks";
+import { memberUtils } from "@/features/database/lib/utils";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { mapUserForLayout } from "@/lib/auth-utils";
 import { Users, UserCheck, UserX, Clock, Download, Plus } from "lucide-react";
@@ -45,7 +46,23 @@ export default function MembersPage() {
   // Export functionality
   const { isExporting, exportMembers } = useExportMembers();
 
+  // Handler for export - fetch all members if needed
+  const handleExportMembers = async () => {
+    if (searchQuery && members) {
+      // In search mode, export filtered results
+      await exportMembers(members);
+    } else {
+      // In infinite scroll mode, fetch all members first
+      const allMembers = await memberUtils.getMembers({
+        ...databaseFilters,
+        limit: 10000, // High limit to get all members
+      });
+      await exportMembers(allMembers);
+    }
+  };
+
   // Main member data with auto-refresh
+  // Only fetch when searching (infinite scroll is disabled during search)
   const {
     data: members,
     isLoading: isMembersLoading,
@@ -55,7 +72,7 @@ export default function MembersPage() {
   } = useMembers({
     search: searchQuery,
     ...databaseFilters,
-    // No limit - fetch all members
+    // No limit - fetch all members for search mode
   });
 
   // Member count for stats
@@ -204,8 +221,8 @@ export default function MembersPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => exportMembers(members || [])}
-              disabled={isExporting || isMembersLoading}
+              onClick={handleExportMembers}
+              disabled={isExporting}
               className="gap-2"
             >
               <Download className="h-4 w-4" />
@@ -225,9 +242,20 @@ export default function MembersPage() {
         {/* Members Table */}
         <Card>
           <AdvancedMemberTable
-            members={members || []}
-            isLoading={isMembersLoading}
-            error={error}
+            // When searching: pass members array (controlled mode)
+            // When not searching: pass filters for infinite scroll (uncontrolled mode)
+            {...(searchQuery
+              ? {
+                  members: members || [],
+                  isLoading: isMembersLoading,
+                  error: error,
+                }
+              : {
+                  filters: {
+                    search: searchQuery,
+                    ...databaseFilters,
+                  },
+                })}
             onView={handleViewMember}
             onEdit={handleEditMember}
             onMemberClick={handleMemberClick}
