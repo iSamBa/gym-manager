@@ -19,6 +19,10 @@ export function useSimpleMemberFilters() {
       status?: MemberStatus;
       joinDateFrom?: string;
       joinDateTo?: string;
+      memberType?: "full" | "trial";
+      hasActiveSubscription?: boolean;
+      hasUpcomingSessions?: boolean;
+      hasOutstandingBalance?: boolean;
     } = {};
 
     // Status filter
@@ -51,6 +55,26 @@ export function useSimpleMemberFilters() {
       }
     }
 
+    // NEW: Member type filter
+    if (filters.memberType) {
+      dbFilters.memberType = filters.memberType;
+    }
+
+    // NEW: Active subscription filter
+    if (filters.hasActiveSubscription !== undefined) {
+      dbFilters.hasActiveSubscription = filters.hasActiveSubscription;
+    }
+
+    // NEW: Upcoming sessions filter
+    if (filters.hasUpcomingSessions !== undefined) {
+      dbFilters.hasUpcomingSessions = filters.hasUpcomingSessions;
+    }
+
+    // NEW: Outstanding balance filter
+    if (filters.hasOutstandingBalance !== undefined) {
+      dbFilters.hasOutstandingBalance = filters.hasOutstandingBalance;
+    }
+
     return dbFilters;
   }, [filters]);
 
@@ -69,6 +93,28 @@ export function useSimpleMemberFilters() {
         "this-year": "This Year",
       };
       summary.push(`Joined: ${dateLabels[filters.dateRange]}`);
+    }
+
+    if (filters.memberType) {
+      summary.push(`Type: ${filters.memberType}`);
+    }
+
+    if (filters.hasActiveSubscription !== undefined) {
+      summary.push(
+        `Subscription: ${filters.hasActiveSubscription ? "Active" : "None"}`
+      );
+    }
+
+    if (filters.hasUpcomingSessions !== undefined) {
+      summary.push(
+        `Sessions: ${filters.hasUpcomingSessions ? "Has Upcoming" : "No Upcoming"}`
+      );
+    }
+
+    if (filters.hasOutstandingBalance !== undefined) {
+      summary.push(
+        `Balance: ${filters.hasOutstandingBalance ? "Has Balance" : "Fully Paid"}`
+      );
     }
 
     return summary;

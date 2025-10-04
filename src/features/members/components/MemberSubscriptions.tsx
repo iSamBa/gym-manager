@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { useMemberWithSubscription } from "@/features/members/hooks";
+import { useMemberSubscriptionHistory } from "@/features/memberships/hooks/use-subscriptions";
 import type { Member } from "@/features/database/lib/types";
 
 import { MemberSubscriptionTable } from "./MemberSubscriptionTable";
@@ -21,9 +22,16 @@ export function MemberSubscriptions({ member }: MemberSubscriptionsProps) {
   const [showNewSubscriptionDialog, setShowNewSubscriptionDialog] =
     useState(false);
 
-  const { isLoading, error } = useMemberWithSubscription(member?.id);
+  const { isLoading: memberLoading } = useMemberWithSubscription(member?.id);
 
-  // Subscriptions are handled by MemberSubscriptionTable component
+  // Fetch member's subscription history
+  const {
+    data: subscriptions = [],
+    isLoading: subscriptionsLoading,
+    error,
+  } = useMemberSubscriptionHistory(member?.id);
+
+  const isLoading = memberLoading || subscriptionsLoading;
 
   if (!member) {
     return <div>No member data available</div>;
@@ -61,7 +69,7 @@ export function MemberSubscriptions({ member }: MemberSubscriptionsProps) {
 
       {/* Unified Subscription Table */}
       <MemberSubscriptionTable
-        subscriptions={[]}
+        subscriptions={subscriptions}
         isLoading={isLoading}
         error={error}
       />

@@ -6,6 +6,8 @@ export { AdvancedMemberTable } from "./AdvancedMemberTable";
 export { MemberSearchForm } from "./MemberSearchForm";
 export { MemberFilters } from "./MemberFilters";
 export { SimpleMemberFilters } from "./SimpleMemberFilters";
+export { ColumnVisibilityToggle } from "./ColumnVisibilityToggle";
+export type { ColumnVisibility } from "./ColumnVisibilityToggle";
 export { MemberDetailsModal } from "./MemberDetailsModal";
 export { MemberForm } from "./MemberForm";
 export { ProgressiveMemberForm } from "./ProgressiveMemberForm";

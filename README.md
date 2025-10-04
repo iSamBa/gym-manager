@@ -1,4 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Gym Manager
+
+A comprehensive gym management system built with Next.js 15.5, React 19, and Supabase.
+
+### Features
+
+- **Enhanced Members Table** - Advanced member management with:
+  - Real-time subscription tracking and status monitoring
+  - Session statistics (last/next sessions, remaining/scheduled counts)
+  - Financial tracking (balance, last payment date)
+  - Advanced filtering (status, member type, subscription state, payment state)
+  - Column visibility controls with persistent preferences
+  - Server-side sorting and filtering for optimal performance
+  - Responsive design for all device sizes
+- **Subscription Management** - Track memberships, payments, and renewals
+- **Training Sessions** - Schedule and manage training sessions
+- **Trainer Management** - Manage trainer profiles and availability
+- **Payment Processing** - Handle payments, refunds, and receipts
+
+### Documentation
+
+- [Members Table Architecture](./docs/members-table-architecture.md)
+- [API Documentation](./docs/api/members-api.md)
+- [Troubleshooting Guide](./docs/troubleshooting-members-table.md)
 
 ## Getting Started
 
