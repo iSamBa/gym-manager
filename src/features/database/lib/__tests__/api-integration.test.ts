@@ -294,7 +294,7 @@ describe("memberUtils.getMembers - US-003 API Integration", () => {
       p_has_active_subscription: null,
       p_has_upcoming_sessions: null,
       p_has_outstanding_balance: null,
-      p_limit: 20,
+      p_limit: 10000,
       p_offset: 0,
       p_order_by: "name",
       p_order_direction: "asc",

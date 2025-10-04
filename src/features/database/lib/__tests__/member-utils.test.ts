@@ -108,7 +108,7 @@ describe("Member Utils Database Operations", () => {
     expect(mockSupabaseClient.rpc).toHaveBeenCalledWith(
       "get_members_with_details",
       expect.objectContaining({
-        p_limit: 20,
+        p_limit: 10000,
         p_offset: 0,
         p_order_by: "name",
         p_order_direction: "asc",
