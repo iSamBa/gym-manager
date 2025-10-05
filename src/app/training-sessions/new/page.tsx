@@ -15,11 +15,8 @@ export default function AddTrainingSessionPage() {
   const router = useRouter();
 
   // Require admin role for this page
-  const {
-    user,
-    isLoading: isAuthLoading,
-    hasRequiredRole,
-  } = useRequireAdmin("/login");
+  const { isLoading: isAuthLoading, hasRequiredRole } =
+    useRequireAdmin("/login");
 
   // Create session mutation
   const createSessionMutation = useCreateTrainingSession();

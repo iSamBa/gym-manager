@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
+import React, { useState, useMemo, useCallback, memo } from "react";
 import {
   Table,
   TableBody,
@@ -9,7 +9,20 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,9 +40,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Edit,
-  Trash2,
-  Eye,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -39,14 +49,12 @@ import {
 } from "lucide-react";
 import { MemberAvatar } from "./MemberAvatar";
 import { MemberStatusBadge } from "./MemberStatusBadge";
+import { DateCell, SessionCountBadge, MemberTypeBadge } from "./cells";
+import { AddSessionButton } from "./AddSessionButton";
+import { AddPaymentButton } from "./AddPaymentButton";
 import {
-  DateCell,
-  SessionCountBadge,
-  BalanceBadge,
-  MemberTypeBadge,
-} from "./cells";
-import {
-  useMembersInfinite,
+  useMembers,
+  useMemberCount,
   useBulkUpdateMemberStatus,
   useDeleteMember,
 } from "@/features/members/hooks";
@@ -57,12 +65,13 @@ import type {
   MemberWithEnhancedDetails,
 } from "@/features/database/lib/types";
 import type { MemberFilters } from "@/features/database/lib/utils";
+import type { ColumnVisibility } from "./ColumnVisibilityToggle";
+import { DEFAULT_VISIBILITY } from "./ColumnVisibilityToggle";
 
 type SortField =
   | "name"
   | "email"
   | "status"
-  | "join_date"
   | "phone"
   | "gender"
   | "date_of_birth"
@@ -72,19 +81,55 @@ type SortField =
   | "last_payment_date";
 type SortDirection = "asc" | "desc";
 
+// US-003: Balance display utilities
+interface BalanceStyles {
+  backgroundColor: string;
+  textColor: string;
+}
+
+function getBalanceStyles(balance: number): BalanceStyles {
+  if (balance > 0) {
+    // Positive balance = member OWES money = red (outstanding debt)
+    return {
+      backgroundColor: "bg-red-50",
+      textColor: "text-red-700",
+    };
+  } else if (balance < 0) {
+    // Negative balance = member OVERPAID = green (credit to member)
+    return {
+      backgroundColor: "bg-green-50",
+      textColor: "text-green-700",
+    };
+  } else {
+    // Zero balance = fully paid = gray (neutral)
+    return {
+      backgroundColor: "bg-gray-50",
+      textColor: "text-gray-600",
+    };
+  }
+}
+
+function formatBalance(balance: number): string {
+  const absBalance = Math.abs(balance);
+  const formatted = absBalance.toFixed(2);
+
+  if (balance < 0) {
+    return `-$${formatted}`;
+  }
+  return `$${formatted}`;
+}
+
 interface AdvancedMemberTableProps {
   // Support both filtering and direct member list approaches
   filters?: MemberFilters;
   members?: MemberWithEnhancedDetails[];
   isLoading?: boolean;
   error?: Error | null;
-  onEdit?: (member: MemberWithEnhancedDetails) => void;
-  onView?: (member: MemberWithEnhancedDetails) => void;
   onMemberClick?: (member: MemberWithEnhancedDetails) => void;
   onMemberHover?: (member: MemberWithEnhancedDetails) => void;
-  enableInfiniteScroll?: boolean;
   showActions?: boolean;
   className?: string;
+  columnVisibility?: ColumnVisibility | null;
 }
 
 interface SortConfig {
@@ -97,19 +142,17 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
   members: propMembers,
   isLoading: propIsLoading,
   error: propError,
-  onEdit,
-  onView,
   onMemberClick,
   onMemberHover,
-  enableInfiniteScroll = true,
   showActions = true,
   className,
+  columnVisibility: propColumnVisibility,
 }: AdvancedMemberTableProps) {
+  // Use provided visibility or default
+  const columnVisibility = propColumnVisibility || DEFAULT_VISIBILITY;
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
     new Set()
   );
-  const [memberToDelete, setMemberToDelete] =
-    useState<MemberWithEnhancedDetails | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     field: "name",
     direction: "asc",
@@ -120,60 +163,56 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
     newStatus?: MemberStatus;
   }>({ isOpen: false, action: null });
 
-  // Enhanced filters with server-side sorting
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+
+  // Enhanced filters with server-side sorting and pagination
   const enhancedFilters = useMemo(() => {
     const baseFilters = filters || {};
 
     // Map sortConfig to database sorting parameters
-    const orderBy:
-      | "name"
-      | "email"
-      | "status"
-      | "join_date"
-      | "phone"
-      | undefined =
-      sortConfig.field === "join_date"
-        ? "join_date"
-        : sortConfig.field === "name"
-          ? "name"
-          : sortConfig.field === "email"
-            ? "email"
-            : sortConfig.field === "status"
-              ? "status"
-              : sortConfig.field === "phone"
-                ? "phone"
-                : undefined;
+    const orderBy: "name" | "email" | "status" | "phone" | undefined =
+      sortConfig.field === "name"
+        ? "name"
+        : sortConfig.field === "email"
+          ? "email"
+          : sortConfig.field === "status"
+            ? "status"
+            : sortConfig.field === "phone"
+              ? "phone"
+              : undefined;
 
     return {
       ...baseFilters,
       orderBy,
       orderDirection: sortConfig.direction,
+      limit: rowsPerPage,
+      offset: (page - 1) * rowsPerPage,
     };
-  }, [filters, sortConfig]);
+  }, [filters, sortConfig, page, rowsPerPage]);
 
-  // Use infinite query when filters are provided, otherwise use passed props
-  const infiniteQuery = useMembersInfinite(enhancedFilters, 20);
+  // Use page-based query or props
+  const membersQuery = useMembers(enhancedFilters);
+  const { data: totalCount } = useMemberCount();
 
   // Determine data source based on what's provided
-  const fetchNextPage = infiniteQuery.fetchNextPage;
-  const hasNextPage = enableInfiniteScroll && infiniteQuery.hasNextPage;
-  const isFetchingNextPage = infiniteQuery.isFetchingNextPage;
-  const isLoading = propIsLoading ?? infiniteQuery.isLoading;
-  const isError = propError ? true : infiniteQuery.isError;
-  const isFetching = infiniteQuery.isFetching;
-  const refetch = infiniteQuery.refetch;
+  const isLoading = propIsLoading ?? membersQuery.isLoading;
+  const isError = propError ? true : membersQuery.isError;
+  const isFetching = membersQuery.isFetching;
+  const refetch = membersQuery.refetch;
+
+  // Calculate pagination values
+  const totalPages = totalCount ? Math.ceil(totalCount / rowsPerPage) : 1;
 
   const bulkUpdateMutation = useBulkUpdateMemberStatus();
   const deleteMemberMutation = useDeleteMember();
 
   // Data is now sorted by the database, no need for client-side sorting
   const allMembers = useMemo(() => {
-    const currentData = propMembers
-      ? { pages: [propMembers] }
-      : infiniteQuery.data;
-    if (!currentData) return [];
-    return currentData.pages.flat();
-  }, [propMembers, infiniteQuery.data]);
+    if (propMembers) return propMembers;
+    return membersQuery.data || [];
+  }, [propMembers, membersQuery.data]);
 
   const isAllSelected = useMemo(
     () => allMembers.length > 0 && selectedMembers.size === allMembers.length,
@@ -258,51 +297,16 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
     }
   }, [selectedMembers, deleteMemberMutation]);
 
-  const handleSingleDelete = useCallback(
-    (member: MemberWithEnhancedDetails) => {
-      setMemberToDelete(member);
-    },
-    []
-  );
+  // Pagination handlers
+  const handleRowsPerPageChange = useCallback((value: string) => {
+    setRowsPerPage(Number(value));
+    setPage(1); // Reset to first page when changing rows per page
+  }, []);
 
-  const handleConfirmSingleDelete = useCallback(async () => {
-    if (!memberToDelete) return;
-
-    try {
-      await deleteMemberMutation.mutateAsync(memberToDelete.id);
-
-      toast.success("Member Deleted", {
-        description: `${memberToDelete.first_name} ${memberToDelete.last_name} has been deleted`,
-      });
-
-      // Clear selection if the deleted member was selected
-      const updatedSelection = new Set(selectedMembers);
-      updatedSelection.delete(memberToDelete.id);
-      setSelectedMembers(updatedSelection);
-      setMemberToDelete(null);
-    } catch {
-      toast.error("Delete Failed", {
-        description: "Failed to delete member. Please try again.",
-      });
-    }
-  }, [memberToDelete, deleteMemberMutation, selectedMembers]);
-
-  // Infinite scroll handler
-  useEffect(() => {
-    const handleScroll = () => {
-      if (
-        window.innerHeight + document.documentElement.scrollTop >=
-          document.documentElement.offsetHeight - 1000 &&
-        hasNextPage &&
-        !isFetchingNextPage
-      ) {
-        fetchNextPage();
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" }); // Scroll to top on page change
+  }, []);
 
   const SortButton = memo(function SortButton({
     field,
@@ -435,44 +439,67 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
               <TableHead>Phone</TableHead>
 
               {/* NEW COLUMNS - Gender & DOB */}
-              <TableHead className="hidden xl:table-cell">
-                <SortButton field="gender">Gender</SortButton>
-              </TableHead>
-              <TableHead className="hidden xl:table-cell">
-                <SortButton field="date_of_birth">DOB</SortButton>
-              </TableHead>
+              {columnVisibility.gender && (
+                <TableHead className="hidden xl:table-cell">
+                  <SortButton field="gender">Gender</SortButton>
+                </TableHead>
+              )}
+              {columnVisibility.dateOfBirth && (
+                <TableHead className="hidden xl:table-cell">
+                  <SortButton field="date_of_birth">DOB</SortButton>
+                </TableHead>
+              )}
 
               {/* NEW COLUMN - Member Type */}
-              <TableHead>
-                <SortButton field="member_type">Type</SortButton>
-              </TableHead>
+              {columnVisibility.memberType && (
+                <TableHead>
+                  <SortButton field="member_type">Type</SortButton>
+                </TableHead>
+              )}
 
               <TableHead>
                 <SortButton field="status">Status</SortButton>
               </TableHead>
 
               {/* NEW COLUMNS - Subscription & Sessions */}
-              <TableHead className="hidden lg:table-cell">
-                <SortButton field="subscription_end_date">Sub End</SortButton>
-              </TableHead>
-              <TableHead className="hidden lg:table-cell">
-                Last Session
-              </TableHead>
-              <TableHead className="hidden lg:table-cell">
-                Next Session
-              </TableHead>
-              <TableHead className="hidden lg:table-cell">Remaining</TableHead>
-              <TableHead className="hidden lg:table-cell">Scheduled</TableHead>
-              <TableHead className="hidden lg:table-cell">
-                <SortButton field="balance_due">Balance</SortButton>
-              </TableHead>
-              <TableHead className="hidden xl:table-cell">
-                <SortButton field="last_payment_date">Last Payment</SortButton>
-              </TableHead>
+              {columnVisibility.subscriptionEnd && (
+                <TableHead className="hidden lg:table-cell">
+                  <SortButton field="subscription_end_date">Sub End</SortButton>
+                </TableHead>
+              )}
+              {columnVisibility.lastSession && (
+                <TableHead className="hidden lg:table-cell">
+                  Last Session
+                </TableHead>
+              )}
+              {columnVisibility.nextSession && (
+                <TableHead className="hidden lg:table-cell">
+                  Next Session
+                </TableHead>
+              )}
+              {columnVisibility.remainingSessions && (
+                <TableHead className="hidden lg:table-cell">
+                  Remaining
+                </TableHead>
+              )}
+              {columnVisibility.scheduledSessions && (
+                <TableHead className="hidden lg:table-cell">
+                  Scheduled
+                </TableHead>
+              )}
+              {columnVisibility.balanceDue && (
+                <TableHead className="hidden lg:table-cell">
+                  <SortButton field="balance_due">Balance Due</SortButton>
+                </TableHead>
+              )}
+              {columnVisibility.lastPayment && (
+                <TableHead className="hidden xl:table-cell">
+                  <SortButton field="last_payment_date">
+                    Last Payment
+                  </SortButton>
+                </TableHead>
+              )}
 
-              <TableHead>
-                <SortButton field="join_date">Join Date</SortButton>
-              </TableHead>
               {showActions && (
                 <TableHead className="w-[120px]">Actions</TableHead>
               )}
@@ -482,7 +509,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
             {isLoading ? (
               <TableRow>
                 <TableCell
-                  colSpan={showActions ? 16 : 15}
+                  colSpan={showActions ? 15 : 14}
                   className="py-12 text-center"
                 >
                   <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" />
@@ -492,7 +519,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
             ) : allMembers.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={showActions ? 16 : 15}
+                  colSpan={showActions ? 15 : 14}
                   className="py-12 text-center"
                 >
                   <p className="text-muted-foreground">No members found</p>
@@ -532,23 +559,29 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                   </TableCell>
 
                   {/* Gender */}
-                  <TableCell className="hidden xl:table-cell">
-                    <span className="text-sm capitalize">
-                      {member.gender || "-"}
-                    </span>
-                  </TableCell>
+                  {columnVisibility.gender && (
+                    <TableCell className="hidden xl:table-cell">
+                      <span className="text-sm capitalize">
+                        {member.gender || "-"}
+                      </span>
+                    </TableCell>
+                  )}
 
                   {/* Date of Birth */}
-                  <TableCell className="hidden xl:table-cell">
-                    <DateCell date={member.date_of_birth || null} />
-                  </TableCell>
+                  {columnVisibility.dateOfBirth && (
+                    <TableCell className="hidden xl:table-cell">
+                      <DateCell date={member.date_of_birth || null} />
+                    </TableCell>
+                  )}
 
                   {/* Member Type */}
-                  <TableCell>
-                    <MemberTypeBadge
-                      type={member.member_type as "full" | "trial"}
-                    />
-                  </TableCell>
+                  {columnVisibility.memberType && (
+                    <TableCell>
+                      <MemberTypeBadge
+                        type={member.member_type as "full" | "trial"}
+                      />
+                    </TableCell>
+                  )}
 
                   {/* Status */}
                   <TableCell onClick={(e) => e.stopPropagation()}>
@@ -560,102 +593,103 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                   </TableCell>
 
                   {/* Subscription End Date */}
-                  <TableCell className="hidden lg:table-cell">
-                    <DateCell
-                      date={member.active_subscription?.end_date || null}
-                    />
-                  </TableCell>
+                  {columnVisibility.subscriptionEnd && (
+                    <TableCell className="hidden lg:table-cell">
+                      <DateCell
+                        date={member.active_subscription?.end_date || null}
+                      />
+                    </TableCell>
+                  )}
 
                   {/* Last Session */}
-                  <TableCell className="hidden lg:table-cell">
-                    <DateCell
-                      date={member.session_stats?.last_session_date || null}
-                      format="short"
-                    />
-                  </TableCell>
+                  {columnVisibility.lastSession && (
+                    <TableCell className="hidden lg:table-cell">
+                      <DateCell
+                        date={member.session_stats?.last_session_date || null}
+                        format="short"
+                      />
+                    </TableCell>
+                  )}
 
                   {/* Next Session */}
-                  <TableCell className="hidden lg:table-cell">
-                    <DateCell
-                      date={member.session_stats?.next_session_date || null}
-                      format="relative"
-                    />
-                  </TableCell>
+                  {columnVisibility.nextSession && (
+                    <TableCell className="hidden lg:table-cell">
+                      <DateCell
+                        date={member.session_stats?.next_session_date || null}
+                        format="relative"
+                      />
+                    </TableCell>
+                  )}
 
                   {/* Remaining Sessions */}
-                  <TableCell className="hidden lg:table-cell">
-                    <SessionCountBadge
-                      count={
-                        member.active_subscription?.remaining_sessions || 0
-                      }
-                    />
-                  </TableCell>
+                  {columnVisibility.remainingSessions && (
+                    <TableCell className="hidden lg:table-cell">
+                      <SessionCountBadge
+                        count={
+                          member.active_subscription?.remaining_sessions || 0
+                        }
+                        showTooltip={false}
+                        colorVariant="yellow"
+                      />
+                    </TableCell>
+                  )}
 
                   {/* Scheduled Sessions */}
-                  <TableCell className="hidden lg:table-cell">
-                    <SessionCountBadge
-                      count={
-                        member.session_stats?.scheduled_sessions_count || 0
-                      }
-                    />
-                  </TableCell>
+                  {columnVisibility.scheduledSessions && (
+                    <TableCell className="hidden lg:table-cell">
+                      <SessionCountBadge
+                        count={
+                          member.session_stats?.scheduled_sessions_count || 0
+                        }
+                        showTooltip={false}
+                      />
+                    </TableCell>
+                  )}
 
                   {/* Balance Due */}
-                  <TableCell className="hidden lg:table-cell">
-                    <BalanceBadge
-                      amount={member.active_subscription?.balance_due || 0}
-                    />
-                  </TableCell>
+                  {columnVisibility.balanceDue && (
+                    <TableCell className="hidden lg:table-cell">
+                      {(() => {
+                        const balance =
+                          member.active_subscription?.balance_due || 0;
+                        const styles = getBalanceStyles(balance);
+                        return (
+                          <div
+                            className={cn(
+                              "inline-block rounded-md px-3 py-1 text-sm font-medium",
+                              styles.backgroundColor,
+                              styles.textColor
+                            )}
+                          >
+                            {formatBalance(balance)}
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
+                  )}
 
                   {/* Last Payment */}
-                  <TableCell className="hidden xl:table-cell">
-                    <DateCell date={member.last_payment_date} />
-                  </TableCell>
+                  {columnVisibility.lastPayment && (
+                    <TableCell className="hidden xl:table-cell">
+                      <DateCell date={member.last_payment_date} />
+                    </TableCell>
+                  )}
 
-                  {/* Join Date */}
-                  <TableCell className="text-sm">
-                    <DateCell date={member.join_date} />
-                  </TableCell>
                   {showActions && (
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center space-x-1">
-                        <Button
+                        <AddSessionButton
+                          member={member}
+                          onSuccess={() => refetch()}
                           variant="ghost"
                           size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onView?.(member);
-                          }}
-                          className="h-8 w-8 p-0"
-                          title="View Details"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
+                        />
+                        <AddPaymentButton
+                          member={member}
+                          onSuccess={() => refetch()}
                           variant="ghost"
                           size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit?.(member);
-                          }}
-                          className="h-8 w-8 p-0"
-                          title="Edit Member"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSingleDelete(member);
-                          }}
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                          title="Delete Member"
-                          disabled={deleteMemberMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        />
                       </div>
                     </TableCell>
                   )}
@@ -674,27 +708,83 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
             </div>
           </div>
         )}
-
-        {/* Load More Button */}
-        {hasNextPage && (
-          <div className="flex justify-center border-t p-4">
-            <Button
-              variant="outline"
-              onClick={() => fetchNextPage()}
-              disabled={isFetchingNextPage}
-            >
-              {isFetchingNextPage ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                "Load More Members"
-              )}
-            </Button>
-          </div>
-        )}
       </div>
+
+      {/* Pagination Component */}
+      {!isLoading && allMembers.length > 0 && (
+        <div className="flex items-center justify-between border-t px-4 py-3">
+          <div className="text-muted-foreground text-sm">
+            {selectedMembers.size} of {totalCount || 0} row(s) selected.
+          </div>
+
+          <div className="flex items-center gap-6">
+            {/* Rows per page selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm whitespace-nowrap">Rows per page</span>
+              <Select
+                value={String(rowsPerPage)}
+                onValueChange={handleRowsPerPageChange}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="30">30</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Page indicator */}
+            <div className="text-sm whitespace-nowrap">
+              Page {page} of {totalPages}
+            </div>
+
+            {/* Navigation buttons */}
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(1)}
+                    disabled={page === 1}
+                  >
+                    First
+                  </Button>
+                </PaginationItem>
+
+                <PaginationPrevious
+                  onClick={() => handlePageChange(Math.max(1, page - 1))}
+                  className={cn(page === 1 && "pointer-events-none opacity-50")}
+                />
+
+                <PaginationNext
+                  onClick={() =>
+                    handlePageChange(Math.min(totalPages, page + 1))
+                  }
+                  className={cn(
+                    page === totalPages && "pointer-events-none opacity-50"
+                  )}
+                />
+
+                <PaginationItem>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={page === totalPages}
+                  >
+                    Last
+                  </Button>
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </div>
+      )}
 
       {/* Bulk Action Confirmation Dialogs */}
       <AlertDialog
@@ -760,23 +850,6 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Single Member Delete Confirmation */}
-      <ConfirmDialog
-        isOpen={!!memberToDelete}
-        onOpenChange={(open) => !open && setMemberToDelete(null)}
-        onConfirm={handleConfirmSingleDelete}
-        title="Delete Member"
-        description={
-          memberToDelete
-            ? `Are you sure you want to delete ${memberToDelete.first_name} ${memberToDelete.last_name}? This action cannot be undone.`
-            : ""
-        }
-        confirmText="Delete Member"
-        cancelText="Cancel"
-        variant="destructive"
-        isLoading={deleteMemberMutation.isPending}
-      />
     </div>
   );
 });

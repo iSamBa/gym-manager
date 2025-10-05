@@ -17,6 +17,10 @@ export {
   withMemberErrorBoundary,
 } from "./MemberErrorBoundary";
 
+// Quick action buttons
+export { AddSessionButton } from "./AddSessionButton";
+export { AddPaymentButton } from "./AddPaymentButton";
+
 // Session-related components
 export { MemberSessions } from "./MemberSessions";
 export { MemberSessionStats } from "./MemberSessionStats";

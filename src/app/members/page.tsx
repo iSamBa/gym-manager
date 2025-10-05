@@ -11,6 +11,7 @@ import {
   EditMemberDialog,
   SimpleMemberFilters,
   ColumnVisibilityToggle,
+  type ColumnVisibility,
 } from "@/features/members/components";
 import type { Member } from "@/features/database/lib/types";
 import {
@@ -23,21 +24,29 @@ import {
 } from "@/features/members/hooks";
 import { memberUtils } from "@/features/database/lib/utils";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
-import { Users, UserCheck, UserX, Clock, Download, Plus } from "lucide-react";
+import {
+  Users,
+  UserCheck,
+  UserX,
+  Clock,
+  Download,
+  Plus,
+  Filter,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function MembersPage() {
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [columnVisibility, setColumnVisibility] =
+    useState<ColumnVisibility | null>(null);
   const router = useRouter();
 
   // Require admin role for entire page
-  const {
-    user,
-    isLoading: isAuthLoading,
-    hasRequiredRole,
-  } = useRequireAdmin("/login");
+  const { isLoading: isAuthLoading, hasRequiredRole } =
+    useRequireAdmin("/login");
 
   // Simplified filter state management
   const { filters, updateFilters, databaseFilters } = useSimpleMemberFilters();
@@ -100,15 +109,6 @@ export default function MembersPage() {
   const pendingMembers = memberCountByStatus?.pending || 0;
 
   // Handler functions for member actions
-  const handleViewMember = (member: Member) => {
-    router.push(`/members/${member.id}`);
-  };
-
-  const handleEditMember = (member: Member) => {
-    setEditingMember(member);
-    setIsEditDialogOpen(true);
-  };
-
   const handleMemberClick = (member: Member) => {
     router.push(`/members/${member.id}`);
   };
@@ -189,50 +189,95 @@ export default function MembersPage() {
         </div>
 
         {/* Search and Filters */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-1 flex-col gap-4 sm:flex-row">
-            {/* Search Input */}
-            <div className="max-w-md flex-1">
-              <SearchInput
-                placeholder="Search members by name..."
-                value={searchQuery}
-                onChange={setSearchQuery}
+        <div className="flex flex-col gap-4">
+          {/* Top Row: Search + Filters + Actions */}
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            {/* Left: Search + Filters */}
+            <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:items-center">
+              {/* Search Input */}
+              <div className="max-w-md flex-1">
+                <SearchInput
+                  placeholder="Search members by name..."
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                />
+              </div>
+
+              {/* Filters */}
+              <SimpleMemberFilters
+                filters={filters}
+                onFiltersChange={updateFilters}
+                className="shrink-0"
               />
             </div>
 
-            {/* Simplified Filters */}
-            <SimpleMemberFilters
-              filters={filters}
-              onFiltersChange={updateFilters}
-              className="shrink-0"
-            />
+            {/* Right: Export, Column Visibility, and Status Indicators */}
+            <div className="flex items-center gap-3">
+              {/* Column Visibility Toggle */}
+              <ColumnVisibilityToggle
+                onVisibilityChange={setColumnVisibility}
+              />
+
+              {/* Export Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportMembers}
+                disabled={isExporting}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {isExporting ? "Exporting..." : "Export"}
+              </Button>
+
+              {/* Background sync indicator */}
+              {isRefetching && (
+                <Badge variant="secondary" className="animate-pulse">
+                  <Clock className="mr-1 h-3 w-3" />
+                  Syncing
+                </Badge>
+              )}
+            </div>
           </div>
 
-          {/* Export, Column Visibility, and Status Indicators */}
-          <div className="flex items-center gap-3">
-            {/* Column Visibility Toggle */}
-            <ColumnVisibilityToggle />
-
-            {/* Export Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportMembers}
-              disabled={isExporting}
-              className="gap-2"
-            >
-              <Download className="h-4 w-4" />
-              {isExporting ? "Exporting..." : "Export"}
-            </Button>
-
-            {/* Background sync indicator */}
-            {isRefetching && (
-              <Badge variant="secondary" className="animate-pulse">
-                <Clock className="mr-1 h-3 w-3" />
-                Syncing
+          {/* Second Row: Active Filters Badge + Clear (only when filters active) */}
+          {Object.values(filters).filter(
+            (v) => v !== undefined && v !== null && v !== "all"
+          ).length > 0 && (
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="gap-1">
+                <Filter className="h-3 w-3" />
+                {
+                  Object.values(filters).filter(
+                    (v) => v !== undefined && v !== null && v !== "all"
+                  ).length
+                }{" "}
+                active filter
+                {Object.values(filters).filter(
+                  (v) => v !== undefined && v !== null && v !== "all"
+                ).length !== 1
+                  ? "s"
+                  : ""}
               </Badge>
-            )}
-          </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  updateFilters({
+                    status: "all",
+                    memberType: undefined,
+                    hasActiveSubscription: undefined,
+                    hasUpcomingSessions: undefined,
+                    hasOutstandingBalance: undefined,
+                  })
+                }
+                className="h-8 gap-1"
+              >
+                <X className="h-4 w-4" />
+                Clear
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Members Table */}
@@ -252,11 +297,9 @@ export default function MembersPage() {
                     ...databaseFilters,
                   },
                 })}
-            onView={handleViewMember}
-            onEdit={handleEditMember}
             onMemberClick={handleMemberClick}
             onMemberHover={handleMemberHover}
-            enableInfiniteScroll={!searchQuery} // Only enable infinite scroll when not searching
+            columnVisibility={columnVisibility}
             className="border-0"
           />
         </Card>

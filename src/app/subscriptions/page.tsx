@@ -61,11 +61,8 @@ export default function SubscriptionsManagementPage() {
   const pageSize = 20;
 
   // Require admin role for entire page
-  const {
-    user,
-    isLoading: isAuthLoading,
-    hasRequiredRole,
-  } = useRequireAdmin("/login");
+  const { isLoading: isAuthLoading, hasRequiredRole } =
+    useRequireAdmin("/login");
 
   const { data: subscriptionsData, isLoading } = useAllSubscriptions({
     search: searchTerm,

@@ -88,7 +88,21 @@ const mockDeleteMember = {
   isPending: false,
 };
 
+const mockMembersQuery = {
+  data: mockMembers,
+  isLoading: false,
+  isError: false,
+  isFetching: false,
+  refetch: vi.fn(),
+};
+
+const mockMemberCount = {
+  data: 68, // Total member count for pagination
+};
+
 vi.mock("@/features/members/hooks", () => ({
+  useMembers: () => mockMembersQuery,
+  useMemberCount: () => mockMemberCount,
   useMembersInfinite: () => mockMembersInfinite,
   useBulkUpdateMemberStatus: () => mockBulkUpdate,
   useDeleteMember: () => mockDeleteMember,
@@ -126,7 +140,8 @@ describe("AdvancedMemberTable", () => {
   });
 
   it("shows loading state", () => {
-    mockMembersInfinite.isLoading = true;
+    mockMembersQuery.isLoading = true;
+    mockMembersQuery.data = undefined;
 
     render(<AdvancedMemberTable filters={{}} />, {
       wrapper: createQueryWrapper(),
@@ -134,10 +149,14 @@ describe("AdvancedMemberTable", () => {
 
     expect(screen.getByText("Loading members...")).toBeInTheDocument();
     expect(document.querySelector(".animate-spin")).toBeInTheDocument();
+
+    // Reset
+    mockMembersQuery.isLoading = false;
+    mockMembersQuery.data = mockMembers;
   });
 
   it("shows error state with retry button", () => {
-    mockMembersInfinite.isError = true;
+    mockMembersQuery.isError = true;
 
     render(<AdvancedMemberTable filters={{}} />, {
       wrapper: createQueryWrapper(),
@@ -145,16 +164,22 @@ describe("AdvancedMemberTable", () => {
 
     expect(screen.getByText("Failed to load members")).toBeInTheDocument();
     expect(screen.getByText("Try Again")).toBeInTheDocument();
+
+    // Reset
+    mockMembersQuery.isError = false;
   });
 
   it("shows empty state when no members", () => {
-    mockMembersInfinite.data = { pages: [[]] };
+    mockMembersQuery.data = [];
 
     render(<AdvancedMemberTable filters={{}} />, {
       wrapper: createQueryWrapper(),
     });
 
     expect(screen.getByText("No members found")).toBeInTheDocument();
+
+    // Reset
+    mockMembersQuery.data = mockMembers;
   });
 
   it("handles column sorting", () => {
@@ -178,22 +203,35 @@ describe("AdvancedMemberTable", () => {
     expect(selectAllCheckbox).toBeInTheDocument();
   });
 
-  it("shows load more button when hasNextPage", () => {
+  it("shows pagination controls", () => {
     render(<AdvancedMemberTable filters={{}} />, {
       wrapper: createQueryWrapper(),
     });
 
-    expect(screen.getByText("Load More Members")).toBeInTheDocument();
+    // Check for pagination elements
+    expect(screen.getByText(/Rows per page/i)).toBeInTheDocument();
+    expect(screen.getByText(/Page 1 of/i)).toBeInTheDocument();
+
+    // Use getAllByRole and filter to avoid "Last Payment" column conflict
+    const buttons = screen.getAllByRole("button");
+    const firstButton = buttons.find((btn) => btn.textContent === "First");
+    const lastButton = buttons.find((btn) => btn.textContent === "Last");
+
+    expect(firstButton).toBeInTheDocument();
+    expect(lastButton).toBeInTheDocument();
   });
 
   it("shows background fetching indicator", () => {
-    mockMembersInfinite.isFetching = true;
+    mockMembersQuery.isFetching = true;
 
     render(<AdvancedMemberTable filters={{}} />, {
       wrapper: createQueryWrapper(),
     });
 
     expect(screen.getByText("Refreshing data...")).toBeInTheDocument();
+
+    // Reset
+    mockMembersQuery.isFetching = false;
   });
 
   it("hides actions when showActions is false", () => {

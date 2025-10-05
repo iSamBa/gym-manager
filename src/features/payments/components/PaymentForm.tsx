@@ -71,7 +71,7 @@ export function PaymentForm({
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
-      amount: remainingBalance > 0 ? remainingBalance : 0,
+      amount: undefined,
       paymentMethod: "cash",
       paymentDate: new Date(),
       referenceNumber: "",
@@ -152,9 +152,13 @@ export function PaymentForm({
                     placeholder="0.00"
                     className="pl-9"
                     {...field}
-                    onChange={(e) =>
-                      field.onChange(parseFloat(e.target.value) || 0)
-                    }
+                    value={field.value ?? ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(
+                        value === "" ? undefined : parseFloat(value)
+                      );
+                    }}
                   />
                 </div>
               </FormControl>

@@ -41,11 +41,8 @@ export default function PlansManagementPage() {
   const [showInactive, setShowInactive] = useState(false);
 
   // Require admin role for entire page
-  const {
-    user,
-    isLoading: isAuthLoading,
-    hasRequiredRole,
-  } = useRequireAdmin("/login");
+  const { isLoading: isAuthLoading, hasRequiredRole } =
+    useRequireAdmin("/login");
 
   const { data: allPlans, isLoading, error } = useSubscriptionPlans();
 

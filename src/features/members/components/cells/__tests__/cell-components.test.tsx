@@ -80,11 +80,11 @@ describe("SessionCountBadge Component", () => {
   });
 
   /**
-   * Test 8: SessionCountBadge - Low Count (Yellow)
+   * Test 8: SessionCountBadge - Low Count (Green)
    */
-  it("should use yellow color for 1-5 sessions", () => {
+  it("should use green color for 1-5 sessions", () => {
     const { container } = render(<SessionCountBadge count={3} />);
-    const badge = container.querySelector(".border-yellow-500");
+    const badge = container.querySelector(".bg-green-100");
     expect(badge).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();
   });
