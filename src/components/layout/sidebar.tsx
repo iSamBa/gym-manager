@@ -15,10 +15,12 @@ import {
   Calendar,
   Package,
   DollarSign,
+  Settings,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { UserProfileDropdown } from "./UserProfileDropdown";
 
 interface SidebarProps {
   className?: string;
@@ -75,8 +77,9 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
   );
 
   return (
-    <div className={cn("pb-12", className)}>
-      <div className="space-y-4 py-4">
+    <div className={cn("flex h-full flex-col", className)}>
+      {/* Main navigation - scrollable */}
+      <div className="flex-1 overflow-y-auto py-4">
         <div className="px-3 py-2">
           <h2 className="mb-2 flex items-center px-4 text-lg font-semibold tracking-tight">
             <div className="bg-primary text-primary-foreground mr-2 flex size-5 items-center justify-center rounded-md">
@@ -124,6 +127,17 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
           </div>
         </div>
       </div>
+
+      {/* Bottom utilities - sticky */}
+      <div className="bg-background space-y-2 border-t p-2">
+        <Button variant="ghost" className="w-full justify-start gap-2" asChild>
+          <Link href="/settings" onClick={onNavigate}>
+            <Settings className="h-4 w-4" />
+            Settings
+          </Link>
+        </Button>
+        <UserProfileDropdown />
+      </div>
     </div>
   );
 }
@@ -139,7 +153,7 @@ export function MobileSidebar() {
           <span className="sr-only">Toggle navigation menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-64 p-0">
+      <SheetContent side="left" className="flex w-64 flex-col p-0">
         <Sidebar onNavigate={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
