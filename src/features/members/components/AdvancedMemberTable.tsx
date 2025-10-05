@@ -53,12 +53,7 @@ import {
 } from "lucide-react";
 import { MemberAvatar } from "./MemberAvatar";
 import { MemberStatusBadge } from "./MemberStatusBadge";
-import {
-  DateCell,
-  SessionCountBadge,
-  BalanceBadge,
-  MemberTypeBadge,
-} from "./cells";
+import { DateCell, SessionCountBadge, MemberTypeBadge } from "./cells";
 import {
   useMembers,
   useMemberCount,
@@ -87,6 +82,44 @@ type SortField =
   | "balance_due"
   | "last_payment_date";
 type SortDirection = "asc" | "desc";
+
+// US-003: Balance display utilities
+interface BalanceStyles {
+  backgroundColor: string;
+  textColor: string;
+}
+
+function getBalanceStyles(balance: number): BalanceStyles {
+  if (balance > 0) {
+    // Positive balance = member OWES money = red (outstanding debt)
+    return {
+      backgroundColor: "bg-red-50",
+      textColor: "text-red-700",
+    };
+  } else if (balance < 0) {
+    // Negative balance = member OVERPAID = green (credit to member)
+    return {
+      backgroundColor: "bg-green-50",
+      textColor: "text-green-700",
+    };
+  } else {
+    // Zero balance = fully paid = gray (neutral)
+    return {
+      backgroundColor: "bg-gray-50",
+      textColor: "text-gray-600",
+    };
+  }
+}
+
+function formatBalance(balance: number): string {
+  const absBalance = Math.abs(balance);
+  const formatted = absBalance.toFixed(2);
+
+  if (balance < 0) {
+    return `-$${formatted}`;
+  }
+  return `$${formatted}`;
+}
 
 interface AdvancedMemberTableProps {
   // Support both filtering and direct member list approaches
@@ -493,7 +526,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
               )}
               {columnVisibility.balanceDue && (
                 <TableHead className="hidden lg:table-cell">
-                  <SortButton field="balance_due">Balance</SortButton>
+                  <SortButton field="balance_due">Balance Due</SortButton>
                 </TableHead>
               )}
               {columnVisibility.lastPayment && (
@@ -652,10 +685,22 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                   {/* Balance Due */}
                   {columnVisibility.balanceDue && (
                     <TableCell className="hidden lg:table-cell">
-                      <BalanceBadge
-                        amount={member.active_subscription?.balance_due || 0}
-                        showTooltip={false}
-                      />
+                      {(() => {
+                        const balance =
+                          member.active_subscription?.balance_due || 0;
+                        const styles = getBalanceStyles(balance);
+                        return (
+                          <div
+                            className={cn(
+                              "inline-block rounded-md px-3 py-1 text-sm font-medium",
+                              styles.backgroundColor,
+                              styles.textColor
+                            )}
+                          >
+                            {formatBalance(balance)}
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                   )}
 

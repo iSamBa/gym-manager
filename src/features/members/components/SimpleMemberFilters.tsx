@@ -1,7 +1,6 @@
 "use client";
 
-import { memo, useCallback } from "react";
-import { Button } from "@/components/ui/button";
+import { memo } from "react";
 import {
   Select,
   SelectContent,
@@ -9,8 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { X, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MemberStatus } from "@/features/database/lib/types";
 
@@ -42,20 +39,6 @@ export const SimpleMemberFilters = memo(function SimpleMemberFilters({
   onFiltersChange,
   className,
 }: SimpleMemberFiltersProps) {
-  const activeFilterCount = Object.values(filters).filter(
-    (v) => v !== undefined && v !== null && v !== "all"
-  ).length;
-
-  const handleClearFilters = useCallback(() => {
-    onFiltersChange({
-      status: "all",
-      memberType: undefined,
-      hasActiveSubscription: undefined,
-      hasUpcomingSessions: undefined,
-      hasOutstandingBalance: undefined,
-    });
-  }, [onFiltersChange]);
-
   return (
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
       {/* Status Filter */}
