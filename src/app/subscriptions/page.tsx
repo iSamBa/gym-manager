@@ -46,7 +46,6 @@ import type {
   SubscriptionStatus,
 } from "@/features/database/lib/types";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
-import { mapUserForLayout } from "@/lib/auth-utils";
 
 export default function SubscriptionsManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -80,7 +79,7 @@ export default function SubscriptionsManagementPage() {
 
   if (isAuthLoading) {
     return (
-      <MainLayout user={mapUserForLayout(user)}>
+      <MainLayout>
         <div className="flex min-h-[400px] items-center justify-center">
           <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
         </div>
@@ -94,7 +93,7 @@ export default function SubscriptionsManagementPage() {
 
   if (isLoading) {
     return (
-      <MainLayout user={mapUserForLayout(user)}>
+      <MainLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <Skeleton className="h-8 w-48" />
@@ -160,11 +159,8 @@ export default function SubscriptionsManagementPage() {
     }
   };
 
-  // Convert user object to expected format for MainLayout
-  const layoutUser = mapUserForLayout(user);
-
   return (
-    <MainLayout user={layoutUser}>
+    <MainLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

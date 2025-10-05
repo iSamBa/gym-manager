@@ -1,17 +1,11 @@
 import { ReactNode } from "react";
-import { Header } from "./header";
-import { Sidebar } from "./sidebar";
+import { Sidebar, MobileSidebar } from "./sidebar";
 
 interface MainLayoutProps {
   children: ReactNode;
-  user?: {
-    name: string;
-    email: string;
-    avatar?: string;
-  };
 }
 
-export function MainLayout({ children, user }: MainLayoutProps) {
+export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="flex h-screen">
       {/* Desktop Sidebar */}
@@ -23,7 +17,10 @@ export function MainLayout({ children, user }: MainLayoutProps) {
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header user={user} />
+        {/* Mobile menu trigger */}
+        <div className="border-b p-4 md:hidden">
+          <MobileSidebar />
+        </div>
 
         <main className="bg-background flex-1 overflow-x-hidden overflow-y-auto p-6">
           {children}

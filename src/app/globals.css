@@ -79,36 +79,59 @@
 }
 
 .dark {
-  --background: oklch(0.05 0 0);
-  --foreground: oklch(0.95 0.005 106);
-  --card: oklch(0.08 0.003 106);
-  --card-foreground: oklch(0.95 0.005 106);
-  --popover: oklch(0.08 0.003 106);
-  --popover-foreground: oklch(0.95 0.005 106);
+  /* Background colors - Gray palette for better contrast */
+  --background: oklch(0.15 0 0); /* ~15% lightness - lighter gray base */
+  --card: oklch(0.2 0 0); /* ~20% lightness - clear card distinction */
+  --popover: oklch(0.2 0 0);
+
+  /* Foreground colors - Off-white for better readability */
+  --foreground: oklch(0.98 0 0); /* ~98% lightness - off-white text */
+  --card-foreground: oklch(0.98 0 0);
+  --popover-foreground: oklch(0.98 0 0);
+
+  /* Primary colors - Keep vibrant for interactive elements */
   --primary: oklch(0.6 0.25 22);
   --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.12 0.008 106);
-  --secondary-foreground: oklch(0.88 0.005 106);
-  --muted: oklch(0.12 0.008 106);
-  --muted-foreground: oklch(0.55 0.01 106);
-  --accent: oklch(0.12 0.008 106);
-  --accent-foreground: oklch(0.88 0.005 106);
+
+  /* Secondary colors - Mid-gray for secondary elements */
+  --secondary: oklch(0.24 0 0); /* ~24% lightness - muted backgrounds */
+  --secondary-foreground: oklch(0.88 0 0);
+
+  /* Muted colors - For disabled/secondary text and backgrounds */
+  --muted: oklch(0.24 0 0); /* ~24% lightness */
+  --muted-foreground: oklch(
+    0.65 0 0
+  ); /* ~65% lightness - readable muted text */
+
+  /* Accent colors */
+  --accent: oklch(0.24 0 0);
+  --accent-foreground: oklch(0.88 0 0);
+
+  /* Destructive colors (error states) */
   --destructive: oklch(0.6 0.25 22);
-  --border: oklch(0.16 0.01 106);
-  --input: oklch(0.16 0.01 106);
+
+  /* Border colors - Visible but subtle */
+  --border: oklch(0.26 0 0); /* ~26% lightness - visible borders */
+  --input: oklch(0.26 0 0);
+
+  /* Ring color (focus states) */
   --ring: oklch(0.6 0.25 22);
+
+  /* Chart colors - Keep vibrant */
   --chart-1: oklch(0.6 0.25 22);
   --chart-2: oklch(0.65 0.23 25);
   --chart-3: oklch(0.7 0.21 28);
   --chart-4: oklch(0.75 0.19 31);
   --chart-5: oklch(0.8 0.17 34);
-  --sidebar: oklch(0.08 0.003 106);
-  --sidebar-foreground: oklch(0.95 0.005 106);
+
+  /* Sidebar colors - Match new gray palette */
+  --sidebar: oklch(0.2 0 0); /* Same as card for consistency */
+  --sidebar-foreground: oklch(0.98 0 0);
   --sidebar-primary: oklch(0.6 0.25 22);
   --sidebar-primary-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.6 0.25 22);
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.16 0.01 106);
+  --sidebar-border: oklch(0.26 0 0); /* Visible borders */
   --sidebar-ring: oklch(0.6 0.25 22);
 }
 
