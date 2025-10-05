@@ -9,7 +9,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="flex h-screen">
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:w-56 md:flex-col">
+      <div className="hidden md:flex md:w-48 md:flex-col">
         <div className="bg-card flex flex-grow flex-col border-r">
           <Sidebar />
         </div>
