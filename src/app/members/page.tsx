@@ -45,11 +45,8 @@ export default function MembersPage() {
   const router = useRouter();
 
   // Require admin role for entire page
-  const {
-    user,
-    isLoading: isAuthLoading,
-    hasRequiredRole,
-  } = useRequireAdmin("/login");
+  const { isLoading: isAuthLoading, hasRequiredRole } =
+    useRequireAdmin("/login");
 
   // Simplified filter state management
   const { filters, updateFilters, databaseFilters } = useSimpleMemberFilters();

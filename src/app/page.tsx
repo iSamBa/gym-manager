@@ -42,7 +42,7 @@ import { useDashboardStats } from "@/features/database/hooks/use-analytics";
 import { useRecentActivities } from "@/features/dashboard/hooks/use-recent-activities";
 
 export default function Home() {
-  const { user, isLoading } = useRequireAdmin();
+  const { isLoading } = useRequireAdmin();
 
   // Fetch analytics data
   const { data: memberEvolutionData, isLoading: isEvolutionLoading } =
