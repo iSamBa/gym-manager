@@ -9,7 +9,7 @@
 
 | Metric                | Target    | Current | Status     |
 | --------------------- | --------- | ------- | ---------- |
-| User Stories Complete | 5         | 3       | 🟡 60%     |
+| User Stories Complete | 5         | 4       | 🟡 80%     |
 | Tests Passing         | 100%      | 100%    | 🟢 Passing |
 | Performance           | ≤ Current | ✓       | 🟢 Met     |
 | Code Quality          | 0 Errors  | 0       | 🟢 Clean   |
@@ -18,23 +18,23 @@
 
 ## 📋 User Story Status
 
-### ✅ Completed Stories (3/5)
+### ✅ Completed Stories (4/5)
 
-| ID     | Story                                      | Priority | Complexity | Completed  | Notes                                                       |
-| ------ | ------------------------------------------ | -------- | ---------- | ---------- | ----------------------------------------------------------- |
-| US-001 | Implement shadcn/ui Pagination Component   | P0       | Medium     | 2025-10-05 | Pagination working, build & linting pass ✓                  |
-| US-002 | Remove Unnecessary Columns and UI Elements | P1       | Small      | 2025-10-05 | Column visibility fixed, filters improved, 843 tests pass ✓ |
-| US-003 | Fix Balance Display Issues                 | P0       | Small      | 2025-10-05 | Balance logic corrected, header clarified, 859 tests pass ✓ |
+| ID     | Story                                      | Priority | Complexity | Completed  | Notes                                                        |
+| ------ | ------------------------------------------ | -------- | ---------- | ---------- | ------------------------------------------------------------ |
+| US-001 | Implement shadcn/ui Pagination Component   | P0       | Medium     | 2025-10-05 | Pagination working, build & linting pass ✓                   |
+| US-002 | Remove Unnecessary Columns and UI Elements | P1       | Small      | 2025-10-05 | Column visibility fixed, filters improved, 843 tests pass ✓  |
+| US-003 | Fix Balance Display Issues                 | P0       | Small      | 2025-10-05 | Balance logic corrected, header clarified, 859 tests pass ✓  |
+| US-004 | Refactor Row Actions                       | P0       | Medium     | 2025-10-05 | Quick actions implemented, View/Edit/Delete removed, tests ✓ |
 
 ### 🟡 In Progress Stories (0/5)
 
 _None yet_
 
-### 🔴 Not Started Stories (2/5)
+### 🔴 Not Started Stories (1/5)
 
 | ID     | Story                          | Priority | Complexity | Assignee | Target Date |
 | ------ | ------------------------------ | -------- | ---------- | -------- | ----------- |
-| US-004 | Refactor Row Actions           | P0       | Medium     | -        | -           |
 | US-005 | Integration Testing and Polish | P1       | Small      | -        | -           |
 
 ---
@@ -92,17 +92,18 @@ _None yet_
 ### Milestone 4: Actions Refactor ✅
 
 **Target:** Complete US-004
-**Status:** 🔴 Not Started
-**Date Completed:** -
+**Status:** 🟢 Completed
+**Date Completed:** 2025-10-05
 
 **Deliverables:**
 
-- [ ] View, Edit, Delete removed from table
-- [ ] AddSessionButton component created
-- [ ] AddPaymentButton component created
-- [ ] Quick actions functional
-- [ ] Edit/Delete verified in details view
-- [ ] Tests passing
+- [x] View, Edit, Delete removed from table
+- [x] AddSessionButton component created
+- [x] AddPaymentButton component created
+- [x] Quick actions functional (integrated in AdvancedMemberTable)
+- [x] Edit/Delete verified in details view
+- [x] Tests passing (859 tests)
+- [x] Linting clean (removed unused props)
 
 ---
 
@@ -147,6 +148,21 @@ _None yet_
 - ✅ Badge component replaced with colored div
 - ✅ All 859 tests passing (16 new balance utility tests)
 - ✅ Manual testing verified by user
+- ✅ US-004 completed
+- ✅ View, Edit, Delete actions removed from AdvancedMemberTable
+- ✅ AddSessionButton component created (integrated with SessionBookingForm)
+- ✅ AddPaymentButton component created (integrated with PaymentForm)
+- ✅ Quick actions integrated into table (Calendar and DollarSign icons)
+- ✅ Session form enhanced: Added end time and location fields
+- ✅ Session form enhanced: Replaced HTML inputs with shadcn Calendar and Select components
+- ✅ Payment form fixed: Removed pre-fill, fixed "stuck 0" issue
+- ✅ Fixed critical timezone bug (sessions now save/display correct times)
+- ✅ Fixed SessionCountBadge styling (Remaining=yellow, Scheduled=green)
+- ✅ Row click navigation verified working
+- ✅ Edit and Delete buttons confirmed in member details page
+- ✅ All 859 tests passing
+- ✅ Linting clean (0 errors, warnings only)
+- ✅ Manual testing checklist completed and verified
 
 ---
 

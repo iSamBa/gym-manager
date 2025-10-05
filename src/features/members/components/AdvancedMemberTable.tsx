@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Select,
   SelectContent,
@@ -41,9 +40,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Edit,
-  Trash2,
-  Eye,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -54,6 +50,8 @@ import {
 import { MemberAvatar } from "./MemberAvatar";
 import { MemberStatusBadge } from "./MemberStatusBadge";
 import { DateCell, SessionCountBadge, MemberTypeBadge } from "./cells";
+import { AddSessionButton } from "./AddSessionButton";
+import { AddPaymentButton } from "./AddPaymentButton";
 import {
   useMembers,
   useMemberCount,
@@ -127,8 +125,6 @@ interface AdvancedMemberTableProps {
   members?: MemberWithEnhancedDetails[];
   isLoading?: boolean;
   error?: Error | null;
-  onEdit?: (member: MemberWithEnhancedDetails) => void;
-  onView?: (member: MemberWithEnhancedDetails) => void;
   onMemberClick?: (member: MemberWithEnhancedDetails) => void;
   onMemberHover?: (member: MemberWithEnhancedDetails) => void;
   showActions?: boolean;
@@ -146,8 +142,6 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
   members: propMembers,
   isLoading: propIsLoading,
   error: propError,
-  onEdit,
-  onView,
   onMemberClick,
   onMemberHover,
   showActions = true,
@@ -159,8 +153,6 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
     new Set()
   );
-  const [memberToDelete, setMemberToDelete] =
-    useState<MemberWithEnhancedDetails | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     field: "name",
     direction: "asc",
@@ -304,35 +296,6 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
       });
     }
   }, [selectedMembers, deleteMemberMutation]);
-
-  const handleSingleDelete = useCallback(
-    (member: MemberWithEnhancedDetails) => {
-      setMemberToDelete(member);
-    },
-    []
-  );
-
-  const handleConfirmSingleDelete = useCallback(async () => {
-    if (!memberToDelete) return;
-
-    try {
-      await deleteMemberMutation.mutateAsync(memberToDelete.id);
-
-      toast.success("Member Deleted", {
-        description: `${memberToDelete.first_name} ${memberToDelete.last_name} has been deleted`,
-      });
-
-      // Clear selection if the deleted member was selected
-      const updatedSelection = new Set(selectedMembers);
-      updatedSelection.delete(memberToDelete.id);
-      setSelectedMembers(updatedSelection);
-      setMemberToDelete(null);
-    } catch {
-      toast.error("Delete Failed", {
-        description: "Failed to delete member. Please try again.",
-      });
-    }
-  }, [memberToDelete, deleteMemberMutation, selectedMembers]);
 
   // Pagination handlers
   const handleRowsPerPageChange = useCallback((value: string) => {
@@ -666,6 +629,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                           member.active_subscription?.remaining_sessions || 0
                         }
                         showTooltip={false}
+                        colorVariant="yellow"
                       />
                     </TableCell>
                   )}
@@ -714,43 +678,18 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                   {showActions && (
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center space-x-1">
-                        <Button
+                        <AddSessionButton
+                          member={member}
+                          onSuccess={() => refetch()}
                           variant="ghost"
                           size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onView?.(member);
-                          }}
-                          className="h-8 w-8 p-0"
-                          title="View Details"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
+                        />
+                        <AddPaymentButton
+                          member={member}
+                          onSuccess={() => refetch()}
                           variant="ghost"
                           size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit?.(member);
-                          }}
-                          className="h-8 w-8 p-0"
-                          title="Edit Member"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSingleDelete(member);
-                          }}
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                          title="Delete Member"
-                          disabled={deleteMemberMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        />
                       </div>
                     </TableCell>
                   )}
@@ -911,23 +850,6 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Single Member Delete Confirmation */}
-      <ConfirmDialog
-        isOpen={!!memberToDelete}
-        onOpenChange={(open) => !open && setMemberToDelete(null)}
-        onConfirm={handleConfirmSingleDelete}
-        title="Delete Member"
-        description={
-          memberToDelete
-            ? `Are you sure you want to delete ${memberToDelete.first_name} ${memberToDelete.last_name}? This action cannot be undone.`
-            : ""
-        }
-        confirmText="Delete Member"
-        cancelText="Cancel"
-        variant="destructive"
-        isLoading={deleteMemberMutation.isPending}
-      />
     </div>
   );
 });

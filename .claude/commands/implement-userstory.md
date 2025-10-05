@@ -8,6 +8,25 @@ I'll guide you through implementing a user story using our proven systematic wor
 
 ---
 
+## ⚠️ CRITICAL RULE: NO STEPS MAY BE SKIPPED
+
+**EVERY SINGLE STEP in the user story and this workflow MUST be completed. Skipping ANY step is UNACCEPTABLE.**
+
+This includes (but is not limited to):
+
+- All implementation steps
+- Unit testing
+- Linting
+- **Manual testing checklists** (EVERY checkbox must be verified)
+- Acceptance criteria verification
+- Definition of Done verification
+- STATUS.md updates
+- User story file updates
+
+**If a step exists in the user story, it MUST be completed. NO EXCEPTIONS.**
+
+---
+
 ## 📋 Usage
 
 ```
@@ -138,11 +157,13 @@ Following AGENT-GUIDE.md workflow, I will:
 
 ---
 
-## 🧪 Step 4: Testing Phase (MANDATORY)
+## 🧪 Step 4: Testing Phase (MANDATORY - NO STEPS SKIPPED)
 
-I will run ALL tests from the user story's "Testing Criteria":
+**⚠️ CRITICAL: ALL testing steps below MUST be completed. Skipping any step makes the user story incomplete.**
 
-### Test Execution
+I will complete ALL tests from the user story in this order:
+
+### 4.1 Automated Testing (REQUIRED)
 
 ```
 ✓ Database tests (SQL queries if applicable)
@@ -153,6 +174,25 @@ I will run ALL tests from the user story's "Testing Criteria":
 ✓ Performance benchmarks (if specified)
 ```
 
+### 4.2 Manual Testing Checklist (REQUIRED - CANNOT BE SKIPPED)
+
+**Every checkbox in the user story's "Manual Testing Checklist" section MUST be verified:**
+
+I will:
+
+1. Read the COMPLETE manual testing checklist from the user story
+2. Prompt the user to verify EACH item (or verify myself if possible)
+3. Document results for EVERY checkbox
+4. If ANY item fails, fix and re-test until it passes
+
+**Example Manual Testing Items:**
+
+- [ ] Feature X appears correctly in UI
+- [ ] Button Y triggers expected action
+- [ ] Navigation from page A to page B works
+- [ ] Data refreshes after action Z
+- [ ] Error states display correctly
+
 ### Test Results Format
 
 ```
@@ -162,13 +202,16 @@ Type Safety: No errors ✓
 Linting: 0 errors, 0 warnings ✓
 Build: Successful ✓
 Performance: Query <500ms ✓
+Manual Testing: 12/12 items verified ✓
 ```
 
-**If any test fails, I'll stop and report the issue.**
+**If any test fails (automated OR manual), I'll stop and report the issue.**
 
 ---
 
-## ✅ Step 5: Definition of Done Verification
+## ✅ Step 5: Definition of Done Verification (NO SKIPPING)
+
+**⚠️ CRITICAL: I will verify EVERY SINGLE checkbox. If ANY checkbox cannot be checked, the user story is INCOMPLETE.**
 
 I will go through EVERY checkbox in "Definition of Done":
 
@@ -176,6 +219,7 @@ I will go through EVERY checkbox in "Definition of Done":
 Definition of Done Checklist:
 ✓ All acceptance criteria met and verified
 ✓ All tests passing (unit, integration, performance)
+✓ ALL manual testing checklist items verified
 ✓ Code follows project standards (CLAUDE.md)
 ✓ TypeScript strict mode compliance (no `any` types)
 ✓ Components under 300 lines
@@ -187,7 +231,9 @@ Definition of Done Checklist:
 ✓ Code reviewed (if applicable)
 ```
 
-**Only proceed when ALL checkboxes are checked.**
+**MANDATORY: Only proceed when ALL checkboxes are checked. No exceptions.**
+
+**If I cannot verify a manual testing item myself, I MUST ask the user to verify it.**
 
 ---
 
@@ -339,17 +385,20 @@ Commit created ✓
 
 ## 🎯 Success Criteria
 
-A user story is complete when:
+**⚠️ A user story is ONLY complete when ALL of these are true:**
 
 ✅ User story file (US-XXX-\*.md) marked as completed
 ✅ Completion date and implementation notes added
-✅ All acceptance criteria verified
-✅ All tests passing (100%)
-✅ All DoD checkboxes checked
+✅ **ALL acceptance criteria verified (no exceptions)**
+✅ **ALL automated tests passing (100%)**
+✅ **ALL manual testing checklist items verified**
+✅ **ALL DoD checkboxes checked**
 ✅ STATUS.md updated with metrics
 ✅ Code committed with proper message
 ✅ No regressions introduced
 ✅ Ready for next user story
+
+**If even ONE item above is not complete, the user story is NOT done.**
 
 ---
 
@@ -357,9 +406,11 @@ A user story is complete when:
 
 1. **Have the feature folder ready** - Run `/create-feature` first
 2. **Follow the order** - Don't skip user stories
-3. **Provide feedback** - Approve/modify plans before implementation
-4. **Review commits** - Check git diff before pushing
-5. **Track progress** - STATUS.md keeps you informed
+3. **NO SKIPPING STEPS** - Every step must be completed
+4. **Manual testing is mandatory** - Be prepared to verify UI changes
+5. **Provide feedback** - Approve/modify plans before implementation
+6. **Review commits** - Check git diff before pushing
+7. **Track progress** - STATUS.md keeps you informed
 
 ---
 

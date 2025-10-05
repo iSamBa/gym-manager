@@ -4,6 +4,24 @@ This guide provides a systematic workflow for implementing the Members Menu Enha
 
 ---
 
+## ⚠️ CRITICAL RULE: NO STEPS MAY BE SKIPPED
+
+**Every step in every user story MUST be completed in order. Skipping ANY step is unacceptable.**
+
+This includes (but is not limited to):
+
+- Reading all documentation
+- Code implementation
+- Unit testing
+- Linting
+- **Manual testing checklists**
+- Acceptance criteria verification
+- STATUS.md updates
+
+**If a step is listed in the user story, it MUST be completed. No exceptions.**
+
+---
+
 ## 🎯 Overview
 
 **Total User Stories:** 5
@@ -161,12 +179,23 @@ US-004 (Actions)    ──┘
 - Create `src/features/members/components/AddSessionButton.tsx`
 - Create `src/features/members/components/AddPaymentButton.tsx`
 
-**Testing:**
+**Testing (ALL STEPS REQUIRED):**
 
-- Test Add Session modal/form
-- Test Add Payment modal/form
-- Verify details view still has Edit/Delete
-- Confirm row click opens details
+1. **Unit Tests** - Run `npm test`, ensure all pass
+2. **Linting** - Run `npm run lint`, fix all issues
+3. **Manual Testing Checklist** - Complete EVERY item from US-004:
+   - [ ] Row actions dropdown shows only Add Session and Add Payment
+   - [ ] View action not present in row dropdown
+   - [ ] Edit action not present in row dropdown
+   - [ ] Delete action not present in row dropdown
+   - [ ] Clicking row opens member details
+   - [ ] Add Session button opens session form with member pre-selected
+   - [ ] Add Payment button opens payment form with member pre-selected
+   - [ ] Add Session form submission works and refreshes table
+   - [ ] Add Payment form submission works and updates balance
+   - [ ] Edit action available in member details view
+   - [ ] Delete action available in member details view
+   - [ ] Quick actions work from different pages (with pagination)
 
 ---
 
@@ -221,15 +250,18 @@ Before starting US-001:
 
 ## 🎯 Post-Implementation Checklist
 
-After completing all user stories:
+**⚠️ MANDATORY: After completing EACH user story:**
 
 - [ ] All tests passing (`npm test`)
 - [ ] Linting clean (`npm run lint`)
 - [ ] Build successful (`npm run build`)
+- [ ] **ALL manual testing checklist items completed**
+- [ ] **ALL acceptance criteria verified**
 - [ ] Performance maintained (same or better than before)
 - [ ] No console errors in browser
-- [ ] All acceptance criteria met
 - [ ] Update STATUS.md with completion dates
+
+**A user story is NOT complete until ALL steps above are done.**
 
 ---
 

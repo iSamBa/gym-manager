@@ -10,6 +10,8 @@ interface SessionBookingInput {
   trainerId: string;
   sessionDate: string;
   sessionTime: string;
+  endTime: string;
+  location: string;
   sessionType:
     | "personal_training"
     | "small_group"
@@ -83,6 +85,8 @@ export function useSessionBookingWithCredits() {
         trainer_id: input.trainerId,
         session_date: input.sessionDate,
         session_time: input.sessionTime,
+        end_time: input.endTime,
+        location: input.location,
         session_type: input.sessionType,
         subscription_id: subscription.id,
         notes: input.notes,
@@ -154,6 +158,8 @@ async function createTrainingSessionBooking(data: {
   trainer_id: string;
   session_date: string;
   session_time: string;
+  end_time: string;
+  location: string;
   session_type: string;
   subscription_id: string;
   notes?: string;
@@ -164,8 +170,8 @@ async function createTrainingSessionBooking(data: {
     {
       p_trainer_id: data.trainer_id,
       p_scheduled_start: `${data.session_date}T${data.session_time}:00`,
-      p_scheduled_end: `${data.session_date}T${data.session_time}:00`, // This should be calculated properly
-      p_location: "TBD", // This should be passed in
+      p_scheduled_end: `${data.session_date}T${data.end_time}:00`,
+      p_location: data.location,
       p_max_participants: 1,
       p_member_ids: [data.member_id],
       p_notes: data.notes || null,

@@ -18,6 +18,8 @@ interface SessionCountBadgeProps {
   showTooltip?: boolean;
   /** Additional CSS classes */
   className?: string;
+  /** Color variant - green (default) or yellow */
+  colorVariant?: "green" | "yellow";
 }
 
 /**
@@ -29,9 +31,10 @@ export const SessionCountBadge = memo(function SessionCountBadge({
   label,
   showTooltip = true,
   className,
+  colorVariant = "green",
 }: SessionCountBadgeProps) {
   const variant = getVariant(count);
-  const colorClass = getColorClass(count);
+  const colorClass = getColorClass(count, colorVariant);
 
   const badge = (
     <Badge variant={variant} className={cn("gap-1", colorClass, className)}>
@@ -59,13 +62,15 @@ export const SessionCountBadge = memo(function SessionCountBadge({
 
 function getVariant(count: number): "default" | "secondary" | "outline" {
   if (count === 0) return "secondary";
-  if (count <= 5) return "outline";
   return "default";
 }
 
-function getColorClass(count: number): string {
+function getColorClass(
+  count: number,
+  colorVariant: "green" | "yellow"
+): string {
   if (count === 0) return "bg-gray-100 text-gray-600";
-  if (count <= 5) return "border-yellow-500 text-yellow-700";
+  if (colorVariant === "yellow") return "bg-yellow-100 text-yellow-700";
   return "bg-green-100 text-green-700";
 }
 

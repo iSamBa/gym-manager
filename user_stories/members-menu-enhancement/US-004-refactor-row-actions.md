@@ -1,9 +1,11 @@
 # US-004: Refactor Row Actions
 
-**Status:** 🔴 Not Started
+**Status:** ✅ Completed
 **Priority:** P0 (Must Have)
 **Complexity:** Medium
 **Estimated Time:** 2-3 hours
+**Actual Time:** 3 hours
+**Completed:** 2025-10-05
 
 ---
 
@@ -476,18 +478,18 @@ describe("AddPaymentButton", () => {
 
 ### Manual Testing Checklist
 
-- [ ] Row actions dropdown shows only Add Session and Add Payment
-- [ ] View action not present in row dropdown
-- [ ] Edit action not present in row dropdown
-- [ ] Delete action not present in row dropdown
-- [ ] Clicking row opens member details
-- [ ] Add Session button opens session form with member pre-selected
-- [ ] Add Payment button opens payment form with member pre-selected
-- [ ] Add Session form submission works and refreshes table
-- [ ] Add Payment form submission works and updates balance
-- [ ] Edit action available in member details view
-- [ ] Delete action available in member details view
-- [ ] Quick actions work from different pages (with pagination)
+- [x] Row actions dropdown shows only Add Session and Add Payment
+- [x] View action not present in row dropdown
+- [x] Edit action not present in row dropdown
+- [x] Delete action not present in row dropdown
+- [x] Clicking row opens member details
+- [x] Add Session button opens session form with member pre-selected
+- [x] Add Payment button opens payment form with member pre-selected
+- [x] Add Session form submission works and refreshes table
+- [x] Add Payment form submission works and updates balance
+- [x] Edit action available in member details view
+- [x] Delete action available in member details view
+- [x] Quick actions work from different pages (with pagination)
 
 ---
 

@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CalendarPlus, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { CalendarPlus, Loader2, CalendarIcon } from "lucide-react";
 
 import {
   Card,
@@ -29,6 +30,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 // Session credit validation functionality removed during hook consolidation
 import { useSessionBookingWithCredits } from "../../hooks/use-session-booking-with-credits";
@@ -39,8 +47,10 @@ import { useTrainers } from "@/features/trainers/hooks";
 const sessionBookingSchema = z.object({
   memberId: z.string().min(1, "Member is required"),
   trainerId: z.string().min(1, "Trainer is required"),
-  sessionDate: z.string().min(1, "Session date is required"),
-  sessionTime: z.string().min(1, "Session time is required"),
+  sessionDate: z.date({ required_error: "Session date is required" }),
+  sessionTime: z.string().min(1, "Start time is required"),
+  endTime: z.string().min(1, "End time is required"),
+  location: z.string().min(1, "Location is required"),
   sessionType: z.enum(["trail", "standard"], {
     message: "Session type is required",
   }),
@@ -52,13 +62,17 @@ type SessionBookingData = z.infer<typeof sessionBookingSchema>;
 interface SessionBookingFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
+  initialMemberId?: string;
 }
 
 export function SessionBookingForm({
   onSuccess,
   onCancel,
+  initialMemberId,
 }: SessionBookingFormProps) {
-  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [selectedMemberId, setSelectedMemberId] = useState(
+    initialMemberId || ""
+  );
 
   // Fetch data
   const { data: members = [], isLoading: membersLoading } = useMembers();
@@ -75,10 +89,12 @@ export function SessionBookingForm({
   const form = useForm<SessionBookingData>({
     resolver: zodResolver(sessionBookingSchema),
     defaultValues: {
-      memberId: "",
+      memberId: initialMemberId || "",
       trainerId: "",
-      sessionDate: "",
+      sessionDate: undefined,
       sessionTime: "",
+      endTime: "",
+      location: "",
       sessionType: undefined,
       notes: "",
     },
@@ -86,7 +102,29 @@ export function SessionBookingForm({
 
   const onSubmit = async (data: SessionBookingData) => {
     try {
-      await bookSessionMutation.mutateAsync(data);
+      // Create Date objects in user's local timezone
+      const startDateTime = new Date(data.sessionDate);
+      const [startHours, startMinutes] = data.sessionTime.split(":");
+      startDateTime.setHours(
+        parseInt(startHours),
+        parseInt(startMinutes),
+        0,
+        0
+      );
+
+      const endDateTime = new Date(data.sessionDate);
+      const [endHours, endMinutes] = data.endTime.split(":");
+      endDateTime.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0);
+
+      // Convert to ISO strings with proper timezone (UTC)
+      const formattedData = {
+        ...data,
+        sessionDate: format(data.sessionDate, "yyyy-MM-dd"),
+        scheduled_start: startDateTime.toISOString(),
+        scheduled_end: endDateTime.toISOString(),
+      };
+
+      await bookSessionMutation.mutateAsync(formattedData);
       onSuccess?.();
     } catch {
       // Error is handled by the mutation's onError
@@ -222,17 +260,79 @@ export function SessionBookingForm({
               )}
             />
 
-            {/* Date and Time */}
+            {/* Date */}
+            <FormField
+              control={form.control}
+              name="sessionDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Session Date *</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < new Date(new Date().setHours(0, 0, 0, 0))
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Start and End Time */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
-                name="sessionDate"
+                name="sessionTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Session Date *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
+                    <FormLabel>Start Time *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select start time" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => i).map((hour) => {
+                          const hourStr = hour.toString().padStart(2, "0");
+                          return (
+                            <React.Fragment key={hour}>
+                              <SelectItem value={`${hourStr}:00`}>
+                                {hourStr}:00
+                              </SelectItem>
+                              <SelectItem value={`${hourStr}:30`}>
+                                {hourStr}:30
+                              </SelectItem>
+                            </React.Fragment>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -240,18 +340,52 @@ export function SessionBookingForm({
 
               <FormField
                 control={form.control}
-                name="sessionTime"
+                name="endTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Session Time *</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
+                    <FormLabel>End Time *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select end time" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => i).map((hour) => {
+                          const hourStr = hour.toString().padStart(2, "0");
+                          return (
+                            <React.Fragment key={hour}>
+                              <SelectItem value={`${hourStr}:00`}>
+                                {hourStr}:00
+                              </SelectItem>
+                              <SelectItem value={`${hourStr}:30`}>
+                                {hourStr}:30
+                              </SelectItem>
+                            </React.Fragment>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
+            {/* Location */}
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Gym Floor, Studio A" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Notes */}
             <FormField
