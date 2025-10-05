@@ -256,7 +256,6 @@ export default function MembersPage() {
             onEdit={handleEditMember}
             onMemberClick={handleMemberClick}
             onMemberHover={handleMemberHover}
-            enableInfiniteScroll={!searchQuery} // Only enable infinite scroll when not searching
             className="border-0"
           />
         </Card>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
+import React, { useState, useMemo, useCallback, memo } from "react";
 import {
   Table,
   TableBody,
@@ -10,6 +10,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,7 +60,8 @@ import {
   MemberTypeBadge,
 } from "./cells";
 import {
-  useMembersInfinite,
+  useMembers,
+  useMemberCount,
   useBulkUpdateMemberStatus,
   useDeleteMember,
 } from "@/features/members/hooks";
@@ -82,7 +97,6 @@ interface AdvancedMemberTableProps {
   onView?: (member: MemberWithEnhancedDetails) => void;
   onMemberClick?: (member: MemberWithEnhancedDetails) => void;
   onMemberHover?: (member: MemberWithEnhancedDetails) => void;
-  enableInfiniteScroll?: boolean;
   showActions?: boolean;
   className?: string;
 }
@@ -101,7 +115,6 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
   onView,
   onMemberClick,
   onMemberHover,
-  enableInfiniteScroll = true,
   showActions = true,
   className,
 }: AdvancedMemberTableProps) {
@@ -120,7 +133,11 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
     newStatus?: MemberStatus;
   }>({ isOpen: false, action: null });
 
-  // Enhanced filters with server-side sorting
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+
+  // Enhanced filters with server-side sorting and pagination
   const enhancedFilters = useMemo(() => {
     const baseFilters = filters || {};
 
@@ -148,32 +165,32 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
       ...baseFilters,
       orderBy,
       orderDirection: sortConfig.direction,
+      limit: rowsPerPage,
+      offset: (page - 1) * rowsPerPage,
     };
-  }, [filters, sortConfig]);
+  }, [filters, sortConfig, page, rowsPerPage]);
 
-  // Use infinite query when filters are provided, otherwise use passed props
-  const infiniteQuery = useMembersInfinite(enhancedFilters, 20);
+  // Use page-based query or props
+  const membersQuery = useMembers(enhancedFilters);
+  const { data: totalCount } = useMemberCount();
 
   // Determine data source based on what's provided
-  const fetchNextPage = infiniteQuery.fetchNextPage;
-  const hasNextPage = enableInfiniteScroll && infiniteQuery.hasNextPage;
-  const isFetchingNextPage = infiniteQuery.isFetchingNextPage;
-  const isLoading = propIsLoading ?? infiniteQuery.isLoading;
-  const isError = propError ? true : infiniteQuery.isError;
-  const isFetching = infiniteQuery.isFetching;
-  const refetch = infiniteQuery.refetch;
+  const isLoading = propIsLoading ?? membersQuery.isLoading;
+  const isError = propError ? true : membersQuery.isError;
+  const isFetching = membersQuery.isFetching;
+  const refetch = membersQuery.refetch;
+
+  // Calculate pagination values
+  const totalPages = totalCount ? Math.ceil(totalCount / rowsPerPage) : 1;
 
   const bulkUpdateMutation = useBulkUpdateMemberStatus();
   const deleteMemberMutation = useDeleteMember();
 
   // Data is now sorted by the database, no need for client-side sorting
   const allMembers = useMemo(() => {
-    const currentData = propMembers
-      ? { pages: [propMembers] }
-      : infiniteQuery.data;
-    if (!currentData) return [];
-    return currentData.pages.flat();
-  }, [propMembers, infiniteQuery.data]);
+    if (propMembers) return propMembers;
+    return membersQuery.data || [];
+  }, [propMembers, membersQuery.data]);
 
   const isAllSelected = useMemo(
     () => allMembers.length > 0 && selectedMembers.size === allMembers.length,
@@ -287,22 +304,16 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
     }
   }, [memberToDelete, deleteMemberMutation, selectedMembers]);
 
-  // Infinite scroll handler
-  useEffect(() => {
-    const handleScroll = () => {
-      if (
-        window.innerHeight + document.documentElement.scrollTop >=
-          document.documentElement.offsetHeight - 1000 &&
-        hasNextPage &&
-        !isFetchingNextPage
-      ) {
-        fetchNextPage();
-      }
-    };
+  // Pagination handlers
+  const handleRowsPerPageChange = useCallback((value: string) => {
+    setRowsPerPage(Number(value));
+    setPage(1); // Reset to first page when changing rows per page
+  }, []);
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" }); // Scroll to top on page change
+  }, []);
 
   const SortButton = memo(function SortButton({
     field,
@@ -674,27 +685,83 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
             </div>
           </div>
         )}
-
-        {/* Load More Button */}
-        {hasNextPage && (
-          <div className="flex justify-center border-t p-4">
-            <Button
-              variant="outline"
-              onClick={() => fetchNextPage()}
-              disabled={isFetchingNextPage}
-            >
-              {isFetchingNextPage ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                "Load More Members"
-              )}
-            </Button>
-          </div>
-        )}
       </div>
+
+      {/* Pagination Component */}
+      {!isLoading && allMembers.length > 0 && (
+        <div className="flex items-center justify-between border-t px-4 py-3">
+          <div className="text-muted-foreground text-sm">
+            {selectedMembers.size} of {totalCount || 0} row(s) selected.
+          </div>
+
+          <div className="flex items-center gap-6">
+            {/* Rows per page selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm whitespace-nowrap">Rows per page</span>
+              <Select
+                value={String(rowsPerPage)}
+                onValueChange={handleRowsPerPageChange}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="30">30</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Page indicator */}
+            <div className="text-sm">
+              Page {page} of {totalPages}
+            </div>
+
+            {/* Navigation buttons */}
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(1)}
+                    disabled={page === 1}
+                  >
+                    First
+                  </Button>
+                </PaginationItem>
+
+                <PaginationPrevious
+                  onClick={() => handlePageChange(Math.max(1, page - 1))}
+                  className={cn(page === 1 && "pointer-events-none opacity-50")}
+                />
+
+                <PaginationNext
+                  onClick={() =>
+                    handlePageChange(Math.min(totalPages, page + 1))
+                  }
+                  className={cn(
+                    page === totalPages && "pointer-events-none opacity-50"
+                  )}
+                />
+
+                <PaginationItem>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={page === totalPages}
+                  >
+                    Last
+                  </Button>
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </div>
+      )}
 
       {/* Bulk Action Confirmation Dialogs */}
       <AlertDialog
