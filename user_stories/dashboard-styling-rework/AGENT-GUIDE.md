@@ -105,6 +105,7 @@ For each user story, follow this workflow:
    - Plan component structure
 
 4. **Update STATUS.md**
+
    ```markdown
    ## US-00X: {Name}
 
