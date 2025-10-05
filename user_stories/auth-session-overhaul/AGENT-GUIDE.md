@@ -8,14 +8,14 @@ This guide provides systematic, step-by-step instructions for implementing the a
 
 Before starting any user story:
 
-1. ✅ Read `START-HERE.md` to understand the problem and objectives
-2. ✅ Review current implementation in these files:
+1. ✅ **Git branch created** (see Step 0 in User Story Implementation Workflow - MANDATORY FIRST!)
+2. ✅ Read `START-HERE.md` to understand the problem and objectives
+3. ✅ Review current implementation in these files:
    - `src/lib/supabase.ts`
    - `src/hooks/use-auth.ts`
    - `src/hooks/use-session-manager.ts`
    - `src/lib/store.ts`
    - `src/components/session-guard.tsx`
-3. ✅ Ensure you're on the `feature/auth-session-overhaul` branch
 4. ✅ All existing tests pass: `npm test`
 
 ## Implementation Order
@@ -39,6 +39,59 @@ US-006 (Testing & Docs) ← Requires ALL above
 ## User Story Implementation Workflow
 
 For each user story:
+
+### Step 0: Git Branch Setup (MANDATORY - DO THIS FIRST!)
+
+**🚨 CRITICAL: This MUST be done BEFORE any code changes!**
+
+1. **Verify current branch and status**
+
+   ```bash
+   git status
+   git branch --show-current
+   ```
+
+2. **Create feature branch (if not already created)**
+
+   ```bash
+   # Create and switch to feature branch
+   git checkout -b feature/auth-session-overhaul
+
+   # Verify you're on the correct branch
+   git branch --show-current
+   # Expected output: feature/auth-session-overhaul
+   ```
+
+3. **Verify branch creation**
+
+   ```bash
+   # List all branches (current branch marked with *)
+   git branch
+
+   # Confirm you're NOT on main
+   git branch --show-current | grep -q "main" && echo "❌ ERROR: Still on main!" || echo "✅ On feature branch"
+   ```
+
+4. **Document branch information**
+   - Branch name: `feature/auth-session-overhaul`
+   - Base branch: `main`
+   - Created: [current date]
+
+**⚠️ If you're already on main with commits:**
+
+- STOP immediately
+- Ask user how to handle existing commits
+- Options: create branch from current state, stash changes, etc.
+- **NEVER commit directly to main** (violates CLAUDE.md rules)
+
+**✅ Checklist before proceeding:**
+
+- [ ] Feature branch created
+- [ ] Verified current branch is NOT main
+- [ ] Branch name follows convention: `feature/auth-session-overhaul`
+- [ ] Ready to start making changes
+
+---
 
 ### Step 1: Read User Story File
 
