@@ -80,11 +80,9 @@
 
 .dark {
   /* Background colors - Gray palette for better contrast */
-  --background: oklch(
-    0.1 0 0
-  ); /* ~10% lightness - dark gray instead of pure black */
-  --card: oklch(0.14 0 0); /* ~14% lightness - lighter gray for cards */
-  --popover: oklch(0.14 0 0);
+  --background: oklch(0.15 0 0); /* ~15% lightness - lighter gray base */
+  --card: oklch(0.2 0 0); /* ~20% lightness - clear card distinction */
+  --popover: oklch(0.2 0 0);
 
   /* Foreground colors - Off-white for better readability */
   --foreground: oklch(0.98 0 0); /* ~98% lightness - off-white text */
@@ -96,25 +94,25 @@
   --primary-foreground: oklch(0.98 0 0);
 
   /* Secondary colors - Mid-gray for secondary elements */
-  --secondary: oklch(0.18 0 0); /* ~18% lightness - muted backgrounds */
+  --secondary: oklch(0.24 0 0); /* ~24% lightness - muted backgrounds */
   --secondary-foreground: oklch(0.88 0 0);
 
   /* Muted colors - For disabled/secondary text and backgrounds */
-  --muted: oklch(0.18 0 0); /* ~18% lightness */
+  --muted: oklch(0.24 0 0); /* ~24% lightness */
   --muted-foreground: oklch(
     0.65 0 0
   ); /* ~65% lightness - readable muted text */
 
   /* Accent colors */
-  --accent: oklch(0.18 0 0);
+  --accent: oklch(0.24 0 0);
   --accent-foreground: oklch(0.88 0 0);
 
   /* Destructive colors (error states) */
   --destructive: oklch(0.6 0.25 22);
 
   /* Border colors - Visible but subtle */
-  --border: oklch(0.2 0 0); /* ~20% lightness - visible borders */
-  --input: oklch(0.2 0 0);
+  --border: oklch(0.26 0 0); /* ~26% lightness - visible borders */
+  --input: oklch(0.26 0 0);
 
   /* Ring color (focus states) */
   --ring: oklch(0.6 0.25 22);
@@ -127,13 +125,13 @@
   --chart-5: oklch(0.8 0.17 34);
 
   /* Sidebar colors - Match new gray palette */
-  --sidebar: oklch(0.14 0 0); /* Same as card for consistency */
+  --sidebar: oklch(0.2 0 0); /* Same as card for consistency */
   --sidebar-foreground: oklch(0.98 0 0);
   --sidebar-primary: oklch(0.6 0.25 22);
   --sidebar-primary-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.6 0.25 22);
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.2 0 0); /* Visible borders */
+  --sidebar-border: oklch(0.26 0 0); /* Visible borders */
   --sidebar-ring: oklch(0.6 0.25 22);
 }
 
