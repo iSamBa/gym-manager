@@ -313,15 +313,15 @@ describe("MembersTable Pagination", () => {
 
 ### Manual Testing Checklist
 
-- [ ] Pagination component displays correctly
-- [ ] Rows per page selector works (10, 20, 30, 50)
-- [ ] First/Previous buttons disabled on first page
-- [ ] Next/Last buttons disabled on last page
-- [ ] Page navigation works in both directions
-- [ ] Page indicator updates correctly
-- [ ] Row selection counter displays
-- [ ] Performance matches current implementation
-- [ ] No visual regressions
+- [x] Pagination component displays correctly
+- [x] Rows per page selector works (10, 20, 30, 50)
+- [x] First/Previous buttons disabled on first page
+- [x] Next/Last buttons disabled on last page
+- [x] Page navigation works in both directions
+- [x] Page indicator updates correctly
+- [x] Row selection counter displays
+- [x] Performance matches current implementation
+- [x] No visual regressions
 
 ---
 

@@ -9,8 +9,8 @@
 
 | Metric                | Target    | Current | Status     |
 | --------------------- | --------- | ------- | ---------- |
-| User Stories Complete | 5         | 1       | 🟡 20%     |
-| Tests Passing         | 100%      | 99%     | 🟢 Passing |
+| User Stories Complete | 5         | 2       | 🟡 40%     |
+| Tests Passing         | 100%      | 100%    | 🟢 Passing |
 | Performance           | ≤ Current | ✓       | 🟢 Met     |
 | Code Quality          | 0 Errors  | 0       | 🟢 Clean   |
 
@@ -18,24 +18,24 @@
 
 ## 📋 User Story Status
 
-### ✅ Completed Stories (1/5)
+### ✅ Completed Stories (2/5)
 
-| ID     | Story                                    | Priority | Complexity | Completed  | Notes                                      |
-| ------ | ---------------------------------------- | -------- | ---------- | ---------- | ------------------------------------------ |
-| US-001 | Implement shadcn/ui Pagination Component | P0       | Medium     | 2025-10-05 | Pagination working, build & linting pass ✓ |
+| ID     | Story                                      | Priority | Complexity | Completed  | Notes                                      |
+| ------ | ------------------------------------------ | -------- | ---------- | ---------- | ------------------------------------------ |
+| US-001 | Implement shadcn/ui Pagination Component   | P0       | Medium     | 2025-10-05 | Pagination working, build & linting pass ✓ |
+| US-002 | Remove Unnecessary Columns and UI Elements | P1       | Small      | 2025-10-05 | Join Date removed, tooltips disabled ✓     |
 
 ### 🟡 In Progress Stories (0/5)
 
 _None yet_
 
-### 🔴 Not Started Stories (4/5)
+### 🔴 Not Started Stories (3/5)
 
-| ID     | Story                                      | Priority | Complexity | Assignee | Target Date |
-| ------ | ------------------------------------------ | -------- | ---------- | -------- | ----------- |
-| US-002 | Remove Unnecessary Columns and UI Elements | P1       | Small      | -        | -           |
-| US-003 | Fix Balance Display Issues                 | P0       | Small      | -        | -           |
-| US-004 | Refactor Row Actions                       | P0       | Medium     | -        | -           |
-| US-005 | Integration Testing and Polish             | P1       | Small      | -        | -           |
+| ID     | Story                          | Priority | Complexity | Assignee | Target Date |
+| ------ | ------------------------------ | -------- | ---------- | -------- | ----------- |
+| US-003 | Fix Balance Display Issues     | P0       | Small      | -        | -           |
+| US-004 | Refactor Row Actions           | P0       | Medium     | -        | -           |
+| US-005 | Integration Testing and Polish | P1       | Small      | -        | -           |
 
 ---
 
@@ -60,15 +60,15 @@ _None yet_
 ### Milestone 2: UI Cleanup ✅
 
 **Target:** Complete US-002
-**Status:** 🔴 Not Started
-**Date Completed:** -
+**Status:** 🟢 Completed
+**Date Completed:** 2025-10-05
 
 **Deliverables:**
 
-- [ ] Join Date column removed
-- [ ] Tooltips removed from sessions/balance
-- [ ] Column filter fixed or removed
-- [ ] Tests updated
+- [x] Join Date column removed
+- [x] Tooltips removed from sessions/balance
+- [x] Column filter not applicable (no filter exists)
+- [x] Tests passing (847 tests)
 
 ---
 
@@ -130,6 +130,11 @@ _None yet_
 - ✅ US-001 implemented and tested
 - ✅ Pagination component working
 - ✅ Build and linting passing
+- ✅ US-002 implemented and tested
+- ✅ Join Date column removed from table
+- ✅ Tooltips disabled for SessionCountBadge and BalanceBadge
+- ✅ All 847 tests passing
+- ✅ Build successful with 0 errors
 
 ---
 

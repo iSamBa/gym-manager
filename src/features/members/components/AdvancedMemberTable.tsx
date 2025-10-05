@@ -77,7 +77,6 @@ type SortField =
   | "name"
   | "email"
   | "status"
-  | "join_date"
   | "phone"
   | "gender"
   | "date_of_birth"
@@ -142,24 +141,16 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
     const baseFilters = filters || {};
 
     // Map sortConfig to database sorting parameters
-    const orderBy:
-      | "name"
-      | "email"
-      | "status"
-      | "join_date"
-      | "phone"
-      | undefined =
-      sortConfig.field === "join_date"
-        ? "join_date"
-        : sortConfig.field === "name"
-          ? "name"
-          : sortConfig.field === "email"
-            ? "email"
-            : sortConfig.field === "status"
-              ? "status"
-              : sortConfig.field === "phone"
-                ? "phone"
-                : undefined;
+    const orderBy: "name" | "email" | "status" | "phone" | undefined =
+      sortConfig.field === "name"
+        ? "name"
+        : sortConfig.field === "email"
+          ? "email"
+          : sortConfig.field === "status"
+            ? "status"
+            : sortConfig.field === "phone"
+              ? "phone"
+              : undefined;
 
     return {
       ...baseFilters,
@@ -481,9 +472,6 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                 <SortButton field="last_payment_date">Last Payment</SortButton>
               </TableHead>
 
-              <TableHead>
-                <SortButton field="join_date">Join Date</SortButton>
-              </TableHead>
               {showActions && (
                 <TableHead className="w-[120px]">Actions</TableHead>
               )}
@@ -493,7 +481,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
             {isLoading ? (
               <TableRow>
                 <TableCell
-                  colSpan={showActions ? 16 : 15}
+                  colSpan={showActions ? 15 : 14}
                   className="py-12 text-center"
                 >
                   <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" />
@@ -503,7 +491,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
             ) : allMembers.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={showActions ? 16 : 15}
+                  colSpan={showActions ? 15 : 14}
                   className="py-12 text-center"
                 >
                   <p className="text-muted-foreground">No members found</p>
@@ -599,6 +587,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                       count={
                         member.active_subscription?.remaining_sessions || 0
                       }
+                      showTooltip={false}
                     />
                   </TableCell>
 
@@ -608,6 +597,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                       count={
                         member.session_stats?.scheduled_sessions_count || 0
                       }
+                      showTooltip={false}
                     />
                   </TableCell>
 
@@ -615,6 +605,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                   <TableCell className="hidden lg:table-cell">
                     <BalanceBadge
                       amount={member.active_subscription?.balance_due || 0}
+                      showTooltip={false}
                     />
                   </TableCell>
 
@@ -623,10 +614,6 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                     <DateCell date={member.last_payment_date} />
                   </TableCell>
 
-                  {/* Join Date */}
-                  <TableCell className="text-sm">
-                    <DateCell date={member.join_date} />
-                  </TableCell>
                   {showActions && (
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center space-x-1">
