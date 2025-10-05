@@ -738,7 +738,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
             </div>
 
             {/* Page indicator */}
-            <div className="text-sm">
+            <div className="text-sm whitespace-nowrap">
               Page {page} of {totalPages}
             </div>
 
