@@ -24,7 +24,6 @@ export interface ColumnVisibility {
   scheduledSessions: boolean;
   balanceDue: boolean;
   lastPayment: boolean;
-  joinDate: boolean;
 }
 
 export const DEFAULT_VISIBILITY: ColumnVisibility = {
@@ -38,7 +37,6 @@ export const DEFAULT_VISIBILITY: ColumnVisibility = {
   scheduledSessions: true,
   balanceDue: true,
   lastPayment: true,
-  joinDate: true,
 };
 
 interface ColumnVisibilityToggleProps {
@@ -145,13 +143,6 @@ export const ColumnVisibilityToggle = memo(function ColumnVisibilityToggle({
           onCheckedChange={() => handleToggle("lastPayment")}
         >
           Last Payment
-        </DropdownMenuCheckboxItem>
-
-        <DropdownMenuCheckboxItem
-          checked={visibility.joinDate}
-          onCheckedChange={() => handleToggle("joinDate")}
-        >
-          Join Date
         </DropdownMenuCheckboxItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -20,10 +20,10 @@
 
 ### ✅ Completed Stories (2/5)
 
-| ID     | Story                                      | Priority | Complexity | Completed  | Notes                                      |
-| ------ | ------------------------------------------ | -------- | ---------- | ---------- | ------------------------------------------ |
-| US-001 | Implement shadcn/ui Pagination Component   | P0       | Medium     | 2025-10-05 | Pagination working, build & linting pass ✓ |
-| US-002 | Remove Unnecessary Columns and UI Elements | P1       | Small      | 2025-10-05 | Join Date removed, tooltips disabled ✓     |
+| ID     | Story                                      | Priority | Complexity | Completed  | Notes                                                       |
+| ------ | ------------------------------------------ | -------- | ---------- | ---------- | ----------------------------------------------------------- |
+| US-001 | Implement shadcn/ui Pagination Component   | P0       | Medium     | 2025-10-05 | Pagination working, build & linting pass ✓                  |
+| US-002 | Remove Unnecessary Columns and UI Elements | P1       | Small      | 2025-10-05 | Column visibility fixed, filters improved, 843 tests pass ✓ |
 
 ### 🟡 In Progress Stories (0/5)
 
@@ -130,10 +130,14 @@ _None yet_
 - ✅ US-001 implemented and tested
 - ✅ Pagination component working
 - ✅ Build and linting passing
-- ✅ US-002 implemented and tested
+- ✅ US-002 completed
 - ✅ Join Date column removed from table
 - ✅ Tooltips disabled for SessionCountBadge and BalanceBadge
-- ✅ All 847 tests passing
+- ✅ Column visibility toggle fixed and working
+- ✅ Join Date removed from column visibility dropdown
+- ✅ Date range filter removed (unnecessary)
+- ✅ Filter layout improved (search + filters in row, badge below)
+- ✅ All 843 tests passing
 - ✅ Build successful with 0 errors
 
 ---

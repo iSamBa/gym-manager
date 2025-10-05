@@ -17,20 +17,11 @@ import type { MemberStatus } from "@/features/database/lib/types";
 // Simple filter state - only the essentials
 export interface SimpleMemberFilters {
   status?: MemberStatus | "all";
-  dateRange?: "all" | "this-month" | "last-3-months" | "this-year";
   memberType?: "full" | "trial";
   hasActiveSubscription?: boolean;
   hasUpcomingSessions?: boolean;
   hasOutstandingBalance?: boolean;
 }
-
-// Predefined date filter options
-const DATE_RANGE_OPTIONS = [
-  { value: "all", label: "All Time" },
-  { value: "this-month", label: "This Month" },
-  { value: "last-3-months", label: "Last 3 Months" },
-  { value: "this-year", label: "This Year" },
-];
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All Statuses" },
@@ -58,7 +49,6 @@ export const SimpleMemberFilters = memo(function SimpleMemberFilters({
   const handleClearFilters = useCallback(() => {
     onFiltersChange({
       status: "all",
-      dateRange: "all",
       memberType: undefined,
       hasActiveSubscription: undefined,
       hasUpcomingSessions: undefined,
@@ -68,7 +58,7 @@ export const SimpleMemberFilters = memo(function SimpleMemberFilters({
 
   return (
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
-      {/* Status Filter (Existing) */}
+      {/* Status Filter */}
       <Select
         value={filters.status || "all"}
         onValueChange={(value) =>
@@ -83,28 +73,6 @@ export const SimpleMemberFilters = memo(function SimpleMemberFilters({
         </SelectTrigger>
         <SelectContent>
           {STATUS_OPTIONS.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Date Range Filter (Existing) */}
-      <Select
-        value={filters.dateRange || "all"}
-        onValueChange={(value) =>
-          onFiltersChange({
-            ...filters,
-            dateRange: value as SimpleMemberFilters["dateRange"],
-          })
-        }
-      >
-        <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="Joined" />
-        </SelectTrigger>
-        <SelectContent>
-          {DATE_RANGE_OPTIONS.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
             </SelectItem>
@@ -212,27 +180,6 @@ export const SimpleMemberFilters = memo(function SimpleMemberFilters({
           <SelectItem value="no">Fully Paid</SelectItem>
         </SelectContent>
       </Select>
-
-      {/* Active Filter Count Badge */}
-      {activeFilterCount > 0 && (
-        <Badge variant="secondary" className="gap-1">
-          <Filter className="h-3 w-3" />
-          {activeFilterCount} active
-        </Badge>
-      )}
-
-      {/* Clear Filters Button */}
-      {activeFilterCount > 0 && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleClearFilters}
-          className="h-9 gap-1"
-        >
-          <X className="h-4 w-4" />
-          Clear
-        </Button>
-      )}
     </div>
   );
 });

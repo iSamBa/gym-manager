@@ -72,6 +72,8 @@ import type {
   MemberWithEnhancedDetails,
 } from "@/features/database/lib/types";
 import type { MemberFilters } from "@/features/database/lib/utils";
+import type { ColumnVisibility } from "./ColumnVisibilityToggle";
+import { DEFAULT_VISIBILITY } from "./ColumnVisibilityToggle";
 
 type SortField =
   | "name"
@@ -98,6 +100,7 @@ interface AdvancedMemberTableProps {
   onMemberHover?: (member: MemberWithEnhancedDetails) => void;
   showActions?: boolean;
   className?: string;
+  columnVisibility?: ColumnVisibility | null;
 }
 
 interface SortConfig {
@@ -116,7 +119,10 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
   onMemberHover,
   showActions = true,
   className,
+  columnVisibility: propColumnVisibility,
 }: AdvancedMemberTableProps) {
+  // Use provided visibility or default
+  const columnVisibility = propColumnVisibility || DEFAULT_VISIBILITY;
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
     new Set()
   );
@@ -437,40 +443,66 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
               <TableHead>Phone</TableHead>
 
               {/* NEW COLUMNS - Gender & DOB */}
-              <TableHead className="hidden xl:table-cell">
-                <SortButton field="gender">Gender</SortButton>
-              </TableHead>
-              <TableHead className="hidden xl:table-cell">
-                <SortButton field="date_of_birth">DOB</SortButton>
-              </TableHead>
+              {columnVisibility.gender && (
+                <TableHead className="hidden xl:table-cell">
+                  <SortButton field="gender">Gender</SortButton>
+                </TableHead>
+              )}
+              {columnVisibility.dateOfBirth && (
+                <TableHead className="hidden xl:table-cell">
+                  <SortButton field="date_of_birth">DOB</SortButton>
+                </TableHead>
+              )}
 
               {/* NEW COLUMN - Member Type */}
-              <TableHead>
-                <SortButton field="member_type">Type</SortButton>
-              </TableHead>
+              {columnVisibility.memberType && (
+                <TableHead>
+                  <SortButton field="member_type">Type</SortButton>
+                </TableHead>
+              )}
 
               <TableHead>
                 <SortButton field="status">Status</SortButton>
               </TableHead>
 
               {/* NEW COLUMNS - Subscription & Sessions */}
-              <TableHead className="hidden lg:table-cell">
-                <SortButton field="subscription_end_date">Sub End</SortButton>
-              </TableHead>
-              <TableHead className="hidden lg:table-cell">
-                Last Session
-              </TableHead>
-              <TableHead className="hidden lg:table-cell">
-                Next Session
-              </TableHead>
-              <TableHead className="hidden lg:table-cell">Remaining</TableHead>
-              <TableHead className="hidden lg:table-cell">Scheduled</TableHead>
-              <TableHead className="hidden lg:table-cell">
-                <SortButton field="balance_due">Balance</SortButton>
-              </TableHead>
-              <TableHead className="hidden xl:table-cell">
-                <SortButton field="last_payment_date">Last Payment</SortButton>
-              </TableHead>
+              {columnVisibility.subscriptionEnd && (
+                <TableHead className="hidden lg:table-cell">
+                  <SortButton field="subscription_end_date">Sub End</SortButton>
+                </TableHead>
+              )}
+              {columnVisibility.lastSession && (
+                <TableHead className="hidden lg:table-cell">
+                  Last Session
+                </TableHead>
+              )}
+              {columnVisibility.nextSession && (
+                <TableHead className="hidden lg:table-cell">
+                  Next Session
+                </TableHead>
+              )}
+              {columnVisibility.remainingSessions && (
+                <TableHead className="hidden lg:table-cell">
+                  Remaining
+                </TableHead>
+              )}
+              {columnVisibility.scheduledSessions && (
+                <TableHead className="hidden lg:table-cell">
+                  Scheduled
+                </TableHead>
+              )}
+              {columnVisibility.balanceDue && (
+                <TableHead className="hidden lg:table-cell">
+                  <SortButton field="balance_due">Balance</SortButton>
+                </TableHead>
+              )}
+              {columnVisibility.lastPayment && (
+                <TableHead className="hidden xl:table-cell">
+                  <SortButton field="last_payment_date">
+                    Last Payment
+                  </SortButton>
+                </TableHead>
+              )}
 
               {showActions && (
                 <TableHead className="w-[120px]">Actions</TableHead>
@@ -531,23 +563,29 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                   </TableCell>
 
                   {/* Gender */}
-                  <TableCell className="hidden xl:table-cell">
-                    <span className="text-sm capitalize">
-                      {member.gender || "-"}
-                    </span>
-                  </TableCell>
+                  {columnVisibility.gender && (
+                    <TableCell className="hidden xl:table-cell">
+                      <span className="text-sm capitalize">
+                        {member.gender || "-"}
+                      </span>
+                    </TableCell>
+                  )}
 
                   {/* Date of Birth */}
-                  <TableCell className="hidden xl:table-cell">
-                    <DateCell date={member.date_of_birth || null} />
-                  </TableCell>
+                  {columnVisibility.dateOfBirth && (
+                    <TableCell className="hidden xl:table-cell">
+                      <DateCell date={member.date_of_birth || null} />
+                    </TableCell>
+                  )}
 
                   {/* Member Type */}
-                  <TableCell>
-                    <MemberTypeBadge
-                      type={member.member_type as "full" | "trial"}
-                    />
-                  </TableCell>
+                  {columnVisibility.memberType && (
+                    <TableCell>
+                      <MemberTypeBadge
+                        type={member.member_type as "full" | "trial"}
+                      />
+                    </TableCell>
+                  )}
 
                   {/* Status */}
                   <TableCell onClick={(e) => e.stopPropagation()}>
@@ -559,60 +597,74 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                   </TableCell>
 
                   {/* Subscription End Date */}
-                  <TableCell className="hidden lg:table-cell">
-                    <DateCell
-                      date={member.active_subscription?.end_date || null}
-                    />
-                  </TableCell>
+                  {columnVisibility.subscriptionEnd && (
+                    <TableCell className="hidden lg:table-cell">
+                      <DateCell
+                        date={member.active_subscription?.end_date || null}
+                      />
+                    </TableCell>
+                  )}
 
                   {/* Last Session */}
-                  <TableCell className="hidden lg:table-cell">
-                    <DateCell
-                      date={member.session_stats?.last_session_date || null}
-                      format="short"
-                    />
-                  </TableCell>
+                  {columnVisibility.lastSession && (
+                    <TableCell className="hidden lg:table-cell">
+                      <DateCell
+                        date={member.session_stats?.last_session_date || null}
+                        format="short"
+                      />
+                    </TableCell>
+                  )}
 
                   {/* Next Session */}
-                  <TableCell className="hidden lg:table-cell">
-                    <DateCell
-                      date={member.session_stats?.next_session_date || null}
-                      format="relative"
-                    />
-                  </TableCell>
+                  {columnVisibility.nextSession && (
+                    <TableCell className="hidden lg:table-cell">
+                      <DateCell
+                        date={member.session_stats?.next_session_date || null}
+                        format="relative"
+                      />
+                    </TableCell>
+                  )}
 
                   {/* Remaining Sessions */}
-                  <TableCell className="hidden lg:table-cell">
-                    <SessionCountBadge
-                      count={
-                        member.active_subscription?.remaining_sessions || 0
-                      }
-                      showTooltip={false}
-                    />
-                  </TableCell>
+                  {columnVisibility.remainingSessions && (
+                    <TableCell className="hidden lg:table-cell">
+                      <SessionCountBadge
+                        count={
+                          member.active_subscription?.remaining_sessions || 0
+                        }
+                        showTooltip={false}
+                      />
+                    </TableCell>
+                  )}
 
                   {/* Scheduled Sessions */}
-                  <TableCell className="hidden lg:table-cell">
-                    <SessionCountBadge
-                      count={
-                        member.session_stats?.scheduled_sessions_count || 0
-                      }
-                      showTooltip={false}
-                    />
-                  </TableCell>
+                  {columnVisibility.scheduledSessions && (
+                    <TableCell className="hidden lg:table-cell">
+                      <SessionCountBadge
+                        count={
+                          member.session_stats?.scheduled_sessions_count || 0
+                        }
+                        showTooltip={false}
+                      />
+                    </TableCell>
+                  )}
 
                   {/* Balance Due */}
-                  <TableCell className="hidden lg:table-cell">
-                    <BalanceBadge
-                      amount={member.active_subscription?.balance_due || 0}
-                      showTooltip={false}
-                    />
-                  </TableCell>
+                  {columnVisibility.balanceDue && (
+                    <TableCell className="hidden lg:table-cell">
+                      <BalanceBadge
+                        amount={member.active_subscription?.balance_due || 0}
+                        showTooltip={false}
+                      />
+                    </TableCell>
+                  )}
 
                   {/* Last Payment */}
-                  <TableCell className="hidden xl:table-cell">
-                    <DateCell date={member.last_payment_date} />
-                  </TableCell>
+                  {columnVisibility.lastPayment && (
+                    <TableCell className="hidden xl:table-cell">
+                      <DateCell date={member.last_payment_date} />
+                    </TableCell>
+                  )}
 
                   {showActions && (
                     <TableCell onClick={(e) => e.stopPropagation()}>

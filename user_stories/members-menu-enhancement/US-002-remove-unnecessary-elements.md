@@ -1,6 +1,6 @@
 # US-002: Remove Unnecessary Columns and UI Elements
 
-**Status:** 🔴 Not Started
+**Status:** ✅ Completed
 **Priority:** P1 (Should Have)
 **Complexity:** Small
 **Estimated Time:** 30 minutes
@@ -259,15 +259,16 @@ describe("MembersTable Cleanup", () => {
 
 ### Manual Testing Checklist
 
-- [ ] Join Date column not visible
-- [ ] No tooltips on Remaining Sessions when hovering
-- [ ] No tooltips on Scheduled Sessions when hovering
-- [ ] No tooltips on Balance when hovering
-- [ ] Column filter removed (or working if kept)
-- [ ] Table layout looks clean and balanced
-- [ ] Responsive design still works
-- [ ] No console errors
-- [ ] No visual artifacts or alignment issues
+- [x] Join Date column not visible
+- [x] No tooltips on Remaining Sessions when hovering
+- [x] No tooltips on Scheduled Sessions when hovering
+- [x] No tooltips on Balance when hovering
+- [x] Column visibility toggle working (Join Date not in dropdown)
+- [x] Table layout looks clean and balanced
+- [x] Responsive design still works
+- [x] No console errors
+- [x] No visual artifacts or alignment issues
+- [x] Filter layout clean (Search + filters in one row, badge below)
 
 ---
 
@@ -277,16 +278,20 @@ describe("MembersTable Cleanup", () => {
 - [x] Tooltips removed from Remaining Sessions column
 - [x] Tooltips removed from Scheduled Sessions column
 - [x] Tooltips removed from Balance column
-- [x] Column filter removed or fixed
+- [x] Column visibility toggle fixed and working
+- [x] Join Date removed from column visibility dropdown
+- [x] Date range filter removed (not needed)
+- [x] Filter layout improved (Search + filters in row, badge below)
 - [x] Unused imports cleaned up
 - [x] All acceptance criteria met
-- [x] Unit tests written and passing
-- [x] Visual regression tests passing
+- [x] Unit tests updated and passing (843 tests)
 - [x] Manual testing checklist complete
-- [x] Code reviewed
-- [x] Linting clean (`npm run lint`)
+- [x] Linting clean (0 errors, 9 pre-existing warnings)
+- [x] Build successful (0 errors)
 - [x] No TypeScript errors
 - [x] No console warnings about removed components
+
+**Completion Date:** 2025-10-05
 
 ---
 
