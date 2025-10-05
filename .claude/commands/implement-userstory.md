@@ -195,15 +195,38 @@ Definition of Done Checklist:
 
 Once all DoD items are verified, I will:
 
-### 1. Update STATUS.md
+### 1. Update User Story File
+
+Mark the user story itself as completed:
+
+**File**: `user_stories/{feature}/US-{number}-*.md`
+
+```markdown
+**Status**: ✅ Completed
+**Completed**: 2025-01-15
+**Implementation Notes**: Brief summary of approach/decisions made
+```
+
+**Example**:
+
+```markdown
+**Status**: ✅ Completed
+**Priority**: P0 (Critical)
+**Effort**: Medium
+**Dependencies**: None
+**Decision**: Option A - Remove Custom Tracker (chosen 2025-01-15)
+**Completed**: 2025-01-15
+```
+
+### 2. Update STATUS.md
 
 ```markdown
 | US-001 | Database Foundation | 🟢 Complete | Claude | 2025-01-15 | 2025-01-15 | All tests passing |
 ```
 
-### 2. Create Commit
+### 3. Create Commit
 
-```
+```bash
 feat({scope}): Implement US-{number} {title}
 
 {description of changes}
@@ -216,11 +239,11 @@ Performance: {benchmarks}
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
-### 3. Ask User
+### 4. Ask User
 
 **"User story US-{number} complete! Push changes? (yes/no)"**
 
-### 4. Show Next Steps
+### 5. Show Next Steps
 
 **"Ready for US-{next}? (yes/no)"**
 
@@ -307,6 +330,7 @@ Coverage: 92%
 Performance: All targets met ✓
 Time: 2.5 hours
 
+US-001 file updated ✓
 STATUS.md updated ✓
 Commit created ✓
 ```
@@ -317,6 +341,8 @@ Commit created ✓
 
 A user story is complete when:
 
+✅ User story file (US-XXX-\*.md) marked as completed
+✅ Completion date and implementation notes added
 ✅ All acceptance criteria verified
 ✅ All tests passing (100%)
 ✅ All DoD checkboxes checked

@@ -4,6 +4,12 @@ import "@testing-library/jest-dom";
 
 // Global test setup
 import { beforeEach, afterEach, vi } from "vitest";
+
+// CRITICAL: Set Supabase env vars BEFORE any module imports
+// This prevents "Your project's URL and API key are required" errors
+// when src/lib/supabase.ts is imported (it creates client at module level)
+process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 import {
   globalTestCleanup,
   cleanupDialogState,

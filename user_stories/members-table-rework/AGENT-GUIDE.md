@@ -10,6 +10,7 @@ This guide helps AI agents implement user stories systematically and correctly.
 
 Before starting ANY user story, verify:
 
+- [ ] **Git branch created** (see Step 0 in Implementation Workflow - MANDATORY FIRST!)
 - [ ] Read the user story completely
 - [ ] Read all dependencies (previous user stories)
 - [ ] Read `CLAUDE.md` in project root
@@ -21,6 +22,62 @@ Before starting ANY user story, verify:
 ---
 
 ## Implementation Workflow
+
+### Step 0: Git Branch Setup (MANDATORY - DO THIS FIRST!)
+
+**🚨 CRITICAL: This MUST be done BEFORE any code changes!**
+
+1. **Verify current branch and status**
+
+   ```bash
+   git status
+   git branch --show-current
+   ```
+
+2. **Create feature branch (if not already created)**
+
+   ```bash
+   # Determine feature name from user stories folder
+   # Example: members-table-rework
+
+   # Create and switch to feature branch
+   git checkout -b feature/members-table-rework
+
+   # Verify you're on the correct branch
+   git branch --show-current
+   # Expected output: feature/members-table-rework
+   ```
+
+3. **Verify branch creation**
+
+   ```bash
+   # List all branches (current branch marked with *)
+   git branch
+
+   # Confirm you're NOT on main
+   git branch --show-current | grep -q "main" && echo "❌ ERROR: Still on main!" || echo "✅ On feature branch"
+   ```
+
+4. **Document branch information**
+   - Branch name: `feature/members-table-rework`
+   - Base branch: `main`
+   - Created: [current date]
+
+**⚠️ If you're already on main with commits:**
+
+- STOP immediately
+- Ask user how to handle existing commits
+- Options: create branch from current state, stash changes, etc.
+- **NEVER commit directly to main** (violates CLAUDE.md rules)
+
+**✅ Checklist before proceeding:**
+
+- [ ] Feature branch created
+- [ ] Verified current branch is NOT main
+- [ ] Branch name follows convention: `feature/[feature-name]`
+- [ ] Ready to start making changes
+
+---
 
 ### Step 1: Understand the Context
 
