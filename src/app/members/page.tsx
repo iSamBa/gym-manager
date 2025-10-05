@@ -23,7 +23,6 @@ import {
 } from "@/features/members/hooks";
 import { memberUtils } from "@/features/database/lib/utils";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
-import { mapUserForLayout } from "@/lib/auth-utils";
 import { Users, UserCheck, UserX, Clock, Download, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -84,7 +83,7 @@ export default function MembersPage() {
 
   if (isAuthLoading) {
     return (
-      <MainLayout user={mapUserForLayout(user)}>
+      <MainLayout>
         <div className="flex min-h-[400px] items-center justify-center">
           <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
         </div>
@@ -123,11 +122,8 @@ export default function MembersPage() {
     // The cache invalidation in EditMemberDialog should handle this automatically
   };
 
-  // Convert user object to expected format for MainLayout
-  const layoutUser = mapUserForLayout(user);
-
   return (
-    <MainLayout user={layoutUser}>
+    <MainLayout>
       <div className="space-y-6">
         {/* Header Section */}
         <div className="flex items-center justify-between">

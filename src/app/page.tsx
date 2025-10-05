@@ -14,7 +14,6 @@ import {
   Activity,
 } from "lucide-react";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
-import { mapUserForLayout } from "@/lib/auth-utils";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -65,9 +64,6 @@ export default function Home() {
   if (!user) {
     return null; // useRequireAdmin will handle redirect
   }
-
-  // Convert user object to expected format for MainLayout
-  const layoutUser = mapUserForLayout(user);
 
   // Stats data using real database analytics
   const stats = dashboardStats
@@ -149,7 +145,7 @@ export default function Home() {
   const activitiesData = recentActivities || [];
 
   return (
-    <MainLayout user={layoutUser}>
+    <MainLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

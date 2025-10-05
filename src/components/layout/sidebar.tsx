@@ -21,6 +21,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { UserProfileDropdown } from "./UserProfileDropdown";
+import { ThemeToggleSidebar } from "@/components/ui/theme-toggle";
 
 interface SidebarProps {
   className?: string;
@@ -130,6 +131,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
 
       {/* Bottom utilities - sticky */}
       <div className="bg-background space-y-2 border-t p-2">
+        <ThemeToggleSidebar />
         <Button variant="ghost" className="w-full justify-start gap-2" asChild>
           <Link href="/settings" onClick={onNavigate}>
             <Settings className="h-4 w-4" />

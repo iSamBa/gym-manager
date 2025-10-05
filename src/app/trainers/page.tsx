@@ -20,7 +20,6 @@ import {
   useTrainersWithExpiringCerts,
 } from "@/features/trainers/hooks";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
-import { mapUserForLayout } from "@/lib/auth-utils";
 import {
   UserCheck,
   Users,
@@ -68,7 +67,7 @@ export default function TrainersPage() {
 
   if (isAuthLoading) {
     return (
-      <MainLayout user={mapUserForLayout(user)}>
+      <MainLayout>
         <div className="flex min-h-[400px] items-center justify-center">
           <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
         </div>
@@ -129,11 +128,8 @@ export default function TrainersPage() {
     await exportTrainers(trainers || []);
   };
 
-  // Convert user object to expected format for MainLayout
-  const layoutUser = mapUserForLayout(user);
-
   return (
-    <MainLayout user={layoutUser}>
+    <MainLayout>
       <div className="space-y-6">
         {/* Header Section */}
         <div className="flex items-center justify-between">

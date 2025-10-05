@@ -7,7 +7,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ProgressiveTrainerForm } from "@/features/trainers/components/ProgressiveTrainerForm";
 import { useCreateTrainer } from "@/features/trainers/hooks";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
-import { mapUserForLayout } from "@/lib/auth-utils";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import type { CreateTrainerData } from "@/features/database/lib/utils";
 
@@ -27,7 +26,7 @@ export default function AddTrainerPage() {
 
   if (isAuthLoading) {
     return (
-      <MainLayout user={mapUserForLayout(user)}>
+      <MainLayout>
         <div className="flex min-h-[400px] items-center justify-center">
           <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
         </div>
@@ -63,7 +62,7 @@ export default function AddTrainerPage() {
   // Show success state after submission
   if (isSubmitted && createTrainerMutation.isSuccess) {
     return (
-      <MainLayout user={mapUserForLayout(user)}>
+      <MainLayout>
         <div className="container mx-auto py-4">
           <div className="flex min-h-[60vh] items-center justify-center">
             <div className="max-w-md space-y-6 text-center">
@@ -88,7 +87,7 @@ export default function AddTrainerPage() {
   }
 
   return (
-    <MainLayout user={mapUserForLayout(user)}>
+    <MainLayout>
       <div className="container mx-auto py-4">
         {/* Error Display */}
         {createTrainerMutation.error && (
