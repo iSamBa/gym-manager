@@ -39,8 +39,7 @@ export const AddPaymentButton = memo(function AddPaymentButton({
 
   // Fetch member's subscriptions when dialog opens
   const { data: subscriptions = [], isLoading } = useMemberSubscriptionHistory(
-    member.id,
-    { enabled: open }
+    member.id
   );
 
   const handleSuccess = () => {

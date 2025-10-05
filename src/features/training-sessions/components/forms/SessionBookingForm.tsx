@@ -47,7 +47,7 @@ import { useTrainers } from "@/features/trainers/hooks";
 const sessionBookingSchema = z.object({
   memberId: z.string().min(1, "Member is required"),
   trainerId: z.string().min(1, "Trainer is required"),
-  sessionDate: z.date({ required_error: "Session date is required" }),
+  sessionDate: z.date(),
   sessionTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
   location: z.string().min(1, "Location is required"),

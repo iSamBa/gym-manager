@@ -112,15 +112,6 @@ export default function MembersPage() {
   const pendingMembers = memberCountByStatus?.pending || 0;
 
   // Handler functions for member actions
-  const handleViewMember = (member: Member) => {
-    router.push(`/members/${member.id}`);
-  };
-
-  const handleEditMember = (member: Member) => {
-    setEditingMember(member);
-    setIsEditDialogOpen(true);
-  };
-
   const handleMemberClick = (member: Member) => {
     router.push(`/members/${member.id}`);
   };
@@ -309,8 +300,6 @@ export default function MembersPage() {
                     ...databaseFilters,
                   },
                 })}
-            onView={handleViewMember}
-            onEdit={handleEditMember}
             onMemberClick={handleMemberClick}
             onMemberHover={handleMemberHover}
             columnVisibility={columnVisibility}
