@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 import {
   Users,
   UserCheck,
@@ -27,20 +28,51 @@ interface SidebarProps {
 export function Sidebar({ className, onNavigate }: SidebarProps) {
   const pathname = usePathname();
 
-  const navigation = [
-    { name: "Dashboard", href: "/", icon: Home },
+  const overviewNav = [{ name: "Dashboard", href: "/", icon: Home }] as const;
+
+  const peopleNav = [
     { name: "Members", href: "/members", icon: Users },
     { name: "Trainers", href: "/trainers", icon: UserCheck },
     { name: "Training Sessions", href: "/training-sessions", icon: Calendar },
+  ] as const;
+
+  const businessNav = [
     { name: "Plans", href: "/plans", icon: Package },
     { name: "Subscriptions", href: "/subscriptions", icon: CreditCard },
     { name: "Payments", href: "/payments", icon: DollarSign },
+  ] as const;
+
+  const insightsNav = [
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
   ] as const;
 
   const isActiveRoute = (href: string) => {
     return pathname === href || (href !== "/" && pathname.startsWith(href));
   };
+
+  const renderNavItems = (
+    items: readonly { name: string; href: string; icon: React.ElementType }[]
+  ) => (
+    <>
+      {items.map((item) => {
+        const isActive = isActiveRoute(item.href);
+
+        return (
+          <Button
+            key={item.name}
+            variant={isActive ? "secondary" : "ghost"}
+            className={cn("w-full justify-start", isActive && "bg-secondary")}
+            asChild
+          >
+            <Link href={item.href} onClick={onNavigate}>
+              <item.icon className="mr-2 h-4 w-4" />
+              {item.name}
+            </Link>
+          </Button>
+        );
+      })}
+    </>
+  );
 
   return (
     <div className={cn("pb-12", className)}>
@@ -52,27 +84,43 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
             </div>
             Gym Manager
           </h2>
-          <div className="space-y-1">
-            {navigation.map((item) => {
-              const isActive = isActiveRoute(item.href);
 
-              return (
-                <Button
-                  key={item.name}
-                  variant={isActive ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start",
-                    isActive && "bg-secondary"
-                  )}
-                  asChild
-                >
-                  <Link href={item.href} onClick={onNavigate}>
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.name}
-                  </Link>
-                </Button>
-              );
-            })}
+          {/* Overview Section */}
+          <div className="space-y-1">
+            <h4 className="text-muted-foreground px-4 py-2 text-sm font-semibold">
+              Overview
+            </h4>
+            {renderNavItems(overviewNav)}
+          </div>
+
+          <Separator className="my-4" />
+
+          {/* People Management Section */}
+          <div className="space-y-1">
+            <h4 className="text-muted-foreground px-4 py-2 text-sm font-semibold">
+              People Management
+            </h4>
+            {renderNavItems(peopleNav)}
+          </div>
+
+          <Separator className="my-4" />
+
+          {/* Business Operations Section */}
+          <div className="space-y-1">
+            <h4 className="text-muted-foreground px-4 py-2 text-sm font-semibold">
+              Business Operations
+            </h4>
+            {renderNavItems(businessNav)}
+          </div>
+
+          <Separator className="my-4" />
+
+          {/* Insights Section */}
+          <div className="space-y-1">
+            <h4 className="text-muted-foreground px-4 py-2 text-sm font-semibold">
+              Insights
+            </h4>
+            {renderNavItems(insightsNav)}
           </div>
         </div>
       </div>
