@@ -67,6 +67,25 @@ export type SessionType =
   | "consultation"
   | "assessment";
 
+// Member Profile Enhancement - Equipment & Referral Tracking
+export type UniformSize = "XS" | "S" | "M" | "L" | "XL";
+export type VestSize =
+  | "V1"
+  | "V2"
+  | "V2_SMALL_EXT"
+  | "V2_LARGE_EXT"
+  | "V2_DOUBLE_EXT";
+export type HipBeltSize = "V1" | "V2";
+export type ReferralSource =
+  | "instagram"
+  | "member_referral"
+  | "website_ib"
+  | "prospection"
+  | "studio"
+  | "phone"
+  | "chatbot";
+export type TrainingPreference = "mixed" | "women_only";
+
 // Address interface for JSON field
 export interface Address {
   street?: string;
@@ -265,6 +284,14 @@ export interface Member {
   marketing_consent: boolean;
   waiver_signed: boolean;
   waiver_signed_date?: string;
+  // Equipment & Referral Tracking (US-001)
+  uniform_size: UniformSize;
+  uniform_received: boolean;
+  vest_size: VestSize;
+  hip_belt_size: HipBeltSize;
+  referral_source: ReferralSource;
+  referred_by_member_id?: string;
+  training_preference?: TrainingPreference;
   created_by?: string;
   created_at: string;
   updated_at: string;

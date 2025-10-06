@@ -12,6 +12,16 @@ import type {
 } from "../types";
 import type { MemberFilters } from "../utils";
 
+// Helper for required member fields (US-001)
+const requiredMemberFields = {
+  member_type: "full",
+  uniform_size: "M" as const,
+  uniform_received: false,
+  vest_size: "V1" as const,
+  hip_belt_size: "V1" as const,
+  referral_source: "studio" as const,
+};
+
 describe("US-002: Enhanced Member Types", () => {
   describe("Test 1: Type Inference", () => {
     it("should compile with all fields present", () => {
@@ -28,6 +38,7 @@ describe("US-002: Enhanced Member Types", () => {
         waiver_signed: true,
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
+        ...requiredMemberFields,
 
         // Enhanced fields (optional)
         active_subscription: {
@@ -63,6 +74,7 @@ describe("US-002: Enhanced Member Types", () => {
         waiver_signed: true,
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
+        ...requiredMemberFields,
         last_payment_date: null,
         // active_subscription and session_stats can be undefined
       };
@@ -140,6 +152,7 @@ describe("US-002: Enhanced Member Types", () => {
         waiver_signed: true,
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
+        ...requiredMemberFields,
       };
 
       expect(oldMember).toBeDefined();
@@ -160,6 +173,7 @@ describe("US-002: Enhanced Member Types", () => {
         waiver_signed: true,
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
+        ...requiredMemberFields,
         last_payment_date: null,
       };
 
@@ -184,6 +198,7 @@ describe("US-002: Enhanced Member Types", () => {
         waiver_signed: true,
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
+        ...requiredMemberFields,
         last_payment_date: null,
       };
 
