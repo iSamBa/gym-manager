@@ -966,21 +966,7 @@ export const trainerUtils = {
           );
         }
 
-        // Then delete associated trainer sessions
-        const { error: sessionsError } = await supabase
-          .from("trainer_sessions")
-          .delete()
-          .eq("trainer_id", id);
-
-        if (sessionsError) {
-          throw new DatabaseError(
-            "Failed to delete trainer sessions",
-            sessionsError.code,
-            sessionsError
-          );
-        }
-
-        // Then delete trainer record
+        // Delete trainer record (CASCADE will handle training_sessions)
         const { error: trainerError } = await supabase
           .from("trainers")
           .delete()

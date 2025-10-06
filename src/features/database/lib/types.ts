@@ -296,15 +296,7 @@ export interface MemberEmergencyContact {
 }
 
 // Equipment
-export interface EquipmentCategory {
-  id: string;
-  name: string;
-  description?: string;
-  color?: string;
-  icon?: string;
-  created_at: string;
-  updated_at: string;
-}
+// EquipmentCategory table has been removed - equipment categorization not used
 
 export interface Equipment {
   id: string;
@@ -334,30 +326,7 @@ export interface Equipment {
   updated_at: string;
 }
 
-export interface EquipmentMaintenanceLog {
-  id: string;
-  equipment_id: string;
-  maintenance_type: MaintenanceType;
-  status: MaintenanceStatus;
-  scheduled_date: string;
-  completed_date?: string;
-  assigned_to?: string;
-  performed_by?: string;
-  title: string;
-  description?: string;
-  work_performed?: string;
-  parts_replaced?: string[];
-  parts_cost?: number;
-  labor_hours?: number;
-  labor_cost?: number;
-  total_cost?: number;
-  notes?: string;
-  next_maintenance_date?: string;
-  images?: string[];
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-}
+// EquipmentMaintenanceLog table has been removed - maintenance system not implemented
 
 // Subscriptions
 export interface SubscriptionPlan {
@@ -390,12 +359,6 @@ export interface MemberSubscription {
   cancellation_reason?: string;
   cancelled_by?: string;
   notes?: string;
-  current_session_credits?: number;
-  total_sessions_consumed?: number;
-  current_period_sessions_used?: number;
-  rollover_sessions_available?: number;
-  last_session_reset_date?: string;
-  session_tracking_enabled?: boolean;
   plan_name_snapshot?: string;
   total_sessions_snapshot?: number;
   total_amount_snapshot?: number;
@@ -403,7 +366,6 @@ export interface MemberSubscription {
   used_sessions?: number;
   paid_amount?: number;
   upgraded_to_id?: string;
-  remaining_sessions?: number;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -440,17 +402,7 @@ export interface SubscriptionPayment {
   updated_at: string;
 }
 
-export interface PaymentReminder {
-  id: string;
-  payment_id: string;
-  member_id: string;
-  reminder_date: string;
-  reminder_type: string;
-  status: string;
-  sent_at?: string;
-  message_content?: string;
-  created_at: string;
-}
+// PaymentReminder table has been removed - feature not implemented
 
 // Trainers and Classes
 export interface TrainerSpecialization {
@@ -482,23 +434,7 @@ export interface Trainer {
   updated_at: string;
 }
 
-export interface ClassType {
-  id: string;
-  name: string;
-  description?: string;
-  difficulty: ClassDifficulty;
-  duration_minutes: number;
-  max_participants: number;
-  min_participants: number;
-  equipment_needed?: string[];
-  room_requirements?: string;
-  color?: string;
-  icon?: string;
-  is_active: boolean;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-}
+// ClassType table has been removed - class typing system not used
 
 export interface Class {
   id: string;
@@ -542,39 +478,9 @@ export interface ClassBooking {
   updated_at: string;
 }
 
-export interface TrainerSession {
-  id: string;
-  trainer_id: string;
-  member_id: string;
-  session_type: SessionType;
-  date: string;
-  start_time: string;
-  end_time: string;
-  status: ClassStatus;
-  price: number;
-  payment_status: PaymentStatus;
-  location?: string;
-  goals?: string;
-  workout_plan?: string;
-  notes?: string;
-  member_feedback?: string;
-  trainer_notes?: string;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-}
+// TrainerSession table has been removed - duplicate of training_sessions
 
-export interface AttendanceLog {
-  id: string;
-  member_id: string;
-  check_in_time: string;
-  check_out_time?: string;
-  class_id?: string;
-  trainer_session_id?: string;
-  location?: string;
-  notes?: string;
-  created_at: string;
-}
+// AttendanceLog table has been removed - attendance system not implemented
 
 // Joined types for queries with relations
 export interface MemberWithSubscription extends Member {
@@ -584,23 +490,21 @@ export interface MemberWithSubscription extends Member {
   emergency_contacts?: MemberEmergencyContact[];
 }
 
+// ClassWithDetails simplified - ClassType removed
 export interface ClassWithDetails extends Class {
-  class_type?: ClassType;
   trainer?: Trainer & {
     user_profile?: UserProfile;
   };
   bookings?: ClassBooking[];
 }
 
-export interface EquipmentWithCategory extends Equipment {
-  category?: EquipmentCategory;
-  maintenance_logs?: EquipmentMaintenanceLog[];
-}
+// EquipmentWithCategory simplified - category and maintenance removed
+// Type alias since no additional fields are needed
+export type EquipmentWithCategory = Equipment;
 
 export interface TrainerWithProfile extends Trainer {
   user_profile?: UserProfile;
   specializations_details?: TrainerSpecialization[];
-  sessions?: TrainerSession[];
   classes?: Class[];
 }
 
@@ -630,9 +534,8 @@ export interface ClassStats {
 
 export interface EquipmentStats {
   total_equipment: number;
-  equipment_needing_maintenance: number;
   equipment_out_of_order: number;
-  upcoming_maintenance: EquipmentMaintenanceLog[];
+  // Maintenance tracking removed
 }
 
 // Enhanced Member Types for Members Table Rework (US-002)
