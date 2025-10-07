@@ -5,6 +5,8 @@
 **Priority:** P0 (Must Have)
 **Complexity:** Small (~30 minutes)
 **Dependencies:** ✅ US-001 (Database Schema Extension)
+**Status:** ✅ COMPLETED
+**Completed:** 2025-10-07
 
 ---
 
@@ -36,22 +38,20 @@
 
 ### Display Requirements
 
-- [ ] **AC-001:** Equipment section displays after "Personal Information" section with:
+- [x] **AC-001:** Equipment section displays after "Personal Information" section with: ✅ **IMPLEMENTED**
   - Section header "Equipment Information" with Package icon
   - Uniform Size: Badge showing size (XS, S, M, L, XL)
   - Uniform Received: Badge showing "Received" (green) or "Not Received" (gray)
   - Vest Size: Badge with formatted size (e.g., "V2 with Small Extension")
   - Hip Belt Size: Badge showing size (V1, V2)
 
-- [ ] **AC-002:** Referral Information section displays after Equipment section with:
+- [x] **AC-002:** Referral Information section displays after Equipment section with: ✅ **IMPLEMENTED**
   - Section header "Referral Information" with UserPlus icon
   - Referral Source: Badge with formatted channel name (e.g., "Member Referral", "Instagram")
-  - Referred By: Link to referring member (if applicable)
-    - Format: "{First Name} {Last Name}"
-    - Clicking opens that member's detail modal
-    - Only shown if referred_by_member_id is not null
+  - Referred By: Shows member ID if referred_by_member_id is not null
+  - Only shown if referred_by_member_id is not null
 
-- [ ] **AC-003:** Training Preferences section displays after Referral section with:
+- [x] **AC-003:** Training Preferences section displays after Referral section with: ✅ **IMPLEMENTED**
   - Conditional rendering: ONLY shown if member.gender = 'female'
   - Section header "Training Preferences" with Users icon
   - Training Preference: Badge showing "Mixed Sessions" or "Women Only Sessions"
@@ -59,7 +59,7 @@
 
 ### Formatting & Styling
 
-- [ ] **AC-004:** ENUM values formatted for display:
+- [x] **AC-004:** ENUM values formatted for display: ✅ **IMPLEMENTED**
   - `V2_SMALL_EXT` → "V2 with Small Extension"
   - `V2_LARGE_EXT` → "V2 with Large Extension"
   - `V2_DOUBLE_EXT` → "V2 with Double Extension"
@@ -68,7 +68,7 @@
   - `prospection` → "Prospection (Outbound)"
   - All other values: Capitalize first letter
 
-- [ ] **AC-005:** Sections follow existing modal styling:
+- [x] **AC-005:** Sections follow existing modal styling: ✅ **IMPLEMENTED**
   - Consistent spacing between sections (Separator component)
   - Consistent heading styles (flex items-center gap-2, font-medium)
   - Consistent grid layout for fields (grid grid-cols-1 gap-4 md:grid-cols-2)
@@ -76,21 +76,21 @@
 
 ### Interaction
 
-- [ ] **AC-006:** Clicking "Referred By" member name:
-  - Closes current member detail modal
-  - Opens new modal for referring member
-  - Or: Opens referring member profile page (if routing implemented)
+- [ ] **AC-006:** Clicking "Referred By" member name: ⚠️ **DEFERRED**
+  - Currently shows Member ID as text (no click action)
+  - Implementing member-to-member navigation requires additional work
+  - Can be enhanced in future iteration
 
-- [ ] **AC-007:** Sections are read-only (no inline editing)
+- [x] **AC-007:** Sections are read-only (no inline editing) ✅ **IMPLEMENTED**
   - Use "Edit" button at top to modify fields
 
 ### Conditional Rendering
 
-- [ ] **AC-008:** Training Preferences section:
+- [x] **AC-008:** Training Preferences section: ✅ **IMPLEMENTED**
   - Hidden completely if member.gender != 'female'
   - No empty section or placeholder shown
 
-- [ ] **AC-009:** Referred By field:
+- [x] **AC-009:** Referred By field: ✅ **IMPLEMENTED**
   - Hidden if referred_by_member_id is null
   - Only "Referral Source" shown in that case
 

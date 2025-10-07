@@ -43,9 +43,18 @@ const mockMember: Member = {
   marketing_consent: true,
   waiver_signed: true,
   waiver_signed_date: "2024-01-15",
-  created_by: null,
+  created_by: undefined,
   created_at: "2024-01-15T10:00:00Z",
   updated_at: "2024-01-15T10:00:00Z",
+  // US-001: New required fields
+  member_type: "full",
+  uniform_size: "M",
+  uniform_received: false,
+  vest_size: "V1",
+  hip_belt_size: "V1",
+  referral_source: "studio",
+  referred_by_member_id: undefined,
+  training_preference: undefined,
 };
 
 describe("MemberDetailsModal", () => {
@@ -161,12 +170,12 @@ describe("MemberDetailsModal", () => {
   });
 
   it("handles missing optional data gracefully", () => {
-    const memberWithoutOptionalData = {
+    const memberWithoutOptionalData: Member = {
       ...mockMember,
-      phone: null,
-      fitness_goals: null,
-      medical_conditions: null,
-      notes: null,
+      phone: undefined,
+      fitness_goals: undefined,
+      medical_conditions: undefined,
+      notes: undefined,
     };
 
     render(
