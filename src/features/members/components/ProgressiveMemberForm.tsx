@@ -45,6 +45,9 @@ import {
 import { cn } from "@/lib/utils";
 import type { Member } from "@/features/database/lib/types";
 import { toast } from "sonner";
+import { Package, UserPlus, Users } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useMembers } from "@/features/members/hooks";
 
 // Schema for each step
 const personalInfoSchema = z.object({
@@ -93,12 +96,83 @@ const settingsSchema = z.object({
   waiver_signed: z.boolean(),
 });
 
+// US-004: Equipment, Referral, and Training Preference schemas
+const equipmentSchema = z.object({
+  uniform_size: z.enum(["XS", "S", "M", "L", "XL"], {
+    required_error: "Uniform size is required",
+  }),
+  uniform_received: z.boolean().default(false),
+  vest_size: z.enum(
+    ["V1", "V2", "V2_SMALL_EXT", "V2_LARGE_EXT", "V2_DOUBLE_EXT"],
+    {
+      required_error: "Vest size is required",
+    }
+  ),
+  hip_belt_size: z.enum(["V1", "V2"], {
+    required_error: "Hip belt size is required",
+  }),
+});
+
+const referralSchema = z.object({
+  referral_source: z.enum(
+    [
+      "instagram",
+      "member_referral",
+      "website_ib",
+      "prospection",
+      "studio",
+      "phone",
+      "chatbot",
+    ],
+    {
+      required_error: "Referral source is required",
+    }
+  ),
+  referred_by_member_id: z.string().uuid().optional(),
+});
+
+const trainingPreferenceSchema = z.object({
+  training_preference: z.enum(["mixed", "women_only"]).optional(),
+});
+
 // Complete form schema
 const memberFormSchema = personalInfoSchema
   .merge(contactInfoSchema)
   .merge(addressSchema)
+  .merge(equipmentSchema)
+  .merge(referralSchema)
+  .merge(trainingPreferenceSchema)
   .merge(healthInfoSchema)
-  .merge(settingsSchema);
+  .merge(settingsSchema)
+  .refine(
+    (data) => {
+      // Conditional validation: referred_by required if member_referral
+      if (
+        data.referral_source === "member_referral" &&
+        !data.referred_by_member_id
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Please select the referring member",
+      path: ["referred_by_member_id"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Conditional validation: training_preference only for females
+      if (data.training_preference && data.gender !== "female") {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Training preference only applies to female members",
+      path: ["training_preference"],
+    }
+  );
 
 type MemberFormData = z.infer<typeof memberFormSchema>;
 
@@ -136,6 +210,28 @@ const steps: StepInfo[] = [
   },
   {
     id: 4,
+    title: "Equipment",
+    description: "Uniform and equipment sizing",
+    icon: Package,
+    schema: equipmentSchema,
+  },
+  {
+    id: 5,
+    title: "Referral",
+    description: "How you heard about us",
+    icon: UserPlus,
+    schema: referralSchema,
+  },
+  {
+    id: 6,
+    title: "Training Preference",
+    description: "Session preferences (optional)",
+    icon: Users,
+    schema: trainingPreferenceSchema,
+    isOptional: true,
+  },
+  {
+    id: 7,
     title: "Health & Fitness",
     description: "Goals and medical info",
     icon: Target,
@@ -143,7 +239,7 @@ const steps: StepInfo[] = [
     isOptional: true,
   },
   {
-    id: 5,
+    id: 8,
     title: "Settings",
     description: "Status and preferences",
     icon: Settings,
@@ -158,6 +254,167 @@ interface ProgressiveMemberFormProps {
   isLoading?: boolean;
   className?: string;
   showHeader?: boolean;
+}
+
+// Helper component for Referral Section
+function ReferralSectionContent({
+  form,
+  member,
+}: {
+  form: ReturnType<typeof useForm<MemberFormData>>;
+  member?: Member | null;
+}) {
+  const referralSource = form.watch("referral_source");
+  const { data: membersData } = useMembers({
+    page: 1,
+    limit: 1000,
+  });
+
+  const availableMembers = React.useMemo(() => {
+    const members = membersData?.pages?.[0]?.data || [];
+    if (!member?.id) return members;
+    return members.filter((m) => m.id !== member.id);
+  }, [membersData, member?.id]);
+
+  const showReferredBy = referralSource === "member_referral";
+
+  return (
+    <div className="space-y-4">
+      <FormField
+        control={form.control}
+        name="referral_source"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>How did you hear about us? *</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Select referral source" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="instagram">Instagram</SelectItem>
+                <SelectItem value="member_referral">Member Referral</SelectItem>
+                <SelectItem value="website_ib">Website (Inbound)</SelectItem>
+                <SelectItem value="prospection">
+                  Prospection (Outbound)
+                </SelectItem>
+                <SelectItem value="studio">Studio (Walk-in)</SelectItem>
+                <SelectItem value="phone">Phone</SelectItem>
+                <SelectItem value="chatbot">Chatbot</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {showReferredBy && (
+        <FormField
+          control={form.control}
+          name="referred_by_member_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Referred By Member *</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Select member" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {availableMembers.length === 0 ? (
+                    <SelectItem value="no-members" disabled>
+                      No members available
+                    </SelectItem>
+                  ) : (
+                    availableMembers.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.first_name} {m.last_name} ({m.email})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Select the member who referred this new member
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+    </div>
+  );
+}
+
+// Helper component for Training Preference Section
+function TrainingPreferenceSectionContent({
+  form,
+}: {
+  form: ReturnType<typeof useForm<MemberFormData>>;
+}) {
+  const gender = form.watch("gender");
+
+  React.useEffect(() => {
+    // Clear training_preference when gender changes to male
+    if (gender === "male") {
+      form.setValue("training_preference", undefined);
+    }
+  }, [gender, form]);
+
+  // Only show this section for female members
+  if (gender !== "female") {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Training preferences are only available for female members. Please
+          select gender as &quot;Female&quot; in Personal Information if this
+          applies.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <FormField
+        control={form.control}
+        name="training_preference"
+        render={({ field }) => (
+          <FormItem className="space-y-3">
+            <FormLabel>Session Preference</FormLabel>
+            <FormDescription>
+              Choose your preferred training session type (optional)
+            </FormDescription>
+            <FormControl>
+              <RadioGroup
+                onValueChange={field.onChange}
+                value={field.value}
+                className="flex flex-col space-y-1"
+              >
+                <FormItem className="flex items-center space-y-0 space-x-3">
+                  <FormControl>
+                    <RadioGroupItem value="mixed" />
+                  </FormControl>
+                  <FormLabel className="font-normal">Mixed Sessions</FormLabel>
+                </FormItem>
+                <FormItem className="flex items-center space-y-0 space-x-3">
+                  <FormControl>
+                    <RadioGroupItem value="women_only" />
+                  </FormControl>
+                  <FormLabel className="font-normal">
+                    Women Only Sessions
+                  </FormLabel>
+                </FormItem>
+              </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
 }
 
 export function ProgressiveMemberForm({
@@ -195,6 +452,16 @@ export function ProgressiveMemberForm({
             postal_code: "",
             country: "Morocco",
           },
+          // US-004: Equipment fields
+          uniform_size: member.uniform_size,
+          uniform_received: member.uniform_received,
+          vest_size: member.vest_size,
+          hip_belt_size: member.hip_belt_size,
+          // US-004: Referral fields
+          referral_source: member.referral_source,
+          referred_by_member_id: member.referred_by_member_id || undefined,
+          // US-004: Training preference
+          training_preference: member.training_preference || undefined,
           status: member.status,
           fitness_goals: member.fitness_goals || "",
           medical_conditions: member.medical_conditions || "",
@@ -219,6 +486,16 @@ export function ProgressiveMemberForm({
             postal_code: "",
             country: "Morocco",
           },
+          // US-004: Equipment fields defaults
+          uniform_size: "M",
+          uniform_received: false,
+          vest_size: "V1",
+          hip_belt_size: "V1",
+          // US-004: Referral fields defaults
+          referral_source: "studio",
+          referred_by_member_id: undefined,
+          // US-004: Training preference default
+          training_preference: undefined,
           status: "active",
           fitness_goals: "",
           medical_conditions: "",
@@ -690,6 +967,122 @@ export function ProgressiveMemberForm({
         );
 
       case 4:
+        // US-004: Equipment Section
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="uniform_size"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Uniform Size *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Select size" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="XS">XS</SelectItem>
+                        <SelectItem value="S">S</SelectItem>
+                        <SelectItem value="M">M</SelectItem>
+                        <SelectItem value="L">L</SelectItem>
+                        <SelectItem value="XL">XL</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="uniform_received"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Uniform Received</FormLabel>
+                      <FormDescription className="text-xs">
+                        Check when member picks up uniform
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="vest_size"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Vest Size *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Select vest size" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="V1">V1</SelectItem>
+                        <SelectItem value="V2">V2</SelectItem>
+                        <SelectItem value="V2_SMALL_EXT">
+                          V2 with Small Extension
+                        </SelectItem>
+                        <SelectItem value="V2_LARGE_EXT">
+                          V2 with Large Extension
+                        </SelectItem>
+                        <SelectItem value="V2_DOUBLE_EXT">
+                          V2 with Double Extension
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="hip_belt_size"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Hip Belt Size *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Select belt size" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="V1">V1</SelectItem>
+                        <SelectItem value="V2">V2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        );
+
+      case 5:
+        // US-004: Referral Section
+        return <ReferralSectionContent form={form} member={member} />;
+
+      case 6:
+        // US-004: Training Preference Section (conditional for females)
+        return <TrainingPreferenceSectionContent form={form} />;
+
+      case 7:
+        // Health & Fitness (moved from case 4)
         return (
           <div className="space-y-4">
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
@@ -743,7 +1136,8 @@ export function ProgressiveMemberForm({
           </div>
         );
 
-      case 5:
+      case 8:
+        // Settings (moved from case 5)
         return (
           <div className="space-y-4">
             <FormField
