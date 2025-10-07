@@ -13,30 +13,98 @@ import {
   AddressSection,
   FitnessHealthSection,
   StatusSettingsSection,
+  EquipmentSection,
+  ReferralSection,
+  TrainingPreferenceSection,
 } from "./form-sections";
 
-const memberFormSchema = z.object({
-  first_name: z.string().min(1, "First name is required").max(50),
-  last_name: z.string().min(1, "Last name is required").max(50),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().optional(),
-  date_of_birth: z.string().min(1, "Date of birth is required"),
-  gender: z.enum(["male", "female"]),
-  address: z.object({
-    street: z.string().min(1, "Street address is required"),
-    city: z.string().min(1, "City is required"),
-    state: z.string().min(1, "State is required"),
-    postal_code: z.string().min(1, "Postal code is required"),
-    country: z.string().min(1, "Country is required"),
-  }),
-  status: z.enum(["active", "inactive", "suspended", "expired", "pending"]),
-  fitness_goals: z.string().optional(),
-  medical_conditions: z.string().optional(),
-  notes: z.string().optional(),
-  preferred_contact_method: z.enum(["email", "phone", "sms"]),
-  marketing_consent: z.boolean(),
-  waiver_signed: z.boolean(),
-});
+const memberFormSchema = z
+  .object({
+    first_name: z.string().min(1, "First name is required").max(50),
+    last_name: z.string().min(1, "Last name is required").max(50),
+    email: z.string().email("Invalid email address"),
+    phone: z.string().optional(),
+    date_of_birth: z.string().min(1, "Date of birth is required"),
+    gender: z.enum(["male", "female"]),
+    address: z.object({
+      street: z.string().min(1, "Street address is required"),
+      city: z.string().min(1, "City is required"),
+      state: z.string().min(1, "State is required"),
+      postal_code: z.string().min(1, "Postal code is required"),
+      country: z.string().min(1, "Country is required"),
+    }),
+    status: z.enum(["active", "inactive", "suspended", "expired", "pending"]),
+    fitness_goals: z.string().optional(),
+    medical_conditions: z.string().optional(),
+    notes: z.string().optional(),
+    preferred_contact_method: z.enum(["email", "phone", "sms"]),
+    marketing_consent: z.boolean(),
+    waiver_signed: z.boolean(),
+
+    // Equipment fields (US-001)
+    uniform_size: z.enum(["XS", "S", "M", "L", "XL"], {
+      required_error: "Uniform size is required",
+    }),
+    uniform_received: z.boolean().default(false),
+    vest_size: z.enum(
+      ["V1", "V2", "V2_SMALL_EXT", "V2_LARGE_EXT", "V2_DOUBLE_EXT"],
+      {
+        required_error: "Vest size is required",
+      }
+    ),
+    hip_belt_size: z.enum(["V1", "V2"], {
+      required_error: "Hip belt size is required",
+    }),
+
+    // Referral fields (US-001)
+    referral_source: z.enum(
+      [
+        "instagram",
+        "member_referral",
+        "website_ib",
+        "prospection",
+        "studio",
+        "phone",
+        "chatbot",
+      ],
+      {
+        required_error: "Referral source is required",
+      }
+    ),
+    referred_by_member_id: z.string().uuid().optional(),
+
+    // Training preference field (US-001)
+    training_preference: z.enum(["mixed", "women_only"]).optional(),
+  })
+  .refine(
+    (data) => {
+      // Conditional validation: referred_by required if member_referral
+      if (
+        data.referral_source === "member_referral" &&
+        !data.referred_by_member_id
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Please select the referring member",
+      path: ["referred_by_member_id"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Conditional validation: training_preference only for females
+      if (data.training_preference && data.gender !== "female") {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Training preference only applies to female members",
+      path: ["training_preference"],
+    }
+  );
 
 type MemberFormData = z.infer<typeof memberFormSchema>;
 
@@ -82,6 +150,16 @@ const MemberForm = memo(function MemberForm({
             | "sms",
           marketing_consent: member.marketing_consent,
           waiver_signed: member.waiver_signed,
+          // Equipment fields (US-001)
+          uniform_size: member.uniform_size,
+          uniform_received: member.uniform_received,
+          vest_size: member.vest_size,
+          hip_belt_size: member.hip_belt_size,
+          // Referral fields (US-001)
+          referral_source: member.referral_source,
+          referred_by_member_id: member.referred_by_member_id || undefined,
+          // Training preference (US-001)
+          training_preference: member.training_preference || undefined,
         }
       : {
           first_name: "",
@@ -104,6 +182,16 @@ const MemberForm = memo(function MemberForm({
           preferred_contact_method: "email",
           marketing_consent: false,
           waiver_signed: false,
+          // Equipment fields (US-001)
+          uniform_size: "M",
+          uniform_received: false,
+          vest_size: "V1",
+          hip_belt_size: "V1",
+          // Referral fields (US-001)
+          referral_source: "studio",
+          referred_by_member_id: undefined,
+          // Training preference (US-001)
+          training_preference: undefined,
         },
   });
 
@@ -121,6 +209,12 @@ const MemberForm = memo(function MemberForm({
           <PersonalInfoSection control={form.control} />
           <ContactInfoSection control={form.control} />
           <AddressSection control={form.control} />
+          <EquipmentSection control={form.control} />
+          <ReferralSection control={form.control} />
+          <TrainingPreferenceSection
+            control={form.control}
+            setValue={form.setValue}
+          />
           <FitnessHealthSection control={form.control} />
           <StatusSettingsSection control={form.control} />
 
