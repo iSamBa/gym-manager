@@ -81,7 +81,7 @@
 
 ### TypeScript Types
 
-- [ ] **AC-008:** ENUM types added to `src/features/database/lib/types.ts`:
+- [x] **AC-008:** ENUM types added to `src/features/database/lib/types.ts` ✅ **TESTED** (enhanced-member-types.test.ts)
   ```typescript
   export type UniformSize = "XS" | "S" | "M" | "L" | "XL";
   export type VestSize =
@@ -101,7 +101,7 @@
     | "chatbot";
   export type TrainingPreference = "mixed" | "women_only";
   ```
-- [ ] **AC-009:** `Member` interface updated with new fields:
+- [x] **AC-009:** `Member` interface updated with new fields ✅ **TESTED** (enhanced-member-types.test.ts)
   ```typescript
   export interface Member {
     // ... existing fields ...
@@ -115,7 +115,7 @@
     // ... existing fields ...
   }
   ```
-- [ ] **AC-010:** No `any` types used in type definitions
+- [x] **AC-010:** No `any` types used in type definitions ✅ **TESTED** (enhanced-member-types.test.ts)
 
 ### Testing & Verification
 
