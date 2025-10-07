@@ -131,6 +131,14 @@ export interface CreateMemberData {
   marketing_consent?: boolean;
   waiver_signed?: boolean;
   waiver_signed_date?: string;
+  // US-001: Equipment & Referral Tracking fields
+  uniform_size?: string;
+  uniform_received?: boolean;
+  vest_size?: string;
+  hip_belt_size?: string;
+  referral_source?: string;
+  referred_by_member_id?: string;
+  training_preference?: string;
 }
 
 export interface UpdateMemberData {
@@ -150,6 +158,14 @@ export interface UpdateMemberData {
   marketing_consent?: boolean;
   waiver_signed?: boolean;
   waiver_signed_date?: string;
+  // US-001: Equipment & Referral Tracking fields
+  uniform_size?: string;
+  uniform_received?: boolean;
+  vest_size?: string;
+  hip_belt_size?: string;
+  referral_source?: string;
+  referred_by_member_id?: string;
+  training_preference?: string;
 }
 
 // Enhanced trainer utilities for TanStack Query integration

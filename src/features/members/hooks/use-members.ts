@@ -158,49 +158,64 @@ export function useUpdateMember() {
     onMutate: async ({ id, data }) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: memberKeys.detail(id) });
+      await queryClient.cancelQueries({
+        queryKey: memberKeys.withSubscription(id),
+      });
 
       // Snapshot previous value
       const previousMember = queryClient.getQueryData<Member>(
         memberKeys.detail(id)
       );
+      const previousMemberWithSub = queryClient.getQueryData<Member>(
+        memberKeys.withSubscription(id)
+      );
 
-      // Optimistically update
+      // Optimistically update detail query
       if (previousMember) {
         queryClient.setQueryData(memberKeys.detail(id), {
           ...previousMember,
           ...data,
           updated_at: new Date().toISOString(),
         });
-
-        // Update in lists too (handle both regular arrays and infinite query structures)
-        queryClient.setQueriesData(
-          { queryKey: memberKeys.lists() },
-          (oldData: Member[] | { pages: Member[][] } | undefined) => {
-            if (!oldData) return oldData;
-
-            const updateMember = (member: Member) =>
-              member.id === id ? { ...member, ...data } : member;
-
-            // Handle infinite query structure
-            if ("pages" in oldData && Array.isArray(oldData.pages)) {
-              return {
-                ...oldData,
-                pages: oldData.pages.map((page) => page.map(updateMember)),
-              };
-            }
-
-            // Handle regular array structure
-            if (Array.isArray(oldData)) {
-              return oldData.map(updateMember);
-            }
-
-            // Return unchanged if unknown structure
-            return oldData;
-          }
-        );
       }
 
-      return { previousMember };
+      // Optimistically update withSubscription query
+      if (previousMemberWithSub) {
+        queryClient.setQueryData(memberKeys.withSubscription(id), {
+          ...previousMemberWithSub,
+          ...data,
+          updated_at: new Date().toISOString(),
+        });
+      }
+
+      // Update in lists too (handle both regular arrays and infinite query structures)
+      queryClient.setQueriesData(
+        { queryKey: memberKeys.lists() },
+        (oldData: Member[] | { pages: Member[][] } | undefined) => {
+          if (!oldData) return oldData;
+
+          const updateMember = (member: Member) =>
+            member.id === id ? { ...member, ...data } : member;
+
+          // Handle infinite query structure
+          if ("pages" in oldData && Array.isArray(oldData.pages)) {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page) => page.map(updateMember)),
+            };
+          }
+
+          // Handle regular array structure
+          if (Array.isArray(oldData)) {
+            return oldData.map(updateMember);
+          }
+
+          // Return unchanged if unknown structure
+          return oldData;
+        }
+      );
+
+      return { previousMember, previousMemberWithSub };
     },
 
     onError: (error, { id }, context) => {
@@ -208,12 +223,21 @@ export function useUpdateMember() {
       if (context?.previousMember) {
         queryClient.setQueryData(memberKeys.detail(id), context.previousMember);
       }
+      if (context?.previousMemberWithSub) {
+        queryClient.setQueryData(
+          memberKeys.withSubscription(id),
+          context.previousMemberWithSub
+        );
+      }
       console.error("Failed to update member:", error);
     },
 
     onSettled: (data, error, { id }) => {
       // Refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: memberKeys.detail(id) });
+      queryClient.invalidateQueries({
+        queryKey: memberKeys.withSubscription(id),
+      });
       queryClient.invalidateQueries({ queryKey: memberKeys.lists() });
     },
   });
@@ -230,16 +254,31 @@ export function useUpdateMemberStatus() {
     onMutate: async ({ id, status }) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: memberKeys.detail(id) });
+      await queryClient.cancelQueries({
+        queryKey: memberKeys.withSubscription(id),
+      });
 
       // Snapshot previous value
       const previousMember = queryClient.getQueryData<Member>(
         memberKeys.detail(id)
+      );
+      const previousMemberWithSub = queryClient.getQueryData<Member>(
+        memberKeys.withSubscription(id)
       );
 
       // Optimistically update individual member
       if (previousMember) {
         queryClient.setQueryData(memberKeys.detail(id), {
           ...previousMember,
+          status,
+          updated_at: new Date().toISOString(),
+        });
+      }
+
+      // Optimistically update withSubscription query
+      if (previousMemberWithSub) {
+        queryClient.setQueryData(memberKeys.withSubscription(id), {
+          ...previousMemberWithSub,
           status,
           updated_at: new Date().toISOString(),
         });
@@ -275,13 +314,19 @@ export function useUpdateMemberStatus() {
         }
       );
 
-      return { previousMember };
+      return { previousMember, previousMemberWithSub };
     },
 
     onError: (error, { id }, context) => {
       // Rollback on error
       if (context?.previousMember) {
         queryClient.setQueryData(memberKeys.detail(id), context.previousMember);
+      }
+      if (context?.previousMemberWithSub) {
+        queryClient.setQueryData(
+          memberKeys.withSubscription(id),
+          context.previousMemberWithSub
+        );
       }
       console.error("Failed to update member status:", error);
     },
@@ -294,6 +339,9 @@ export function useUpdateMemberStatus() {
     onSettled: (data, error, { id }) => {
       // Refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: memberKeys.detail(id) });
+      queryClient.invalidateQueries({
+        queryKey: memberKeys.withSubscription(id),
+      });
       queryClient.invalidateQueries({ queryKey: memberKeys.lists() });
     },
   });

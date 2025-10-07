@@ -19,6 +19,9 @@ import {
   MemberSubscriptions,
   MemberPayments,
 } from "@/features/members/components";
+import { EquipmentEditor } from "@/features/members/components/EquipmentEditor";
+import { ReferralEditor } from "@/features/members/components/ReferralEditor";
+import { TrainingPreferenceEditor } from "@/features/members/components/TrainingPreferenceEditor";
 import {
   useMemberWithSubscription,
   useUpdateMemberStatus,
@@ -39,6 +42,9 @@ import {
   UserCircle,
   CreditCard,
   Receipt,
+  Package,
+  UserPlus,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -55,6 +61,23 @@ const formatDate = (date: Date): string => {
     day: "numeric",
     year: "numeric",
   });
+};
+
+// Helper function to calculate age from date of birth
+const calculateAge = (dateOfBirth: string): number => {
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+
+  return age;
 };
 
 // Helper function to format address
@@ -189,29 +212,12 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/members">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Members
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold">
-                {member.first_name} {member.last_name}
-              </h1>
-              <div className="mt-1 flex items-center gap-2">
-                <MemberStatusBadge
-                  status={member.status}
-                  memberId={member.id}
-                  readonly={true}
-                />
-                <Badge variant="outline" className="text-xs">
-                  Member ID: {member.id.slice(-8)}
-                </Badge>
-              </div>
-            </div>
-          </div>
+          <Link href="/members">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Members
+            </Button>
+          </Link>
 
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
@@ -267,14 +273,35 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="flex items-start gap-4">
-                      <MemberAvatar
-                        member={member}
-                        size="lg"
-                        className="flex-shrink-0"
-                      />
-                      <div className="flex-1 space-y-2">
-                        <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+                    <div className="flex items-start gap-6">
+                      {/* Avatar and Status Badge */}
+                      <div className="flex flex-shrink-0 flex-col items-center gap-3">
+                        <MemberAvatar
+                          member={member}
+                          size="lg"
+                          className="flex-shrink-0"
+                        />
+                        <MemberStatusBadge
+                          status={member.status}
+                          memberId={member.id}
+                          readonly={false}
+                        />
+                      </div>
+
+                      {/* Member Details */}
+                      <div className="flex-1 space-y-4">
+                        {/* Name and Member ID */}
+                        <div className="space-y-1">
+                          <h2 className="text-2xl font-bold">
+                            {member.first_name} {member.last_name}
+                          </h2>
+                          <Badge variant="outline" className="text-xs">
+                            Member ID: {member.id.slice(-8)}
+                          </Badge>
+                        </div>
+
+                        {/* Contact Information */}
+                        <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
                           <div className="flex items-center gap-2">
                             <Mail className="text-muted-foreground h-4 w-4" />
                             <span>{member.email}</span>
@@ -286,10 +313,25 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                           <div className="flex items-center gap-2">
                             <Calendar className="text-muted-foreground h-4 w-4" />
                             <span>
-                              Joined {formatDate(new Date(member.created_at))}
+                              {member.date_of_birth ? (
+                                <>
+                                  Birthday:{" "}
+                                  {formatDate(new Date(member.date_of_birth))} (
+                                  {calculateAge(member.date_of_birth)} years
+                                  old)
+                                </>
+                              ) : (
+                                "Birthday: Not provided"
+                              )}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
+                            <Calendar className="text-muted-foreground h-4 w-4" />
+                            <span>
+                              Joined {formatDate(new Date(member.created_at))}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 md:col-span-2">
                             <MapPin className="text-muted-foreground h-4 w-4" />
                             <span>{formatAddress(member.address)}</span>
                           </div>
@@ -297,90 +339,58 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                       </div>
                     </div>
 
-                    {/* Status Actions */}
-                    <div className="flex gap-2 border-t pt-4">
-                      <Button
-                        variant={
-                          member.status === "active" ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => handleStatusChange("active")}
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        Mark Active
-                      </Button>
-                      <Button
-                        variant={
-                          member.status === "inactive" ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => handleStatusChange("inactive")}
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        Mark Inactive
-                      </Button>
-                      <Button
-                        variant={
-                          member.status === "suspended" ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => handleStatusChange("suspended")}
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        Mark Suspended
-                      </Button>
-                      <Button
-                        variant={
-                          member.status === "pending" ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => handleStatusChange("pending")}
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        Mark Pending
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    {/* Additional Information - Aligned with member details */}
+                    <div className="flex items-start gap-6">
+                      {/* Spacer to match avatar column width + icon spacing */}
+                      <div className="w-20 flex-shrink-0" />
 
-                {/* Emergency Contacts */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Emergency Contacts</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {member.emergency_contacts &&
-                    member.emergency_contacts.length > 0 ? (
-                      <div className="space-y-4">
-                        {member.emergency_contacts.map((contact, index) => (
-                          <div
-                            key={index}
-                            className="bg-muted flex items-center justify-between rounded-lg p-3"
-                          >
-                            <div>
-                              <p className="font-medium">
-                                {contact.first_name} {contact.last_name}
-                              </p>
-                              <p className="text-muted-foreground text-sm">
-                                {contact.relationship}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm">{contact.phone}</p>
-                              {contact.email && (
-                                <p className="text-muted-foreground text-sm">
-                                  {contact.email}
-                                </p>
+                      {/* Content aligned with member details */}
+                      <div className="flex-1 space-y-6">
+                        {/* Emergency Contacts */}
+                        {member.emergency_contacts &&
+                          member.emergency_contacts.length > 0 && (
+                            <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
+                              <div className="md:col-span-2">
+                                <span className="text-muted-foreground">
+                                  Emergency Contacts:
+                                </span>
+                              </div>
+                              {member.emergency_contacts.map(
+                                (contact, index) => (
+                                  <div
+                                    key={index}
+                                    className="bg-muted rounded-lg p-3"
+                                  >
+                                    <div>
+                                      <p className="text-sm font-medium">
+                                        {contact.first_name} {contact.last_name}
+                                      </p>
+                                      <p className="text-muted-foreground text-xs">
+                                        {contact.relationship}
+                                      </p>
+                                    </div>
+                                    <div className="mt-1">
+                                      <p className="text-sm">{contact.phone}</p>
+                                      {contact.email && (
+                                        <p className="text-muted-foreground text-xs">
+                                          {contact.email}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                )
                               )}
                             </div>
-                          </div>
-                        ))}
+                          )}
+
+                        {/* Equipment and Other Information */}
+                        <EquipmentEditor member={member} />
+                        <ReferralEditor member={member} />
+                        {member.gender === "female" && (
+                          <TrainingPreferenceEditor member={member} />
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-muted-foreground">
-                        No emergency contacts provided
-                      </p>
-                    )}
+                    </div>
                   </CardContent>
                 </Card>
               </div>

@@ -17,6 +17,11 @@ export {
   withMemberErrorBoundary,
 } from "./MemberErrorBoundary";
 
+// Inline editor components
+export { EquipmentEditor } from "./EquipmentEditor";
+export { ReferralEditor } from "./ReferralEditor";
+export { TrainingPreferenceEditor } from "./TrainingPreferenceEditor";
+
 // Quick action buttons
 export { AddSessionButton } from "./AddSessionButton";
 export { AddPaymentButton } from "./AddPaymentButton";
