@@ -81,6 +81,16 @@ Before starting any user story:
 - [ ] Self-referral is blocked
 - [ ] TypeScript types match database schema
 
+**✅ MANDATORY: Update Acceptance Criteria Checkboxes**
+
+After completing implementation:
+
+1. Open the user story file (US-001-database-schema-extension.md)
+2. Check off ALL acceptance criteria with ✅ markers
+3. Add verification evidence (file paths, line numbers, test results)
+4. Update Definition of Done checkboxes
+5. Example format: `- [x] **AC-001:** Description ✅ **VERIFIED** (evidence)`
+
 **Update STATUS.md:** Mark US-001 as COMPLETED
 
 ---
@@ -155,6 +165,15 @@ Before starting any user story:
 - [ ] No TypeScript errors
 - [ ] Components use React.memo and useCallback
 
+**✅ MANDATORY: Update Acceptance Criteria Checkboxes**
+
+After completing implementation:
+
+1. Open US-002-member-creation-form-enhancement.md
+2. Check off ALL ~20 acceptance criteria with verification evidence
+3. Add file paths and line numbers as proof
+4. Update Definition of Done checkboxes
+
 **Update STATUS.md:** Mark US-002 as COMPLETED
 
 ---
@@ -219,6 +238,15 @@ Before starting any user story:
 - [ ] Sections follow existing styling patterns
 - [ ] No layout issues or overlaps
 
+**✅ MANDATORY: Update Acceptance Criteria Checkboxes**
+
+After completing implementation:
+
+1. Open US-003-member-details-view-enhancement.md
+2. Check off ALL acceptance criteria with verification
+3. Add component file paths and line numbers
+4. Update Definition of Done checkboxes
+
 **Update STATUS.md:** Mark US-003 as COMPLETED
 
 ---
@@ -275,6 +303,16 @@ Before starting any user story:
 - [ ] Conditional fields work correctly
 - [ ] Changes save successfully
 - [ ] Cancel discards changes
+
+**✅ MANDATORY: Update Acceptance Criteria Checkboxes**
+
+After completing implementation:
+
+1. Open US-004-member-edit-functionality.md
+2. Check off ALL ~15 acceptance criteria with verification
+3. Add implementation evidence (file paths, line numbers)
+4. Update Definition of Done checkboxes
+5. Verify all conditional logic and validations
 
 **Update STATUS.md:** Mark US-004 as COMPLETED
 
@@ -365,6 +403,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 4. **Update STATUS.md** after each milestone
 5. **Run tests frequently** during development
 6. **Commit after each user story** completion
+7. **✅ MANDATORY: Update all acceptance criteria checkboxes** with verification evidence after completing each user story
 
 ---
 
