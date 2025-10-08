@@ -9,10 +9,10 @@
 
 ## 📊 Overall Progress
 
-**Completion:** 11 / 13 User Stories (85%)
+**Completion:** 12 / 13 User Stories (92%)
 
 ```
-[█████████████████░░░] 85%
+[██████████████████░░] 92%
 ```
 
 ---
@@ -371,32 +371,36 @@
 
 ---
 
-### 🔵 US-012: Comment Alert Integration
+### ✅ US-012: Comment Alert Integration
 
-**Status:** 🔵 NOT STARTED
+**Status:** 🟢 COMPLETED
 **Priority:** P1 (Required)
 **Complexity:** Small (~30 minutes)
 **Dependencies:** ✅ US-009 (Completed), ✅ US-010 (Completed), ✅ US-011 (Completed)
-**Completed:** N/A
+**Completed:** 2025-10-08
 
 **Progress:**
 
-- [ ] Update MemberAlertsCard to fetch comment alerts
-- [ ] Add comment alerts to alerts array
-- [ ] Implement urgency logic (critical vs warning)
-- [ ] Add MessageSquare icon
-- [ ] Truncate long comment bodies
-- [ ] Sort alerts by priority
-- [ ] Test alert display
+- [x] Update MemberAlertsCard to fetch comment alerts
+- [x] Add comment alerts to alerts array
+- [x] Implement urgency logic (critical vs warning)
+- [x] Add MessageSquare icon
+- [x] Truncate long comment bodies
+- [x] Sort alerts by priority
+- [x] Test alert display
 
 **Blockers:** None
 
 **Notes:**
 
-- Due in 3 days or less = critical (red)
-- Due in more than 3 days = warning (amber)
-- Past due dates don't show
-- Alerts auto-remove after due date
+- All 8 acceptance criteria met and verified
+- Urgency logic: ≤3 days = critical (red), >3 days = warning (amber)
+- Comment body truncated to 100 characters
+- Alerts sorted by priority (critical first)
+- Auto-refresh every 60 seconds (from hook)
+- Past due dates filtered by query (don't appear)
+- Linting passed (0 errors, 0 warnings)
+- Build successful
 
 ---
 
@@ -405,7 +409,7 @@
 **Status:** 🔵 NOT STARTED
 **Priority:** P2 (Quality)
 **Complexity:** Small (~45 minutes)
-**Dependencies:** ✅ US-009 (Completed), ✅ US-010 (Completed), ✅ US-011 (Completed), 🔵 US-012
+**Dependencies:** ✅ US-009 (Completed), ✅ US-010 (Completed), ✅ US-011 (Completed), ✅ US-012 (Completed)
 **Completed:** N/A
 
 **Progress:**
@@ -495,15 +499,15 @@
    - ✅ US-009: Database Schema (Completed)
    - ✅ US-010: CRUD Operations (Completed)
    - ✅ US-011: UI Components (Completed)
-   - 🔵 US-012: Alert Integration (Ready to start)
-   - 🔵 US-013: Testing & Polish (Blocked by US-012)
+   - ✅ US-012: Alert Integration (Completed)
+   - 🔵 US-013: Testing & Polish (Ready to start)
 
 **Next Steps:**
 
 1. ✅ Implement US-009 (Database Schema) - COMPLETED
 2. ✅ Implement US-010 (CRUD Operations) - COMPLETED
 3. ✅ Implement US-011 (UI Components) - COMPLETED
-4. Implement US-012 (Alert Integration)
+4. ✅ Implement US-012 (Alert Integration) - COMPLETED
 5. Implement US-013 (Testing & Polish)
 6. Final code review
 7. Merge to main branch

@@ -9,8 +9,12 @@ import {
   Cake,
   DollarSign,
   CheckCircle,
+  MessageSquare,
 } from "lucide-react";
-import { useMemberActivityMetrics } from "@/features/members/hooks";
+import {
+  useMemberActivityMetrics,
+  useActiveCommentAlerts,
+} from "@/features/members/hooks";
 import type { MemberWithSubscription } from "@/features/database/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +34,7 @@ export const MemberAlertsCard = memo(function MemberAlertsCard({
   member,
 }: MemberAlertsCardProps) {
   const { data: metrics } = useMemberActivityMetrics(member.id);
+  const { data: commentAlerts = [] } = useActiveCommentAlerts(member.id);
 
   const alerts = useMemo((): Alert[] => {
     const alertList: Alert[] = [];
@@ -104,8 +109,54 @@ export const MemberAlertsCard = memo(function MemberAlertsCard({
       });
     }
 
-    return alertList;
-  }, [member, metrics]);
+    // Comment-based alerts
+    commentAlerts.forEach((comment) => {
+      if (!comment.due_date) return;
+
+      const dueDate = new Date(comment.due_date);
+      const today = new Date();
+      const daysUntilDue = Math.ceil(
+        (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      // Only show alerts for future dates
+      if (daysUntilDue < 0) return;
+
+      // Determine alert type based on urgency
+      const alertType = daysUntilDue <= 3 ? "critical" : "warning";
+      const iconColor =
+        alertType === "critical"
+          ? "text-red-600 dark:text-red-400"
+          : "text-amber-600 dark:text-amber-400";
+
+      // Truncate comment body to 100 characters
+      const truncatedBody =
+        comment.body.length > 100
+          ? `${comment.body.substring(0, 100)}...`
+          : comment.body;
+
+      // Format due date
+      const formattedDate = dueDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+
+      alertList.push({
+        id: `comment-${comment.id}`,
+        type: alertType,
+        icon: <MessageSquare className={cn("h-4 w-4", iconColor)} />,
+        title: comment.author,
+        description: `${truncatedBody} (Due: ${formattedDate})`,
+      });
+    });
+
+    // Sort alerts by priority (critical first)
+    return alertList.sort((a, b) => {
+      const priorityOrder = { critical: 0, warning: 1 };
+      return priorityOrder[a.type] - priorityOrder[b.type];
+    });
+  }, [member, metrics, commentAlerts]);
 
   if (alerts.length === 0) {
     return (

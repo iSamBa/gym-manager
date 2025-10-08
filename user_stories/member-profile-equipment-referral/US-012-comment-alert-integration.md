@@ -5,7 +5,9 @@
 **Priority:** P1 (Required)
 **Complexity:** Small (~30 minutes)
 **Dependencies:** US-009, US-010, US-011
-**Status:** 🔵 NOT STARTED
+**Status:** ✅ COMPLETED
+**Completed:** 2025-10-08
+**Implementation Notes:** Comment alerts integrated into MemberAlertsCard with urgency-based color coding and auto-refresh. All 8 acceptance criteria met.
 
 ---
 
