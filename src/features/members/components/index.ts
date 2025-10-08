@@ -25,6 +25,7 @@ export { ContactInformationCard } from "./ContactInformationCard";
 export { PersonalDetailsCard } from "./PersonalDetailsCard";
 
 // Sidebar components (US-007)
+export { SubscriptionStatusCard } from "./SubscriptionStatusCard";
 export { EnhancedActivityCard } from "./EnhancedActivityCard";
 export { MemberAlertsCard } from "./MemberAlertsCard";
 
@@ -60,3 +61,7 @@ export { AddPaymentDialog } from "./AddPaymentDialog";
 
 // Payment-related components
 export { MemberPayments } from "./MemberPayments";
+
+// Comments components (US-011)
+export { MemberCommentsCard } from "./MemberCommentsCard";
+export { CommentDialog } from "./CommentDialog";

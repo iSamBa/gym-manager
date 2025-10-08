@@ -20,10 +20,12 @@ import {
   TrainingPreferenceDisplay,
   ContactInformationCard,
   PersonalDetailsCard,
+  SubscriptionStatusCard,
   EnhancedActivityCard,
   MemberAlertsCard,
   EquipmentEditor,
   ReferralEditor,
+  MemberCommentsCard,
 } from "@/features/members/components";
 import {
   useMemberWithSubscription,
@@ -31,17 +33,9 @@ import {
   useMemberPrefetch,
   useUpdateMember,
 } from "@/features/members/hooks";
-import {
-  ArrowLeft,
-  AlertCircle,
-  Package,
-  UserPlus,
-  Users,
-  CreditCard,
-} from "lucide-react";
+import { ArrowLeft, AlertCircle, Package, Users, Edit } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Edit } from "lucide-react";
 import { toast } from "sonner";
 import type { Member } from "@/features/database/lib/types";
 
@@ -59,27 +53,20 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
   const [equipmentReferralFormData, setEquipmentReferralFormData] =
     useState<Member | null>(null);
 
-  // Member data with subscription and emergency contacts
   const {
     data: member,
     isLoading,
     error,
     refetch,
   } = useMemberWithSubscription(id, {
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 60000,
     refetchOnWindowFocus: true,
   });
 
-  // Delete mutation
   const deleteMutation = useDeleteMember();
-
-  // Update mutation for equipment & referral
   const updateMember = useUpdateMember();
-
-  // Prefetch related members for navigation
   const { prefetchAdjacentMembers } = useMemberPrefetch();
 
-  // Prefetch adjacent members when the component loads
   useEffect(() => {
     if (member) {
       prefetchAdjacentMembers(member.id);
@@ -98,8 +85,8 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
       await deleteMutation.mutateAsync(member.id);
       setShowDeleteConfirm(false);
       router.push("/members");
-    } catch (error) {
-      console.error("Failed to delete member:", error);
+    } catch (err) {
+      console.error("Failed to delete member:", err);
     }
   };
 
@@ -132,7 +119,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
       });
       setIsEditingEquipmentReferral(false);
       toast.success("Equipment & referral information updated successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update equipment & referral information");
     }
   }, [equipmentReferralFormData, updateMember]);
@@ -200,14 +187,6 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
       </MainLayout>
     );
   }
-
-  const formatDate = (date: Date): string => {
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
 
   return (
     <MainLayout>
@@ -331,6 +310,9 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                   </CardContent>
                 </Card>
 
+                {/* Comments & Notes Card */}
+                <MemberCommentsCard member={member} />
+
                 {/* Training Preferences Card (conditional) */}
                 {member.gender === "female" && (
                   <Card>
@@ -370,70 +352,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
           {/* Right Column: Sidebar */}
           <div className="space-y-6">
             {/* Subscription Status Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <CreditCard className="h-4 w-4" />
-                  Subscription Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {member.subscription ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Plan</span>
-                      <span className="text-sm">
-                        {member.subscription.plan?.name || "Unknown Plan"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Status</span>
-                      <span
-                        className={
-                          member.subscription.status === "active"
-                            ? "text-green-600"
-                            : "text-gray-600"
-                        }
-                      >
-                        {member.subscription.status}
-                      </span>
-                    </div>
-
-                    <div className="border-t pt-4">
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Start Date
-                          </span>
-                          <span>
-                            {formatDate(
-                              new Date(member.subscription.start_date)
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            End Date
-                          </span>
-                          <span>
-                            {member.subscription.end_date
-                              ? formatDate(
-                                  new Date(member.subscription.end_date)
-                                )
-                              : "No end date"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    No active subscription
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            <SubscriptionStatusCard member={member} />
 
             {/* Enhanced Activity Summary Card */}
             <EnhancedActivityCard member={member} />
