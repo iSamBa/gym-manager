@@ -2,7 +2,6 @@
 
 import { memo, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Activity } from "lucide-react";
 import { useMemberActivityMetrics } from "@/features/members/hooks";
 import type { Member } from "@/features/database/lib/types";
@@ -27,11 +26,6 @@ export const EnhancedActivityCard = memo(function EnhancedActivityCard({
       },
     []
   );
-
-  const paymentStatus = useMemo(() => {
-    if (!metrics) return null;
-    return metrics.overduePaymentsCount > 0 ? "overdue" : "current";
-  }, [metrics]);
 
   return (
     <Card>
@@ -70,19 +64,6 @@ export const EnhancedActivityCard = memo(function EnhancedActivityCard({
               ? formatDate(metrics.lastSessionDate)
               : "No sessions yet"}
           </span>
-        </div>
-
-        {/* Payment Status */}
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Payment Status</span>
-          {paymentStatus && (
-            <Badge
-              variant={paymentStatus === "current" ? "default" : "destructive"}
-              className="text-xs"
-            >
-              {paymentStatus === "current" ? "Current" : "Overdue"}
-            </Badge>
-          )}
         </div>
       </CardContent>
     </Card>

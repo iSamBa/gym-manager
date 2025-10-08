@@ -46,7 +46,9 @@ export const MemberAlertsCard = memo(function MemberAlertsCard({
         alertList.push({
           id: "expiring-subscription",
           type: "warning",
-          icon: <Calendar className="h-4 w-4 text-amber-600" />,
+          icon: (
+            <Calendar className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          ),
           title: "Subscription Expiring Soon",
           description: `Renews in ${daysUntilExpiry} day${daysUntilExpiry !== 1 ? "s" : ""}`,
         });
@@ -58,7 +60,9 @@ export const MemberAlertsCard = memo(function MemberAlertsCard({
       alertList.push({
         id: "missing-uniform",
         type: "warning",
-        icon: <Package className="h-4 w-4 text-amber-600" />,
+        icon: (
+          <Package className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+        ),
         title: "Uniform Not Received",
         description: "Member has not received uniform yet",
       });
@@ -82,7 +86,7 @@ export const MemberAlertsCard = memo(function MemberAlertsCard({
         alertList.push({
           id: "upcoming-birthday",
           type: "warning",
-          icon: <Cake className="h-4 w-4 text-amber-600" />,
+          icon: <Cake className="h-4 w-4 text-amber-600 dark:text-amber-400" />,
           title: "Birthday Coming Up",
           description: `Birthday on ${thisYearBirthday.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
         });
@@ -94,7 +98,7 @@ export const MemberAlertsCard = memo(function MemberAlertsCard({
       alertList.push({
         id: "outstanding-payments",
         type: "critical",
-        icon: <DollarSign className="h-4 w-4 text-red-600" />,
+        icon: <DollarSign className="h-4 w-4 text-red-600 dark:text-red-400" />,
         title: "Outstanding Payments",
         description: `${metrics.overduePaymentsCount} overdue payment${metrics.overduePaymentsCount !== 1 ? "s" : ""}`,
       });
@@ -113,7 +117,7 @@ export const MemberAlertsCard = memo(function MemberAlertsCard({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center gap-2 text-sm text-green-600">
+          <div className="flex items-center justify-center gap-2 text-sm text-green-600 dark:text-green-400">
             <CheckCircle className="h-4 w-4" />
             <span>No alerts</span>
           </div>
@@ -137,15 +141,31 @@ export const MemberAlertsCard = memo(function MemberAlertsCard({
             className={cn(
               "rounded-md border-l-4 p-4",
               alert.type === "warning"
-                ? "border-amber-400 bg-amber-50"
-                : "border-red-400 bg-red-50"
+                ? "border-amber-400 bg-amber-50 dark:border-amber-500 dark:bg-amber-950/30"
+                : "border-red-400 bg-red-50 dark:border-red-500 dark:bg-red-950/30"
             )}
           >
             <div className="flex items-start gap-3">
               {alert.icon}
               <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium">{alert.title}</p>
-                <p className="text-muted-foreground text-sm">
+                <p
+                  className={cn(
+                    "text-sm font-medium",
+                    alert.type === "warning"
+                      ? "text-amber-900 dark:text-amber-100"
+                      : "text-red-900 dark:text-red-100"
+                  )}
+                >
+                  {alert.title}
+                </p>
+                <p
+                  className={cn(
+                    "text-sm",
+                    alert.type === "warning"
+                      ? "text-amber-700 dark:text-amber-300"
+                      : "text-red-700 dark:text-red-300"
+                  )}
+                >
                   {alert.description}
                 </p>
               </div>
