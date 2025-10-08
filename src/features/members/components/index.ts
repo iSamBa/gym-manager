@@ -23,7 +23,6 @@ export { MemberProfileHeader } from "./MemberProfileHeader";
 // Information cards (US-006)
 export { ContactInformationCard } from "./ContactInformationCard";
 export { PersonalDetailsCard } from "./PersonalDetailsCard";
-export { EnhancedEmergencyContactsCard } from "./EnhancedEmergencyContactsCard";
 
 // Sidebar components (US-007)
 export { EnhancedActivityCard } from "./EnhancedActivityCard";
@@ -38,6 +37,8 @@ export { TrainingPreferenceDisplay } from "./TrainingPreferenceDisplay";
 export { EquipmentEditor } from "./EquipmentEditor";
 export { ReferralEditor } from "./ReferralEditor";
 export { TrainingPreferenceEditor } from "./TrainingPreferenceEditor";
+export { ContactInformationEditor } from "./ContactInformationEditor";
+export { PersonalDetailsEditor } from "./PersonalDetailsEditor";
 
 // Quick action buttons
 export { AddSessionButton } from "./AddSessionButton";

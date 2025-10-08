@@ -309,19 +309,6 @@ export interface PartialMember {
   phone?: string;
 }
 
-export interface MemberEmergencyContact {
-  id: string;
-  member_id: string;
-  first_name: string;
-  last_name: string;
-  relationship: string;
-  phone: string;
-  email?: string;
-  is_primary: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
 // Equipment
 // EquipmentCategory table has been removed - equipment categorization not used
 
@@ -514,7 +501,6 @@ export interface MemberWithSubscription extends Member {
   subscription?: MemberSubscription & {
     plan?: SubscriptionPlan;
   };
-  emergency_contacts?: MemberEmergencyContact[];
 }
 
 // ClassWithDetails simplified - ClassType removed

@@ -269,8 +269,6 @@ export const createTestData = {
     date_of_birth: "1990-01-01",
     status: "active" as const,
     membership_type: "monthly",
-    emergency_contact_name: "Jane Doe",
-    emergency_contact_phone: "+1234567891",
     medical_conditions: null,
     fitness_goals: null,
     created_at: "2024-01-01T00:00:00Z",

@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, useCallback } from "react";
 import { MainLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,16 +22,28 @@ import {
   PersonalDetailsCard,
   EnhancedActivityCard,
   MemberAlertsCard,
+  EquipmentEditor,
+  ReferralEditor,
 } from "@/features/members/components";
 import {
   useMemberWithSubscription,
   useDeleteMember,
   useMemberPrefetch,
+  useUpdateMember,
 } from "@/features/members/hooks";
-import { ArrowLeft, AlertCircle, Package, UserPlus, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  AlertCircle,
+  Package,
+  UserPlus,
+  Users,
+  CreditCard,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Edit } from "lucide-react";
+import { toast } from "sonner";
+import type { Member } from "@/features/database/lib/types";
 
 interface MemberDetailPageProps {
   params: Promise<{ id: string }>;
@@ -42,6 +54,10 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
   const router = useRouter();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isEditingEquipmentReferral, setIsEditingEquipmentReferral] =
+    useState(false);
+  const [equipmentReferralFormData, setEquipmentReferralFormData] =
+    useState<Member | null>(null);
 
   // Member data with subscription and emergency contacts
   const {
@@ -56,6 +72,9 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
 
   // Delete mutation
   const deleteMutation = useDeleteMember();
+
+  // Update mutation for equipment & referral
+  const updateMember = useUpdateMember();
 
   // Prefetch related members for navigation
   const { prefetchAdjacentMembers } = useMemberPrefetch();
@@ -87,6 +106,50 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
   const handleEditSuccess = () => {
     setIsEditDialogOpen(false);
   };
+
+  const handleEquipmentReferralEdit = useCallback(() => {
+    if (member) {
+      setEquipmentReferralFormData(member);
+      setIsEditingEquipmentReferral(true);
+    }
+  }, [member]);
+
+  const handleEquipmentReferralSave = useCallback(async () => {
+    if (!equipmentReferralFormData) return;
+
+    try {
+      await updateMember.mutateAsync({
+        id: equipmentReferralFormData.id,
+        data: {
+          uniform_size: equipmentReferralFormData.uniform_size,
+          uniform_received: equipmentReferralFormData.uniform_received,
+          vest_size: equipmentReferralFormData.vest_size,
+          hip_belt_size: equipmentReferralFormData.hip_belt_size,
+          referral_source: equipmentReferralFormData.referral_source,
+          referred_by_member_id:
+            equipmentReferralFormData.referred_by_member_id,
+        },
+      });
+      setIsEditingEquipmentReferral(false);
+      toast.success("Equipment & referral information updated successfully");
+    } catch (error) {
+      toast.error("Failed to update equipment & referral information");
+    }
+  }, [equipmentReferralFormData, updateMember]);
+
+  const handleEquipmentReferralCancel = useCallback(() => {
+    setEquipmentReferralFormData(null);
+    setIsEditingEquipmentReferral(false);
+  }, []);
+
+  const handleEquipmentReferralFormChange = useCallback(
+    (updated: Partial<Member>) => {
+      setEquipmentReferralFormData((prev) =>
+        prev ? { ...prev, ...updated } : null
+      );
+    },
+    []
+  );
 
   if (isLoading) {
     return (
@@ -195,32 +258,76 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                       <Package className="h-4 w-4" />
                       Equipment & Referral
                     </CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsEditDialogOpen(true)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    {!isEditingEquipmentReferral && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleEquipmentReferralEdit}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                      {/* Equipment Section */}
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-medium">
-                          Equipment & Gear
-                        </h3>
-                        <EquipmentDisplay member={member} />
-                      </div>
+                    {isEditingEquipmentReferral && equipmentReferralFormData ? (
+                      <>
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                          {/* Equipment Editor */}
+                          <div className="space-y-4">
+                            <h3 className="text-sm font-medium">
+                              Equipment & Gear
+                            </h3>
+                            <EquipmentEditor
+                              member={equipmentReferralFormData}
+                              onChange={handleEquipmentReferralFormChange}
+                            />
+                          </div>
 
-                      {/* Referral Section */}
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-medium">
-                          Referral Information
-                        </h3>
-                        <ReferralDisplay member={member} />
+                          {/* Referral Editor */}
+                          <div className="space-y-4">
+                            <h3 className="text-sm font-medium">
+                              Referral Information
+                            </h3>
+                            <ReferralEditor
+                              member={equipmentReferralFormData}
+                              onChange={handleEquipmentReferralFormChange}
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-4 flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={handleEquipmentReferralCancel}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleEquipmentReferralSave}
+                            disabled={updateMember.isPending}
+                          >
+                            {updateMember.isPending ? "Saving..." : "Save"}
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        {/* Equipment Section */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-medium">
+                            Equipment & Gear
+                          </h3>
+                          <EquipmentDisplay member={member} />
+                        </div>
+
+                        {/* Referral Section */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-medium">
+                            Referral Information
+                          </h3>
+                          <ReferralDisplay member={member} />
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -265,7 +372,10 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
             {/* Subscription Status Card */}
             <Card>
               <CardHeader>
-                <CardTitle>Subscription Status</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <CreditCard className="h-4 w-4" />
+                  Subscription Status
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {member.subscription ? (

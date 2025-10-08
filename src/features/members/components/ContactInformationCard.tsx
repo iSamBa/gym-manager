@@ -3,10 +3,14 @@
 import { memo, useCallback, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Mail, Phone, MapPin, Copy, Check } from "lucide-react";
+import { Mail, Phone, MapPin, Copy, Check, Edit } from "lucide-react";
 import { toast } from "sonner";
-import type { MemberWithSubscription } from "@/features/database/lib/types";
+import type {
+  Member,
+  MemberWithSubscription,
+} from "@/features/database/lib/types";
+import { useUpdateMember } from "@/features/members/hooks";
+import { ContactInformationEditor } from "./ContactInformationEditor";
 
 interface ContactInformationCardProps {
   member: MemberWithSubscription;
@@ -15,8 +19,11 @@ interface ContactInformationCardProps {
 export const ContactInformationCard = memo(function ContactInformationCard({
   member,
 }: ContactInformationCardProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<Member>(member);
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
+  const updateMember = useUpdateMember();
 
   const handleCopyEmail = useCallback(async () => {
     await navigator.clipboard.writeText(member.email);
@@ -33,6 +40,32 @@ export const ContactInformationCard = memo(function ContactInformationCard({
     setTimeout(() => setCopiedPhone(false), 2000);
   }, [member.phone]);
 
+  const handleSave = useCallback(async () => {
+    try {
+      await updateMember.mutateAsync({
+        id: member.id,
+        data: {
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+        },
+      });
+      setIsEditing(false);
+      toast.success("Contact information updated successfully");
+    } catch (error) {
+      toast.error("Failed to update contact information");
+    }
+  }, [formData, member.id, updateMember]);
+
+  const handleCancel = useCallback(() => {
+    setFormData(member);
+    setIsEditing(false);
+  }, [member]);
+
+  const handleFormChange = useCallback((updated: Partial<Member>) => {
+    setFormData((prev) => ({ ...prev, ...updated }));
+  }, []);
+
   const formatAddress = useCallback((address: Member["address"]) => {
     if (!address) return "No address provided";
     return `${address.street}, ${address.city}, ${address.state} ${address.postal_code}, ${address.country}`;
@@ -40,15 +73,34 @@ export const ContactInformationCard = memo(function ContactInformationCard({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-base">
           <Mail className="h-4 w-4" />
           Contact Information
         </CardTitle>
+        {!isEditing && (
+          <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
+            <Edit className="h-4 w-4" />
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Member Contact Information */}
+        {isEditing ? (
+          <>
+            <ContactInformationEditor
+              member={formData}
+              onChange={handleFormChange}
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={updateMember.isPending}>
+                {updateMember.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </>
+        ) : (
           <div className="space-y-4">
             {/* Email */}
             <div className="flex items-center justify-between">
@@ -98,44 +150,7 @@ export const ContactInformationCard = memo(function ContactInformationCard({
               <span className="text-sm">{formatAddress(member.address)}</span>
             </div>
           </div>
-
-          {/* Emergency Contacts */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium">Emergency Contacts</h3>
-            {!member.emergency_contacts ||
-            member.emergency_contacts.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                No emergency contacts on file
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {member.emergency_contacts.map((contact, index) => (
-                  <div
-                    key={index}
-                    className="border-border bg-muted/50 rounded-lg border p-3"
-                  >
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">
-                          {contact.first_name} {contact.last_name}
-                        </p>
-                        <Badge variant="secondary" className="text-xs">
-                          {contact.relationship}
-                        </Badge>
-                      </div>
-                      <p className="text-sm font-semibold">{contact.phone}</p>
-                      {contact.email && (
-                        <p className="text-muted-foreground text-xs">
-                          {contact.email}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

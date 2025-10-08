@@ -17,11 +17,10 @@ import type {
   VestSize,
   HipBeltSize,
 } from "@/features/database/lib/types";
-import { useUpdateMember } from "@/features/members/hooks";
-import { toast } from "sonner";
 
 interface EquipmentEditorProps {
   member: Member;
+  onChange: (updated: Partial<Member>) => void;
   className?: string;
 }
 
@@ -37,32 +36,16 @@ const formatVestSize = (size: VestSize): string => {
   return mapping[size];
 };
 
-export function EquipmentEditor({ member, className }: EquipmentEditorProps) {
-  const updateMemberMutation = useUpdateMember();
-
-  const handleUpdate = useCallback(
-    async (field: string, value: unknown) => {
-      try {
-        await updateMemberMutation.mutateAsync({
-          id: member.id,
-          data: {
-            [field]: value,
-          },
-        });
-
-        toast.success("Updated", {
-          description: "Member equipment information has been updated.",
-        });
-      } catch (error) {
-        toast.error("Update Failed", {
-          description:
-            error instanceof Error
-              ? error.message
-              : "Failed to update equipment information. Please try again.",
-        });
-      }
+export function EquipmentEditor({
+  member,
+  onChange,
+  className,
+}: EquipmentEditorProps) {
+  const handleFieldChange = useCallback(
+    (field: keyof Member, value: unknown) => {
+      onChange({ [field]: value });
     },
-    [member.id, updateMemberMutation]
+    [onChange]
   );
 
   // Safety check - if member is not defined, don't render
@@ -80,7 +63,7 @@ export function EquipmentEditor({ member, className }: EquipmentEditorProps) {
         <Select
           value={member.uniform_size}
           onValueChange={(value) =>
-            handleUpdate("uniform_size", value as UniformSize)
+            handleFieldChange("uniform_size", value as UniformSize)
           }
         >
           <SelectTrigger className="mt-1 h-8">
@@ -103,7 +86,9 @@ export function EquipmentEditor({ member, className }: EquipmentEditorProps) {
           <Switch
             id="uniform-received"
             checked={member.uniform_received}
-            onCheckedChange={(value) => handleUpdate("uniform_received", value)}
+            onCheckedChange={(value) =>
+              handleFieldChange("uniform_received", value)
+            }
           />
           <Label
             htmlFor="uniform-received"
@@ -120,7 +105,7 @@ export function EquipmentEditor({ member, className }: EquipmentEditorProps) {
         <Select
           value={member.vest_size}
           onValueChange={(value) =>
-            handleUpdate("vest_size", value as VestSize)
+            handleFieldChange("vest_size", value as VestSize)
           }
         >
           <SelectTrigger className="mt-1 h-8">
@@ -148,7 +133,7 @@ export function EquipmentEditor({ member, className }: EquipmentEditorProps) {
         <Select
           value={member.hip_belt_size}
           onValueChange={(value) =>
-            handleUpdate("hip_belt_size", value as HipBeltSize)
+            handleFieldChange("hip_belt_size", value as HipBeltSize)
           }
         >
           <SelectTrigger className="mt-1 h-8">

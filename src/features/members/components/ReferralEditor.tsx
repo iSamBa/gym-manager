@@ -11,8 +11,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { Member, ReferralSource } from "@/features/database/lib/types";
-import { useUpdateMember, useMembers } from "@/features/members/hooks";
-import { toast } from "sonner";
+import { useMembers } from "@/features/members/hooks";
 import {
   Command,
   CommandEmpty,
@@ -29,6 +28,7 @@ import {
 
 interface ReferralEditorProps {
   member: Member;
+  onChange: (updated: Partial<Member>) => void;
   className?: string;
 }
 
@@ -46,11 +46,13 @@ const formatReferralSource = (source: ReferralSource): string => {
   return mapping[source];
 };
 
-export function ReferralEditor({ member, className }: ReferralEditorProps) {
+export function ReferralEditor({
+  member,
+  onChange,
+  className,
+}: ReferralEditorProps) {
   const [memberSearchOpen, setMemberSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const updateMemberMutation = useUpdateMember();
 
   // Fetch all members for the referral search (set high limit to get all)
   const { data: allMembers = [] } = useMembers({ limit: 10000 });
@@ -81,51 +83,28 @@ export function ReferralEditor({ member, className }: ReferralEditorProps) {
     [selectableMembers, member.referred_by_member_id]
   );
 
-  const handleUpdate = useCallback(
-    async (field: string, value: unknown) => {
-      try {
-        await updateMemberMutation.mutateAsync({
-          id: member.id,
-          data: {
-            [field]: value,
-          },
-        });
-
-        toast.success("Updated", {
-          description: "Member referral information has been updated.",
-        });
-      } catch (error) {
-        toast.error("Update Failed", {
-          description:
-            error instanceof Error
-              ? error.message
-              : "Failed to update referral information. Please try again.",
-        });
-      }
-    },
-    [member.id, updateMemberMutation]
-  );
-
   // Handle referral source change
   const handleReferralSourceChange = useCallback(
-    async (value: ReferralSource) => {
+    (value: ReferralSource) => {
       // Clear referred_by if changing away from member_referral
       if (value !== "member_referral") {
-        await handleUpdate("referral_source", value);
-        await handleUpdate("referred_by_member_id", undefined);
+        onChange({
+          referral_source: value,
+          referred_by_member_id: undefined,
+        });
       } else {
-        await handleUpdate("referral_source", value);
+        onChange({ referral_source: value });
       }
     },
-    [handleUpdate]
+    [onChange]
   );
 
   const handleReferredByChange = useCallback(
-    async (memberId: string) => {
-      await handleUpdate("referred_by_member_id", memberId);
+    (memberId: string) => {
+      onChange({ referred_by_member_id: memberId });
       setMemberSearchOpen(false);
     },
-    [handleUpdate]
+    [onChange]
   );
 
   // Safety check - if member is not defined, don't render

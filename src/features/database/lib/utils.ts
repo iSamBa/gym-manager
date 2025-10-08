@@ -558,8 +558,7 @@ export const memberUtils = {
           subscriptions:member_subscriptions(
             *,
             plan:subscription_plans(*)
-          ),
-          emergency_contacts:member_emergency_contacts(*)
+          )
         `
         )
         .eq("id", id)
