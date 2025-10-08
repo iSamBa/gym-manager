@@ -112,7 +112,7 @@ export function EditMemberDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[85vh] w-[60vw] overflow-y-auto sm:max-w-[60vw]">
+      <DialogContent className="max-h-[85vh] w-[95vw] overflow-y-auto sm:max-w-[1400px]">
         <DialogHeader>
           <DialogTitle>
             Edit Member: {member.first_name} {member.last_name}
@@ -132,7 +132,7 @@ export function EditMemberDialog({
         )}
 
         {/* Member Form */}
-        <div className="mt-4">
+        <div className="mt-4 px-4 py-6">
           <ProgressiveMemberForm
             member={member}
             onSubmit={handleSubmit}

@@ -419,6 +419,7 @@ export function ProgressiveMemberForm({
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isValidatingStep, setIsValidatingStep] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const announceRef = useRef<HTMLDivElement>(null);
   const formId = useId();
@@ -546,6 +547,18 @@ export function ProgressiveMemberForm({
     }
   }, [form, member, formStorageKey, currentStep]);
 
+  // Track form changes in edit mode
+  useEffect(() => {
+    if (member) {
+      // Only for editing existing members
+      const subscription = form.watch(() => {
+        // Any change triggers hasChanges
+        setHasChanges(true);
+      });
+      return () => subscription.unsubscribe();
+    }
+  }, [form, member]);
+
   // Accessibility: Announce step changes to screen readers
   useEffect(() => {
     if (announceRef.current) {
@@ -629,15 +642,45 @@ export function ProgressiveMemberForm({
   };
 
   const handleStepClick = async (stepId: number) => {
-    if (stepId < currentStep || completedSteps.includes(stepId)) {
-      setCurrentStep(stepId);
-    } else if (stepId === currentStep + 1) {
-      await handleNextStep();
-    }
+    // Allow free navigation to any step
+    setCurrentStep(stepId);
   };
 
   const handleSubmit = async (data: MemberFormData) => {
-    // Validate all steps before final submission
+    // In edit mode: check if there are any changes
+    if (member) {
+      try {
+        await memberFormSchema.parseAsync(data);
+
+        // Check if any fields were modified
+        if (!hasChanges) {
+          toast.info("No Changes", {
+            description: "No fields were modified",
+          });
+          return;
+        }
+
+        // Submit all form data (database will handle the update)
+        await onSubmit(data);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          // Show validation errors without jumping to steps
+          const errorMessages = error.errors
+            .map((e) => `${e.path.join(".")}: ${e.message}`)
+            .join("; ");
+          toast.error("Validation Failed", {
+            description:
+              errorMessages.length > 100
+                ? "Please check all required fields"
+                : errorMessages,
+          });
+        }
+        throw error;
+      }
+      return;
+    }
+
+    // Create mode: step-by-step validation
     for (const step of steps) {
       try {
         await step.schema.parseAsync(data);
@@ -1267,7 +1310,7 @@ export function ProgressiveMemberForm({
 
   return (
     <div
-      className={cn("mx-auto max-w-2xl space-y-4", className)}
+      className={cn("mx-auto w-full max-w-7xl space-y-4", className)}
       role="region"
       aria-label="Member registration form"
     >
@@ -1323,7 +1366,7 @@ export function ProgressiveMemberForm({
             {steps.map((step) => {
               const isCompleted = completedSteps.includes(step.id);
               const isCurrent = step.id === currentStep;
-              const isAccessible = step.id <= currentStep || isCompleted;
+              const isAccessible = true; // Allow navigation to all steps
 
               return (
                 <li key={step.id} className="flex">
@@ -1388,7 +1431,7 @@ export function ProgressiveMemberForm({
             {currentStepInfo.description}
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-h-[400px]">
           <Form {...form}>
             <form
               ref={formRef}
@@ -1408,80 +1451,114 @@ export function ProgressiveMemberForm({
         </CardContent>
       </Card>
 
-      {/* Navigation Footer */}
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handlePreviousStep}
-          disabled={currentStep === 1}
-          className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:w-auto"
-          aria-label={
-            currentStep === 1
-              ? "Previous step (disabled - first step)"
-              : `Go to previous step: ${steps[currentStep - 2]?.title}`
-          }
-        >
-          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-          Previous
-        </Button>
-
-        <div className="flex gap-2">
-          {currentStep < steps.length ? (
-            <Button
-              type="button"
-              onClick={handleNextStep}
-              disabled={isValidatingStep}
-              className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
-              aria-label={`Continue to next step: ${steps[currentStep]?.title}`}
-            >
-              {isValidatingStep ? (
-                <>
-                  <Loader2
-                    className="h-4 w-4 animate-spin"
-                    aria-hidden="true"
-                  />
-                  <span>Validating...</span>
-                  <span className="sr-only">
-                    Please wait while we validate your information
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span>Continue</span>
-                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </>
-              )}
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
-              onClick={() => form.handleSubmit(handleSubmit)()}
-              aria-label={`${member ? "Update" : "Create"} member with provided information`}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2
-                    className="h-4 w-4 animate-spin"
-                    aria-hidden="true"
-                  />
-                  <span>Saving...</span>
-                  <span className="sr-only">
-                    Please wait while we save the member information
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" aria-hidden="true" />
-                  <span>{member ? "Update Member" : "Create Member"}</span>
-                </>
-              )}
-            </Button>
-          )}
+      {/* Navigation Footer - Outside Form */}
+      {member ? (
+        // Edit Mode: Just Save & Cancel
+        <div className="flex items-center justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            className="min-h-[44px]"
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            disabled={isLoading}
+            onClick={() => form.handleSubmit(handleSubmit)()}
+            className="min-h-[44px]"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Update Member
+              </>
+            )}
+          </Button>
         </div>
-      </div>
+      ) : (
+        // Create Mode: Previous/Next workflow
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePreviousStep}
+            disabled={currentStep === 1}
+            className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:w-auto"
+            aria-label={
+              currentStep === 1
+                ? "Previous step (disabled - first step)"
+                : `Go to previous step: ${steps[currentStep - 2]?.title}`
+            }
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+            Previous
+          </Button>
+
+          <div className="flex gap-2">
+            {currentStep < steps.length ? (
+              <Button
+                type="button"
+                onClick={handleNextStep}
+                disabled={isValidatingStep}
+                className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
+                aria-label={`Continue to next step: ${steps[currentStep]?.title}`}
+              >
+                {isValidatingStep ? (
+                  <>
+                    <Loader2
+                      className="h-4 w-4 animate-spin"
+                      aria-hidden="true"
+                    />
+                    <span>Validating...</span>
+                    <span className="sr-only">
+                      Please wait while we validate your information
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span>Continue</span>
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
+                onClick={() => form.handleSubmit(handleSubmit)()}
+                aria-label="Create member with provided information"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2
+                      className="h-4 w-4 animate-spin"
+                      aria-hidden="true"
+                    />
+                    <span>Saving...</span>
+                    <span className="sr-only">
+                      Please wait while we save the member information
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" aria-hidden="true" />
+                    <span>Create Member</span>
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
