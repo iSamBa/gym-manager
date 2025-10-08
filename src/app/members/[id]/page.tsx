@@ -20,7 +20,6 @@ import {
   TrainingPreferenceDisplay,
   ContactInformationCard,
   PersonalDetailsCard,
-  EnhancedEmergencyContactsCard,
   EnhancedActivityCard,
   MemberAlertsCard,
 } from "@/features/members/components";
@@ -189,12 +188,12 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                 {/* Personal Details Card */}
                 <PersonalDetailsCard member={member} />
 
-                {/* Equipment & Gear Card */}
+                {/* Equipment & Referral Card */}
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-base">
                       <Package className="h-4 w-4" />
-                      Equipment & Gear
+                      Equipment & Referral
                     </CardTitle>
                     <Button
                       variant="ghost"
@@ -205,20 +204,23 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                     </Button>
                   </CardHeader>
                   <CardContent>
-                    <EquipmentDisplay member={member} />
-                  </CardContent>
-                </Card>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                      {/* Equipment Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium">
+                          Equipment & Gear
+                        </h3>
+                        <EquipmentDisplay member={member} />
+                      </div>
 
-                {/* Referral Information Card */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <UserPlus className="h-4 w-4" />
-                      Referral Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ReferralDisplay member={member} />
+                      {/* Referral Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium">
+                          Referral Information
+                        </h3>
+                        <ReferralDisplay member={member} />
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -236,9 +238,6 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                     </CardContent>
                   </Card>
                 )}
-
-                {/* Emergency Contacts Card */}
-                <EnhancedEmergencyContactsCard member={member} />
               </TabsContent>
 
               {/* Training Sessions Tab */}
