@@ -591,3 +591,20 @@ export interface MemberWithEnhancedDetails extends Member {
   /** Date of last completed payment (null if no payments) */
   last_payment_date: string | null;
 }
+
+// Member Comments (US-009)
+
+/**
+ * Member comment with optional due date for alerts
+ * Comments with due_date appear as alerts until the date passes
+ */
+export interface MemberComment {
+  id: string;
+  member_id: string;
+  author: string;
+  body: string;
+  due_date?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}

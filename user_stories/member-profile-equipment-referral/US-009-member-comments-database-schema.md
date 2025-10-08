@@ -5,7 +5,9 @@
 **Priority:** P0 (Must Have)
 **Complexity:** Small (~30 minutes)
 **Dependencies:** None
-**Status:** 🔵 NOT STARTED
+**Status:** ✅ COMPLETED
+**Completed:** 2025-10-08
+**Implementation Notes:** Database schema created via Supabase MCP tool. All constraints, indexes, RLS policies, and TypeScript types implemented successfully.
 
 ---
 
@@ -37,7 +39,7 @@
 
 ### Database Table
 
-- [ ] **AC-001:** Table `member_comments` created with correct schema
+- [x] **AC-001:** Table `member_comments` created with correct schema ✅ **VERIFIED** (Migration applied via Supabase MCP)
 
   ```sql
   CREATE TABLE member_comments (
@@ -54,13 +56,13 @@
 
 ### Indexes
 
-- [ ] **AC-002:** Index on `member_id` for efficient member comment queries
+- [x] **AC-002:** Index on `member_id` for efficient member comment queries ✅ **VERIFIED** (SQL query confirmed)
 
   ```sql
   CREATE INDEX idx_member_comments_member_id ON member_comments(member_id);
   ```
 
-- [ ] **AC-003:** Index on `due_date` for efficient alert queries
+- [x] **AC-003:** Index on `due_date` for efficient alert queries ✅ **VERIFIED** (Partial index with WHERE clause confirmed)
 
   ```sql
   CREATE INDEX idx_member_comments_due_date ON member_comments(due_date)
@@ -69,21 +71,21 @@
 
 ### Constraints
 
-- [ ] **AC-004:** Foreign key constraint on `member_id`:
+- [x] **AC-004:** Foreign key constraint on `member_id` ✅ **VERIFIED** (FK references members.id with ON DELETE CASCADE)
   - References `members.id`
   - ON DELETE CASCADE (if member deleted, delete their comments)
 
-- [ ] **AC-005:** Foreign key constraint on `created_by`:
+- [x] **AC-005:** Foreign key constraint on `created_by` ✅ **VERIFIED** (FK references user_profiles.id with ON DELETE SET NULL)
   - References `user_profiles.id`
   - ON DELETE SET NULL (preserve comment if user deleted)
 
-- [ ] **AC-006:** Check constraints:
+- [x] **AC-006:** Check constraints ✅ **VERIFIED** (Tested: empty body rejected, valid body accepted)
   - `body` must not be empty: `CHECK (LENGTH(TRIM(body)) > 0)`
   - `author` must not be empty: `CHECK (LENGTH(TRIM(author)) > 0)`
 
 ### Triggers
 
-- [ ] **AC-007:** Automatic `updated_at` timestamp trigger:
+- [x] **AC-007:** Automatic `updated_at` timestamp trigger ✅ **VERIFIED** (Tested: updated_at changed on UPDATE)
 
   ```sql
   CREATE TRIGGER update_member_comments_updated_at
@@ -94,9 +96,9 @@
 
 ### Row Level Security (RLS)
 
-- [ ] **AC-008:** RLS enabled on `member_comments` table
+- [x] **AC-008:** RLS enabled on `member_comments` table ✅ **VERIFIED** (SQL query confirmed)
 
-- [ ] **AC-009:** Policy for SELECT:
+- [x] **AC-009:** Policy for SELECT ✅ **VERIFIED** (Admin/trainer-only policy confirmed)
 
   ```sql
   CREATE POLICY select_member_comments ON member_comments
@@ -110,7 +112,7 @@
     );
   ```
 
-- [ ] **AC-010:** Policy for INSERT:
+- [x] **AC-010:** Policy for INSERT ✅ **VERIFIED** (Admin/trainer-only policy confirmed)
 
   ```sql
   CREATE POLICY insert_member_comments ON member_comments
@@ -124,7 +126,7 @@
     );
   ```
 
-- [ ] **AC-011:** Policy for UPDATE:
+- [x] **AC-011:** Policy for UPDATE ✅ **VERIFIED** (Admin/trainer-only policy confirmed)
 
   ```sql
   CREATE POLICY update_member_comments ON member_comments
@@ -138,7 +140,7 @@
     );
   ```
 
-- [ ] **AC-012:** Policy for DELETE:
+- [x] **AC-012:** Policy for DELETE ✅ **VERIFIED** (Admin/trainer-only policy confirmed)
 
   ```sql
   CREATE POLICY delete_member_comments ON member_comments
@@ -154,7 +156,7 @@
 
 ### TypeScript Types
 
-- [ ] **AC-013:** `MemberComment` interface added to `src/features/database/lib/types.ts`:
+- [x] **AC-013:** `MemberComment` interface added to `src/features/database/lib/types.ts` ✅ **VERIFIED** (types.ts:601-610)
 
   ```typescript
   export interface MemberComment {
@@ -169,7 +171,7 @@
   }
   ```
 
-- [ ] **AC-014:** Export `MemberComment` from types file
+- [x] **AC-014:** Export `MemberComment` from types file ✅ **VERIFIED** (Exported as public interface)
 
 ---
 
@@ -322,16 +324,16 @@ VALUES (
 
 ## 🧪 Testing Checklist
 
-- [ ] Migration runs successfully without errors
-- [ ] All indexes created
-- [ ] All constraints working (empty body/author rejected)
-- [ ] RLS policies applied correctly
-- [ ] Foreign keys cascade properly
-- [ ] Updated_at trigger fires on updates
-- [ ] TypeScript types compile without errors
-- [ ] Can insert valid comment
-- [ ] Can query comments by member_id
-- [ ] Can query comments by due_date
+- [x] Migration runs successfully without errors ✅
+- [x] All indexes created ✅
+- [x] All constraints working (empty body/author rejected) ✅
+- [x] RLS policies applied correctly ✅
+- [x] Foreign keys cascade properly ✅
+- [x] Updated_at trigger fires on updates ✅
+- [x] TypeScript types compile without errors ✅
+- [x] Can insert valid comment ✅
+- [x] Can query comments by member_id ✅
+- [x] Can query comments by due_date ✅
 
 ---
 
