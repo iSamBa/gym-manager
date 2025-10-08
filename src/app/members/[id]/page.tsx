@@ -314,12 +314,6 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                               : "No end date"}
                           </span>
                         </div>
-                        <div className="flex justify-between font-medium">
-                          <span className="text-muted-foreground">
-                            Monthly Fee
-                          </span>
-                          <span>${member.subscription.price}</span>
-                        </div>
                       </div>
                     </div>
                   </div>
