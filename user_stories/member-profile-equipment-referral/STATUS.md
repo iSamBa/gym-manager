@@ -2,17 +2,17 @@
 
 **Feature:** Member Profile Enhancement - Equipment & Referral Tracking
 **Branch:** `feature/member-profile-equipment-referral`
-**Status:** ✅ COMPLETED
-**Last Updated:** 2025-10-07
+**Status:** 🔄 IN PROGRESS (Phase 3: Comments System)
+**Last Updated:** 2025-10-08
 
 ---
 
 ## 📊 Overall Progress
 
-**Completion:** 8 / 8 User Stories (100%)
+**Completion:** 8 / 13 User Stories (62%)
 
 ```
-[████████████████████] 100%
+[████████████░░░░░░░░] 62%
 ```
 
 ---
@@ -274,6 +274,152 @@
 
 ---
 
+### 🔵 US-009: Member Comments Database Schema
+
+**Status:** 🔵 NOT STARTED
+**Priority:** P0 (Must Have)
+**Complexity:** Small (~30 minutes)
+**Dependencies:** None
+**Completed:** N/A
+
+**Progress:**
+
+- [ ] Create migration file
+- [ ] Create member_comments table with indexes
+- [ ] Add RLS policies
+- [ ] Add check constraints
+- [ ] Add triggers
+- [ ] Update TypeScript types
+- [ ] Test migration
+
+**Blockers:** None
+
+**Notes:**
+
+- Foundation for comments system
+- Supports optional due dates for alerts
+- Only admins and trainers can access
+
+---
+
+### 🔵 US-010: Comments CRUD Operations
+
+**Status:** 🔵 NOT STARTED
+**Priority:** P0 (Must Have)
+**Complexity:** Medium (~1 hour)
+**Dependencies:** ✅ US-009
+**Completed:** N/A
+
+**Progress:**
+
+- [ ] Add database utility functions (fetch, create, update, delete)
+- [ ] Create useMemberComments hook
+- [ ] Create useActiveCommentAlerts hook
+- [ ] Create useCreateComment mutation
+- [ ] Create useUpdateComment mutation
+- [ ] Create useDeleteComment mutation
+- [ ] Export from hooks index
+- [ ] Test all operations
+
+**Blockers:** None
+
+**Notes:**
+
+- TanStack Query integration
+- Automatic cache invalidation
+- Toast notifications for all operations
+
+---
+
+### 🔵 US-011: Comments UI Component
+
+**Status:** 🔵 NOT STARTED
+**Priority:** P1 (Required)
+**Complexity:** Medium (~1.5 hours)
+**Dependencies:** 🔵 US-009, 🔵 US-010
+**Completed:** N/A
+
+**Progress:**
+
+- [ ] Create CommentDialog component
+- [ ] Create MemberCommentsCard component
+- [ ] Integrate into member detail page (Profile tab)
+- [ ] Add loading/empty/error states
+- [ ] Add form validation
+- [ ] Add delete confirmation
+- [ ] Export from components index
+- [ ] Test UI interactions
+
+**Blockers:** None
+
+**Notes:**
+
+- Reusable dialog for add/edit modes
+- Comments ordered newest first
+- Due date badge for alerts
+- Must use React.memo and useCallback
+
+---
+
+### 🔵 US-012: Comment Alert Integration
+
+**Status:** 🔵 NOT STARTED
+**Priority:** P1 (Required)
+**Complexity:** Small (~30 minutes)
+**Dependencies:** 🔵 US-009, 🔵 US-010, 🔵 US-011
+**Completed:** N/A
+
+**Progress:**
+
+- [ ] Update MemberAlertsCard to fetch comment alerts
+- [ ] Add comment alerts to alerts array
+- [ ] Implement urgency logic (critical vs warning)
+- [ ] Add MessageSquare icon
+- [ ] Truncate long comment bodies
+- [ ] Sort alerts by priority
+- [ ] Test alert display
+
+**Blockers:** None
+
+**Notes:**
+
+- Due in 3 days or less = critical (red)
+- Due in more than 3 days = warning (amber)
+- Past due dates don't show
+- Alerts auto-remove after due date
+
+---
+
+### 🔵 US-013: Comments Testing & Polish
+
+**Status:** 🔵 NOT STARTED
+**Priority:** P2 (Quality)
+**Complexity:** Small (~45 minutes)
+**Dependencies:** 🔵 US-009, 🔵 US-010, 🔵 US-011, 🔵 US-012
+**Completed:** N/A
+
+**Progress:**
+
+- [ ] Write unit tests for hooks
+- [ ] Write component tests
+- [ ] Write integration tests
+- [ ] Add UX polish (loading, empty, error states)
+- [ ] Add confirmation dialogs
+- [ ] Accessibility testing
+- [ ] Performance verification
+- [ ] Code quality check
+
+**Blockers:** None
+
+**Notes:**
+
+- Target >80% test coverage
+- Must follow CLAUDE.md guidelines
+- Verify React.memo and useCallback usage
+- Test on mobile and dark mode
+
+---
+
 ## 🧪 Testing Status
 
 ### Unit Tests
@@ -324,30 +470,36 @@
 
 ---
 
-## ✅ Feature Complete
+## 🔄 Feature Status
 
-**Status:** 🎉 **ALL USER STORIES COMPLETED**
+**Status:** 🔄 **PHASE 3 IN PROGRESS** (Comments System)
 
-**Completed Steps:**
+**Completed Phases:**
 
-1. ✅ US-001 completed - Database schema and types ready
-2. ✅ US-002 completed - Member creation form with new fields
-3. ✅ US-003 completed - Member details view displaying new fields
-4. ✅ US-004 completed - Member edit functionality with all new fields
-5. ✅ User story files created for redesign (US-005 through US-008)
-6. ✅ US-005 completed - Profile Header & Layout Restructure
-7. ✅ US-006 completed - Information Cards Implementation
-8. ✅ US-007 completed - Enhanced Sidebar & Alerts
-9. ✅ US-008 completed - Testing & Polish
+1. ✅ **Phase 1: Equipment & Referral Tracking** (US-001 through US-004)
+2. ✅ **Phase 2: Profile Redesign** (US-005 through US-008)
+
+**Current Phase:**
+
+3. 🔄 **Phase 3: Comments System** (US-009 through US-013)
+   - 🔵 US-009: Database Schema (Not Started)
+   - 🔵 US-010: CRUD Operations (Blocked by US-009)
+   - 🔵 US-011: UI Components (Blocked by US-009, US-010)
+   - 🔵 US-012: Alert Integration (Blocked by US-009, US-010, US-011)
+   - 🔵 US-013: Testing & Polish (Blocked by US-009, US-010, US-011, US-012)
 
 **Next Steps:**
 
-1. Final manual testing (recommended)
-2. Code review
-3. Merge to main branch
-4. Deploy to production
+1. Implement US-009 (Database Schema)
+2. Implement US-010 (CRUD Operations)
+3. Implement US-011 (UI Components)
+4. Implement US-012 (Alert Integration)
+5. Implement US-013 (Testing & Polish)
+6. Final code review
+7. Merge to main branch
+8. Deploy to production
 
-**Feature Ready for:** Production Deployment
+**Feature Ready for:** Implementation (Phase 3)
 
 ---
 
@@ -404,35 +556,62 @@ No current blockers.
 
 **User Stories:**
 
-- US-001: Small - Estimated 30 minutes ✅
-- US-002: Medium - Estimated 60 minutes ✅
-- US-003: Small - Estimated 30 minutes ✅
-- US-004: Medium - Estimated 45 minutes ✅
-- US-005: Medium - Estimated 90 minutes ✅
-- US-006: Large - Estimated 120 minutes ✅
-- US-007: Medium - Estimated 90 minutes ✅
-- US-008: Small - Estimated 45 minutes ✅
+**Phase 1 & 2 (Completed):**
 
-**Total Estimated:** ~8 hours
-**Completed:** ~8 hours (100%) ✅
+- US-001: Small - 30 minutes ✅
+- US-002: Medium - 60 minutes ✅
+- US-003: Small - 30 minutes ✅
+- US-004: Medium - 45 minutes ✅
+- US-005: Medium - 90 minutes ✅
+- US-006: Large - 120 minutes ✅
+- US-007: Medium - 90 minutes ✅
+- US-008: Small - 45 minutes ✅
+
+**Phase 3 (In Progress):**
+
+- US-009: Small - 30 minutes 🔵
+- US-010: Medium - 60 minutes 🔵
+- US-011: Medium - 90 minutes 🔵
+- US-012: Small - 30 minutes 🔵
+- US-013: Small - 45 minutes 🔵
+
+**Total Estimated:** ~11.5 hours
+**Completed:** ~8 hours (70%)
+**Remaining:** ~3.5 hours (Phase 3)
 
 ---
 
 ## 🔗 Quick Links
 
+**Project Documentation:**
+
 - [START-HERE.md](./START-HERE.md) - Feature overview
 - [AGENT-GUIDE.md](./AGENT-GUIDE.md) - Implementation workflow
 - [README.md](./README.md) - Full documentation
+
+**Phase 1: Equipment & Referral Tracking (✅ Completed)**
+
 - [US-001](./US-001-database-schema-extension.md) - Database Schema
 - [US-002](./US-002-member-creation-form-enhancement.md) - Form Enhancement
 - [US-003](./US-003-member-details-view-enhancement.md) - Details View
 - [US-004](./US-004-member-edit-functionality.md) - Edit Functionality
+
+**Phase 2: Profile Redesign (✅ Completed)**
+
 - [US-005](./US-005-profile-header-layout-restructure.md) - Profile Header & Layout
 - [US-006](./US-006-information-cards-implementation.md) - Information Cards
 - [US-007](./US-007-enhanced-sidebar-alerts.md) - Sidebar & Alerts
 - [US-008](./US-008-testing-polish.md) - Testing & Polish
 
+**Phase 3: Comments System (🔄 In Progress)**
+
+- [US-009](./US-009-member-comments-database-schema.md) - Comments Database Schema
+- [US-010](./US-010-comments-crud-operations.md) - Comments CRUD Operations
+- [US-011](./US-011-comments-ui-component.md) - Comments UI Component
+- [US-012](./US-012-comment-alert-integration.md) - Comment Alert Integration
+- [US-013](./US-013-comments-testing-polish.md) - Comments Testing & Polish
+
 ---
 
-**Last Activity:** 🎉 Feature Complete - All 8 user stories implemented and tested
-**Next Review:** Code review before production deployment
+**Last Activity:** 📝 Phase 3 user stories created - Comments system ready for implementation
+**Next Steps:** Implement US-009 (Database Schema)
