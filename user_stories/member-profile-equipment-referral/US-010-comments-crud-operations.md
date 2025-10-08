@@ -5,7 +5,9 @@
 **Priority:** P0 (Must Have)
 **Complexity:** Medium (~1 hour)
 **Dependencies:** US-009
-**Status:** 🔵 NOT STARTED
+**Status:** ✅ COMPLETED
+**Completed:** 2025-10-08
+**Implementation Notes:** All database functions and React hooks implemented with TanStack Query integration. Full CRUD operations with cache invalidation and toast notifications.
 
 ---
 
@@ -39,7 +41,7 @@
 
 **File:** `src/features/database/lib/utils.ts`
 
-- [ ] **AC-001:** `fetchMemberComments(memberId)` function:
+- [x] **AC-001:** `fetchMemberComments(memberId)` function ✅ **VERIFIED** (utils.ts:1313-1324):
 
   ```typescript
   /**
@@ -59,7 +61,7 @@
   }
   ```
 
-- [ ] **AC-002:** `fetchActiveCommentAlerts(memberId)` function:
+- [x] **AC-002:** `fetchActiveCommentAlerts(memberId)` function ✅ **VERIFIED** (utils.ts:1329-1342):
 
   ```typescript
   /**
@@ -81,7 +83,7 @@
   }
   ```
 
-- [ ] **AC-003:** `createMemberComment(data)` function:
+- [x] **AC-003:** `createMemberComment(data)` function ✅ **VERIFIED** (utils.ts:1347-1359):
 
   ```typescript
   /**
@@ -102,7 +104,7 @@
   }
   ```
 
-- [ ] **AC-004:** `updateMemberComment(id, data)` function:
+- [x] **AC-004:** `updateMemberComment(id, data)` function ✅ **VERIFIED** (utils.ts:1364-1378):
 
   ```typescript
   /**
@@ -125,7 +127,7 @@
   }
   ```
 
-- [ ] **AC-005:** `deleteMemberComment(id)` function:
+- [x] **AC-005:** `deleteMemberComment(id)` function ✅ **VERIFIED** (utils.ts:1383-1387):
 
   ```typescript
   /**
@@ -145,7 +147,7 @@
 
 **File:** `src/features/members/hooks/use-member-comments.ts`
 
-- [ ] **AC-006:** `useMemberComments(memberId)` query hook:
+- [x] **AC-006:** `useMemberComments(memberId)` query hook ✅ **VERIFIED** (use-member-comments.ts:14-20):
 
   ```typescript
   import { useQuery } from "@tanstack/react-query";
@@ -160,7 +162,7 @@
   }
   ```
 
-- [ ] **AC-007:** `useActiveCommentAlerts(memberId)` query hook:
+- [x] **AC-007:** `useActiveCommentAlerts(memberId)` query hook ✅ **VERIFIED** (use-member-comments.ts:26-32):
 
   ```typescript
   export function useActiveCommentAlerts(memberId: string) {
@@ -172,7 +174,7 @@
   }
   ```
 
-- [ ] **AC-008:** `useCreateComment()` mutation hook:
+- [x] **AC-008:** `useCreateComment()` mutation hook ✅ **VERIFIED** (use-member-comments.ts:38-61):
 
   ```typescript
   import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -204,7 +206,7 @@
   }
   ```
 
-- [ ] **AC-009:** `useUpdateComment()` mutation hook:
+- [x] **AC-009:** `useUpdateComment()` mutation hook ✅ **VERIFIED** (use-member-comments.ts:67-90):
 
   ```typescript
   export function useUpdateComment() {
@@ -234,7 +236,7 @@
   }
   ```
 
-- [ ] **AC-010:** `useDeleteComment()` mutation hook:
+- [x] **AC-010:** `useDeleteComment()` mutation hook ✅ **VERIFIED** (use-member-comments.ts:99-118):
 
   ```typescript
   export function useDeleteComment() {
@@ -259,7 +261,7 @@
   }
   ```
 
-- [ ] **AC-011:** Export from `src/features/members/hooks/index.ts`:
+- [x] **AC-011:** Export from `src/features/members/hooks/index.ts` ✅ **VERIFIED** (hooks/index.ts:43-49):
   ```typescript
   export {
     useMemberComments,
@@ -316,19 +318,19 @@ createComment.mutate({
 
 ## 🧪 Testing Checklist
 
-- [ ] Database functions compile without TypeScript errors
-- [ ] Hooks compile without TypeScript errors
-- [ ] Can fetch comments for a member
-- [ ] Can fetch active alerts for a member
-- [ ] Can create a new comment
-- [ ] Can update an existing comment
-- [ ] Can delete a comment
-- [ ] Query invalidation works (UI updates after mutations)
-- [ ] Toast notifications appear on success/error
-- [ ] Comments ordered correctly (newest first)
-- [ ] Alerts ordered correctly (earliest due date first)
-- [ ] Handles empty results gracefully
-- [ ] Handles database errors gracefully
+- [x] Database functions compile without TypeScript errors ✅
+- [x] Hooks compile without TypeScript errors ✅
+- [x] Can fetch comments for a member ✅
+- [x] Can fetch active alerts for a member ✅
+- [x] Can create a new comment ✅
+- [x] Can update an existing comment ✅
+- [x] Can delete a comment ✅
+- [x] Query invalidation works (UI updates after mutations) ✅
+- [x] Toast notifications appear on success/error ✅
+- [x] Comments ordered correctly (newest first) ✅
+- [x] Alerts ordered correctly (earliest due date first) ✅
+- [x] Handles empty results gracefully ✅
+- [x] Handles database errors gracefully ✅
 
 ---
 
