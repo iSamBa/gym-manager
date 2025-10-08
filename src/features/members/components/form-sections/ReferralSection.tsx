@@ -37,13 +37,12 @@ export const ReferralSection = memo(function ReferralSection({
 
   // Fetch members for referral selector
   const { data: membersData } = useMembers({
-    page: 1,
     limit: 1000, // Get all members for selector (optimize later if needed)
   });
 
   // Filter out current member to prevent self-referral
   const availableMembers = useMemo(() => {
-    const members = membersData?.pages?.[0]?.data || [];
+    const members = membersData || [];
     if (!excludeMemberId) return members;
     return members.filter((m) => m.id !== excludeMemberId);
   }, [membersData, excludeMemberId]);

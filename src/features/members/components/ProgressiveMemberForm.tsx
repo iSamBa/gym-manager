@@ -98,36 +98,28 @@ const settingsSchema = z.object({
 
 // US-004: Equipment, Referral, and Training Preference schemas
 const equipmentSchema = z.object({
-  uniform_size: z.enum(["XS", "S", "M", "L", "XL"], {
-    required_error: "Uniform size is required",
-  }),
-  uniform_received: z.boolean().default(false),
-  vest_size: z.enum(
-    ["V1", "V2", "V2_SMALL_EXT", "V2_LARGE_EXT", "V2_DOUBLE_EXT"],
-    {
-      required_error: "Vest size is required",
-    }
-  ),
-  hip_belt_size: z.enum(["V1", "V2"], {
-    required_error: "Hip belt size is required",
-  }),
+  uniform_size: z.enum(["XS", "S", "M", "L", "XL"]),
+  uniform_received: z.boolean(),
+  vest_size: z.enum([
+    "V1",
+    "V2",
+    "V2_SMALL_EXT",
+    "V2_LARGE_EXT",
+    "V2_DOUBLE_EXT",
+  ]),
+  hip_belt_size: z.enum(["V1", "V2"]),
 });
 
 const referralSchema = z.object({
-  referral_source: z.enum(
-    [
-      "instagram",
-      "member_referral",
-      "website_ib",
-      "prospection",
-      "studio",
-      "phone",
-      "chatbot",
-    ],
-    {
-      required_error: "Referral source is required",
-    }
-  ),
+  referral_source: z.enum([
+    "instagram",
+    "member_referral",
+    "website_ib",
+    "prospection",
+    "studio",
+    "phone",
+    "chatbot",
+  ]),
   referred_by_member_id: z.string().uuid().optional(),
 });
 
@@ -266,12 +258,11 @@ function ReferralSectionContent({
 }) {
   const referralSource = form.watch("referral_source");
   const { data: membersData } = useMembers({
-    page: 1,
     limit: 1000,
   });
 
   const availableMembers = React.useMemo(() => {
-    const members = membersData?.pages?.[0]?.data || [];
+    const members = membersData || [];
     if (!member?.id) return members;
     return members.filter((m) => m.id !== member.id);
   }, [membersData, member?.id]);

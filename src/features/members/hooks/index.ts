@@ -35,3 +35,6 @@ export {
 
 // Simple filtering (used in pages)
 export { useSimpleMemberFilters } from "./use-simple-member-filters";
+
+// Activity metrics (US-007)
+export { useMemberActivityMetrics } from "./use-member-activity-metrics";

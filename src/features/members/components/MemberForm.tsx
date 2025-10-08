@@ -42,35 +42,27 @@ const memberFormSchema = z
     waiver_signed: z.boolean(),
 
     // Equipment fields (US-001)
-    uniform_size: z.enum(["XS", "S", "M", "L", "XL"], {
-      required_error: "Uniform size is required",
-    }),
-    uniform_received: z.boolean().default(false),
-    vest_size: z.enum(
-      ["V1", "V2", "V2_SMALL_EXT", "V2_LARGE_EXT", "V2_DOUBLE_EXT"],
-      {
-        required_error: "Vest size is required",
-      }
-    ),
-    hip_belt_size: z.enum(["V1", "V2"], {
-      required_error: "Hip belt size is required",
-    }),
+    uniform_size: z.enum(["XS", "S", "M", "L", "XL"]),
+    uniform_received: z.boolean(),
+    vest_size: z.enum([
+      "V1",
+      "V2",
+      "V2_SMALL_EXT",
+      "V2_LARGE_EXT",
+      "V2_DOUBLE_EXT",
+    ]),
+    hip_belt_size: z.enum(["V1", "V2"]),
 
     // Referral fields (US-001)
-    referral_source: z.enum(
-      [
-        "instagram",
-        "member_referral",
-        "website_ib",
-        "prospection",
-        "studio",
-        "phone",
-        "chatbot",
-      ],
-      {
-        required_error: "Referral source is required",
-      }
-    ),
+    referral_source: z.enum([
+      "instagram",
+      "member_referral",
+      "website_ib",
+      "prospection",
+      "studio",
+      "phone",
+      "chatbot",
+    ]),
     referred_by_member_id: z.string().uuid().optional(),
 
     // Training preference field (US-001)

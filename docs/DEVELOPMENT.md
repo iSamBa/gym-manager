@@ -26,9 +26,6 @@
 - `npm test` - Run unit tests with Jest
 - `npm run test:watch` - Run tests in watch mode
 - `npm run test:coverage` - Generate test coverage report
-- `npm run test:e2e` - Run E2E tests with Playwright
-- `npm run test:e2e:ui` - Run E2E tests with UI
-- `npm run test:e2e:report` - View E2E test report
 
 ### Documentation
 
@@ -58,7 +55,6 @@ src/
     └── ui/             # shadcn/ui components
 
 tests/
-├── e2e/                # Playwright E2E tests
 └── __tests__/          # Jest unit tests
 
 docs/                   # Documentation

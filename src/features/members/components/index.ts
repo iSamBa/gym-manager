@@ -17,7 +17,24 @@ export {
   withMemberErrorBoundary,
 } from "./MemberErrorBoundary";
 
-// Inline editor components
+// Profile header
+export { MemberProfileHeader } from "./MemberProfileHeader";
+
+// Information cards (US-006)
+export { ContactInformationCard } from "./ContactInformationCard";
+export { PersonalDetailsCard } from "./PersonalDetailsCard";
+export { EnhancedEmergencyContactsCard } from "./EnhancedEmergencyContactsCard";
+
+// Sidebar components (US-007)
+export { EnhancedActivityCard } from "./EnhancedActivityCard";
+export { MemberAlertsCard } from "./MemberAlertsCard";
+
+// Display components (read-only for profile view)
+export { EquipmentDisplay } from "./EquipmentDisplay";
+export { ReferralDisplay } from "./ReferralDisplay";
+export { TrainingPreferenceDisplay } from "./TrainingPreferenceDisplay";
+
+// Inline editor components (for edit mode)
 export { EquipmentEditor } from "./EquipmentEditor";
 export { ReferralEditor } from "./ReferralEditor";
 export { TrainingPreferenceEditor } from "./TrainingPreferenceEditor";
