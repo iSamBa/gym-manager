@@ -419,7 +419,6 @@ export function ProgressiveMemberForm({
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isValidatingStep, setIsValidatingStep] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const announceRef = useRef<HTMLDivElement>(null);
   const formId = useId();
@@ -501,6 +500,43 @@ export function ProgressiveMemberForm({
   const progress = (currentStep / steps.length) * 100;
   const currentStepInfo = steps.find((step) => step.id === currentStep)!;
 
+  // Reset form when member prop changes (for edit mode)
+  useEffect(() => {
+    if (member) {
+      form.reset({
+        first_name: member.first_name,
+        last_name: member.last_name,
+        email: member.email,
+        phone: member.phone || "",
+        date_of_birth: member.date_of_birth,
+        gender: member.gender,
+        address: member.address || {
+          street: "",
+          city: "",
+          postal_code: "",
+          country: "Morocco",
+        },
+        uniform_size: member.uniform_size,
+        uniform_received: member.uniform_received,
+        vest_size: member.vest_size,
+        hip_belt_size: member.hip_belt_size,
+        referral_source: member.referral_source,
+        referred_by_member_id: member.referred_by_member_id || undefined,
+        training_preference: member.training_preference || undefined,
+        status: member.status,
+        fitness_goals: member.fitness_goals || "",
+        medical_conditions: member.medical_conditions || "",
+        notes: member.notes || "",
+        preferred_contact_method: member.preferred_contact_method as
+          | "email"
+          | "phone"
+          | "sms",
+        marketing_consent: member.marketing_consent,
+        waiver_signed: member.waiver_signed,
+      });
+    }
+  }, [member, form]);
+
   // Form state persistence with localStorage
   useEffect(() => {
     if (!member) {
@@ -547,17 +583,8 @@ export function ProgressiveMemberForm({
     }
   }, [form, member, formStorageKey, currentStep]);
 
-  // Track form changes in edit mode
-  useEffect(() => {
-    if (member) {
-      // Only for editing existing members
-      const subscription = form.watch(() => {
-        // Any change triggers hasChanges
-        setHasChanges(true);
-      });
-      return () => subscription.unsubscribe();
-    }
-  }, [form, member]);
+  // Note: Change tracking removed - we now always allow updates in edit mode
+  // React Hook Form's built-in dirty tracking can be used if needed via form.formState.isDirty
 
   // Accessibility: Announce step changes to screen readers
   useEffect(() => {
@@ -647,25 +674,18 @@ export function ProgressiveMemberForm({
   };
 
   const handleSubmit = async (data: MemberFormData) => {
-    // In edit mode: check if there are any changes
+    // In edit mode: validate and submit
     if (member) {
       try {
         await memberFormSchema.parseAsync(data);
-
-        // Check if any fields were modified
-        if (!hasChanges) {
-          toast.info("No Changes", {
-            description: "No fields were modified",
-          });
-          return;
-        }
 
         // Submit all form data (database will handle the update)
         await onSubmit(data);
       } catch (error) {
         if (error instanceof z.ZodError) {
           // Show validation errors without jumping to steps
-          const errorMessages = error.errors
+          const zodError = error as z.ZodError;
+          const errorMessages = zodError.issues
             .map((e) => `${e.path.join(".")}: ${e.message}`)
             .join("; ");
           toast.error("Validation Failed", {

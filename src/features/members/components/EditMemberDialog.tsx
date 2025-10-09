@@ -36,6 +36,9 @@ export function EditMemberDialog({
   // Cache utilities for smart invalidation
   const { invalidateMemberCache } = useMemberCacheUtils();
 
+  // Note: data parameter type is UpdateMemberData, but ProgressiveMemberForm sends MemberFormData
+  // This is safe because UpdateMemberData is a subset of MemberFormData (all fields optional)
+  // and the database update function will only use the fields it recognizes
   const handleSubmit = async (data: UpdateMemberData) => {
     if (!member) return;
 

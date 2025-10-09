@@ -378,11 +378,38 @@ export const memberUtils = {
 
   async createMember(memberData: CreateMemberData): Promise<Member> {
     await validateAdminAccess();
+
+    /**
+     * Data Cleaning: Empty String → NULL conversion
+     * See updateMember() for detailed explanation of why this is done
+     * at the database layer instead of in Zod validation.
+     */
+    const cleanedData: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(memberData)) {
+      // Skip undefined values
+      if (value === undefined) continue;
+
+      // Convert empty strings to null for optional text fields
+      if (
+        value === "" &&
+        (key === "phone" ||
+          key === "notes" ||
+          key === "medical_conditions" ||
+          key === "fitness_goals" ||
+          key === "profile_picture_url")
+      ) {
+        cleanedData[key] = null;
+      } else {
+        cleanedData[key] = value;
+      }
+    }
+
     return executeQuery(async () => {
       return await supabase
         .from("members")
         .insert({
-          ...memberData,
+          ...cleanedData,
           status: memberData.status || "active",
           join_date:
             memberData.join_date || new Date().toISOString().split("T")[0],
@@ -400,11 +427,46 @@ export const memberUtils = {
     id: string,
     memberData: UpdateMemberData
   ): Promise<Member> {
+    /**
+     * Data Cleaning: Empty String → NULL conversion
+     *
+     * WHY HERE AND NOT IN ZOD?
+     * - This is a database compatibility concern, not a validation concern
+     * - Zod validates: "Is this a valid string?" ✅ "" is valid
+     * - Database expects: NULL for optional fields, not empty strings
+     * - Using z.preprocess() breaks TypeScript type inference (types become 'unknown')
+     * - Keeping data transformation at the DB layer is cleaner and more maintainable
+     *
+     * WHAT IT DOES:
+     * Converts empty strings ("") to null for optional text fields to match
+     * PostgreSQL's expectation. Prevents "malformed array literal" errors.
+     */
+    const cleanedData: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(memberData)) {
+      // Skip undefined values
+      if (value === undefined) continue;
+
+      // Convert empty strings to null for optional text fields
+      if (
+        value === "" &&
+        (key === "phone" ||
+          key === "notes" ||
+          key === "medical_conditions" ||
+          key === "fitness_goals" ||
+          key === "profile_picture_url")
+      ) {
+        cleanedData[key] = null;
+      } else {
+        cleanedData[key] = value;
+      }
+    }
+
     return executeQuery(async () => {
       return await supabase
         .from("members")
         .update({
-          ...memberData,
+          ...cleanedData,
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
