@@ -11,14 +11,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { SessionBookingForm } from "@/features/training-sessions/components/forms/SessionBookingForm";
-import type { MemberWithEnhancedDetails } from "@/features/database/lib/types";
+import type { Member } from "@/features/database/lib/types";
 
 interface AddSessionButtonProps {
-  member: MemberWithEnhancedDetails;
+  member: Member;
   onSuccess?: () => void;
   variant?: "ghost" | "outline" | "default";
   size?: "sm" | "default" | "lg" | "icon";
   className?: string;
+  showText?: boolean;
 }
 
 /**
@@ -32,6 +33,7 @@ export const AddSessionButton = memo(function AddSessionButton({
   variant = "ghost",
   size = "sm",
   className,
+  showText = false,
 }: AddSessionButtonProps) {
   const [open, setOpen] = useState(false);
 
@@ -56,7 +58,8 @@ export const AddSessionButton = memo(function AddSessionButton({
         }}
         title="Add Session"
       >
-        <Calendar className="h-4 w-4" />
+        <Calendar className={showText ? "mr-2 h-4 w-4" : "h-4 w-4"} />
+        {showText && "Book Session"}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>

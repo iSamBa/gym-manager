@@ -616,7 +616,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                     <TableCell className="hidden lg:table-cell">
                       <DateCell
                         date={member.session_stats?.next_session_date || null}
-                        format="relative"
+                        format="short"
                       />
                     </TableCell>
                   )}

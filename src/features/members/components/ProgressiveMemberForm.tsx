@@ -45,6 +45,9 @@ import {
 import { cn } from "@/lib/utils";
 import type { Member } from "@/features/database/lib/types";
 import { toast } from "sonner";
+import { Package, UserPlus, Users } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useMembers } from "@/features/members/hooks";
 
 // Schema for each step
 const personalInfoSchema = z.object({
@@ -93,12 +96,75 @@ const settingsSchema = z.object({
   waiver_signed: z.boolean(),
 });
 
+// US-004: Equipment, Referral, and Training Preference schemas
+const equipmentSchema = z.object({
+  uniform_size: z.enum(["XS", "S", "M", "L", "XL"]),
+  uniform_received: z.boolean(),
+  vest_size: z.enum([
+    "V1",
+    "V2",
+    "V2_SMALL_EXT",
+    "V2_LARGE_EXT",
+    "V2_DOUBLE_EXT",
+  ]),
+  hip_belt_size: z.enum(["V1", "V2"]),
+});
+
+const referralSchema = z.object({
+  referral_source: z.enum([
+    "instagram",
+    "member_referral",
+    "website_ib",
+    "prospection",
+    "studio",
+    "phone",
+    "chatbot",
+  ]),
+  referred_by_member_id: z.string().uuid().optional(),
+});
+
+const trainingPreferenceSchema = z.object({
+  training_preference: z.enum(["mixed", "women_only"]).optional(),
+});
+
 // Complete form schema
 const memberFormSchema = personalInfoSchema
   .merge(contactInfoSchema)
   .merge(addressSchema)
+  .merge(equipmentSchema)
+  .merge(referralSchema)
+  .merge(trainingPreferenceSchema)
   .merge(healthInfoSchema)
-  .merge(settingsSchema);
+  .merge(settingsSchema)
+  .refine(
+    (data) => {
+      // Conditional validation: referred_by required if member_referral
+      if (
+        data.referral_source === "member_referral" &&
+        !data.referred_by_member_id
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Please select the referring member",
+      path: ["referred_by_member_id"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Conditional validation: training_preference only for females
+      if (data.training_preference && data.gender !== "female") {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Training preference only applies to female members",
+      path: ["training_preference"],
+    }
+  );
 
 type MemberFormData = z.infer<typeof memberFormSchema>;
 
@@ -136,6 +202,28 @@ const steps: StepInfo[] = [
   },
   {
     id: 4,
+    title: "Equipment",
+    description: "Uniform and equipment sizing",
+    icon: Package,
+    schema: equipmentSchema,
+  },
+  {
+    id: 5,
+    title: "Referral",
+    description: "How you heard about us",
+    icon: UserPlus,
+    schema: referralSchema,
+  },
+  {
+    id: 6,
+    title: "Training Preference",
+    description: "Session preferences (optional)",
+    icon: Users,
+    schema: trainingPreferenceSchema,
+    isOptional: true,
+  },
+  {
+    id: 7,
     title: "Health & Fitness",
     description: "Goals and medical info",
     icon: Target,
@@ -143,7 +231,7 @@ const steps: StepInfo[] = [
     isOptional: true,
   },
   {
-    id: 5,
+    id: 8,
     title: "Settings",
     description: "Status and preferences",
     icon: Settings,
@@ -158,6 +246,166 @@ interface ProgressiveMemberFormProps {
   isLoading?: boolean;
   className?: string;
   showHeader?: boolean;
+}
+
+// Helper component for Referral Section
+function ReferralSectionContent({
+  form,
+  member,
+}: {
+  form: ReturnType<typeof useForm<MemberFormData>>;
+  member?: Member | null;
+}) {
+  const referralSource = form.watch("referral_source");
+  const { data: membersData } = useMembers({
+    limit: 1000,
+  });
+
+  const availableMembers = React.useMemo(() => {
+    const members = membersData || [];
+    if (!member?.id) return members;
+    return members.filter((m) => m.id !== member.id);
+  }, [membersData, member?.id]);
+
+  const showReferredBy = referralSource === "member_referral";
+
+  return (
+    <div className="space-y-4">
+      <FormField
+        control={form.control}
+        name="referral_source"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>How did you hear about us? *</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Select referral source" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="instagram">Instagram</SelectItem>
+                <SelectItem value="member_referral">Member Referral</SelectItem>
+                <SelectItem value="website_ib">Website (Inbound)</SelectItem>
+                <SelectItem value="prospection">
+                  Prospection (Outbound)
+                </SelectItem>
+                <SelectItem value="studio">Studio (Walk-in)</SelectItem>
+                <SelectItem value="phone">Phone</SelectItem>
+                <SelectItem value="chatbot">Chatbot</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {showReferredBy && (
+        <FormField
+          control={form.control}
+          name="referred_by_member_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Referred By Member *</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Select member" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {availableMembers.length === 0 ? (
+                    <SelectItem value="no-members" disabled>
+                      No members available
+                    </SelectItem>
+                  ) : (
+                    availableMembers.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.first_name} {m.last_name} ({m.email})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Select the member who referred this new member
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+    </div>
+  );
+}
+
+// Helper component for Training Preference Section
+function TrainingPreferenceSectionContent({
+  form,
+}: {
+  form: ReturnType<typeof useForm<MemberFormData>>;
+}) {
+  const gender = form.watch("gender");
+
+  React.useEffect(() => {
+    // Clear training_preference when gender changes to male
+    if (gender === "male") {
+      form.setValue("training_preference", undefined);
+    }
+  }, [gender, form]);
+
+  // Only show this section for female members
+  if (gender !== "female") {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Training preferences are only available for female members. Please
+          select gender as &quot;Female&quot; in Personal Information if this
+          applies.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <FormField
+        control={form.control}
+        name="training_preference"
+        render={({ field }) => (
+          <FormItem className="space-y-3">
+            <FormLabel>Session Preference</FormLabel>
+            <FormDescription>
+              Choose your preferred training session type (optional)
+            </FormDescription>
+            <FormControl>
+              <RadioGroup
+                onValueChange={field.onChange}
+                value={field.value}
+                className="flex flex-col space-y-1"
+              >
+                <FormItem className="flex items-center space-y-0 space-x-3">
+                  <FormControl>
+                    <RadioGroupItem value="mixed" />
+                  </FormControl>
+                  <FormLabel className="font-normal">Mixed Sessions</FormLabel>
+                </FormItem>
+                <FormItem className="flex items-center space-y-0 space-x-3">
+                  <FormControl>
+                    <RadioGroupItem value="women_only" />
+                  </FormControl>
+                  <FormLabel className="font-normal">
+                    Women Only Sessions
+                  </FormLabel>
+                </FormItem>
+              </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
 }
 
 export function ProgressiveMemberForm({
@@ -195,6 +443,16 @@ export function ProgressiveMemberForm({
             postal_code: "",
             country: "Morocco",
           },
+          // US-004: Equipment fields
+          uniform_size: member.uniform_size,
+          uniform_received: member.uniform_received,
+          vest_size: member.vest_size,
+          hip_belt_size: member.hip_belt_size,
+          // US-004: Referral fields
+          referral_source: member.referral_source,
+          referred_by_member_id: member.referred_by_member_id || undefined,
+          // US-004: Training preference
+          training_preference: member.training_preference || undefined,
           status: member.status,
           fitness_goals: member.fitness_goals || "",
           medical_conditions: member.medical_conditions || "",
@@ -219,6 +477,16 @@ export function ProgressiveMemberForm({
             postal_code: "",
             country: "Morocco",
           },
+          // US-004: Equipment fields defaults
+          uniform_size: "M",
+          uniform_received: false,
+          vest_size: "V1",
+          hip_belt_size: "V1",
+          // US-004: Referral fields defaults
+          referral_source: "studio",
+          referred_by_member_id: undefined,
+          // US-004: Training preference default
+          training_preference: undefined,
           status: "active",
           fitness_goals: "",
           medical_conditions: "",
@@ -231,6 +499,43 @@ export function ProgressiveMemberForm({
 
   const progress = (currentStep / steps.length) * 100;
   const currentStepInfo = steps.find((step) => step.id === currentStep)!;
+
+  // Reset form when member prop changes (for edit mode)
+  useEffect(() => {
+    if (member) {
+      form.reset({
+        first_name: member.first_name,
+        last_name: member.last_name,
+        email: member.email,
+        phone: member.phone || "",
+        date_of_birth: member.date_of_birth,
+        gender: member.gender,
+        address: member.address || {
+          street: "",
+          city: "",
+          postal_code: "",
+          country: "Morocco",
+        },
+        uniform_size: member.uniform_size,
+        uniform_received: member.uniform_received,
+        vest_size: member.vest_size,
+        hip_belt_size: member.hip_belt_size,
+        referral_source: member.referral_source,
+        referred_by_member_id: member.referred_by_member_id || undefined,
+        training_preference: member.training_preference || undefined,
+        status: member.status,
+        fitness_goals: member.fitness_goals || "",
+        medical_conditions: member.medical_conditions || "",
+        notes: member.notes || "",
+        preferred_contact_method: member.preferred_contact_method as
+          | "email"
+          | "phone"
+          | "sms",
+        marketing_consent: member.marketing_consent,
+        waiver_signed: member.waiver_signed,
+      });
+    }
+  }, [member, form]);
 
   // Form state persistence with localStorage
   useEffect(() => {
@@ -277,6 +582,9 @@ export function ProgressiveMemberForm({
       return () => subscription.unsubscribe();
     }
   }, [form, member, formStorageKey, currentStep]);
+
+  // Note: Change tracking removed - we now always allow updates in edit mode
+  // React Hook Form's built-in dirty tracking can be used if needed via form.formState.isDirty
 
   // Accessibility: Announce step changes to screen readers
   useEffect(() => {
@@ -361,15 +669,38 @@ export function ProgressiveMemberForm({
   };
 
   const handleStepClick = async (stepId: number) => {
-    if (stepId < currentStep || completedSteps.includes(stepId)) {
-      setCurrentStep(stepId);
-    } else if (stepId === currentStep + 1) {
-      await handleNextStep();
-    }
+    // Allow free navigation to any step
+    setCurrentStep(stepId);
   };
 
   const handleSubmit = async (data: MemberFormData) => {
-    // Validate all steps before final submission
+    // In edit mode: validate and submit
+    if (member) {
+      try {
+        await memberFormSchema.parseAsync(data);
+
+        // Submit all form data (database will handle the update)
+        await onSubmit(data);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          // Show validation errors without jumping to steps
+          const zodError = error as z.ZodError;
+          const errorMessages = zodError.issues
+            .map((e) => `${e.path.join(".")}: ${e.message}`)
+            .join("; ");
+          toast.error("Validation Failed", {
+            description:
+              errorMessages.length > 100
+                ? "Please check all required fields"
+                : errorMessages,
+          });
+        }
+        throw error;
+      }
+      return;
+    }
+
+    // Create mode: step-by-step validation
     for (const step of steps) {
       try {
         await step.schema.parseAsync(data);
@@ -690,6 +1021,122 @@ export function ProgressiveMemberForm({
         );
 
       case 4:
+        // US-004: Equipment Section
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="uniform_size"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Uniform Size *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Select size" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="XS">XS</SelectItem>
+                        <SelectItem value="S">S</SelectItem>
+                        <SelectItem value="M">M</SelectItem>
+                        <SelectItem value="L">L</SelectItem>
+                        <SelectItem value="XL">XL</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="uniform_received"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-y-0 space-x-3 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Uniform Received</FormLabel>
+                      <FormDescription className="text-xs">
+                        Check when member picks up uniform
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="vest_size"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Vest Size *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Select vest size" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="V1">V1</SelectItem>
+                        <SelectItem value="V2">V2</SelectItem>
+                        <SelectItem value="V2_SMALL_EXT">
+                          V2 with Small Extension
+                        </SelectItem>
+                        <SelectItem value="V2_LARGE_EXT">
+                          V2 with Large Extension
+                        </SelectItem>
+                        <SelectItem value="V2_DOUBLE_EXT">
+                          V2 with Double Extension
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="hip_belt_size"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Hip Belt Size *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Select belt size" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="V1">V1</SelectItem>
+                        <SelectItem value="V2">V2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        );
+
+      case 5:
+        // US-004: Referral Section
+        return <ReferralSectionContent form={form} member={member} />;
+
+      case 6:
+        // US-004: Training Preference Section (conditional for females)
+        return <TrainingPreferenceSectionContent form={form} />;
+
+      case 7:
+        // Health & Fitness (moved from case 4)
         return (
           <div className="space-y-4">
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
@@ -743,7 +1190,8 @@ export function ProgressiveMemberForm({
           </div>
         );
 
-      case 5:
+      case 8:
+        // Settings (moved from case 5)
         return (
           <div className="space-y-4">
             <FormField
@@ -882,7 +1330,7 @@ export function ProgressiveMemberForm({
 
   return (
     <div
-      className={cn("mx-auto max-w-2xl space-y-4", className)}
+      className={cn("mx-auto w-full max-w-7xl space-y-4", className)}
       role="region"
       aria-label="Member registration form"
     >
@@ -938,7 +1386,7 @@ export function ProgressiveMemberForm({
             {steps.map((step) => {
               const isCompleted = completedSteps.includes(step.id);
               const isCurrent = step.id === currentStep;
-              const isAccessible = step.id <= currentStep || isCompleted;
+              const isAccessible = true; // Allow navigation to all steps
 
               return (
                 <li key={step.id} className="flex">
@@ -1003,7 +1451,7 @@ export function ProgressiveMemberForm({
             {currentStepInfo.description}
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-h-[400px]">
           <Form {...form}>
             <form
               ref={formRef}
@@ -1023,80 +1471,114 @@ export function ProgressiveMemberForm({
         </CardContent>
       </Card>
 
-      {/* Navigation Footer */}
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handlePreviousStep}
-          disabled={currentStep === 1}
-          className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:w-auto"
-          aria-label={
-            currentStep === 1
-              ? "Previous step (disabled - first step)"
-              : `Go to previous step: ${steps[currentStep - 2]?.title}`
-          }
-        >
-          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-          Previous
-        </Button>
-
-        <div className="flex gap-2">
-          {currentStep < steps.length ? (
-            <Button
-              type="button"
-              onClick={handleNextStep}
-              disabled={isValidatingStep}
-              className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
-              aria-label={`Continue to next step: ${steps[currentStep]?.title}`}
-            >
-              {isValidatingStep ? (
-                <>
-                  <Loader2
-                    className="h-4 w-4 animate-spin"
-                    aria-hidden="true"
-                  />
-                  <span>Validating...</span>
-                  <span className="sr-only">
-                    Please wait while we validate your information
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span>Continue</span>
-                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </>
-              )}
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
-              onClick={() => form.handleSubmit(handleSubmit)()}
-              aria-label={`${member ? "Update" : "Create"} member with provided information`}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2
-                    className="h-4 w-4 animate-spin"
-                    aria-hidden="true"
-                  />
-                  <span>Saving...</span>
-                  <span className="sr-only">
-                    Please wait while we save the member information
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" aria-hidden="true" />
-                  <span>{member ? "Update Member" : "Create Member"}</span>
-                </>
-              )}
-            </Button>
-          )}
+      {/* Navigation Footer - Outside Form */}
+      {member ? (
+        // Edit Mode: Just Save & Cancel
+        <div className="flex items-center justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            className="min-h-[44px]"
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            disabled={isLoading}
+            onClick={() => form.handleSubmit(handleSubmit)()}
+            className="min-h-[44px]"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Update Member
+              </>
+            )}
+          </Button>
         </div>
-      </div>
+      ) : (
+        // Create Mode: Previous/Next workflow
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePreviousStep}
+            disabled={currentStep === 1}
+            className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:w-auto"
+            aria-label={
+              currentStep === 1
+                ? "Previous step (disabled - first step)"
+                : `Go to previous step: ${steps[currentStep - 2]?.title}`
+            }
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+            Previous
+          </Button>
+
+          <div className="flex gap-2">
+            {currentStep < steps.length ? (
+              <Button
+                type="button"
+                onClick={handleNextStep}
+                disabled={isValidatingStep}
+                className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
+                aria-label={`Continue to next step: ${steps[currentStep]?.title}`}
+              >
+                {isValidatingStep ? (
+                  <>
+                    <Loader2
+                      className="h-4 w-4 animate-spin"
+                      aria-hidden="true"
+                    />
+                    <span>Validating...</span>
+                    <span className="sr-only">
+                      Please wait while we validate your information
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span>Continue</span>
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
+                onClick={() => form.handleSubmit(handleSubmit)()}
+                aria-label="Create member with provided information"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2
+                      className="h-4 w-4 animate-spin"
+                      aria-hidden="true"
+                    />
+                    <span>Saving...</span>
+                    <span className="sr-only">
+                      Please wait while we save the member information
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" aria-hidden="true" />
+                    <span>Create Member</span>
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

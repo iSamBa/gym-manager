@@ -13,6 +13,7 @@ import type {
   TrainerWithProfile,
   TrainerSpecialization,
   EmergencyContact,
+  MemberComment,
 } from "./types";
 
 // Error handling utility
@@ -131,6 +132,14 @@ export interface CreateMemberData {
   marketing_consent?: boolean;
   waiver_signed?: boolean;
   waiver_signed_date?: string;
+  // US-001: Equipment & Referral Tracking fields
+  uniform_size?: string;
+  uniform_received?: boolean;
+  vest_size?: string;
+  hip_belt_size?: string;
+  referral_source?: string;
+  referred_by_member_id?: string;
+  training_preference?: string;
 }
 
 export interface UpdateMemberData {
@@ -150,6 +159,14 @@ export interface UpdateMemberData {
   marketing_consent?: boolean;
   waiver_signed?: boolean;
   waiver_signed_date?: string;
+  // US-001: Equipment & Referral Tracking fields
+  uniform_size?: string;
+  uniform_received?: boolean;
+  vest_size?: string;
+  hip_belt_size?: string;
+  referral_source?: string;
+  referred_by_member_id?: string;
+  training_preference?: string;
 }
 
 // Enhanced trainer utilities for TanStack Query integration
@@ -361,11 +378,38 @@ export const memberUtils = {
 
   async createMember(memberData: CreateMemberData): Promise<Member> {
     await validateAdminAccess();
+
+    /**
+     * Data Cleaning: Empty String → NULL conversion
+     * See updateMember() for detailed explanation of why this is done
+     * at the database layer instead of in Zod validation.
+     */
+    const cleanedData: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(memberData)) {
+      // Skip undefined values
+      if (value === undefined) continue;
+
+      // Convert empty strings to null for optional text fields
+      if (
+        value === "" &&
+        (key === "phone" ||
+          key === "notes" ||
+          key === "medical_conditions" ||
+          key === "fitness_goals" ||
+          key === "profile_picture_url")
+      ) {
+        cleanedData[key] = null;
+      } else {
+        cleanedData[key] = value;
+      }
+    }
+
     return executeQuery(async () => {
       return await supabase
         .from("members")
         .insert({
-          ...memberData,
+          ...cleanedData,
           status: memberData.status || "active",
           join_date:
             memberData.join_date || new Date().toISOString().split("T")[0],
@@ -383,11 +427,46 @@ export const memberUtils = {
     id: string,
     memberData: UpdateMemberData
   ): Promise<Member> {
+    /**
+     * Data Cleaning: Empty String → NULL conversion
+     *
+     * WHY HERE AND NOT IN ZOD?
+     * - This is a database compatibility concern, not a validation concern
+     * - Zod validates: "Is this a valid string?" ✅ "" is valid
+     * - Database expects: NULL for optional fields, not empty strings
+     * - Using z.preprocess() breaks TypeScript type inference (types become 'unknown')
+     * - Keeping data transformation at the DB layer is cleaner and more maintainable
+     *
+     * WHAT IT DOES:
+     * Converts empty strings ("") to null for optional text fields to match
+     * PostgreSQL's expectation. Prevents "malformed array literal" errors.
+     */
+    const cleanedData: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(memberData)) {
+      // Skip undefined values
+      if (value === undefined) continue;
+
+      // Convert empty strings to null for optional text fields
+      if (
+        value === "" &&
+        (key === "phone" ||
+          key === "notes" ||
+          key === "medical_conditions" ||
+          key === "fitness_goals" ||
+          key === "profile_picture_url")
+      ) {
+        cleanedData[key] = null;
+      } else {
+        cleanedData[key] = value;
+      }
+    }
+
     return executeQuery(async () => {
       return await supabase
         .from("members")
         .update({
-          ...memberData,
+          ...cleanedData,
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
@@ -542,8 +621,7 @@ export const memberUtils = {
           subscriptions:member_subscriptions(
             *,
             plan:subscription_plans(*)
-          ),
-          emergency_contacts:member_emergency_contacts(*)
+          )
         `
         )
         .eq("id", id)
@@ -1287,6 +1365,90 @@ export async function testDatabaseConnection(): Promise<boolean> {
     console.error("Database connection test failed:", error);
     return false;
   }
+}
+
+// Member Comments Utilities (US-010)
+
+/**
+ * Fetch all comments for a specific member, ordered by creation date (newest first)
+ */
+export async function fetchMemberComments(
+  memberId: string
+): Promise<MemberComment[]> {
+  const { data, error } = await supabase
+    .from("member_comments")
+    .select("*")
+    .eq("member_id", memberId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new DatabaseError(error.message, error.code);
+  return data || [];
+}
+
+/**
+ * Fetch comments with due dates in the future (active alerts)
+ */
+export async function fetchActiveCommentAlerts(
+  memberId: string
+): Promise<MemberComment[]> {
+  const today = new Date().toISOString().split("T")[0];
+  const { data, error } = await supabase
+    .from("member_comments")
+    .select("*")
+    .eq("member_id", memberId)
+    .gte("due_date", today)
+    .order("due_date", { ascending: true });
+
+  if (error) throw new DatabaseError(error.message, error.code);
+  return data || [];
+}
+
+/**
+ * Create a new comment for a member
+ */
+export async function createMemberComment(
+  data: Omit<MemberComment, "id" | "created_at" | "updated_at">
+): Promise<MemberComment> {
+  const { data: comment, error } = await supabase
+    .from("member_comments")
+    .insert([data])
+    .select()
+    .single();
+
+  if (error) throw new DatabaseError(error.message, error.code);
+  if (!comment) throw new DatabaseError("Failed to create comment");
+  return comment;
+}
+
+/**
+ * Update an existing comment
+ */
+export async function updateMemberComment(
+  id: string,
+  data: Partial<Pick<MemberComment, "author" | "body" | "due_date">>
+): Promise<MemberComment> {
+  const { data: comment, error } = await supabase
+    .from("member_comments")
+    .update(data)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw new DatabaseError(error.message, error.code);
+  if (!comment) throw new DatabaseError("Comment not found");
+  return comment;
+}
+
+/**
+ * Delete a comment
+ */
+export async function deleteMemberComment(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("member_comments")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw new DatabaseError(error.message, error.code);
 }
 
 // Export a default object with all utilities

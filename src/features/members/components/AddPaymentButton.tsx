@@ -13,14 +13,15 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PaymentForm } from "@/features/payments/components/PaymentForm";
 import { useMemberSubscriptionHistory } from "@/features/memberships/hooks/use-subscriptions";
-import type { MemberWithEnhancedDetails } from "@/features/database/lib/types";
+import type { Member } from "@/features/database/lib/types";
 
 interface AddPaymentButtonProps {
-  member: MemberWithEnhancedDetails;
+  member: Member;
   onSuccess?: () => void;
   variant?: "ghost" | "outline" | "default";
   size?: "sm" | "default" | "lg" | "icon";
   className?: string;
+  showText?: boolean;
 }
 
 /**
@@ -34,6 +35,7 @@ export const AddPaymentButton = memo(function AddPaymentButton({
   variant = "ghost",
   size = "sm",
   className,
+  showText = false,
 }: AddPaymentButtonProps) {
   const [open, setOpen] = useState(false);
 
@@ -68,7 +70,8 @@ export const AddPaymentButton = memo(function AddPaymentButton({
         }}
         title="Add Payment"
       >
-        <DollarSign className="h-4 w-4" />
+        <DollarSign className={showText ? "mr-2 h-4 w-4" : "h-4 w-4"} />
+        {showText && "Record Payment"}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>

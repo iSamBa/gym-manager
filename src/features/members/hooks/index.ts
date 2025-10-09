@@ -35,3 +35,15 @@ export {
 
 // Simple filtering (used in pages)
 export { useSimpleMemberFilters } from "./use-simple-member-filters";
+
+// Activity metrics (US-007)
+export { useMemberActivityMetrics } from "./use-member-activity-metrics";
+
+// Member comments (US-010)
+export {
+  useMemberComments,
+  useActiveCommentAlerts,
+  useCreateComment,
+  useUpdateComment,
+  useDeleteComment,
+} from "./use-member-comments";

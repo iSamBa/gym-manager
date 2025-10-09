@@ -17,6 +17,30 @@ export {
   withMemberErrorBoundary,
 } from "./MemberErrorBoundary";
 
+// Profile header
+export { MemberProfileHeader } from "./MemberProfileHeader";
+
+// Information cards (US-006)
+export { ContactInformationCard } from "./ContactInformationCard";
+export { PersonalDetailsCard } from "./PersonalDetailsCard";
+
+// Sidebar components (US-007)
+export { SubscriptionStatusCard } from "./SubscriptionStatusCard";
+export { EnhancedActivityCard } from "./EnhancedActivityCard";
+export { MemberAlertsCard } from "./MemberAlertsCard";
+
+// Display components (read-only for profile view)
+export { EquipmentDisplay } from "./EquipmentDisplay";
+export { ReferralDisplay } from "./ReferralDisplay";
+export { TrainingPreferenceDisplay } from "./TrainingPreferenceDisplay";
+
+// Inline editor components (for edit mode)
+export { EquipmentEditor } from "./EquipmentEditor";
+export { ReferralEditor } from "./ReferralEditor";
+export { TrainingPreferenceEditor } from "./TrainingPreferenceEditor";
+export { ContactInformationEditor } from "./ContactInformationEditor";
+export { PersonalDetailsEditor } from "./PersonalDetailsEditor";
+
 // Quick action buttons
 export { AddSessionButton } from "./AddSessionButton";
 export { AddPaymentButton } from "./AddPaymentButton";
@@ -37,3 +61,7 @@ export { AddPaymentDialog } from "./AddPaymentDialog";
 
 // Payment-related components
 export { MemberPayments } from "./MemberPayments";
+
+// Comments components (US-011)
+export { MemberCommentsCard } from "./MemberCommentsCard";
+export { CommentDialog } from "./CommentDialog";

@@ -1,117 +1,77 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, useCallback } from "react";
 import { MainLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  MemberAvatar,
-  MemberStatusBadge,
+  MemberProfileHeader,
   EditMemberDialog,
   withMemberErrorBoundary,
   MemberSessions,
   MemberSubscriptions,
   MemberPayments,
+  EquipmentDisplay,
+  ReferralDisplay,
+  TrainingPreferenceDisplay,
+  ContactInformationCard,
+  PersonalDetailsCard,
+  SubscriptionStatusCard,
+  EnhancedActivityCard,
+  MemberAlertsCard,
+  EquipmentEditor,
+  ReferralEditor,
+  MemberCommentsCard,
 } from "@/features/members/components";
 import {
   useMemberWithSubscription,
-  useUpdateMemberStatus,
   useDeleteMember,
   useMemberPrefetch,
+  useUpdateMember,
 } from "@/features/members/hooks";
-import {
-  Edit,
-  ArrowLeft,
-  Phone,
-  Mail,
-  Calendar,
-  MapPin,
-  User,
-  AlertCircle,
-  Trash2,
-  Activity,
-  UserCircle,
-  CreditCard,
-  Receipt,
-} from "lucide-react";
+import { ArrowLeft, AlertCircle, Package, Users, Edit } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { Member } from "@/features/database/lib/types";
 
 interface MemberDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-// Helper function to format dates
-const formatDate = (date: Date): string => {
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
-// Helper function to format address
-const formatAddress = (address: Member["address"]) => {
-  if (!address) return "No address provided";
-  return `${address.street}, ${address.city}, ${address.state} ${address.postal_code}, ${address.country}`;
-};
-
 function MemberDetailPage({ params }: MemberDetailPageProps) {
   const { id } = use(params);
   const router = useRouter();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isEditingEquipmentReferral, setIsEditingEquipmentReferral] =
+    useState(false);
+  const [equipmentReferralFormData, setEquipmentReferralFormData] =
+    useState<Member | null>(null);
 
-  // Member data with subscription and emergency contacts
   const {
     data: member,
     isLoading,
     error,
     refetch,
   } = useMemberWithSubscription(id, {
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 60000,
     refetchOnWindowFocus: true,
   });
 
-  // Status update mutation with optimistic updates
-  const updateStatusMutation = useUpdateMemberStatus();
-
-  // Delete mutation
   const deleteMutation = useDeleteMember();
-
-  // Prefetch related members for navigation
+  const updateMember = useUpdateMember();
   const { prefetchAdjacentMembers } = useMemberPrefetch();
 
-  // Page cache strategy temporarily disabled
-
-  // Prefetch adjacent members when the component loads
   useEffect(() => {
     if (member) {
       prefetchAdjacentMembers(member.id);
     }
   }, [member, prefetchAdjacentMembers]);
-
-  const handleStatusChange = async (
-    newStatus: "active" | "inactive" | "pending" | "suspended"
-  ) => {
-    if (!member) return;
-
-    try {
-      await updateStatusMutation.mutateAsync({
-        id: member.id,
-        status: newStatus,
-      });
-    } catch (error) {
-      console.error("Failed to update member status:", error);
-    }
-  };
 
   const handleDeleteMember = () => {
     if (!member) return;
@@ -125,21 +85,65 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
       await deleteMutation.mutateAsync(member.id);
       setShowDeleteConfirm(false);
       router.push("/members");
-    } catch (error) {
-      console.error("Failed to delete member:", error);
+    } catch (err) {
+      console.error("Failed to delete member:", err);
     }
   };
 
   const handleEditSuccess = () => {
     setIsEditDialogOpen(false);
-    // The EditMemberDialog handles cache invalidation, so member data will refresh automatically
   };
+
+  const handleEquipmentReferralEdit = useCallback(() => {
+    if (member) {
+      setEquipmentReferralFormData(member);
+      setIsEditingEquipmentReferral(true);
+    }
+  }, [member]);
+
+  const handleEquipmentReferralSave = useCallback(async () => {
+    if (!equipmentReferralFormData) return;
+
+    try {
+      await updateMember.mutateAsync({
+        id: equipmentReferralFormData.id,
+        data: {
+          uniform_size: equipmentReferralFormData.uniform_size,
+          uniform_received: equipmentReferralFormData.uniform_received,
+          vest_size: equipmentReferralFormData.vest_size,
+          hip_belt_size: equipmentReferralFormData.hip_belt_size,
+          referral_source: equipmentReferralFormData.referral_source,
+          referred_by_member_id:
+            equipmentReferralFormData.referred_by_member_id,
+        },
+      });
+      setIsEditingEquipmentReferral(false);
+      toast.success("Equipment & referral information updated successfully");
+    } catch {
+      toast.error("Failed to update equipment & referral information");
+    }
+  }, [equipmentReferralFormData, updateMember]);
+
+  const handleEquipmentReferralCancel = useCallback(() => {
+    setEquipmentReferralFormData(null);
+    setIsEditingEquipmentReferral(false);
+  }, []);
+
+  const handleEquipmentReferralFormChange = useCallback(
+    (updated: Partial<Member>) => {
+      setEquipmentReferralFormData((prev) =>
+        prev ? { ...prev, ...updated } : null
+      );
+    },
+    []
+  );
 
   if (isLoading) {
     return (
       <MainLayout>
         <div className="space-y-6">
           <LoadingSkeleton className="h-8 w-64" />
+          <LoadingSkeleton className="h-32" />
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">
               <LoadingSkeleton className="h-64" />
@@ -187,310 +191,176 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/members">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Members
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold">
-                {member.first_name} {member.last_name}
-              </h1>
-              <div className="mt-1 flex items-center gap-2">
-                <MemberStatusBadge
-                  status={member.status}
+        {/* Back Button */}
+        <Link href="/members">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Members
+          </Button>
+        </Link>
+
+        {/* Profile Header */}
+        <MemberProfileHeader
+          member={member}
+          onEdit={() => setIsEditDialogOpen(true)}
+          onDelete={handleDeleteMember}
+          onSessionSuccess={refetch}
+          onPaymentSuccess={refetch}
+        />
+
+        {/* Main Content: 2-Column Layout with Tabs */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Left Column: Tabbed Content */}
+          <div className="lg:col-span-2">
+            <Tabs defaultValue="profile" className="w-full">
+              <TabsList className="mb-6">
+                <TabsTrigger value="profile">Profile</TabsTrigger>
+                <TabsTrigger value="training-sessions">
+                  Training Sessions
+                </TabsTrigger>
+                <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
+                <TabsTrigger value="payments">Payments</TabsTrigger>
+              </TabsList>
+
+              {/* Profile Tab */}
+              <TabsContent value="profile" className="space-y-6">
+                {/* Contact Information Card */}
+                <ContactInformationCard member={member} />
+
+                {/* Personal Details Card */}
+                <PersonalDetailsCard member={member} />
+
+                {/* Equipment & Referral Card */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Package className="h-4 w-4" />
+                      Equipment & Referral
+                    </CardTitle>
+                    {!isEditingEquipmentReferral && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleEquipmentReferralEdit}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {isEditingEquipmentReferral && equipmentReferralFormData ? (
+                      <>
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                          {/* Equipment Editor */}
+                          <div className="space-y-4">
+                            <h3 className="text-sm font-medium">
+                              Equipment & Gear
+                            </h3>
+                            <EquipmentEditor
+                              member={equipmentReferralFormData}
+                              onChange={handleEquipmentReferralFormChange}
+                            />
+                          </div>
+
+                          {/* Referral Editor */}
+                          <div className="space-y-4">
+                            <h3 className="text-sm font-medium">
+                              Referral Information
+                            </h3>
+                            <ReferralEditor
+                              member={equipmentReferralFormData}
+                              onChange={handleEquipmentReferralFormChange}
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-4 flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={handleEquipmentReferralCancel}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleEquipmentReferralSave}
+                            disabled={updateMember.isPending}
+                          >
+                            {updateMember.isPending ? "Saving..." : "Save"}
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        {/* Equipment Section */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-medium">
+                            Equipment & Gear
+                          </h3>
+                          <EquipmentDisplay member={member} />
+                        </div>
+
+                        {/* Referral Section */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-medium">
+                            Referral Information
+                          </h3>
+                          <ReferralDisplay member={member} />
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Comments & Notes Card */}
+                <MemberCommentsCard member={member} />
+
+                {/* Training Preferences Card (conditional) */}
+                {member.gender === "female" && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Users className="h-4 w-4" />
+                        Training Preferences
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <TrainingPreferenceDisplay member={member} />
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              {/* Training Sessions Tab */}
+              <TabsContent value="training-sessions">
+                <MemberSessions
                   memberId={member.id}
-                  readonly={true}
+                  memberName={`${member.first_name} ${member.last_name}`}
                 />
-                <Badge variant="outline" className="text-xs">
-                  Member ID: {member.id.slice(-8)}
-                </Badge>
-              </div>
-            </div>
+              </TabsContent>
+
+              {/* Subscriptions Tab */}
+              <TabsContent value="subscriptions">
+                <MemberSubscriptions member={member} />
+              </TabsContent>
+
+              {/* Payments Tab */}
+              <TabsContent value="payments">
+                <MemberPayments member={member} />
+              </TabsContent>
+            </Tabs>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteMember}
-              disabled={deleteMutation.isPending}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
-            </Button>
+          {/* Right Column: Sidebar */}
+          <div className="space-y-6">
+            {/* Subscription Status Card */}
+            <SubscriptionStatusCard member={member} />
+
+            {/* Enhanced Activity Summary Card */}
+            <EnhancedActivityCard member={member} />
+
+            {/* Member Alerts Card */}
+            <MemberAlertsCard member={member} />
           </div>
         </div>
-
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="profile" className="flex items-center gap-2">
-              <UserCircle className="h-4 w-4" />
-              Profile
-            </TabsTrigger>
-            <TabsTrigger value="sessions" className="flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              Training Sessions
-            </TabsTrigger>
-            <TabsTrigger
-              value="subscriptions"
-              className="flex items-center gap-2"
-            >
-              <CreditCard className="h-4 w-4" />
-              Subscriptions
-            </TabsTrigger>
-            <TabsTrigger value="payments" className="flex items-center gap-2">
-              <Receipt className="h-4 w-4" />
-              Payments
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {/* Main Member Information */}
-              <div className="space-y-6 lg:col-span-2">
-                {/* Basic Info Card */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5" />
-                      Member Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="flex items-start gap-4">
-                      <MemberAvatar
-                        member={member}
-                        size="lg"
-                        className="flex-shrink-0"
-                      />
-                      <div className="flex-1 space-y-2">
-                        <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
-                          <div className="flex items-center gap-2">
-                            <Mail className="text-muted-foreground h-4 w-4" />
-                            <span>{member.email}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Phone className="text-muted-foreground h-4 w-4" />
-                            <span>{member.phone || "Not provided"}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="text-muted-foreground h-4 w-4" />
-                            <span>
-                              Joined {formatDate(new Date(member.created_at))}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="text-muted-foreground h-4 w-4" />
-                            <span>{formatAddress(member.address)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Status Actions */}
-                    <div className="flex gap-2 border-t pt-4">
-                      <Button
-                        variant={
-                          member.status === "active" ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => handleStatusChange("active")}
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        Mark Active
-                      </Button>
-                      <Button
-                        variant={
-                          member.status === "inactive" ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => handleStatusChange("inactive")}
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        Mark Inactive
-                      </Button>
-                      <Button
-                        variant={
-                          member.status === "suspended" ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => handleStatusChange("suspended")}
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        Mark Suspended
-                      </Button>
-                      <Button
-                        variant={
-                          member.status === "pending" ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => handleStatusChange("pending")}
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        Mark Pending
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Emergency Contacts */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Emergency Contacts</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {member.emergency_contacts &&
-                    member.emergency_contacts.length > 0 ? (
-                      <div className="space-y-4">
-                        {member.emergency_contacts.map((contact, index) => (
-                          <div
-                            key={index}
-                            className="bg-muted flex items-center justify-between rounded-lg p-3"
-                          >
-                            <div>
-                              <p className="font-medium">
-                                {contact.first_name} {contact.last_name}
-                              </p>
-                              <p className="text-muted-foreground text-sm">
-                                {contact.relationship}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm">{contact.phone}</p>
-                              {contact.email && (
-                                <p className="text-muted-foreground text-sm">
-                                  {contact.email}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground">
-                        No emergency contacts provided
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Sidebar - Subscription Info */}
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Subscription Status</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {member.subscription ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Plan</span>
-                          <Badge variant="secondary">
-                            {member.subscription.plan?.name || "Unknown Plan"}
-                          </Badge>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Status</span>
-                          <Badge
-                            variant={
-                              member.subscription.status === "active"
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {member.subscription.status}
-                          </Badge>
-                        </div>
-
-                        <Separator />
-
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span>Start Date</span>
-                            <span>
-                              {formatDate(
-                                new Date(member.subscription.start_date)
-                              )}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>End Date</span>
-                            <span>
-                              {member.subscription.end_date
-                                ? formatDate(
-                                    new Date(member.subscription.end_date)
-                                  )
-                                : "No end date"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between font-medium">
-                            <span>Monthly Fee</span>
-                            <span>${member.subscription.price}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground">
-                        No active subscription
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Activity Summary */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Activity Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex justify-between text-sm">
-                      <span>Member Since</span>
-                      <span className="text-muted-foreground">
-                        {formatDate(new Date(member.join_date))}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Account Created</span>
-                      <span className="text-muted-foreground">
-                        {formatDate(new Date(member.created_at))}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Training Sessions Tab */}
-          <TabsContent value="sessions" className="space-y-6">
-            <MemberSessions
-              memberId={member.id}
-              memberName={`${member.first_name} ${member.last_name}`}
-            />
-          </TabsContent>
-
-          {/* Subscriptions Tab */}
-          <TabsContent value="subscriptions" className="space-y-6">
-            <MemberSubscriptions member={member} />
-          </TabsContent>
-
-          {/* Payments Tab */}
-          <TabsContent value="payments" className="space-y-6">
-            <MemberPayments member={member} />
-          </TabsContent>
-        </Tabs>
       </div>
 
       {/* Edit Member Dialog */}

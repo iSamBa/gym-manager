@@ -29,6 +29,9 @@ import {
   Target,
   FileText,
   Loader2,
+  Package,
+  UserPlus,
+  Users,
 } from "lucide-react";
 import { MemberAvatar } from "./MemberAvatar";
 import { MemberStatusBadge } from "./MemberStatusBadge";
@@ -57,6 +60,36 @@ const formatDate = (dateString: string) => {
 const formatAddress = (address: Member["address"]) => {
   if (!address) return "Not provided";
   return `${address.street}, ${address.city}, ${address.state} ${address.postal_code}, ${address.country}`;
+};
+
+// US-003: Formatting helpers for new fields
+const formatVestSize = (size: string): string => {
+  const mapping: Record<string, string> = {
+    V1: "V1",
+    V2: "V2",
+    V2_SMALL_EXT: "V2 with Small Extension",
+    V2_LARGE_EXT: "V2 with Large Extension",
+    V2_DOUBLE_EXT: "V2 with Double Extension",
+  };
+  return mapping[size] || size;
+};
+
+const formatReferralSource = (source: string): string => {
+  const mapping: Record<string, string> = {
+    instagram: "Instagram",
+    member_referral: "Member Referral",
+    website_ib: "Website (Inbound)",
+    prospection: "Prospection (Outbound)",
+    studio: "Studio (Walk-in)",
+    phone: "Phone",
+    chatbot: "Chatbot",
+  };
+  return mapping[source] || source.charAt(0).toUpperCase() + source.slice(1);
+};
+
+const formatTrainingPreference = (pref?: string): string => {
+  if (!pref) return "Not Specified";
+  return pref === "mixed" ? "Mixed Sessions" : "Women Only Sessions";
 };
 
 export function MemberDetailsModal({
@@ -254,6 +287,105 @@ export function MemberDetailsModal({
               </div>
             </div>
           </div>
+
+          <Separator />
+
+          {/* Equipment Information - US-003 */}
+          <div>
+            <h3 className="mb-3 flex items-center gap-2 font-medium">
+              <Package className="h-4 w-4" />
+              Equipment Information
+            </h3>
+            <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+              <div>
+                <span className="text-muted-foreground">Uniform Size:</span>
+                <div className="mt-1">
+                  <Badge variant="outline">{member.uniform_size}</Badge>
+                </div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Uniform Status:</span>
+                <div className="mt-1">
+                  <Badge
+                    variant={member.uniform_received ? "default" : "secondary"}
+                  >
+                    {member.uniform_received ? "Received" : "Not Received"}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Vest Size:</span>
+                <div className="mt-1">
+                  <Badge variant="outline">
+                    {formatVestSize(member.vest_size)}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Hip Belt Size:</span>
+                <div className="mt-1">
+                  <Badge variant="outline">{member.hip_belt_size}</Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Referral Information - US-003 */}
+          <div>
+            <h3 className="mb-3 flex items-center gap-2 font-medium">
+              <UserPlus className="h-4 w-4" />
+              Referral Information
+            </h3>
+            <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+              <div>
+                <span className="text-muted-foreground">Referral Source:</span>
+                <div className="mt-1">
+                  <Badge variant="outline">
+                    {formatReferralSource(member.referral_source)}
+                  </Badge>
+                </div>
+              </div>
+              {member.referred_by_member_id && (
+                <div>
+                  <span className="text-muted-foreground">Referred By:</span>
+                  <div className="mt-1">
+                    <span className="text-sm">
+                      Member ID: {member.referred_by_member_id}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Training Preferences - US-003 (Conditional for females only) */}
+          {member.gender === "female" && (
+            <>
+              <Separator />
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 font-medium">
+                  <Users className="h-4 w-4" />
+                  Training Preferences
+                </h3>
+                <div className="text-sm">
+                  <span className="text-muted-foreground">
+                    Session Preference:
+                  </span>
+                  <div className="mt-1">
+                    <Badge
+                      variant={
+                        member.training_preference ? "default" : "secondary"
+                      }
+                    >
+                      {formatTrainingPreference(member.training_preference)}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Fitness Goals */}
           {member.fitness_goals && (

@@ -34,8 +34,6 @@ updates:
         patterns:
           - "vitest*"
           - "@vitest/*"
-          - "playwright*"
-          - "@playwright/*"
           - "@testing-library/*"
           - "jest*"
           - "@jest/*"
