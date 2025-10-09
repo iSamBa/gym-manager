@@ -114,7 +114,7 @@ export const useCreateTrainingSession = () => {
           p_trainer_id: data.trainer_id || null, // MODIFIED: Optional
           p_scheduled_start: data.scheduled_start,
           p_scheduled_end: data.scheduled_end,
-          p_location: data.location,
+
           // REMOVED: p_max_participants
           p_member_ids: data.member_id ? [data.member_id] : [], // Single member as array
           p_notes: data.notes || null,
@@ -170,7 +170,7 @@ describe("useCreateTrainingSession", () => {
         member_id: "member-id",
         scheduled_start: "2025-01-15T10:00:00Z",
         scheduled_end: "2025-01-15T10:30:00Z",
-        location: "Main Gym",
+
         session_type: "standard",
       });
     });

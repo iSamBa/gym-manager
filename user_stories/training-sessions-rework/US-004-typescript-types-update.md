@@ -65,7 +65,7 @@ export interface TrainingSession {
   session_type?: "trail" | "standard";
   // REMOVED: max_participants
   current_participants: number; // 0 or 1
-  location: string | null;
+
   notes: string | null;
   trainer_name?: string;
   participants?: SessionParticipant[];
@@ -79,7 +79,7 @@ export interface CreateSessionData {
   trainer_id?: string | null; // MODIFIED: Optional
   scheduled_start: string;
   scheduled_end: string;
-  location: string;
+
   session_type: "trail" | "standard";
   member_id: string; // MODIFIED: Single member, not array
   notes?: string;
@@ -91,7 +91,7 @@ export interface UpdateSessionData {
   trainer_id?: string | null; // Can clear trainer
   scheduled_start?: string;
   scheduled_end?: string;
-  location?: string;
+
   session_type?: "trail" | "standard";
   notes?: string;
   status?: "scheduled" | "in_progress" | "completed" | "cancelled";
@@ -138,7 +138,7 @@ describe("TypeScript Types", () => {
       scheduled_end: new Date().toISOString(),
       status: "scheduled",
       current_participants: 0,
-      location: null,
+
       notes: null,
     };
     expect(session.trainer_id).toBeNull();
@@ -150,7 +150,6 @@ describe("TypeScript Types", () => {
       // trainer_id optional
       scheduled_start: new Date().toISOString(),
       scheduled_end: new Date().toISOString(),
-      location: "Main Gym",
       session_type: "standard",
       member_id: "member-uuid",
     };

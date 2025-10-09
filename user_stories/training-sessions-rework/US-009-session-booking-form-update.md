@@ -88,7 +88,6 @@ const bookingSchema = z.object({
   trainer_id: z.string().optional().nullable(),
   scheduled_start: z.string(),
   scheduled_end: z.string(),
-  location: z.string().default("Main Gym"),
   session_type: z.enum(["trail", "standard"]).default("standard"),
   notes: z.string().optional(),
 });
@@ -128,7 +127,7 @@ export const SessionBookingDialog: React.FC<SessionBookingDialogProps> = ({
         member_id: data.member_id, // Single member
         scheduled_start: data.scheduled_start,
         scheduled_end: data.scheduled_end,
-        location: data.location,
+
         session_type: data.session_type,
         notes: data.notes,
       });
@@ -229,7 +228,7 @@ export const SessionBookingDialog: React.FC<SessionBookingDialogProps> = ({
             </Select>
           </div>
 
-          {/* Time fields, location, etc. */}
+          {/* Time fields, etc. */}
           {/* ... (similar to existing form) */}
 
           <div className="flex justify-end gap-2">

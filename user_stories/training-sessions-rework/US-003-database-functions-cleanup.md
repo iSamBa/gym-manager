@@ -58,7 +58,7 @@ CREATE OR REPLACE FUNCTION create_training_session_with_members(
   p_trainer_id UUID DEFAULT NULL,  -- MODIFIED: Now optional
   p_scheduled_start TIMESTAMPTZ,
   p_scheduled_end TIMESTAMPTZ,
-  p_location TEXT,
+  -- REMOVED: p_location (redundant with machine_id)
   -- REMOVED: p_max_participants
   p_member_ids UUID[],  -- Should only contain 1 member ID
   p_notes TEXT DEFAULT NULL,
@@ -97,7 +97,6 @@ BEGIN
     trainer_id,
     scheduled_start,
     scheduled_end,
-    location,
     status,
     session_type,
     notes,
@@ -107,7 +106,6 @@ BEGIN
     p_trainer_id,  -- Can be NULL
     p_scheduled_start,
     p_scheduled_end,
-    p_location,
     'scheduled',
     p_session_type,
     p_notes,
@@ -159,7 +157,6 @@ SELECT
   ts.scheduled_end,
   ts.status,
   ts.session_type,
-  ts.location,
   ts.notes,
   ts.created_at,
   ts.updated_at,
@@ -214,7 +211,6 @@ describe("create_training_session_with_members", () => {
         p_trainer_id: null, // No trainer
         p_scheduled_start: "2025-01-15T10:00:00Z",
         p_scheduled_end: "2025-01-15T10:30:00Z",
-        p_location: "Main Gym",
         p_member_ids: [member1.id],
         p_session_type: "standard",
       }

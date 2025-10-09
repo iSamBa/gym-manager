@@ -181,7 +181,7 @@ export interface TrainingSession {
   session_type?: "trail" | "standard";
   // REMOVED: max_participants
   current_participants: number; // Always 0 or 1
-  location: string | null;
+
   notes: string | null;
   trainer_name?: string;
   participants?: SessionParticipant[];
@@ -194,7 +194,7 @@ export interface CreateSessionData {
   trainer_id?: string; // OPTIONAL - can be assigned later
   scheduled_start: string;
   scheduled_end: string;
-  location: string;
+
   session_type: "trail" | "standard";
   member_id: string; // Single member, not array
   notes?: string;
@@ -205,7 +205,7 @@ export interface UpdateSessionData {
   trainer_id?: string | null; // Can assign or clear trainer
   scheduled_start?: string;
   scheduled_end?: string;
-  location?: string;
+
   session_type?: "trail" | "standard";
   notes?: string;
   status?: "scheduled" | "in_progress" | "completed" | "cancelled";

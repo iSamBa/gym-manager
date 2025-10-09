@@ -19,11 +19,12 @@
 
 ## ✅ Acceptance Criteria
 
-### AC-1: Remove max_participants Column
+### AC-1: Remove Redundant Columns
 
 - [ ] `max_participants` column dropped from `training_sessions` table
+- [ ] `location` column dropped (redundant with machine_id)
 - [ ] Current participants count remains (0 or 1)
-- [ ] No application code references max_participants after migration
+- [ ] No application code references max_participants or location after migration
 
 ### AC-2: Make trainer_id Nullable
 
@@ -87,9 +88,9 @@ training_sessions (
   scheduled_end TIMESTAMPTZ NOT NULL,
   status TEXT DEFAULT 'scheduled',
   -- max_participants REMOVED
+  -- location REMOVED (redundant with machine_id)
   current_participants INTEGER DEFAULT 0 CHECK (current_participants >= 0),
   notes TEXT,
-  location TEXT,
   session_type TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
@@ -127,9 +128,10 @@ ON training_sessions(machine_id);
 ALTER TABLE training_sessions
 ALTER COLUMN trainer_id DROP NOT NULL;
 
--- Step 6: Remove max_participants column
+-- Step 6: Remove max_participants and location columns
 ALTER TABLE training_sessions
-DROP COLUMN IF EXISTS max_participants;
+DROP COLUMN IF EXISTS max_participants,
+DROP COLUMN IF EXISTS location;
 
 -- Step 7: Add column comments
 COMMENT ON COLUMN training_sessions.machine_id IS 'Machine assigned to this session (1, 2, or 3)';
@@ -138,6 +140,7 @@ COMMENT ON COLUMN training_sessions.trainer_id IS 'Trainer assigned to session (
 -- Rollback instructions (as comment):
 -- ALTER TABLE training_sessions DROP COLUMN IF EXISTS machine_id;
 -- ALTER TABLE training_sessions ADD COLUMN max_participants INTEGER DEFAULT 1 CHECK (max_participants > 0);
+-- ALTER TABLE training_sessions ADD COLUMN location TEXT;
 -- ALTER TABLE training_sessions ALTER COLUMN trainer_id SET NOT NULL;
 ```
 
@@ -339,6 +342,7 @@ Before marking this story complete, verify:
 ### For Backend Code
 
 - ❌ **max_participants** no longer exists - remove all references
+- ❌ **location** no longer exists - remove all references (use machine_id instead)
 - ⚠️ **trainer_id** can now be null - handle null checks
 - ➕ **machine_id** is required - update create/update mutations
 
