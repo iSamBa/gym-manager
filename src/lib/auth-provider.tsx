@@ -65,19 +65,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [setUser]
   );
 
-  // Auth event listener (runs once when AuthProvider mounts)
+  // Auth initialization and event listener
   useEffect(() => {
+    let mounted = true;
+
+    // Set timeout BEFORE starting initialization
+    const timeoutId = setTimeout(() => {
+      if (mounted) {
+        console.warn(
+          "Auth initialization timeout - setting loading to false anyway"
+        );
+        setIsLoading(false);
+      }
+    }, 3000); // 3 second timeout
+
+    // Proactively check for existing session (don't wait for INITIAL_SESSION event)
+    const initializeAuth = async () => {
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (!mounted) return;
+
+        if (error) {
+          console.error("Error getting initial session:", error);
+          setIsLoading(false);
+          clearTimeout(timeoutId); // Cancel timeout on completion
+          return;
+        }
+
+        if (session?.user) {
+          await loadUserProfile(session.user);
+          setAuthError(null);
+        }
+
+        setIsLoading(false);
+        clearTimeout(timeoutId); // Cancel timeout on successful completion
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        if (mounted) {
+          setIsLoading(false);
+          clearTimeout(timeoutId); // Cancel timeout on error
+        }
+      }
+    };
+
+    // Start initialization immediately
+    initializeAuth();
+
+    // Set up auth state change listener for subsequent events
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
       switch (event) {
         case "INITIAL_SESSION":
-          // Initial session loaded on page load
-          if (session?.user) {
-            await loadUserProfile(session.user);
-            setAuthError(null);
-          }
-          setIsLoading(false);
+          // Skip - already handled by initializeAuth above
           break;
 
         case "SIGNED_IN":
@@ -124,6 +170,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => {
+      mounted = false;
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, [setUser, setIsLoading, setAuthError, loadUserProfile]);
