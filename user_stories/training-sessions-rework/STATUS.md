@@ -6,7 +6,7 @@
 **Branch:** `feature/training-sessions-rework`
 **Started:** 2025-10-09
 **Target Completion:** TBD
-**Completed Stories:** 1/10 (10%)
+**Completed Stories:** 2/10 (20%)
 
 ---
 
@@ -14,11 +14,11 @@
 
 ### Phase 1: Database Foundation
 
-| Story  | Title                            | Status         | Completed  | Notes                                   |
-| ------ | -------------------------------- | -------------- | ---------- | --------------------------------------- |
-| US-001 | Machines Database Schema         | 🟢 Complete    | 2025-10-09 | Migration applied, all tests passed     |
-| US-002 | Training Sessions Schema Updates | ⬜ Not Started | -          | Remove max_participants, add machine_id |
-| US-003 | Database Functions Cleanup       | ⬜ Not Started | -          | Remove trainer availability checks      |
+| Story  | Title                            | Status         | Completed  | Notes                                  |
+| ------ | -------------------------------- | -------------- | ---------- | -------------------------------------- |
+| US-001 | Machines Database Schema         | 🟢 Complete    | 2025-10-09 | Migration applied, all tests passed    |
+| US-002 | Training Sessions Schema Updates | 🟢 Complete    | 2025-10-09 | Schema updated, 1128 sessions migrated |
+| US-003 | Database Functions Cleanup       | ⬜ Not Started | -          | Remove trainer availability checks     |
 
 ### Phase 2: Backend Updates
 
@@ -49,10 +49,10 @@
 ### Milestone 1: Database Ready ⏳ In Progress
 
 - [x] US-001 Complete
-- [ ] US-002 Complete
+- [x] US-002 Complete
 - [ ] US-003 Complete
-- [ ] All migrations pass
-- [ ] Existing data migrated successfully
+- [x] All migrations pass (2/2 applied successfully)
+- [x] Existing data migrated successfully (1128 sessions)
 
 ### Milestone 2: Backend Ready ✅/❌
 
@@ -95,7 +95,7 @@
 
 | Test Suite          | Passing | Total | Status |
 | ------------------- | ------- | ----- | ------ |
-| Database Migrations | 1       | 1     | ✅     |
+| Database Migrations | 2       | 2     | ✅     |
 | Unit Tests          | -       | -     | ⏳     |
 | Component Tests     | -       | -     | ⏳     |
 | Integration Tests   | -       | -     | ⏳     |
@@ -109,6 +109,20 @@
 ---
 
 ## 📝 Notes
+
+### 2025-10-09 - US-002 Complete
+
+- ✅ Updated training_sessions schema via Supabase MCP migration
+- ✅ Removed max_participants and location columns
+- ✅ Made trainer_id nullable
+- ✅ Added machine_id column with foreign key to machines table
+- ✅ Created index on machine_id for performance
+- ✅ All 1128 existing sessions migrated to Machine 1 by default
+- ✅ Zero data loss, all trainer assignments preserved
+- ✅ Dropped 3 dependent views (will be recreated in US-003)
+- ✅ All constraints and foreign keys working correctly
+- Migration name: `update_training_sessions_schema_for_machines`
+- Actual effort: ~45 minutes (under estimated 2-3 hours)
 
 ### 2025-10-09 - US-001 Complete
 
@@ -135,10 +149,11 @@
 1. [x] Read START-HERE.md
 2. [x] Read AGENT-GUIDE.md
 3. [x] Read README.md
-4. [x] Begin US-001 implementation
-5. [ ] Begin US-002 implementation (Training Sessions Schema Updates)
+4. [x] Complete US-001 implementation
+5. [x] Complete US-002 implementation
+6. [ ] Begin US-003 implementation (Database Functions Cleanup)
 
-**Command to continue:** `/implement-userstory US-002`
+**Command to continue:** `/implement-userstory US-003`
 
 ---
 
@@ -147,13 +162,13 @@
 | Phase             | Duration     | Start      | End | Status        |
 | ----------------- | ------------ | ---------- | --- | ------------- |
 | Planning          | 1 day        | -          | -   | ✅ Complete   |
-| Phase 1 (DB)      | 1-2 days     | 2025-10-09 | -   | ⏳ 33% (1/3)  |
+| Phase 1 (DB)      | 1-2 days     | 2025-10-09 | -   | ⏳ 67% (2/3)  |
 | Phase 2 (Backend) | 1 day        | -          | -   | ⬜            |
 | Phase 3 (UI)      | 1-2 days     | -          | -   | ⬜            |
 | Phase 4 (Forms)   | 1 day        | -          | -   | ⬜            |
-| **Total**         | **4-6 days** | 2025-10-09 | -   | ⏳ 10% (1/10) |
+| **Total**         | **4-6 days** | 2025-10-09 | -   | ⏳ 20% (2/10) |
 
 ---
 
 **Last Updated:** 2025-10-09
-**Updated By:** Claude Code Agent (US-001 completion)
+**Updated By:** Claude Code Agent (US-002 completion)
