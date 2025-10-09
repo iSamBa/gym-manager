@@ -21,30 +21,30 @@
 
 ### AC-1: Update `create_training_session_with_members` Function
 
-- [ ] Add `p_machine_id` parameter (required)
-- [ ] Make `p_trainer_id` parameter optional (NULL allowed)
-- [ ] Remove `p_max_participants` parameter
-- [ ] Remove trainer availability validation logic
-- [ ] Function creates sessions with machine_id
+- [x] Add `p_machine_id` parameter (required)
+- [x] Make `p_trainer_id` parameter optional (NULL allowed)
+- [x] Remove `p_max_participants` parameter
+- [x] Remove trainer availability validation logic
+- [x] Function creates sessions with machine_id
 
 ### AC-2: Update `training_sessions_calendar` View
 
-- [ ] Include machine_id in SELECT
-- [ ] Join with machines table to get machine_number and name
-- [ ] Remove max_participants from output
-- [ ] Handle nullable trainer_id in joins
+- [x] Include machine_id in SELECT
+- [x] Join with machines table to get machine_number and name
+- [x] Remove max_participants from output
+- [x] Handle nullable trainer_id in joins
 
 ### AC-3: Remove Trainer Availability Functions
 
-- [ ] Drop `check_trainer_availability` function (if exists)
-- [ ] Remove any availability-related helper functions
-- [ ] Clean up obsolete validation functions
+- [x] Drop `check_trainer_availability` function (if exists)
+- [x] Remove any availability-related helper functions
+- [x] Clean up obsolete validation functions
 
 ### AC-4: Update Other Dependent Functions
 
-- [ ] Update any session-related stored procedures
-- [ ] Ensure all functions handle nullable trainer_id
-- [ ] Remove max_participants references
+- [x] Update any session-related stored procedures
+- [x] Ensure all functions handle nullable trainer_id
+- [x] Remove max_participants references
 
 ---
 
@@ -326,18 +326,18 @@ describe("training_sessions_calendar view", () => {
 
 ## 📊 Verification Checklist
 
-- [ ] `create_training_session_with_members` function updated
-- [ ] Function accepts machine_id parameter
-- [ ] Function accepts nullable trainer_id
-- [ ] Function rejects multiple members
-- [ ] Function validates machine availability
-- [ ] Trainer availability check removed
-- [ ] `training_sessions_calendar` view updated
-- [ ] View includes machine data
-- [ ] View handles null trainer_id
-- [ ] Obsolete functions dropped
-- [ ] All function tests passing
-- [ ] All view tests passing
+- [x] `create_training_session_with_members` function updated
+- [x] Function accepts machine_id parameter
+- [x] Function accepts nullable trainer_id
+- [x] Function rejects multiple members
+- [x] Function validates machine availability
+- [x] Trainer availability check removed
+- [x] `training_sessions_calendar` view updated
+- [x] View includes machine data
+- [x] View handles null trainer_id
+- [x] Obsolete functions dropped
+- [x] All function tests passing
+- [x] All view tests passing
 
 ---
 
@@ -357,16 +357,25 @@ describe("training_sessions_calendar view", () => {
 
 ## 🎯 Definition of Done
 
-- [ ] Functions updated with new parameters
-- [ ] Views updated to include machine data
-- [ ] Trainer availability logic removed
-- [ ] Obsolete functions dropped
-- [ ] All tests passing
-- [ ] Documentation updated
-- [ ] Code review approved
+- [x] Functions updated with new parameters
+- [x] Views updated to include machine data
+- [x] Trainer availability logic removed
+- [x] Obsolete functions dropped
+- [x] All tests passing
+- [x] Documentation updated
+- [ ] Code review approved (will be done at PR time)
 
 ---
 
+**Status:** ✅ Completed
 **Estimated Effort:** 2-3 hours
-**Actual Effort:** TBD
-**Completed:** Not yet
+**Actual Effort:** ~1 hour
+**Completed:** 2025-10-09
+
+**Implementation Notes:**
+
+- Updated create_training_session_with_members function with new signature (machine_id required, trainer_id optional)
+- Recreated all 3 views (training_sessions_calendar, trainer_session_history, member_session_history) with machine data
+- Updated 2 trigger functions (validate_training_session_capacity, promote_from_training_session_waitlist) to check capacity against 1 instead of max_participants
+- Dropped check_trainer_availability function (no longer needed)
+- All tests passing: nullable trainer, machine validation, single-member enforcement, view data integrity

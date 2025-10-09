@@ -6,7 +6,7 @@
 **Branch:** `feature/training-sessions-rework`
 **Started:** 2025-10-09
 **Target Completion:** TBD
-**Completed Stories:** 2/10 (20%)
+**Completed Stories:** 3/10 (30%)
 
 ---
 
@@ -14,11 +14,11 @@
 
 ### Phase 1: Database Foundation
 
-| Story  | Title                            | Status         | Completed  | Notes                                  |
-| ------ | -------------------------------- | -------------- | ---------- | -------------------------------------- |
-| US-001 | Machines Database Schema         | 🟢 Complete    | 2025-10-09 | Migration applied, all tests passed    |
-| US-002 | Training Sessions Schema Updates | 🟢 Complete    | 2025-10-09 | Schema updated, 1128 sessions migrated |
-| US-003 | Database Functions Cleanup       | ⬜ Not Started | -          | Remove trainer availability checks     |
+| Story  | Title                            | Status      | Completed  | Notes                                      |
+| ------ | -------------------------------- | ----------- | ---------- | ------------------------------------------ |
+| US-001 | Machines Database Schema         | 🟢 Complete | 2025-10-09 | Migration applied, all tests passed        |
+| US-002 | Training Sessions Schema Updates | 🟢 Complete | 2025-10-09 | Schema updated, 1128 sessions migrated     |
+| US-003 | Database Functions Cleanup       | 🟢 Complete | 2025-10-09 | Functions/views updated, all tests passing |
 
 ### Phase 2: Backend Updates
 
@@ -46,12 +46,12 @@
 
 ## 📈 Milestones
 
-### Milestone 1: Database Ready ⏳ In Progress
+### Milestone 1: Database Ready ✅ Complete
 
 - [x] US-001 Complete
 - [x] US-002 Complete
-- [ ] US-003 Complete
-- [x] All migrations pass (2/2 applied successfully)
+- [x] US-003 Complete
+- [x] All migrations pass (3/3 applied successfully)
 - [x] Existing data migrated successfully (1128 sessions)
 
 ### Milestone 2: Backend Ready ✅/❌
@@ -95,7 +95,8 @@
 
 | Test Suite          | Passing | Total | Status |
 | ------------------- | ------- | ----- | ------ |
-| Database Migrations | 2       | 2     | ✅     |
+| Database Migrations | 3       | 3     | ✅     |
+| Function Tests      | 4       | 4     | ✅     |
 | Unit Tests          | -       | -     | ⏳     |
 | Component Tests     | -       | -     | ⏳     |
 | Integration Tests   | -       | -     | ⏳     |
@@ -109,6 +110,17 @@
 ---
 
 ## 📝 Notes
+
+### 2025-10-09 - US-003 Complete
+
+- ✅ Updated create_training_session_with_members function (new signature with machine_id)
+- ✅ Recreated 3 views with machine data (training_sessions_calendar, trainer_session_history, member_session_history)
+- ✅ Updated 2 trigger functions to check capacity against 1 instead of max_participants
+- ✅ Dropped check_trainer_availability function (obsolete)
+- ✅ All function tests passing (nullable trainer, machine validation, single-member enforcement)
+- ✅ All view tests passing (1128/1128, 1128/1128, 1077/1077 rows with machine data)
+- Migration name: `update_training_session_functions_and_views`
+- Actual effort: ~1 hour (under estimated 2-3 hours)
 
 ### 2025-10-09 - US-002 Complete
 
@@ -151,24 +163,27 @@
 3. [x] Read README.md
 4. [x] Complete US-001 implementation
 5. [x] Complete US-002 implementation
-6. [ ] Begin US-003 implementation (Database Functions Cleanup)
+6. [x] Complete US-003 implementation
+7. [ ] Begin US-004 implementation (TypeScript Types Update)
 
-**Command to continue:** `/implement-userstory US-003`
+**Milestone 1 Complete!** 🎉 All database changes finished.
+
+**Command to continue:** `/implement-userstory US-004`
 
 ---
 
 ## 📅 Timeline
 
-| Phase             | Duration     | Start      | End | Status        |
-| ----------------- | ------------ | ---------- | --- | ------------- |
-| Planning          | 1 day        | -          | -   | ✅ Complete   |
-| Phase 1 (DB)      | 1-2 days     | 2025-10-09 | -   | ⏳ 67% (2/3)  |
-| Phase 2 (Backend) | 1 day        | -          | -   | ⬜            |
-| Phase 3 (UI)      | 1-2 days     | -          | -   | ⬜            |
-| Phase 4 (Forms)   | 1 day        | -          | -   | ⬜            |
-| **Total**         | **4-6 days** | 2025-10-09 | -   | ⏳ 20% (2/10) |
+| Phase             | Duration     | Start      | End        | Status        |
+| ----------------- | ------------ | ---------- | ---------- | ------------- |
+| Planning          | 1 day        | -          | -          | ✅ Complete   |
+| Phase 1 (DB)      | 1-2 days     | 2025-10-09 | 2025-10-09 | ✅ 100% (3/3) |
+| Phase 2 (Backend) | 1 day        | -          | -          | ⬜ 0% (0/2)   |
+| Phase 3 (UI)      | 1-2 days     | -          | -          | ⬜ 0% (0/3)   |
+| Phase 4 (Forms)   | 1 day        | -          | -          | ⬜ 0% (0/2)   |
+| **Total**         | **4-6 days** | 2025-10-09 | -          | ⏳ 30% (3/10) |
 
 ---
 
 **Last Updated:** 2025-10-09
-**Updated By:** Claude Code Agent (US-002 completion)
+**Updated By:** Claude Code Agent (US-003 completion - Phase 1 Complete!)
