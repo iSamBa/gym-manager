@@ -12,23 +12,23 @@
 
 ### AC-1: Grid Layout
 
-- [x] 3 columns displayed (one per machine)
-- [x] Responsive design works on desktop
-- [x] Each column labeled with machine name
-- [x] Time axis labels on left side
+- [ ] 3 columns displayed (one per machine)
+- [ ] Responsive design works on desktop
+- [ ] Each column labeled with machine name
+- [ ] Time axis labels on left side
 
 ### AC-2: Machine Column Component
 
-- [x] MachineColumn component created
-- [x] Displays machine name as header
-- [x] Shows availability status
-- [x] Renders all time slots for the day
+- [ ] MachineColumn component created
+- [ ] Displays machine name as header
+- [ ] Shows availability status
+- [ ] Renders all time slots for the day
 
 ### AC-3: Performance Optimized
 
-- [x] Components memoized with React.memo
-- [x] Slot generation memoized with useMemo
-- [x] No unnecessary re-renders (verified with React DevTools)
+- [ ] Components memoized with React.memo
+- [ ] Slot generation memoized with useMemo
+- [ ] No unnecessary re-renders (verified with React DevTools)
 
 ---
 
@@ -217,10 +217,10 @@ describe("MachineSlotGrid", () => {
 
 ## 🎯 Definition of Done
 
-- [x] Grid layout component created
-- [x] 3 columns displayed
-- [x] Memoization applied
-- [x] Tests passing
-- [x] Code review approved
+- [ ] Grid layout component created
+- [ ] 3 columns displayed
+- [ ] Memoization applied
+- [ ] Tests passing
+- [ ] Code review approved
 
 **Estimated Effort:** 3-4 hours

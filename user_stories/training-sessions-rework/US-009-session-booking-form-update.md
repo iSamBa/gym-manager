@@ -12,39 +12,41 @@
 
 ### AC-1: Machine Selection Field
 
-- [x] Dropdown showing 3 machines
-- [x] Disabled machines grayed out and unselectable
-- [x] Pre-selected when clicking slot (machine auto-filled)
-- [x] Required field validation
+- [ ] Dropdown showing 3 machines
+- [ ] Disabled machines grayed out and unselectable
+- [ ] Pre-selected when clicking slot (machine auto-filled)
+- [ ] Required field validation
 
 ### AC-2: Member Selection Field
 
-- [x] Single member dropdown (not multi-select)
-- [x] Searchable by name or email
-- [x] Required field validation
-- [x] Shows member status badge
+- [ ] Single member dropdown (not multi-select)
+- [ ] Searchable by name or email
+- [ ] Required field validation
+- [ ] Shows member status badge
 
 ### AC-3: Trainer Selection Field
 
-- [x] Optional dropdown (can submit without trainer)
-- [x] Shows "Assign Later" placeholder
-- [x] Searchable by name
-- [x] Indicates trainer can be added when completing session
+- [ ] Optional dropdown (can submit without trainer)
+- [ ] Shows "Assign Later" placeholder
+- [ ] Searchable by name
+
+- [ ] Indicates trainer can be added when completing session
 
 ### AC-4: Time Slot Fields
 
-- [x] Pre-filled from clicked slot
-- [x] Start and end time pickers
-- [x] Default 30-minute duration
-- [x] Validation: end must be after start
+- [ ] Pre-filled from clicked slot
+- [ ] Start and end time pickers
+
+- [ ] Default 30-minute duration
+- [ ] Validation: end must be after start
 
 ### AC-5: Form Behavior
 
-- [x] Submit creates session with single member
-- [x] Handles optional trainer (sends null if not selected)
-- [x] Shows success toast
-- [x] Closes dialog and refreshes grid
-- [x] Shows validation errors clearly
+- [ ] Submit creates session with single member
+- [ ] Handles optional trainer (sends null if not selected)
+- [ ] Shows success toast
+- [ ] Closes dialog and refreshes grid
+- [ ] Shows validation errors clearly
 
 ---
 
@@ -300,12 +302,12 @@ describe("SessionBookingDialog", () => {
 
 ## 🎯 Definition of Done
 
-- [x] Form updated with all fields
-- [x] Machine selection working
-- [x] Single member selection
-- [x] Optional trainer selection
-- [x] Validation working
-- [x] Tests passing
-- [x] Code review approved
+- [ ] Form updated with all fields
+- [ ] Machine selection working
+- [ ] Single member selection
+- [ ] Optional trainer selection
+- [ ] Validation working
+- [ ] Tests passing
+- [ ] Code review approved
 
 **Estimated Effort:** 3-4 hours

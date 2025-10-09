@@ -21,37 +21,37 @@
 
 ### AC-1: Remove max_participants Column
 
-- [x] `max_participants` column dropped from `training_sessions` table
-- [x] Current participants count remains (0 or 1)
-- [x] No application code references max_participants after migration
+- [ ] `max_participants` column dropped from `training_sessions` table
+- [ ] Current participants count remains (0 or 1)
+- [ ] No application code references max_participants after migration
 
 ### AC-2: Make trainer_id Nullable
 
-- [x] `trainer_id` column constraint changed from NOT NULL to NULLABLE
-- [x] Existing sessions retain their trainer assignments
-- [x] New sessions can be created without trainer_id
-- [x] Trainer can be assigned later when session is completed
+- [ ] `trainer_id` column constraint changed from NOT NULL to NULLABLE
+- [ ] Existing sessions retain their trainer assignments
+- [ ] New sessions can be created without trainer_id
+- [ ] Trainer can be assigned later when session is completed
 
 ### AC-3: Add machine_id Column
 
-- [x] `machine_id UUID` column added to `training_sessions`
-- [x] Foreign key constraint: `REFERENCES machines(id)`
-- [x] ON DELETE behavior: RESTRICT (cannot delete machine with active sessions)
-- [x] Existing sessions assigned to default machine (Machine 1)
-- [x] Column becomes NOT NULL after default assignment
+- [ ] `machine_id UUID` column added to `training_sessions`
+- [ ] Foreign key constraint: `REFERENCES machines(id)`
+- [ ] ON DELETE behavior: RESTRICT (cannot delete machine with active sessions)
+- [ ] Existing sessions assigned to default machine (Machine 1)
+- [ ] Column becomes NOT NULL after default assignment
 
 ### AC-4: Update Table Constraints
 
-- [x] Remove any max_participants-related CHECK constraints
-- [x] current_participants CHECK remains (>= 0)
-- [x] Add index on machine_id for query performance
+- [ ] Remove any max_participants-related CHECK constraints
+- [ ] current_participants CHECK remains (>= 0)
+- [ ] Add index on machine_id for query performance
 
 ### AC-5: Data Migration Safe
 
-- [x] Existing sessions preserved with all data intact
-- [x] No data loss during migration
-- [x] Rollback script provided
-- [x] Migration is idempotent (can run multiple times safely)
+- [ ] Existing sessions preserved with all data intact
+- [ ] No data loss during migration
+- [ ] Rollback script provided
+- [ ] Migration is idempotent (can run multiple times safely)
 
 ---
 
@@ -352,17 +352,17 @@ Before marking this story complete, verify:
 
 ## 🎯 Definition of Done
 
-- [x] Migration file created and applied
-- [x] machine_id column added with foreign key
-- [x] trainer_id made nullable
-- [x] max_participants removed
-- [x] Index created on machine_id
-- [x] All existing sessions migrated successfully
-- [x] Schema verification tests passing
-- [x] Data migration tests passing
-- [x] Manual SQL verification completed
-- [x] Documentation updated
-- [x] Code review approved
+- [ ] Migration file created and applied
+- [ ] machine_id column added with foreign key
+- [ ] trainer_id made nullable
+- [ ] max_participants removed
+- [ ] Index created on machine_id
+- [ ] All existing sessions migrated successfully
+- [ ] Schema verification tests passing
+- [ ] Data migration tests passing
+- [ ] Manual SQL verification completed
+- [ ] Documentation updated
+- [ ] Code review approved
 
 ---
 

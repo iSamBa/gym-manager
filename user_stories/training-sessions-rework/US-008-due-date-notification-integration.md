@@ -12,24 +12,24 @@
 
 ### AC-1: Notification Badge Component
 
-- [x] SessionNotificationBadge component created
-- [x] Displays count of due-date alerts
-- [x] Red circular badge design
-- [x] Positioned top-right of session slot
+- [ ] SessionNotificationBadge component created
+- [ ] Displays count of due-date alerts
+- [ ] Red circular badge design
+- [ ] Positioned top-right of session slot
 
 ### AC-2: Due-Date Query Logic
 
-- [x] Query member_comments for member with due_date
-- [x] Filter: due_date >= session.scheduled_start
-- [x] Count number of matching comments
-- [x] Cache results for performance
+- [ ] Query member_comments for member with due_date
+- [ ] Filter: due_date >= session.scheduled_start
+- [ ] Count number of matching comments
+- [ ] Cache results for performance
 
 ### AC-3: Badge Display Logic
 
-- [x] Only shows if alert_count > 0
-- [x] Only on sessions before or on due_date
-- [x] Sessions after due_date have no badge
-- [x] Badge updates when comments change
+- [ ] Only shows if alert_count > 0
+- [ ] Only on sessions before or on due_date
+- [ ] Sessions after due_date have no badge
+- [ ] Badge updates when comments change
 
 ---
 
@@ -204,11 +204,11 @@ describe("SessionNotificationBadge", () => {
 
 ## 🎯 Definition of Done
 
-- [x] useSessionAlerts hook created
-- [x] Badge component created
-- [x] Integrated in TimeSlot
-- [x] Query logic correct (due_date >= session date)
-- [x] Tests passing
-- [x] Code review approved
+- [ ] useSessionAlerts hook created
+- [ ] Badge component created
+- [ ] Integrated in TimeSlot
+- [ ] Query logic correct (due_date >= session date)
+- [ ] Tests passing
+- [ ] Code review approved
 
 **Estimated Effort:** 2-3 hours

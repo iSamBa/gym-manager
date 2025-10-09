@@ -21,36 +21,36 @@
 
 ### AC-1: Machines Table Created
 
-- [x] Table `machines` exists in public schema
-- [x] Primary key: `id UUID`
-- [x] Unique constraint on `machine_number`
-- [x] Default timestamps (created_at, updated_at)
+- [ ] Table `machines` exists in public schema
+- [ ] Primary key: `id UUID`
+- [ ] Unique constraint on `machine_number`
+- [ ] Default timestamps (created_at, updated_at)
 
 ### AC-2: Machine Number Constraint
 
-- [x] `machine_number` must be INTEGER
-- [x] CHECK constraint ensures value is 1, 2, or 3
-- [x] Attempting to insert machine_number outside range fails
+- [ ] `machine_number` must be INTEGER
+- [ ] CHECK constraint ensures value is 1, 2, or 3
+- [ ] Attempting to insert machine_number outside range fails
 
 ### AC-3: Default Machines Inserted
 
-- [x] 3 machines automatically created during migration
-- [x] Machine 1: `machine_number = 1, name = "Machine 1", is_available = true`
-- [x] Machine 2: `machine_number = 2, name = "Machine 2", is_available = true`
-- [x] Machine 3: `machine_number = 3, name = "Machine 3", is_available = true`
+- [ ] 3 machines automatically created during migration
+- [ ] Machine 1: `machine_number = 1, name = "Machine 1", is_available = true`
+- [ ] Machine 2: `machine_number = 2, name = "Machine 2", is_available = true`
+- [ ] Machine 3: `machine_number = 3, name = "Machine 3", is_available = true`
 
 ### AC-4: Row Level Security Enabled
 
-- [x] RLS enabled on machines table
-- [x] **SELECT**: All authenticated users can view machines
-- [x] **INSERT/UPDATE/DELETE**: Only users with role='admin' can modify
-- [x] Non-admin users cannot change `is_available` status
+- [ ] RLS enabled on machines table
+- [ ] **SELECT**: All authenticated users can view machines
+- [ ] **INSERT/UPDATE/DELETE**: Only users with role='admin' can modify
+- [ ] Non-admin users cannot change `is_available` status
 
 ### AC-5: Migration Rollback Safe
 
-- [x] Migration includes DROP TABLE IF EXISTS for rollback
-- [x] Rollback script provided in migration comments
-- [x] No foreign key dependencies prevent rollback
+- [ ] Migration includes DROP TABLE IF EXISTS for rollback
+- [ ] Rollback script provided in migration comments
+- [ ] No foreign key dependencies prevent rollback
 
 ---
 
@@ -355,16 +355,16 @@ Before marking this story complete, verify:
 
 ## 🎯 Definition of Done
 
-- [x] Migration file created and applied
-- [x] Table created with correct schema
-- [x] 3 default machines inserted
-- [x] RLS policies created and tested
-- [x] Constraints enforced (unique, check)
-- [x] Updated_at trigger working
-- [x] Unit tests written and passing
-- [x] Manual verification completed
-- [x] Code review approved
-- [x] Documentation updated
+- [ ] Migration file created and applied
+- [ ] Table created with correct schema
+- [ ] 3 default machines inserted
+- [ ] RLS policies created and tested
+- [ ] Constraints enforced (unique, check)
+- [ ] Updated_at trigger working
+- [ ] Unit tests written and passing
+- [ ] Manual verification completed
+- [ ] Code review approved
+- [ ] Documentation updated
 
 ---
 

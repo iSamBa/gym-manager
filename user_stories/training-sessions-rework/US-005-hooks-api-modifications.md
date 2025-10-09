@@ -12,28 +12,28 @@
 
 ### AC-1: Update useTrainingSessions Hook
 
-- [x] Add `machine_id` filter support
-- [x] Query includes machine data from view
-- [x] Handle nullable trainer_id in results
+- [ ] Add `machine_id` filter support
+- [ ] Query includes machine data from view
+- [ ] Handle nullable trainer_id in results
 
 ### AC-2: Update useCreateTrainingSession Hook
 
-- [x] Accept `machine_id` parameter (required)
-- [x] Accept `trainer_id` as optional
-- [x] Change `member_ids` to `member_id` (single)
-- [x] Remove `max_participants` parameter
+- [ ] Accept `machine_id` parameter (required)
+- [ ] Accept `trainer_id` as optional
+- [ ] Change `member_ids` to `member_id` (single)
+- [ ] Remove `max_participants` parameter
 
 ### AC-3: Create useMachines Hook
 
-- [x] Fetch all machines
-- [x] Filter by `is_available` if needed
-- [x] Cache with React Query
+- [ ] Fetch all machines
+- [ ] Filter by `is_available` if needed
+- [ ] Cache with React Query
 
 ### AC-4: Create useUpdateMachine Hook (Admin Only)
 
-- [x] Toggle machine availability
-- [x] Optimistic updates
-- [x] Invalidate sessions query on change
+- [ ] Toggle machine availability
+- [ ] Optimistic updates
+- [ ] Invalidate sessions query on change
 
 ---
 
@@ -184,10 +184,10 @@ describe("useCreateTrainingSession", () => {
 
 ## 🎯 Definition of Done
 
-- [x] All hooks updated
-- [x] useMachines hook created
-- [x] Type safety maintained
-- [x] Tests passing
-- [x] Code review approved
+- [ ] All hooks updated
+- [ ] useMachines hook created
+- [ ] Type safety maintained
+- [ ] Tests passing
+- [ ] Code review approved
 
 **Estimated Effort:** 2-3 hours

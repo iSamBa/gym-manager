@@ -12,30 +12,31 @@
 
 ### AC-1: Admin Toggle Control
 
-- [x] Toggle switch in machine column header
-- [x] Only visible to admin role users
-- [x] Instantly updates machine availability
-- [x] Optimistic UI update
+- [ ] Toggle switch in machine column header
+- [ ] Only visible to admin role users
+- [ ] Instantly updates machine availability
+- [ ] Optimistic UI update
 
 ### AC-2: Visual Feedback
 
-- [x] Disabled machines have gray overlay
-- [x] "Unavailable" badge displayed
-- [x] Slots in disabled column not clickable
-- [x] Tooltip explains why machine is disabled
+- [ ] Disabled machines have gray overlay
+- [ ] "Unavailable" badge displayed
+- [ ] Slots in disabled column not clickable
+- [ ] Tooltip explains why machine is disabled
 
 ### AC-3: Booking Prevention
 
-- [x] Cannot create new sessions on disabled machine
-- [x] Form disables disabled machines in dropdown
-- [x] API validates machine availability
-- [x] Error message if attempting to book unavailable machine
+- [ ] Cannot create new sessions on disabled machine
+- [ ] Form disables disabled machines in dropdown
+- [ ] API validates machine availability
+
+- [ ] Error message if attempting to book unavailable machine
 
 ### AC-4: Existing Sessions Preserved
 
-- [x] Disabling machine doesn't cancel existing sessions
-- [x] Existing sessions remain visible and editable
-- [x] Only new bookings are prevented
+- [ ] Disabling machine doesn't cancel existing sessions
+- [ ] Existing sessions remain visible and editable
+- [ ] Only new bookings are prevented
 
 ---
 
@@ -243,13 +244,13 @@ describe("MachineAvailabilityToggle", () => {
 
 ## 🎯 Definition of Done
 
-- [x] Toggle component created
-- [x] Only visible to admins
-- [x] Updates machine availability
-- [x] Visual feedback working
-- [x] Booking prevention enforced
-- [x] Existing sessions preserved
-- [x] Tests passing
-- [x] Code review approved
+- [ ] Toggle component created
+- [ ] Only visible to admins
+- [ ] Updates machine availability
+- [ ] Visual feedback working
+- [ ] Booking prevention enforced
+- [ ] Existing sessions preserved
+- [ ] Tests passing
+- [ ] Code review approved
 
 **Estimated Effort:** 2-3 hours

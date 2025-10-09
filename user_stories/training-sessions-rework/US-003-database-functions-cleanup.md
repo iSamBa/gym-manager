@@ -21,30 +21,30 @@
 
 ### AC-1: Update `create_training_session_with_members` Function
 
-- [x] Add `p_machine_id` parameter (required)
-- [x] Make `p_trainer_id` parameter optional (NULL allowed)
-- [x] Remove `p_max_participants` parameter
-- [x] Remove trainer availability validation logic
-- [x] Function creates sessions with machine_id
+- [ ] Add `p_machine_id` parameter (required)
+- [ ] Make `p_trainer_id` parameter optional (NULL allowed)
+- [ ] Remove `p_max_participants` parameter
+- [ ] Remove trainer availability validation logic
+- [ ] Function creates sessions with machine_id
 
 ### AC-2: Update `training_sessions_calendar` View
 
-- [x] Include machine_id in SELECT
-- [x] Join with machines table to get machine_number and name
-- [x] Remove max_participants from output
-- [x] Handle nullable trainer_id in joins
+- [ ] Include machine_id in SELECT
+- [ ] Join with machines table to get machine_number and name
+- [ ] Remove max_participants from output
+- [ ] Handle nullable trainer_id in joins
 
 ### AC-3: Remove Trainer Availability Functions
 
-- [x] Drop `check_trainer_availability` function (if exists)
-- [x] Remove any availability-related helper functions
-- [x] Clean up obsolete validation functions
+- [ ] Drop `check_trainer_availability` function (if exists)
+- [ ] Remove any availability-related helper functions
+- [ ] Clean up obsolete validation functions
 
 ### AC-4: Update Other Dependent Functions
 
-- [x] Update any session-related stored procedures
-- [x] Ensure all functions handle nullable trainer_id
-- [x] Remove max_participants references
+- [ ] Update any session-related stored procedures
+- [ ] Ensure all functions handle nullable trainer_id
+- [ ] Remove max_participants references
 
 ---
 
@@ -361,13 +361,13 @@ describe("training_sessions_calendar view", () => {
 
 ## 🎯 Definition of Done
 
-- [x] Functions updated with new parameters
-- [x] Views updated to include machine data
-- [x] Trainer availability logic removed
-- [x] Obsolete functions dropped
-- [x] All tests passing
-- [x] Documentation updated
-- [x] Code review approved
+- [ ] Functions updated with new parameters
+- [ ] Views updated to include machine data
+- [ ] Trainer availability logic removed
+- [ ] Obsolete functions dropped
+- [ ] All tests passing
+- [ ] Documentation updated
+- [ ] Code review approved
 
 ---
 

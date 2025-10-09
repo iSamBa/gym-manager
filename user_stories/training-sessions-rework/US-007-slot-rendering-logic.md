@@ -12,30 +12,30 @@
 
 ### AC-1: Time Slot Generation
 
-- [x] 30 time slots generated (9:00 AM to 12:00 AM)
-- [x] Each slot is 30 minutes
-- [x] Slot labels formatted as "HH:MM - HH:MM"
+- [ ] 30 time slots generated (9:00 AM to 12:00 AM)
+- [ ] Each slot is 30 minutes
+- [ ] Slot labels formatted as "HH:MM - HH:MM"
 
 ### AC-2: Empty Slot Display
 
-- [x] Empty slots show time label
-- [x] Clickable to open booking dialog
-- [x] Hover state indicates clickability
-- [x] Disabled if machine unavailable
+- [ ] Empty slots show time label
+- [ ] Clickable to open booking dialog
+- [ ] Hover state indicates clickability
+- [ ] Disabled if machine unavailable
 
 ### AC-3: Booked Slot Display
 
-- [x] Shows member name prominently
-- [x] Shows time label
-- [x] Color-coded by session status
-- [x] Clickable to open session details
+- [ ] Shows member name prominently
+- [ ] Shows time label
+- [ ] Color-coded by session status
+- [ ] Clickable to open session details
 
 ### AC-4: Status Colors
 
-- [x] Scheduled: Blue background
-- [x] In Progress: Orange background
-- [x] Completed: Green background
-- [x] Cancelled: Gray with strikethrough
+- [ ] Scheduled: Blue background
+- [ ] In Progress: Orange background
+- [ ] Completed: Green background
+- [ ] Cancelled: Gray with strikethrough
 
 ---
 
@@ -243,11 +243,11 @@ describe("TimeSlot", () => {
 
 ## 🎯 Definition of Done
 
-- [x] Slot generator created
-- [x] 30 slots generated correctly
-- [x] TimeSlot component renders both states
-- [x] Status colors applied
-- [x] Tests passing
-- [x] Code review approved
+- [ ] Slot generator created
+- [ ] 30 slots generated correctly
+- [ ] TimeSlot component renders both states
+- [ ] Status colors applied
+- [ ] Tests passing
+- [ ] Code review approved
 
 **Estimated Effort:** 2-3 hours

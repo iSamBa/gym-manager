@@ -12,28 +12,28 @@
 
 ### AC-1: Update TrainingSession Interface
 
-- [x] Add `machine_id: string` property
-- [x] Add optional `machine_number?: 1 | 2 | 3` from view
-- [x] Add optional `machine_name?: string` from view
-- [x] Change `trainer_id: string | null` (nullable)
-- [x] Remove `max_participants` property
-- [x] `current_participants` remains (always 0 or 1)
+- [ ] Add `machine_id: string` property
+- [ ] Add optional `machine_number?: 1 | 2 | 3` from view
+- [ ] Add optional `machine_name?: string` from view
+- [ ] Change `trainer_id: string | null` (nullable)
+- [ ] Remove `max_participants` property
+- [ ] `current_participants` remains (always 0 or 1)
 
 ### AC-2: Create Machine Interface
 
-- [x] New `Machine` interface created
-- [x] Properties: id, machine_number, name, is_available, timestamps
+- [ ] New `Machine` interface created
+- [ ] Properties: id, machine_number, name, is_available, timestamps
 
 ### AC-3: Update CreateSessionData
 
-- [x] Add `machine_id: string` (required)
-- [x] Change `trainer_id?: string` (optional)
-- [x] Remove `max_participants`
-- [x] Change `member_ids` to `member_id` (single string)
+- [ ] Add `machine_id: string` (required)
+- [ ] Change `trainer_id?: string` (optional)
+- [ ] Remove `max_participants`
+- [ ] Change `member_ids` to `member_id` (single string)
 
 ### AC-4: Update SessionFilters
 
-- [x] Add `machine_id?: string` filter option
+- [ ] Add `machine_id?: string` filter option
 
 ---
 
@@ -163,9 +163,9 @@ describe("TypeScript Types", () => {
 
 ## 🎯 Definition of Done
 
-- [x] All interfaces updated
-- [x] No TypeScript errors
-- [x] Type tests passing
-- [x] Code review approved
+- [ ] All interfaces updated
+- [ ] No TypeScript errors
+- [ ] Type tests passing
+- [ ] Code review approved
 
 **Estimated Effort:** 1 hour
