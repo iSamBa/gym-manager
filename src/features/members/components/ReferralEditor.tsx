@@ -32,20 +32,6 @@ interface ReferralEditorProps {
   className?: string;
 }
 
-// Format referral source for display
-const formatReferralSource = (source: ReferralSource): string => {
-  const mapping: Record<ReferralSource, string> = {
-    instagram: "Instagram",
-    member_referral: "Member Referral",
-    website_ib: "Website (Inbound)",
-    prospection: "Prospection (Outbound)",
-    studio: "Studio (Walk-in)",
-    phone: "Phone",
-    chatbot: "Chatbot",
-  };
-  return mapping[source];
-};
-
 export function ReferralEditor({
   member,
   onChange,

@@ -52,7 +52,7 @@ export const ContactInformationCard = memo(function ContactInformationCard({
       });
       setIsEditing(false);
       toast.success("Contact information updated successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update contact information");
     }
   }, [formData, member.id, updateMember]);

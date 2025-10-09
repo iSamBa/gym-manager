@@ -18,12 +18,6 @@ interface TrainingPreferenceEditorProps {
   className?: string;
 }
 
-// Format training preference for display
-const formatTrainingPreference = (pref?: TrainingPreference): string => {
-  if (!pref) return "Not Specified";
-  return pref === "mixed" ? "Mixed Sessions" : "Women Only Sessions";
-};
-
 export function TrainingPreferenceEditor({
   member,
   className,

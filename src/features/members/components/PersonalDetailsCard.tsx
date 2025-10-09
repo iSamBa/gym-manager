@@ -50,7 +50,7 @@ export const PersonalDetailsCard = memo(function PersonalDetailsCard({
       });
       setIsEditing(false);
       toast.success("Personal details updated successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update personal details");
     }
   }, [formData, member.id, updateMember]);

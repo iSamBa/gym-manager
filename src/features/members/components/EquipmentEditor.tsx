@@ -24,18 +24,6 @@ interface EquipmentEditorProps {
   className?: string;
 }
 
-// Format vest size for display
-const formatVestSize = (size: VestSize): string => {
-  const mapping: Record<VestSize, string> = {
-    V1: "V1",
-    V2: "V2",
-    V2_SMALL_EXT: "V2 with Small Extension",
-    V2_LARGE_EXT: "V2 with Large Extension",
-    V2_DOUBLE_EXT: "V2 with Double Extension",
-  };
-  return mapping[size];
-};
-
 export function EquipmentEditor({
   member,
   onChange,
