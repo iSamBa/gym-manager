@@ -3,6 +3,7 @@ import { SESSION_VISIBILITY_CONFIG, type CalendarViewMode } from "./constants";
 import type {
   TrainingSession,
   TrainingSessionWithDetails,
+  TrainingSessionCalendarEvent,
   SessionHistoryEntry,
   CreateSessionData,
 } from "./types";
@@ -37,18 +38,15 @@ interface SessionWithTrainerName extends TrainingSession {
 // Keeping this as a stub to prevent breaking existing code
 export const transformSessionToCalendarEvent = (
   session: TrainingSession | TrainingSessionWithDetails | SessionWithTrainerName
-): Record<string, unknown> => {
-  // Deprecated: Calendar events being replaced with machine slot grid
-  // Return minimal structure to prevent breaks until US-006 cleanup
+): TrainingSessionCalendarEvent => {
+  // Cast to TrainingSession to ensure type compatibility
+  const baseSession = session as TrainingSession;
   return {
-    id: session.id,
+    ...baseSession,
     title: session.trainer_name || "Session",
     start: parseISO(session.scheduled_start),
     end: parseISO(session.scheduled_end),
-    trainer_name: session.trainer_name,
-    participant_count: session.current_participants,
-    status: session.status,
-  };
+  } as TrainingSessionCalendarEvent;
 };
 
 // Validation utilities

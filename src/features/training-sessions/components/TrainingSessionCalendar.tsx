@@ -18,7 +18,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   Calendar as CalendarIcon,
-  MapPin,
   Users,
   Clock,
   Maximize2,
@@ -160,13 +159,14 @@ const TrainingSessionCalendar: React.FC<TrainingSessionCalendarProps> = ({
                 <div className="flex items-center gap-1">
                   <Users className="h-3 w-3 flex-shrink-0" />
                   <span className="text-xs">
-                    {event.participant_count}/{event.max_participants}
+                    {event.current_participants === 1 ? "1 member" : "Empty"}
                   </span>
                 </div>
-                {event.location && (
+                {event.machine_name && (
                   <div className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate text-xs">{event.location}</span>
+                    <span className="truncate text-xs">
+                      {event.machine_name}
+                    </span>
                   </div>
                 )}
               </div>
@@ -176,9 +176,8 @@ const TrainingSessionCalendar: React.FC<TrainingSessionCalendarProps> = ({
             {!showFullDetails && (
               <div className="session-details-condensed">
                 <div className="text-xs">
-                  {event.participant_count}/{event.max_participants}
-                  {event.location &&
-                    ` • ${event.location.substring(0, 8)}${event.location.length > 8 ? "..." : ""}`}
+                  {event.current_participants === 1 ? "1 member" : "Empty"}
+                  {event.machine_name && ` • ${event.machine_name}`}
                 </div>
               </div>
             )}
@@ -195,22 +194,22 @@ const TrainingSessionCalendar: React.FC<TrainingSessionCalendarProps> = ({
                 </span>
                 <span className="text-xs opacity-70">({durationMinutes}m)</span>
               </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-3 w-3" />
-                <span>{event.location || "No location specified"}</span>
-              </div>
+              {event.machine_name && (
+                <div className="flex items-center gap-2">
+                  <span>Machine: {event.machine_name}</span>
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Users className="h-3 w-3" />
                 <span>
-                  {event.participant_count}/{event.max_participants}{" "}
-                  participants
+                  {event.current_participants === 1 ? "1 member" : "Empty"}
                 </span>
               </div>
-              {event.session_category && (
+              {event.session_type && (
                 <div className="flex items-center gap-2">
                   <Badge className="h-3 w-3" />
                   <span className="capitalize">
-                    {event.session_category} session
+                    {event.session_type} session
                   </span>
                 </div>
               )}
@@ -318,8 +317,8 @@ const TrainingSessionCalendar: React.FC<TrainingSessionCalendarProps> = ({
 
   // Event handlers
   const handleSelectEvent = (event: TrainingSessionCalendarEvent) => {
-    if (onSelectSession && event.resource?.session) {
-      onSelectSession(event.resource.session);
+    if (onSelectSession) {
+      onSelectSession(event);
     }
   };
 
@@ -398,7 +397,9 @@ const TrainingSessionCalendar: React.FC<TrainingSessionCalendarProps> = ({
         max={CALENDAR_CONFIG.max}
         scrollToTime={CALENDAR_CONFIG.scrollToTime}
         popup
-        tooltipAccessor={(event) => `${event.trainer_name} - ${event.location}`}
+        tooltipAccessor={(event) =>
+          `${event.trainer_name}${event.machine_name ? ` - ${event.machine_name}` : ""}`
+        }
       />
     </Card>
   );

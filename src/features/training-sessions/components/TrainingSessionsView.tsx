@@ -37,16 +37,10 @@ const TrainingSessionsView: React.FC = () => {
       scheduled_start: session.scheduled_start,
       scheduled_end: session.scheduled_end,
       status: session.status,
-      location: session.location,
+      machine_name: session.machine_name,
       trainer_name: session.trainer_name || "Unknown Trainer",
       participant_count: session.current_participants,
-      max_participants: session.max_participants,
-      attendance_rate:
-        session.current_participants > 0
-          ? Math.round(
-              (session.current_participants / session.max_participants) * 100
-            )
-          : 0,
+      attendance_rate: session.current_participants === 1 ? 100 : 0,
       duration_minutes: durationMinutes,
       session_category: session.session_type || "standard",
       notes: session.notes || undefined,

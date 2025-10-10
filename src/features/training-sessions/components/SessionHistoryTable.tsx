@@ -38,7 +38,6 @@ import {
   Search,
   Clock,
   User,
-  MapPin,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -59,7 +58,6 @@ interface SessionHistoryTableProps {
   showSelectionColumn?: boolean;
   showTrainerColumn?: boolean;
   showMemberColumn?: boolean;
-  showLocationColumn?: boolean;
   onSessionClick?: (session: SessionHistoryEntry) => void;
   onExport?: (sessions: SessionHistoryEntry[], format: "csv" | "pdf") => void;
   onBulkAction?: (sessions: SessionHistoryEntry[], action: string) => void;
@@ -70,7 +68,6 @@ const SessionHistoryTable: React.FC<SessionHistoryTableProps> = ({
   sessions,
   showSelectionColumn = false,
   showTrainerColumn = true,
-  showLocationColumn = true,
   onSessionClick,
   onExport,
   onBulkAction,
@@ -309,9 +306,10 @@ const SessionHistoryTable: React.FC<SessionHistoryTableProps> = ({
         },
         cell: ({ row }) => {
           const session = row.original;
+          const count = session.participant_count || 0;
           return (
             <div className="text-center">
-              {session.participant_count || 0}/{session.max_participants}
+              {count === 1 ? "1 member" : "Empty"}
             </div>
           );
         },
@@ -375,27 +373,6 @@ const SessionHistoryTable: React.FC<SessionHistoryTableProps> = ({
         },
       })
     );
-
-    // Location column
-    if (showLocationColumn) {
-      cols.push(
-        columnHelper.accessor("location", {
-          id: "location",
-          header: "Location",
-          cell: ({ getValue }) => {
-            const location = getValue();
-            return location ? (
-              <div className="flex items-center gap-1 text-sm">
-                <MapPin className="h-3 w-3" />
-                <span>{location}</span>
-              </div>
-            ) : (
-              <span className="text-muted-foreground text-sm">—</span>
-            );
-          },
-        })
-      );
-    }
 
     // Duration column
     cols.push(
@@ -485,12 +462,7 @@ const SessionHistoryTable: React.FC<SessionHistoryTableProps> = ({
     );
 
     return cols;
-  }, [
-    showSelectionColumn,
-    showTrainerColumn,
-    showLocationColumn,
-    onSessionClick,
-  ]);
+  }, [showSelectionColumn, showTrainerColumn, onSessionClick]);
 
   const table = useReactTable({
     data: sessions,

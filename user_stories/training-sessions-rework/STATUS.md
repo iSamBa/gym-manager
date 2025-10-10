@@ -6,7 +6,7 @@
 **Branch:** `feature/training-sessions-rework`
 **Started:** 2025-10-09
 **Target Completion:** TBD
-**Completed Stories:** 8/10 (80%)
+**Completed Stories:** 9/10 (90%)
 
 ---
 
@@ -37,10 +37,10 @@
 
 ### Phase 4: Forms & Admin
 
-| Story  | Title                               | Status         | Completed | Notes                                           |
-| ------ | ----------------------------------- | -------------- | --------- | ----------------------------------------------- |
-| US-009 | Session Booking Form Update         | ⬜ Not Started | -         | Machine select, single member, optional trainer |
-| US-010 | Machine Availability Admin Controls | ⬜ Not Started | -         | Toggle machine on/off                           |
+| Story  | Title                               | Status         | Completed  | Notes                                                     |
+| ------ | ----------------------------------- | -------------- | ---------- | --------------------------------------------------------- |
+| US-009 | Session Booking Form Update         | 🟢 Complete    | 2025-10-10 | All ACs passed, submission bug fixed, 21/21 tests passing |
+| US-010 | Machine Availability Admin Controls | ⬜ Not Started | -          | Toggle machine on/off                                     |
 
 ---
 
@@ -110,6 +110,26 @@ None currently
 ---
 
 ## 📝 Notes
+
+### 2025-10-10 - US-009 Complete
+
+- ✅ Created SessionBookingDialog component with React Hook Form + Zod validation
+- ✅ Machine selection dropdown (3 machines, shows availability)
+- ✅ Single member selection dropdown (searchable, status badges)
+- ✅ Optional trainer selection ("Assign later" default with checkmark)
+- ✅ Time slot fields with datetime-local inputs (30-min default duration)
+- ✅ Session type radio buttons (Trail/Standard with descriptions)
+- ✅ Form validation with clear error messages (red text below fields)
+- ✅ Comprehensive testing: 21/21 acceptance criteria items passed
+- ✅ **CRITICAL BUG FIXED**: Parameter mismatch (`p_member_id` → `p_member_ids` array)
+- ✅ Build passed with 0 TypeScript errors, 0 ESLint warnings
+- ✅ Replaced ProgressiveTrainingSessionForm everywhere
+- ✅ Removed all trainer availability checking logic
+- ✅ Removed all location field references
+- ✅ Removed all max_participants references
+- ✅ Test results documented in `US-009-TEST-RESULTS.md`
+- Migration name: N/A (component + hook bug fix only)
+- Actual effort: ~3 hours (estimated 2-3 hours)
 
 ### 2025-10-10 - US-008 Complete
 

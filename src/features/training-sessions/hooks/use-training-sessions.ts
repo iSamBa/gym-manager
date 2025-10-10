@@ -110,7 +110,7 @@ export const useCreateTrainingSession = () => {
           p_trainer_id: data.trainer_id || null,
           p_scheduled_start: data.scheduled_start,
           p_scheduled_end: data.scheduled_end,
-          p_member_id: data.member_id,
+          p_member_ids: [data.member_id], // Database function expects an array
           p_session_type: data.session_type,
           p_notes: data.notes || null,
         }

@@ -1,15 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Edit,
-  Loader2,
-  MapPin,
-  Clock,
-  User,
-  AlertTriangle,
-  Star,
-} from "lucide-react";
+import { Edit, Loader2, Clock, User, AlertTriangle, Star } from "lucide-react";
 import { format } from "date-fns";
 
 import {
@@ -36,7 +28,6 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +45,6 @@ import {
   useDeleteTrainingSession,
 } from "../../hooks/use-training-sessions";
 import { useTrainers } from "@/features/trainers/hooks";
-import { TrainerAvailabilityCheck } from "./TrainerAvailabilityCheck";
 import type { TrainingSession } from "../../lib/types";
 
 interface EditSessionDialogProps {
@@ -72,7 +62,6 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   onSessionUpdated,
   onSessionDeleted,
 }) => {
-  const [showAvailabilityCheck, setShowAvailabilityCheck] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Fetch session data
@@ -108,7 +97,7 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   const { handleSubmit, watch, setValue, reset, formState } = form;
   const { isSubmitting, isDirty } = formState;
 
-  // Watch form fields for real-time validation and availability checking
+  // Watch form fields for real-time validation
   const watchedFields = watch();
   const { scheduled_start, scheduled_end } = watchedFields;
 
@@ -131,16 +120,6 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
       setValue("member_id", memberId);
     }
   }, [session, open, setValue]);
-
-  // Show availability check when all required fields are present
-  useEffect(() => {
-    const shouldShowCheck = !!(
-      session?.trainer_id &&
-      scheduled_start &&
-      scheduled_end
-    );
-    setShowAvailabilityCheck(shouldShowCheck);
-  }, [session?.trainer_id, scheduled_start, scheduled_end]);
 
   // Handle form submission
   const onSubmit = async (data: UpdateSessionData) => {
@@ -428,15 +407,19 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
                 <div className="flex items-center gap-2">
                   <User className="text-muted-foreground h-4 w-4" />
                   <span className="font-medium">
-                    {session.trainer_name ||
-                      formatTrainerName(
-                        trainers.find((t) => t.id === session.trainer_id) || {
-                          id: session.trainer_id,
-                        }
-                      )}
+                    {session.trainer_id
+                      ? session.trainer_name ||
+                        formatTrainerName(
+                          trainers.find((t) => t.id === session.trainer_id) || {
+                            id: session.trainer_id || "",
+                          }
+                        )
+                      : "No trainer assigned"}
                   </span>
                 </div>
-                <Badge variant="outline">Assigned</Badge>
+                <Badge variant="outline">
+                  {session.trainer_id ? "Assigned" : "Not Assigned"}
+                </Badge>
               </div>
               <p className="text-muted-foreground text-xs">
                 Trainer cannot be changed after session creation
@@ -570,48 +553,7 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
               </div>
             )}
 
-            {/* Trainer Availability Check */}
-            {showAvailabilityCheck &&
-              isDirty &&
-              session &&
-              scheduled_start &&
-              scheduled_end && (
-                <TrainerAvailabilityCheck
-                  trainerId={session.trainer_id}
-                  startTime={scheduled_start}
-                  endTime={scheduled_end}
-                  excludeSessionId={sessionId}
-                />
-              )}
-
             <Separator />
-
-            {/* Location and Capacity */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      Location *
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Studio 1, Gym Floor, etc."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* TODO US-009: Update form fields for machine-based single-member sessions */}
-              {/* Max participants and member selection fields temporarily disabled */}
-              {/* These will be replaced with machine_id selector and single member_id field */}
-            </div>
 
             {/* Notes */}
             <FormField

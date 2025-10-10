@@ -96,6 +96,13 @@ export interface CalendarViewState {
   selectedSession: TrainingSession | null;
 }
 
+// Training session calendar event (for react-big-calendar)
+export interface TrainingSessionCalendarEvent extends TrainingSession {
+  start: Date;
+  end: Date;
+  title: string;
+}
+
 // API response types
 export interface SessionAvailabilityCheck {
   available: boolean;
