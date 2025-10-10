@@ -18,3 +18,10 @@ export {
   sessionStatsKeys,
   type SessionStats,
 } from "./use-session-stats";
+
+// Machine management hooks
+export {
+  useMachines,
+  useUpdateMachine,
+  MACHINES_KEYS as machinesKeys,
+} from "./use-machines";

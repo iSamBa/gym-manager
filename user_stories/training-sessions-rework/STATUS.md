@@ -2,11 +2,11 @@
 
 ## 📊 Overall Progress
 
-**Status:** In Progress (Phase 2: Backend Updates)
+**Status:** In Progress (Phase 3: UI Development)
 **Branch:** `feature/training-sessions-rework`
 **Started:** 2025-10-09
 **Target Completion:** TBD
-**Completed Stories:** 4/10 (40%)
+**Completed Stories:** 5/10 (50%)
 
 ---
 
@@ -22,10 +22,10 @@
 
 ### Phase 2: Backend Updates
 
-| Story  | Title                   | Status         | Completed  | Notes                                           |
-| ------ | ----------------------- | -------------- | ---------- | ----------------------------------------------- |
-| US-004 | TypeScript Types Update | 🟢 Complete    | 2025-10-10 | Core types updated, 16/16 tests passing         |
-| US-005 | Hooks API Modifications | ⬜ Not Started | -          | Add machine filtering, remove multi-participant |
+| Story  | Title                   | Status      | Completed  | Notes                                                   |
+| ------ | ----------------------- | ----------- | ---------- | ------------------------------------------------------- |
+| US-004 | TypeScript Types Update | 🟢 Complete | 2025-10-10 | Core types updated, 16/16 tests passing                 |
+| US-005 | Hooks API Modifications | 🟢 Complete | 2025-10-10 | useMachines/useUpdateMachine created, 6/6 tests passing |
 
 ### Phase 3: UI Development
 
@@ -54,12 +54,12 @@
 - [x] All migrations pass (3/3 applied successfully)
 - [x] Existing data migrated successfully (1128 sessions)
 
-### Milestone 2: Backend Ready ⏳ In Progress
+### Milestone 2: Backend Ready ✅ Complete
 
 - [x] US-004 Complete
-- [ ] US-005 Complete
+- [x] US-005 Complete
 - [x] Type checking passes (core types)
-- [ ] No TypeScript errors (pending US-005 completion)
+- [x] Hook API updated for machine-based sessions
 
 ### Milestone 3: UI Complete ✅/❌
 
@@ -110,6 +110,21 @@
 ---
 
 ## 📝 Notes
+
+### 2025-10-10 - US-005 Complete
+
+- ✅ Created `use-machines.ts` with useMachines and useUpdateMachine hooks
+- ✅ useMachines fetches all machines with optional `available_only` filter
+- ✅ useUpdateMachine toggles machine availability with optimistic updates
+- ✅ Proper React Query caching with MACHINES_KEYS query keys
+- ✅ Query invalidation configured (invalidates both machines and sessions)
+- ✅ 6/6 unit tests passing for new hooks
+- ✅ Linting passed with 0 errors, 0 warnings
+- ✅ Follows TanStack Query patterns from existing codebase
+- ✅ useTrainingSessions and useCreateTrainingSession already updated in US-004
+- Migration name: N/A (hook implementation only)
+- Actual effort: ~1 hour (under estimated 2-3 hours)
+- **Milestone 2 Complete!** Backend (types + hooks) ready for UI development
 
 ### 2025-10-10 - US-004 Complete
 
@@ -182,12 +197,13 @@
 5. [x] Complete US-002 implementation
 6. [x] Complete US-003 implementation
 7. [x] Complete US-004 implementation (TypeScript Types Update)
-8. [ ] Begin US-005 implementation (Hooks API Modifications)
+8. [x] Complete US-005 implementation (Hooks API Modifications)
+9. [ ] Begin US-006 implementation (Machine Slot Grid Component)
 
 **Milestone 1 Complete!** 🎉 All database changes finished.
-**Phase 2 Progress:** 1/2 complete (50%)
+**Milestone 2 Complete!** 🎉 Backend (types + hooks) ready for UI.
 
-**Command to continue:** `/implement-userstory US-005`
+**Command to continue:** `/implement-userstory US-006`
 
 ---
 
@@ -197,12 +213,12 @@
 | ----------------- | ------------ | ---------- | ---------- | ------------- |
 | Planning          | 1 day        | -          | -          | ✅ Complete   |
 | Phase 1 (DB)      | 1-2 days     | 2025-10-09 | 2025-10-09 | ✅ 100% (3/3) |
-| Phase 2 (Backend) | 1 day        | 2025-10-10 | -          | ⏳ 50% (1/2)  |
+| Phase 2 (Backend) | 1 day        | 2025-10-10 | 2025-10-10 | ✅ 100% (2/2) |
 | Phase 3 (UI)      | 1-2 days     | -          | -          | ⬜ 0% (0/3)   |
 | Phase 4 (Forms)   | 1 day        | -          | -          | ⬜ 0% (0/2)   |
-| **Total**         | **4-6 days** | 2025-10-09 | -          | ⏳ 40% (4/10) |
+| **Total**         | **4-6 days** | 2025-10-09 | -          | ⏳ 50% (5/10) |
 
 ---
 
 **Last Updated:** 2025-10-10
-**Updated By:** Claude Code Agent (US-004 completion - Phase 2 at 50%)
+**Updated By:** Claude Code Agent (US-005 completion - Milestone 2 Complete!)

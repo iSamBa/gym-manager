@@ -184,10 +184,21 @@ describe("useCreateTrainingSession", () => {
 
 ## 🎯 Definition of Done
 
-- [ ] All hooks updated
-- [ ] useMachines hook created
-- [ ] Type safety maintained
-- [ ] Tests passing
-- [ ] Code review approved
+- [x] All hooks updated
+- [x] useMachines hook created
+- [x] Type safety maintained
+- [x] Tests passing
+- [x] Code review approved
 
+**Status**: ✅ Completed
+**Completed**: 2025-10-10
 **Estimated Effort:** 2-3 hours
+**Actual Effort:** ~1 hour
+
+**Implementation Notes:**
+
+- Created `use-machines.ts` with useMachines and useUpdateMachine hooks
+- useTrainingSessions and useCreateTrainingSession already updated in US-004
+- 6/6 unit tests passing for new machine hooks
+- Query invalidation properly configured for cache updates
+- Follows TanStack Query patterns established in codebase
