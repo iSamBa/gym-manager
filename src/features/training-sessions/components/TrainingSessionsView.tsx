@@ -1,51 +1,41 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, History, BarChart3, Users, Clock } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+} from "lucide-react";
+import { format, addDays, subDays } from "date-fns";
 
-// Import new machine slot grid (replaces old calendar view)
+// Import machine slot grid
 import { MachineSlotGrid } from "./MachineSlotGrid";
-import SessionHistoryTable from "./SessionHistoryTable";
 import { EditSessionDialog } from "./forms/EditSessionDialog";
-import { useTrainingSessions, useSessionStats } from "../hooks";
-import type { TrainingSession, SessionHistoryEntry } from "../lib/types";
+import { SessionBookingDialog } from "./forms/SessionBookingDialog";
+import { useTrainingSessions } from "../hooks";
+import type { TrainingSession } from "../lib/types";
 
 const TrainingSessionsView: React.FC = () => {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState("sessions");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSession, setSelectedSession] =
     useState<TrainingSession | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showBookingDialog, setShowBookingDialog] = useState(false);
+  const [bookingDefaults, setBookingDefaults] = useState<{
+    machine_id: string;
+    scheduled_start: string;
+    scheduled_end: string;
+  } | null>(null);
 
-  // Transform TrainingSession to SessionHistoryEntry
-  const transformToHistoryEntry = (
-    session: TrainingSession
-  ): SessionHistoryEntry => {
-    const start = new Date(session.scheduled_start);
-    const end = new Date(session.scheduled_end);
-    const durationMinutes = Math.floor(
-      (end.getTime() - start.getTime()) / (1000 * 60)
-    );
-
-    return {
-      session_id: session.id,
-      scheduled_start: session.scheduled_start,
-      scheduled_end: session.scheduled_end,
-      status: session.status,
-      machine_name: session.machine_name,
-      trainer_name: session.trainer_name || "Unknown Trainer",
-      duration_minutes: durationMinutes,
-      session_category: session.session_type || "standard",
-      notes: session.notes || undefined,
-    };
-  };
-
-  // Get current date range based on active tab
+  // Get current date range
   const dateRange = React.useMemo(() => {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -62,20 +52,7 @@ const TrainingSessionsView: React.FC = () => {
     date_range: dateRange,
   });
 
-  // Fetch session statistics with SQL aggregation (much more efficient)
-  const { data: sessionStats, isLoading: statsLoading } = useSessionStats({
-    date_range: dateRange,
-  });
-
   const handleSessionClick = (session: TrainingSession) => {
-    setSelectedSession(session);
-    setShowEditDialog(true);
-  };
-
-  const handleHistorySessionClick = (sessionEntry: SessionHistoryEntry) => {
-    // For history entries, we need to create a minimal session object
-    // since we only need the ID for the EditSessionDialog
-    const session = { id: sessionEntry.session_id } as TrainingSession;
     setSelectedSession(session);
     setShowEditDialog(true);
   };
@@ -106,170 +83,101 @@ const TrainingSessionsView: React.FC = () => {
     );
   }
 
+  const handlePreviousDay = () => {
+    setSelectedDate(subDays(selectedDate, 1));
+  };
+
+  const handleNextDay = () => {
+    setSelectedDate(addDays(selectedDate, 1));
+  };
+
+  const handleToday = () => {
+    setSelectedDate(new Date());
+  };
+
   return (
     <>
       <Card className="flex flex-1 flex-col">
-        <CardHeader>
-          <CardTitle>Session Management</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-1 flex-col">
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="flex flex-1 flex-col"
-          >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="sessions" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Sessions
-              </TabsTrigger>
-              <TabsTrigger value="history" className="flex items-center gap-2">
-                <History className="h-4 w-4" />
-                History
-              </TabsTrigger>
-              <TabsTrigger
-                value="analytics"
-                className="flex items-center gap-2"
-              >
-                <BarChart3 className="h-4 w-4" />
-                Analytics
-              </TabsTrigger>
-            </TabsList>
+        <CardContent className="flex flex-1 flex-col pt-6">
+          {isLoading ? (
+            <div className="flex h-64 items-center justify-center">
+              <div className="text-center">
+                <div className="border-primary mx-auto h-8 w-8 animate-spin rounded-full border-b-2"></div>
+                <p className="text-muted-foreground mt-2 text-sm">
+                  Loading sessions...
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex min-h-0 flex-1 flex-col">
+              {/* Day Navigation Bar */}
+              <div className="mb-4 flex items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePreviousDay}
+                  aria-label="Previous day"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
 
-            <TabsContent
-              value="sessions"
-              className="mt-6 flex min-h-0 flex-1 flex-col"
-            >
-              {isLoading ? (
-                <div className="flex h-64 items-center justify-center">
-                  <div className="text-center">
-                    <div className="border-primary mx-auto h-8 w-8 animate-spin rounded-full border-b-2"></div>
-                    <p className="text-muted-foreground mt-2 text-sm">
-                      Loading sessions...
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex min-h-0 flex-1 flex-col">
-                  <MachineSlotGrid
-                    selectedDate={selectedDate}
-                    onSessionClick={handleSessionClick}
-                    onSlotClick={(machineId, timeSlot) => {
-                      // Navigate to new session with pre-filled data
-                      const searchParams = new URLSearchParams({
-                        machine_id: machineId,
-                        start: timeSlot.start.toISOString(),
-                        end: timeSlot.end.toISOString(),
-                      });
-                      router.push(
-                        `/training-sessions/new?${searchParams.toString()}`
-                      );
-                    }}
-                  />
-                </div>
-              )}
-            </TabsContent>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="min-w-[240px] justify-center gap-2"
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                      {format(selectedDate, "EEEE, MMMM d, yyyy")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="center">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => {
+                        if (date) {
+                          setSelectedDate(date);
+                        }
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
 
-            <TabsContent value="history" className="mt-6">
-              <SessionHistoryTable
-                sessions={sessions.map(transformToHistoryEntry)}
-                showSelectionColumn={true}
-                onSessionClick={handleHistorySessionClick}
-                onExport={(sessions, format) => {
-                  // Handle export
-                  console.log(
-                    "Export:",
-                    sessions.length,
-                    "sessions as",
-                    format
-                  );
-                }}
-                onBulkAction={(sessions, action) => {
-                  // Handle bulk actions
-                  console.log(
-                    "Bulk action:",
-                    action,
-                    "on",
-                    sessions.length,
-                    "sessions"
-                  );
-                }}
-                isLoading={isLoading}
-              />
-            </TabsContent>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleNextDay}
+                  aria-label="Next day"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
 
-            <TabsContent value="analytics" className="mt-6">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-lg border p-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="text-muted-foreground h-4 w-4" />
-                    <h3 className="font-medium">Total Sessions</h3>
-                  </div>
-                  <p className="mt-2 text-2xl font-bold">{sessions.length}</p>
-                  <p className="text-muted-foreground mt-1 text-xs">All time</p>
-                </div>
-
-                <div className="rounded-lg border p-4">
-                  <div className="flex items-center gap-2">
-                    <Users className="text-muted-foreground h-4 w-4" />
-                    <h3 className="font-medium">Active Sessions</h3>
-                  </div>
-                  <p className="mt-2 text-2xl font-bold">
-                    {statsLoading ? "..." : sessionStats?.active || 0}
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Currently active
-                  </p>
-                </div>
-
-                <div className="rounded-lg border p-4">
-                  <div className="flex items-center gap-2">
-                    <BarChart3 className="text-muted-foreground h-4 w-4" />
-                    <h3 className="font-medium">Completed</h3>
-                  </div>
-                  <p className="mt-2 text-2xl font-bold">
-                    {statsLoading ? "..." : sessionStats?.completed || 0}
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Sessions completed
-                  </p>
-                </div>
-
-                <div className="rounded-lg border p-4">
-                  <div className="flex items-center gap-2">
-                    <Clock className="text-muted-foreground h-4 w-4" />
-                    <h3 className="font-medium">Average Utilization</h3>
-                  </div>
-                  <p className="mt-2 text-2xl font-bold">
-                    {statsLoading
-                      ? "..."
-                      : `${sessionStats?.average_utilization || 0}%`}
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Capacity utilization
-                  </p>
-                </div>
+                <Button variant="outline" onClick={handleToday}>
+                  Today
+                </Button>
               </div>
 
-              {sessions.length === 0 && (
-                <div className="mt-4 flex h-64 items-center justify-center">
-                  <div className="text-center">
-                    <BarChart3 className="text-muted-foreground mx-auto mb-4 h-16 w-16" />
-                    <p className="text-muted-foreground mb-2 text-lg font-medium">
-                      No Session Data
-                    </p>
-                    <p className="text-muted-foreground text-sm">
-                      Create some training sessions to see analytics here.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+              <MachineSlotGrid
+                selectedDate={selectedDate}
+                onSessionClick={handleSessionClick}
+                onSlotClick={(machineId, timeSlot) => {
+                  // Open booking dialog with pre-filled data
+                  setBookingDefaults({
+                    machine_id: machineId,
+                    scheduled_start: timeSlot.start.toISOString(),
+                    scheduled_end: timeSlot.end.toISOString(),
+                  });
+                  setShowBookingDialog(true);
+                }}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Dialogs */}
+      {/* Edit Session Dialog */}
       <EditSessionDialog
         open={showEditDialog}
         onOpenChange={(open) => {
@@ -277,6 +185,18 @@ const TrainingSessionsView: React.FC = () => {
           if (!open) handleCloseDialogs();
         }}
         sessionId={selectedSession?.id}
+      />
+
+      {/* Session Booking Dialog */}
+      <SessionBookingDialog
+        open={showBookingDialog}
+        onOpenChange={(open) => {
+          setShowBookingDialog(open);
+          if (!open) {
+            setBookingDefaults(null);
+          }
+        }}
+        defaultValues={bookingDefaults || undefined}
       />
     </>
   );

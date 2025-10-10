@@ -37,7 +37,6 @@ export interface TrainingSession {
   scheduled_end: string; // ISO string
   status: "scheduled" | "in_progress" | "completed" | "cancelled";
   session_type?: "trail" | "standard"; // Optional, may not be in all views
-  current_participants: number; // Always 0 or 1 (single member per session)
   notes: string | null;
   trainer_user_id?: string; // From calendar view
   trainer_name?: string; // From calendar view join
@@ -60,7 +59,7 @@ export interface TrainingSessionMember {
   id: string;
   session_id: string;
   member_id: string;
-  booking_status: "confirmed" | "waitlisted" | "cancelled";
+  booking_status: "confirmed" | "cancelled" | "no_show" | "attended";
   created_at: string;
   member?: Member;
 }
@@ -127,61 +126,6 @@ export interface SessionFilters {
     start: Date;
     end: Date;
   };
-}
-
-// Simplified history and analytics types
-export interface SessionHistoryEntry {
-  session_id: string;
-  scheduled_start: string;
-  scheduled_end: string;
-  status: string;
-  machine_name?: string; // Machine used for session
-  trainer_name: string;
-  participant_count: number; // Always 0 or 1
-  attendance_rate: number;
-  duration_minutes: number;
-  session_category: string;
-  notes?: string;
-}
-
-export interface SessionAnalytics {
-  total_sessions: number;
-  completed_sessions: number;
-  cancelled_sessions: number;
-  average_attendance_rate: number;
-  most_popular_time_slots: Array<{
-    time_slot: string;
-    session_count: number;
-  }>;
-  trainer_utilization: Array<{
-    trainer_id: string;
-    trainer_name: string;
-    sessions_count: number;
-    utilization_rate: number;
-  }>;
-  session_trends: Array<{
-    period: string;
-    session_count: number;
-    attendance_rate: number;
-    revenue: number;
-  }>;
-  session_types: Array<{
-    category: string;
-    count: number;
-    percentage: number;
-  }>;
-  hourly_distribution: Array<{
-    hour: number;
-    session_count: number;
-    utilization_rate: number;
-  }>;
-  trainer_performance: Array<{
-    trainer_id: string;
-    trainer_name: string;
-    session_count: number;
-    attendance_rate: number;
-    revenue: number;
-  }>;
 }
 
 // Utility functions for computed properties

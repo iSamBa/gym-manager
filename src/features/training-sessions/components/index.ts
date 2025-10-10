@@ -5,7 +5,6 @@ export { default as TrainingSessionCalendar } from "./TrainingSessionCalendar";
 
 // Main view components
 export { default as TrainingSessionsView } from "./TrainingSessionsView";
-export { default as SessionQuickStats } from "./SessionQuickStats";
 export { default as SessionBreadcrumbs } from "./SessionBreadcrumbs";
 
 // Form components
@@ -14,9 +13,7 @@ export { default as MemberMultiSelect } from "./forms/MemberMultiSelect";
 export { SessionBookingForm } from "./forms/SessionBookingForm";
 export { SessionBookingDialog } from "./forms/SessionBookingDialog";
 
-// Analytics and reporting components
-export { default as SessionHistoryTable } from "./SessionHistoryTable";
-export { default as SessionAnalyticsCharts } from "./SessionAnalyticsCharts";
+// Action menu
 export { default as SessionActionMenu } from "./SessionActionMenu";
 
 // Machine slot grid components (US-006, US-007, US-008)

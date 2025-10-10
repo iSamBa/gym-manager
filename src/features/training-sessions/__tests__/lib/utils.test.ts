@@ -8,7 +8,6 @@ import {
   getSessionConflicts,
   prepareSessionData,
   getSessionStatusColor,
-  calculateAttendanceRate,
   groupSessionsByDate,
 } from "../../lib/utils";
 import type {
@@ -419,39 +418,6 @@ describe("Training Session Utility Functions", () => {
   });
 
   describe("History and Analytics Utilities", () => {
-    describe("calculateAttendanceRate", () => {
-      it("should calculate attendance rate correctly", () => {
-        const result = calculateAttendanceRate(8, 10);
-        expect(result).toBe(80);
-      });
-
-      it("should return 100% for full attendance", () => {
-        const result = calculateAttendanceRate(10, 10);
-        expect(result).toBe(100);
-      });
-
-      it("should return 0% for no attendance", () => {
-        const result = calculateAttendanceRate(0, 10);
-        expect(result).toBe(0);
-      });
-
-      it("should return 0% for zero max participants", () => {
-        const result = calculateAttendanceRate(5, 0);
-        expect(result).toBe(0);
-      });
-
-      it("should round to nearest integer", () => {
-        const result = calculateAttendanceRate(1, 3);
-        expect(result).toBe(33); // 33.33... rounded to 33
-      });
-
-      it("should handle edge case with more current than max", () => {
-        // This shouldn't happen in real usage, but test for robustness
-        const result = calculateAttendanceRate(12, 10);
-        expect(result).toBe(120);
-      });
-    });
-
     describe("groupSessionsByDate", () => {
       const mockSessions: SessionHistoryEntry[] = [
         {
@@ -461,8 +427,8 @@ describe("Training Session Utility Functions", () => {
           status: "completed",
           location: "Gym A",
           trainer_name: "John Doe",
-          participant_count: 8,
-          attendance_rate: 80,
+          duration_minutes: 60,
+          session_category: "standard",
         },
         {
           session_id: "session-2",
@@ -471,8 +437,8 @@ describe("Training Session Utility Functions", () => {
           status: "completed",
           location: "Gym B",
           trainer_name: "Jane Smith",
-          participant_count: 6,
-          attendance_rate: 75,
+          duration_minutes: 60,
+          session_category: "standard",
         },
         {
           session_id: "session-3",
@@ -481,8 +447,8 @@ describe("Training Session Utility Functions", () => {
           status: "completed",
           location: "Gym A",
           trainer_name: "John Doe",
-          participant_count: 10,
-          attendance_rate: 100,
+          duration_minutes: 60,
+          session_category: "standard",
         },
       ];
 

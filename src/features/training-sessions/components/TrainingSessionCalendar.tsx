@@ -18,7 +18,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   Calendar as CalendarIcon,
-  Users,
   Clock,
   Maximize2,
   Minimize2,
@@ -156,12 +155,6 @@ const TrainingSessionCalendar: React.FC<TrainingSessionCalendarProps> = ({
             {/* Session details - conditional based on space */}
             {showFullDetails && (
               <div className="session-details space-y-0.5">
-                <div className="flex items-center gap-1">
-                  <Users className="h-3 w-3 flex-shrink-0" />
-                  <span className="text-xs">
-                    {event.current_participants === 1 ? "1 member" : "Empty"}
-                  </span>
-                </div>
                 {event.machine_name && (
                   <div className="flex items-center gap-1">
                     <span className="truncate text-xs">
@@ -173,12 +166,9 @@ const TrainingSessionCalendar: React.FC<TrainingSessionCalendarProps> = ({
             )}
 
             {/* Condensed display for very short sessions in standard mode */}
-            {!showFullDetails && (
+            {!showFullDetails && event.machine_name && (
               <div className="session-details-condensed">
-                <div className="text-xs">
-                  {event.current_participants === 1 ? "1 member" : "Empty"}
-                  {event.machine_name && ` • ${event.machine_name}`}
-                </div>
+                <div className="text-xs">{event.machine_name}</div>
               </div>
             )}
           </div>
@@ -199,12 +189,6 @@ const TrainingSessionCalendar: React.FC<TrainingSessionCalendarProps> = ({
                   <span>Machine: {event.machine_name}</span>
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                <Users className="h-3 w-3" />
-                <span>
-                  {event.current_participants === 1 ? "1 member" : "Empty"}
-                </span>
-              </div>
               {event.session_type && (
                 <div className="flex items-center gap-2">
                   <Badge className="h-3 w-3" />

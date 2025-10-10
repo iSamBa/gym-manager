@@ -219,7 +219,7 @@ describe("Training Session Types", () => {
       expect(typeof participant.id).toBe("string");
       expect(typeof participant.session_id).toBe("string");
       expect(typeof participant.member_id).toBe("string");
-      expect(["confirmed", "waitlisted", "cancelled"]).toContain(
+      expect(["confirmed", "cancelled", "no_show", "attended"]).toContain(
         participant.booking_status
       );
       expect(typeof participant.created_at).toBe("string");
@@ -228,8 +228,9 @@ describe("Training Session Types", () => {
     it("should enforce correct booking status values", () => {
       const validStatuses: TrainingSessionMember["booking_status"][] = [
         "confirmed",
-        "waitlisted",
         "cancelled",
+        "no_show",
+        "attended",
       ];
 
       validStatuses.forEach((booking_status) => {
@@ -410,8 +411,8 @@ describe("Training Session Types", () => {
           status: "completed",
           location: "Main Gym",
           trainer_name: "John Doe",
-          participant_count: 8,
-          attendance_rate: 80,
+          duration_minutes: 60,
+          session_category: "standard",
         };
 
         expect(typeof historyEntry.session_id).toBe("string");
@@ -419,8 +420,7 @@ describe("Training Session Types", () => {
         expect(typeof historyEntry.scheduled_end).toBe("string");
         expect(typeof historyEntry.status).toBe("string");
         expect(typeof historyEntry.trainer_name).toBe("string");
-        expect(typeof historyEntry.participant_count).toBe("number");
-        expect(typeof historyEntry.attendance_rate).toBe("number");
+        expect(typeof historyEntry.duration_minutes).toBe("number");
       });
 
       it("should allow null location", () => {
@@ -431,8 +431,8 @@ describe("Training Session Types", () => {
           status: "completed",
           location: null,
           trainer_name: "John Doe",
-          participant_count: 8,
-          attendance_rate: 80,
+          duration_minutes: 60,
+          session_category: "standard",
         };
 
         expect(historyEntry.location).toBeNull();
@@ -445,7 +445,6 @@ describe("Training Session Types", () => {
           total_sessions: 100,
           completed_sessions: 85,
           cancelled_sessions: 5,
-          average_attendance_rate: 82.5,
           most_popular_time_slots: [
             { time_slot: "09:00-10:00", session_count: 25 },
             { time_slot: "18:00-19:00", session_count: 20 },
@@ -463,7 +462,6 @@ describe("Training Session Types", () => {
         expect(typeof analytics.total_sessions).toBe("number");
         expect(typeof analytics.completed_sessions).toBe("number");
         expect(typeof analytics.cancelled_sessions).toBe("number");
-        expect(typeof analytics.average_attendance_rate).toBe("number");
         expect(Array.isArray(analytics.most_popular_time_slots)).toBe(true);
         expect(Array.isArray(analytics.trainer_utilization)).toBe(true);
 

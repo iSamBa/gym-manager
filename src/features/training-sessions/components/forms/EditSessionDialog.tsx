@@ -304,9 +304,6 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
               <p className="text-muted-foreground text-sm">
                 Machine: {session.machine_name || "Not specified"}
               </p>
-              <p className="text-muted-foreground text-sm">
-                Participants: {session.current_participants}/1
-              </p>
             </div>
           </div>
 
@@ -356,12 +353,6 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
                 <p className="text-sm font-medium">Current Status</p>
                 <Badge variant="outline" className="capitalize">
                   {session.status.replace("_", " ")}
-                </Badge>
-              </div>
-              <div className="space-y-1 text-right">
-                <p className="text-sm font-medium">Participants</p>
-                <Badge variant="outline">
-                  {session.current_participants}/1
                 </Badge>
               </div>
             </div>

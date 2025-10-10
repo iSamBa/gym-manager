@@ -68,15 +68,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Auth initialization and event listener
   useEffect(() => {
     let mounted = true;
+    let loadingCleared = false;
+
+    // Helper to ensure loading is only cleared once
+    const clearLoading = () => {
+      if (!loadingCleared && mounted) {
+        loadingCleared = true;
+        setIsLoading(false);
+      }
+    };
 
     // Set timeout BEFORE starting initialization
     const timeoutId = setTimeout(() => {
-      if (mounted) {
-        console.warn(
-          "Auth initialization timeout - setting loading to false anyway"
-        );
-        setIsLoading(false);
-      }
+      console.warn(
+        "Auth initialization timeout - setting loading to false anyway"
+      );
+      clearLoading();
     }, 3000); // 3 second timeout
 
     // Proactively check for existing session (don't wait for INITIAL_SESSION event)
@@ -91,24 +98,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (error) {
           console.error("Error getting initial session:", error);
-          setIsLoading(false);
-          clearTimeout(timeoutId); // Cancel timeout on completion
+          clearTimeout(timeoutId);
+          clearLoading();
           return;
         }
 
         if (session?.user) {
-          await loadUserProfile(session.user);
-          setAuthError(null);
+          // Load profile with timeout protection
+          try {
+            await Promise.race([
+              loadUserProfile(session.user),
+              new Promise((_, reject) =>
+                setTimeout(
+                  () => reject(new Error("Profile load timeout")),
+                  2000
+                )
+              ),
+            ]);
+            setAuthError(null);
+          } catch (profileError) {
+            console.error("Error loading user profile:", profileError);
+            // Continue anyway - don't block the UI
+          }
         }
 
-        setIsLoading(false);
-        clearTimeout(timeoutId); // Cancel timeout on successful completion
+        clearTimeout(timeoutId);
+        clearLoading();
       } catch (error) {
         console.error("Error initializing auth:", error);
-        if (mounted) {
-          setIsLoading(false);
-          clearTimeout(timeoutId); // Cancel timeout on error
-        }
+        clearTimeout(timeoutId);
+        clearLoading();
       }
     };
 

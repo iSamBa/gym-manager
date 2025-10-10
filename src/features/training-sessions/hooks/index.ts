@@ -12,13 +12,6 @@ export {
 // Session booking with credits
 export { useSessionBookingWithCredits } from "./use-session-booking-with-credits";
 
-// Session statistics with SQL aggregation
-export {
-  useSessionStats,
-  sessionStatsKeys,
-  type SessionStats,
-} from "./use-session-stats";
-
 // Machine management hooks
 export {
   useMachines,

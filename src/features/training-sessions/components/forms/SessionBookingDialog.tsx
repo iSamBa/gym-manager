@@ -2,8 +2,16 @@ import React, { memo, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { CalendarPlus, Loader2, User, Users, Dumbbell } from "lucide-react";
+import {
+  CalendarPlus,
+  Loader2,
+  User,
+  Users,
+  Dumbbell,
+  Calendar as CalendarIcon,
+} from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 import {
   Dialog,
@@ -27,10 +35,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Calendar } from "@/components/ui/calendar";
+import { TimePicker } from "@/components/ui/time-picker";
+import { cn } from "@/lib/utils";
 
 import { useMachines } from "../../hooks/use-machines";
 import { useMembers } from "@/features/members/hooks/use-members";
@@ -414,65 +430,147 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
 
               {/* Time Slot Fields (AC-4) */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {/* Start Date & Time */}
                 <FormField
                   control={form.control}
                   name="scheduled_start"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Time *</FormLabel>
-                      <FormControl>
-                        <input
-                          type="datetime-local"
-                          className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                          {...field}
-                          value={
-                            field.value
-                              ? new Date(field.value).toISOString().slice(0, 16)
-                              : ""
-                          }
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value) {
-                              field.onChange(new Date(value).toISOString());
-                            }
+                  render={({ field }) => {
+                    const startDate = field.value
+                      ? new Date(field.value)
+                      : undefined;
+                    const startTime = startDate
+                      ? format(startDate, "HH:mm")
+                      : "";
+
+                    return (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Start Date & Time *</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !startDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {startDate
+                                  ? format(startDate, "PPP")
+                                  : "Pick a date"}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={startDate}
+                              onSelect={(date) => {
+                                if (date) {
+                                  // Preserve time when changing date
+                                  const newDateTime = new Date(date);
+                                  if (startDate) {
+                                    newDateTime.setHours(startDate.getHours());
+                                    newDateTime.setMinutes(
+                                      startDate.getMinutes()
+                                    );
+                                  }
+                                  field.onChange(newDateTime.toISOString());
+                                }
+                              }}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <TimePicker
+                          value={startTime}
+                          onChange={(time) => {
+                            const [hours, minutes] = time.split(":");
+                            const newDateTime = startDate
+                              ? new Date(startDate)
+                              : new Date();
+                            newDateTime.setHours(parseInt(hours));
+                            newDateTime.setMinutes(parseInt(minutes));
+                            field.onChange(newDateTime.toISOString());
                           }}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
+                {/* End Date & Time */}
                 <FormField
                   control={form.control}
                   name="scheduled_end"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Time *</FormLabel>
-                      <FormControl>
-                        <input
-                          type="datetime-local"
-                          className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                          {...field}
-                          value={
-                            field.value
-                              ? new Date(field.value).toISOString().slice(0, 16)
-                              : ""
-                          }
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value) {
-                              field.onChange(new Date(value).toISOString());
-                            }
+                  render={({ field }) => {
+                    const endDate = field.value
+                      ? new Date(field.value)
+                      : undefined;
+                    const endTime = endDate ? format(endDate, "HH:mm") : "";
+
+                    return (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>End Date & Time *</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !endDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {endDate
+                                  ? format(endDate, "PPP")
+                                  : "Pick a date"}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={endDate}
+                              onSelect={(date) => {
+                                if (date) {
+                                  // Preserve time when changing date
+                                  const newDateTime = new Date(date);
+                                  if (endDate) {
+                                    newDateTime.setHours(endDate.getHours());
+                                    newDateTime.setMinutes(
+                                      endDate.getMinutes()
+                                    );
+                                  }
+                                  field.onChange(newDateTime.toISOString());
+                                }
+                              }}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <TimePicker
+                          value={endTime}
+                          onChange={(time) => {
+                            const [hours, minutes] = time.split(":");
+                            const newDateTime = endDate
+                              ? new Date(endDate)
+                              : new Date();
+                            newDateTime.setHours(parseInt(hours));
+                            newDateTime.setMinutes(parseInt(minutes));
+                            field.onChange(newDateTime.toISOString());
                           }}
                         />
-                      </FormControl>
-                      <FormMessage />
-                      <p className="text-muted-foreground text-xs">
-                        Default duration: 30 minutes
-                      </p>
-                    </FormItem>
-                  )}
+                        <FormMessage />
+                        <p className="text-muted-foreground text-xs">
+                          Default duration: 30 minutes
+                        </p>
+                      </FormItem>
+                    );
+                  }}
                 />
               </div>
 
