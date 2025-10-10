@@ -10,47 +10,53 @@ interface TimeSlotProps {
   machine: Machine;
   timeSlot: TimeSlotType;
   session?: TrainingSession;
+  alertCount?: number;
   onClick: () => void;
 }
 
 /**
  * TimeSlot component - renders a single 30-minute slot
- * NOTE: This is a placeholder for US-006. Full implementation with member names,
- * colors, and booking logic will be added in US-007.
+ * Displays member names for booked sessions and applies status-based colors
  */
 export const TimeSlot = memo<TimeSlotProps>(
-  ({
-    machine,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    timeSlot: _timeSlot, // Will be used in US-007 for rendering time labels
-    session,
-    onClick,
-  }) => {
-    const isUnavailable = !machine.is_available;
-    const isBooked = !!session;
-    const isClickable = !isUnavailable && !isBooked;
+  ({ machine, timeSlot, session, alertCount, onClick }) => {
+    // Empty slot
+    if (!session) {
+      return (
+        <div
+          data-testid="time-slot"
+          className={cn(
+            "flex h-16 cursor-pointer items-center justify-center rounded border p-2 transition-colors",
+            machine.is_available
+              ? "border-gray-200 hover:bg-gray-50"
+              : "cursor-not-allowed opacity-50"
+          )}
+          onClick={() => machine.is_available && onClick()}
+        >
+          <span className="text-xs text-gray-400">{timeSlot.label}</span>
+        </div>
+      );
+    }
+
+    // Booked slot
+    const memberName = session.participants?.[0]?.name || "Unknown Member";
 
     return (
       <div
         data-testid="time-slot"
-        onClick={isClickable ? onClick : undefined}
         className={cn(
-          "h-16 rounded-md border-2 transition-all",
-          // Unavailable machine
-          isUnavailable && "cursor-not-allowed border-gray-200 bg-gray-50",
-          // Available empty slot
-          !isUnavailable &&
-            !isBooked &&
-            "hover:border-primary hover:bg-primary/5 cursor-pointer border-gray-300 bg-white",
-          // Booked session
-          isBooked &&
-            "cursor-pointer border-blue-300 bg-blue-50 hover:border-blue-400"
+          "relative h-16 cursor-pointer rounded border p-2 transition-shadow hover:shadow-md",
+          getStatusColor(session.status)
         )}
+        onClick={onClick}
       >
-        {/* Placeholder content - full implementation in US-007 */}
-        {isBooked && (
-          <div className="flex h-full items-center justify-center text-xs text-blue-700">
-            Booked
+        <div className="truncate text-sm font-medium">{memberName}</div>
+        <div className="text-xs text-gray-600">{timeSlot.label}</div>
+
+        {/* Notification badge (US-008) */}
+        {alertCount && alertCount > 0 && (
+          <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+            {alertCount}
           </div>
         )}
       </div>
@@ -59,3 +65,16 @@ export const TimeSlot = memo<TimeSlotProps>(
 );
 
 TimeSlot.displayName = "TimeSlot";
+
+function getStatusColor(status: TrainingSession["status"]): string {
+  switch (status) {
+    case "scheduled":
+      return "bg-blue-100 border-blue-300 text-blue-800";
+    case "in_progress":
+      return "bg-orange-100 border-orange-300 text-orange-800";
+    case "completed":
+      return "bg-green-100 border-green-300 text-green-800";
+    case "cancelled":
+      return "bg-gray-100 border-gray-300 text-gray-500 line-through";
+  }
+}

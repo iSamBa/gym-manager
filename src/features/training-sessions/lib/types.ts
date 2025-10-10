@@ -14,7 +14,9 @@ export interface Machine {
 export interface TimeSlot {
   start: Date;
   end: Date;
-  label: string; // e.g., "6:00 AM - 6:30 AM"
+  label: string; // e.g., "09:00 - 09:30"
+  hour: number; // Hour of the day (0-23)
+  minute: number; // Minute of the hour (0, 30)
 }
 
 // Participant in training session (from database view)

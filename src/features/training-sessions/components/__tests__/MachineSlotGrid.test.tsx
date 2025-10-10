@@ -187,9 +187,9 @@ describe("MachineSlotGrid", () => {
     );
 
     await waitFor(() => {
-      // Check for first and last time labels
-      expect(screen.getByText("6:00 AM")).toBeInTheDocument();
-      expect(screen.getByText("8:30 PM")).toBeInTheDocument();
+      // Check for first and last time labels (24-hour format)
+      expect(screen.getByText("09:00")).toBeInTheDocument();
+      expect(screen.getByText("23:30")).toBeInTheDocument();
     });
   });
 
