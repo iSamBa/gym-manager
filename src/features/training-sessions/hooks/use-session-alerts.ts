@@ -1,47 +1,48 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-
-interface SessionAlertsResult {
-  session_id: string;
-  member_id: string;
-  alert_count: number;
-}
+import type { MemberComment } from "@/features/database/lib/types";
 
 /**
  * Fetch notification alerts for a training session
- * Queries member_comments with due_date >= session.scheduled_start
- * Used to display badge count on TimeSlot components
+ * Returns full MemberComment data for alerts with due dates >= session date
+ * Alerts are shown only when their due_date is on or after the session date
  */
 export function useSessionAlerts(
   sessionId: string | undefined,
   memberId: string | undefined,
-  scheduledStart: string | undefined
+  sessionDate: string | undefined // ISO timestamp of session scheduled_start
 ) {
-  return useQuery<SessionAlertsResult | null>({
-    queryKey: ["session-alerts", sessionId, memberId, scheduledStart],
+  return useQuery<MemberComment[]>({
+    queryKey: ["session-alerts", sessionId, memberId, sessionDate],
     queryFn: async () => {
-      if (!memberId || !sessionId || !scheduledStart) return null;
+      if (!memberId || !sessionId || !sessionDate) {
+        return [];
+      }
 
-      // Query member_comments with due_date >= session scheduled_start
+      // Extract just the date portion from session timestamp for comparison
+      const sessionDateOnly = new Date(sessionDate).toISOString().split("T")[0];
+
+      // Query member_comments with:
+      // 1. due_date IS NOT NULL
+      // 2. due_date >= sessionDateOnly (alert due on or after session date)
       const { data: comments, error } = await supabase
         .from("member_comments")
-        .select("id, due_date")
+        .select(
+          "id, author, body, due_date, created_at, member_id, created_by, updated_at"
+        )
         .eq("member_id", memberId)
         .not("due_date", "is", null)
-        .gte("due_date", scheduledStart);
+        .gte("due_date", sessionDateOnly)
+        .order("due_date", { ascending: true });
 
       if (error) {
         console.error("Error fetching session alerts:", error);
-        return null;
+        return [];
       }
 
-      return {
-        session_id: sessionId,
-        member_id: memberId,
-        alert_count: comments?.length || 0,
-      };
+      return comments || [];
     },
-    enabled: !!memberId && !!sessionId && !!scheduledStart,
+    enabled: !!memberId && !!sessionId && !!sessionDate,
     staleTime: 60000, // Cache for 1 minute
   });
 }

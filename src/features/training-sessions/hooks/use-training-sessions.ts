@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { trainingSessionUtils } from "../lib/database-utils";
 import { subscriptionKeys } from "@/features/memberships/hooks/use-subscriptions";
+import { subscriptionUtils } from "@/features/memberships/lib/subscription-utils";
+import { memberKeys } from "@/features/members/hooks/use-members";
 import type {
   TrainingSession,
   CreateSessionData,
@@ -133,9 +135,35 @@ export const useCreateTrainingSession = () => {
 
       return result;
     },
-    onSuccess: () => {
+    onSuccess: async (_result, variables) => {
+      // Consume session from member's active subscription
+      try {
+        const subscription =
+          await subscriptionUtils.getMemberActiveSubscription(
+            variables.member_id
+          );
+
+        if (subscription) {
+          await subscriptionUtils.consumeSession(subscription.id);
+
+          // Invalidate subscription queries for cache updates
+          queryClient.invalidateQueries({
+            queryKey: ["subscriptions", "member", variables.member_id],
+          });
+          queryClient.invalidateQueries({
+            queryKey: subscriptionKeys.memberActive(variables.member_id),
+          });
+        }
+      } catch (error) {
+        // Log error but don't fail the whole operation
+        console.error("Failed to consume session:", error);
+      }
+
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: TRAINING_SESSIONS_KEYS.all });
+
+      // Invalidate members table to update scheduled_sessions_count
+      queryClient.invalidateQueries({ queryKey: memberKeys.all });
     },
   });
 };
@@ -412,23 +440,74 @@ export const useUpdateTrainingSessionStatus = () => {
 };
 
 // Delete training session mutation
+// Delete/Cancel training session mutation
 export const useDeleteTrainingSession = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      // Get session details first to find member_id for credit restoration
+      const { data: session, error: fetchError } = await supabase
+        .from("training_sessions_calendar")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) {
+        throw new Error(
+          `Failed to fetch session details: ${fetchError.message}`
+        );
+      }
+
+      // Extract member ID from participants array
+      const memberId = session?.participants?.[0]?.id;
+
+      // Delete session (cascade will delete training_session_members)
+      const { error: deleteError } = await supabase
         .from("training_sessions")
         .delete()
         .eq("id", id);
 
-      if (error) {
-        throw new Error(`Failed to delete training session: ${error.message}`);
+      if (deleteError) {
+        throw new Error(
+          `Failed to delete training session: ${deleteError.message}`
+        );
       }
+
+      return { sessionId: id, memberId };
     },
-    onSuccess: () => {
+    onSuccess: async ({ sessionId, memberId }) => {
+      // Restore session credit to member's subscription
+      if (memberId) {
+        try {
+          const subscription =
+            await subscriptionUtils.getMemberActiveSubscription(memberId);
+
+          if (subscription) {
+            await subscriptionUtils.restoreSession(subscription.id);
+
+            // Invalidate subscription queries for cache updates
+            queryClient.invalidateQueries({
+              queryKey: ["subscriptions", "member", memberId],
+            });
+            queryClient.invalidateQueries({
+              queryKey: subscriptionKeys.memberActive(memberId),
+            });
+          }
+        } catch (error) {
+          // Log error but don't fail the whole operation
+          console.error("Failed to restore session credit:", error);
+        }
+      }
+
       // Invalidate all training session queries
       queryClient.invalidateQueries({ queryKey: TRAINING_SESSIONS_KEYS.all });
+      queryClient.invalidateQueries({
+        queryKey: TRAINING_SESSIONS_KEYS.detail(sessionId),
+      });
+
+      // Invalidate members table to update scheduled_sessions_count
+      queryClient.invalidateQueries({ queryKey: memberKeys.all });
     },
   });
 };

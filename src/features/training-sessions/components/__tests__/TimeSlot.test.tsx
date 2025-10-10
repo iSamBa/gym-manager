@@ -35,9 +35,9 @@ describe("TimeSlot", () => {
   beforeEach(() => {
     // Reset mock before each test
     vi.clearAllMocks();
-    // Default mock returns no alerts
+    // Default mock returns empty array (no alerts)
     vi.mocked(useSessionAlerts).mockReturnValue({
-      data: null,
+      data: [],
     } as any);
   });
 
@@ -293,13 +293,37 @@ describe("TimeSlot", () => {
     };
 
     it("shows notification badge when alerts are present", () => {
-      // Mock hook to return alerts
+      // Mock hook to return alerts (array of 3 comments)
       vi.mocked(useSessionAlerts).mockReturnValue({
-        data: {
-          session_id: "session-1",
-          member_id: "member-1",
-          alert_count: 3,
-        },
+        data: [
+          {
+            id: "comment-1",
+            due_date: "2025-01-20",
+            author: "Admin",
+            body: "Alert 1",
+            member_id: "member-1",
+            created_at: "2025-01-10T10:00:00Z",
+            updated_at: "2025-01-10T10:00:00Z",
+          },
+          {
+            id: "comment-2",
+            due_date: "2025-01-21",
+            author: "Admin",
+            body: "Alert 2",
+            member_id: "member-1",
+            created_at: "2025-01-10T10:00:00Z",
+            updated_at: "2025-01-10T10:00:00Z",
+          },
+          {
+            id: "comment-3",
+            due_date: "2025-01-22",
+            author: "Admin",
+            body: "Alert 3",
+            member_id: "member-1",
+            created_at: "2025-01-10T10:00:00Z",
+            updated_at: "2025-01-10T10:00:00Z",
+          },
+        ],
       } as any);
 
       render(
@@ -316,13 +340,9 @@ describe("TimeSlot", () => {
     });
 
     it("does not show badge when alert count is 0", () => {
-      // Mock hook to return 0 alerts
+      // Mock hook to return empty array (0 alerts)
       vi.mocked(useSessionAlerts).mockReturnValue({
-        data: {
-          session_id: "session-1",
-          member_id: "member-1",
-          alert_count: 0,
-        },
+        data: [],
       } as any);
 
       const { container } = render(
@@ -342,9 +362,9 @@ describe("TimeSlot", () => {
     });
 
     it("does not show badge when no alert data", () => {
-      // Mock hook to return null (no data)
+      // Mock hook to return empty array (no alerts)
       vi.mocked(useSessionAlerts).mockReturnValue({
-        data: null,
+        data: [],
       } as any);
 
       const { container } = render(

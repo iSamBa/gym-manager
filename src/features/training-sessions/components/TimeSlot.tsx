@@ -23,7 +23,7 @@ export const TimeSlot = memo<TimeSlotProps>(
   ({ machine, timeSlot, session, onClick }) => {
     // Get notification alerts for this session
     const memberId = session?.participants?.[0]?.id;
-    const { data: alerts } = useSessionAlerts(
+    const { data: alerts = [] } = useSessionAlerts(
       session?.id,
       memberId,
       session?.scheduled_start
@@ -49,6 +49,8 @@ export const TimeSlot = memo<TimeSlotProps>(
 
     // Booked slot
     const memberName = session.participants?.[0]?.name || "Unknown Member";
+    const alertCount = alerts.length;
+    const showAlertBadge = session.status !== "completed" && alertCount > 0;
 
     return (
       <div
@@ -62,8 +64,8 @@ export const TimeSlot = memo<TimeSlotProps>(
         <div className="truncate text-sm font-medium">{memberName}</div>
         <div className="text-xs text-gray-600">{timeSlot.label}</div>
 
-        {/* Notification badge */}
-        {alerts && <SessionNotificationBadge count={alerts.alert_count} />}
+        {/* Notification badge - only show for non-completed sessions with alerts */}
+        {showAlertBadge && <SessionNotificationBadge count={alertCount} />}
       </div>
     );
   }
