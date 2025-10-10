@@ -5,12 +5,13 @@ import type {
   TimeSlot as TimeSlotType,
   TrainingSession,
 } from "../lib/types";
+import { useSessionAlerts } from "../hooks/use-session-alerts";
+import { SessionNotificationBadge } from "./SessionNotificationBadge";
 
 interface TimeSlotProps {
   machine: Machine;
   timeSlot: TimeSlotType;
   session?: TrainingSession;
-  alertCount?: number;
   onClick: () => void;
 }
 
@@ -19,7 +20,15 @@ interface TimeSlotProps {
  * Displays member names for booked sessions and applies status-based colors
  */
 export const TimeSlot = memo<TimeSlotProps>(
-  ({ machine, timeSlot, session, alertCount, onClick }) => {
+  ({ machine, timeSlot, session, onClick }) => {
+    // Get notification alerts for this session
+    const memberId = session?.participants?.[0]?.id;
+    const { data: alerts } = useSessionAlerts(
+      session?.id,
+      memberId,
+      session?.scheduled_start
+    );
+
     // Empty slot
     if (!session) {
       return (
@@ -53,12 +62,8 @@ export const TimeSlot = memo<TimeSlotProps>(
         <div className="truncate text-sm font-medium">{memberName}</div>
         <div className="text-xs text-gray-600">{timeSlot.label}</div>
 
-        {/* Notification badge (US-008) */}
-        {alertCount && alertCount > 0 && (
-          <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-            {alertCount}
-          </div>
-        )}
+        {/* Notification badge */}
+        {alerts && <SessionNotificationBadge count={alerts.alert_count} />}
       </div>
     );
   }

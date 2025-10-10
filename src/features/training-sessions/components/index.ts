@@ -20,7 +20,8 @@ export { default as SessionHistoryTable } from "./SessionHistoryTable";
 export { default as SessionAnalyticsCharts } from "./SessionAnalyticsCharts";
 export { default as SessionActionMenu } from "./SessionActionMenu";
 
-// Machine slot grid components (US-006)
+// Machine slot grid components (US-006, US-007, US-008)
 export { MachineSlotGrid } from "./MachineSlotGrid";
 export { MachineColumn } from "./MachineColumn";
 export { TimeSlot } from "./TimeSlot";
+export { SessionNotificationBadge } from "./SessionNotificationBadge";

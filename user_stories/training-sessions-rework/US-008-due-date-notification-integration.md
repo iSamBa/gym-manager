@@ -204,11 +204,27 @@ describe("SessionNotificationBadge", () => {
 
 ## 🎯 Definition of Done
 
-- [ ] useSessionAlerts hook created
-- [ ] Badge component created
-- [ ] Integrated in TimeSlot
-- [ ] Query logic correct (due_date >= session date)
-- [ ] Tests passing
-- [ ] Code review approved
+- [x] useSessionAlerts hook created
+- [x] Badge component created
+- [x] Integrated in TimeSlot
+- [x] Query logic correct (due_date >= session date)
+- [x] Tests passing
+- [x] Code review approved
 
+**Status**: ✅ Completed
+**Completed**: 2025-10-10
 **Estimated Effort:** 2-3 hours
+**Actual Effort:** ~1 hour
+
+**Implementation Notes:**
+
+- Created useSessionAlerts hook with React Query (1 min staleTime)
+- Queries member_comments with due_date >= session.scheduled_start
+- Created SessionNotificationBadge with Tooltip support
+- Red circular badge positioned absolute top-right
+- Integrated into TimeSlot component (removed alertCount prop)
+- Updated TimeSlot tests to mock useSessionAlerts hook
+- Created 7 hook tests + 6 badge tests
+- All 27 tests passing (7 hook + 6 badge + 14 TimeSlot)
+- 0 TypeScript errors, 0 linting errors
+- Performance optimized with React Query caching

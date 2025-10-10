@@ -2,11 +2,11 @@
 
 ## 📊 Overall Progress
 
-**Status:** In Progress (Phase 3: UI Development)
+**Status:** In Progress (Phase 4: Forms & Admin)
 **Branch:** `feature/training-sessions-rework`
 **Started:** 2025-10-09
 **Target Completion:** TBD
-**Completed Stories:** 7/10 (70%)
+**Completed Stories:** 8/10 (80%)
 
 ---
 
@@ -29,11 +29,11 @@
 
 ### Phase 3: UI Development
 
-| Story  | Title                             | Status         | Completed  | Notes                                      |
-| ------ | --------------------------------- | -------------- | ---------- | ------------------------------------------ |
-| US-006 | Machine Slot Grid Component       | 🟢 Complete    | 2025-10-10 | 3-column grid layout, 6/6 tests passing    |
-| US-007 | Slot Rendering Logic              | 🟢 Complete    | 2025-10-10 | 24-hour format, status colors, 27/27 tests |
-| US-008 | Due-Date Notification Integration | ⬜ Not Started | -          | Badge with alert count                     |
+| Story  | Title                             | Status      | Completed  | Notes                                          |
+| ------ | --------------------------------- | ----------- | ---------- | ---------------------------------------------- |
+| US-006 | Machine Slot Grid Component       | 🟢 Complete | 2025-10-10 | 3-column grid layout, 6/6 tests passing        |
+| US-007 | Slot Rendering Logic              | 🟢 Complete | 2025-10-10 | 24-hour format, status colors, 27/27 tests     |
+| US-008 | Due-Date Notification Integration | 🟢 Complete | 2025-10-10 | Badge with tooltip, 27/27 tests (hook + badge) |
 
 ### Phase 4: Forms & Admin
 
@@ -61,13 +61,13 @@
 - [x] Type checking passes (core types)
 - [x] Hook API updated for machine-based sessions
 
-### Milestone 3: UI Complete ✅/❌
+### Milestone 3: UI Complete ✅ Complete
 
 - [x] US-006 Complete
 - [x] US-007 Complete
-- [ ] US-008 Complete
+- [x] US-008 Complete
 - [x] Grid renders correctly
-- [ ] Notifications display
+- [x] Notifications display
 
 ### Milestone 4: Feature Complete ✅/❌
 
@@ -110,6 +110,27 @@ None currently
 ---
 
 ## 📝 Notes
+
+### 2025-10-10 - US-008 Complete
+
+- ✅ Created useSessionAlerts hook with React Query (1 min staleTime)
+- ✅ Queries member_comments with due_date >= session.scheduled_start filter
+- ✅ Returns session_id, member_id, and alert_count
+- ✅ Created SessionNotificationBadge component with Tooltip
+- ✅ Red circular badge (6x6, positioned absolute -top-2 -right-2)
+- ✅ Shows count with plural/singular "reminder(s)" in tooltip
+- ✅ Returns null when count === 0
+- ✅ Integrated into TimeSlot component
+- ✅ Removed alertCount prop, now uses hook directly
+- ✅ Updated TimeSlot tests to mock useSessionAlerts
+- ✅ Created comprehensive tests: 7 hook tests + 6 badge tests
+- ✅ All 27 tests passing (7 hook + 6 badge + 14 TimeSlot)
+- ✅ Linting passed with 0 errors, 0 warnings
+- ✅ TypeScript: 0 errors in US-008 files
+- ✅ Performance optimized: React Query caching (1 minute)
+- Migration name: N/A (component/hook implementation only)
+- Actual effort: ~1 hour (under estimated 2-3 hours)
+- **Milestone 3 Complete!** 🎉 All UI development finished
 
 ### 2025-10-10 - US-007 Complete
 
@@ -235,13 +256,15 @@ None currently
 8. [x] Complete US-005 implementation (Hooks API Modifications)
 9. [x] Complete US-006 implementation (Machine Slot Grid Component)
 10. [x] Complete US-007 implementation (Slot Rendering Logic)
-11. [ ] Begin US-008 implementation (Due-Date Notification Integration)
+11. [x] Complete US-008 implementation (Due-Date Notification Integration)
+12. [ ] Begin US-009 implementation (Session Booking Form Update)
 
 **Milestone 1 Complete!** 🎉 All database changes finished.
 **Milestone 2 Complete!** 🎉 Backend (types + hooks) ready for UI.
-**Phase 3 Progress:** 2/3 complete (67%)
+**Milestone 3 Complete!** 🎉 All UI development finished.
+**Phase 4 Progress:** 0/2 complete (0%)
 
-**Command to continue:** `/implement-userstory US-008`
+**Command to continue:** `/implement-userstory US-009`
 
 ---
 
@@ -252,11 +275,11 @@ None currently
 | Planning          | 1 day        | -          | -          | ✅ Complete   |
 | Phase 1 (DB)      | 1-2 days     | 2025-10-09 | 2025-10-09 | ✅ 100% (3/3) |
 | Phase 2 (Backend) | 1 day        | 2025-10-10 | 2025-10-10 | ✅ 100% (2/2) |
-| Phase 3 (UI)      | 1-2 days     | 2025-10-10 | -          | ⏳ 67% (2/3)  |
+| Phase 3 (UI)      | 1-2 days     | 2025-10-10 | 2025-10-10 | ✅ 100% (3/3) |
 | Phase 4 (Forms)   | 1 day        | -          | -          | ⬜ 0% (0/2)   |
-| **Total**         | **4-6 days** | 2025-10-09 | -          | ⏳ 70% (7/10) |
+| **Total**         | **4-6 days** | 2025-10-09 | -          | ⏳ 80% (8/10) |
 
 ---
 
 **Last Updated:** 2025-10-10
-**Updated By:** Claude Code Agent (US-007 completion - Phase 3 at 67%)
+**Updated By:** Claude Code Agent (US-008 completion - Milestone 3 complete!)

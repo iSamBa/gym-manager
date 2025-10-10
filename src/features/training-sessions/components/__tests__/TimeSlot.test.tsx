@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { TimeSlot } from "../TimeSlot";
 import type {
@@ -6,6 +6,13 @@ import type {
   TimeSlot as TimeSlotType,
   TrainingSession,
 } from "../../lib/types";
+
+// Mock useSessionAlerts hook
+vi.mock("../../hooks/use-session-alerts", () => ({
+  useSessionAlerts: vi.fn(),
+}));
+
+import { useSessionAlerts } from "../../hooks/use-session-alerts";
 
 const mockMachine: Machine = {
   id: "machine-1",
@@ -25,6 +32,15 @@ const mockTimeSlot: TimeSlotType = {
 };
 
 describe("TimeSlot", () => {
+  beforeEach(() => {
+    // Reset mock before each test
+    vi.clearAllMocks();
+    // Default mock returns no alerts
+    vi.mocked(useSessionAlerts).mockReturnValue({
+      data: null,
+    } as any);
+  });
+
   describe("Empty Slot", () => {
     it("renders empty slot with time label", () => {
       const onClick = vi.fn();
@@ -276,37 +292,61 @@ describe("TimeSlot", () => {
       ],
     };
 
-    it("shows notification badge when alertCount > 0", () => {
+    it("shows notification badge when alerts are present", () => {
+      // Mock hook to return alerts
+      vi.mocked(useSessionAlerts).mockReturnValue({
+        data: {
+          session_id: "session-1",
+          member_id: "member-1",
+          alert_count: 3,
+        },
+      } as any);
+
       render(
         <TimeSlot
           machine={mockMachine}
           timeSlot={mockTimeSlot}
           session={mockSession}
-          alertCount={3}
           onClick={vi.fn()}
         />
       );
 
+      expect(screen.getByTestId("notification-badge")).toBeInTheDocument();
       expect(screen.getByText("3")).toBeInTheDocument();
     });
 
-    it("does not show badge when alertCount is 0", () => {
+    it("does not show badge when alert count is 0", () => {
+      // Mock hook to return 0 alerts
+      vi.mocked(useSessionAlerts).mockReturnValue({
+        data: {
+          session_id: "session-1",
+          member_id: "member-1",
+          alert_count: 0,
+        },
+      } as any);
+
       const { container } = render(
         <TimeSlot
           machine={mockMachine}
           timeSlot={mockTimeSlot}
           session={mockSession}
-          alertCount={0}
           onClick={vi.fn()}
         />
       );
 
       // Badge should not exist
-      const badge = container.querySelector(".bg-red-500");
+      const badge = container.querySelector(
+        '[data-testid="notification-badge"]'
+      );
       expect(badge).not.toBeInTheDocument();
     });
 
-    it("does not show badge when alertCount is undefined", () => {
+    it("does not show badge when no alert data", () => {
+      // Mock hook to return null (no data)
+      vi.mocked(useSessionAlerts).mockReturnValue({
+        data: null,
+      } as any);
+
       const { container } = render(
         <TimeSlot
           machine={mockMachine}
@@ -317,7 +357,9 @@ describe("TimeSlot", () => {
       );
 
       // Badge should not exist
-      const badge = container.querySelector(".bg-red-500");
+      const badge = container.querySelector(
+        '[data-testid="notification-badge"]'
+      );
       expect(badge).not.toBeInTheDocument();
     });
   });
