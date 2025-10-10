@@ -104,22 +104,25 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   // Populate form when session data loads
   useEffect(() => {
     if (session && open) {
-      setValue("machine_id", session.machine_id);
-      setValue("trainer_id", session.trainer_id || null);
-      setValue("scheduled_start", session.scheduled_start);
-      setValue("scheduled_end", session.scheduled_end);
-      setValue("session_type", session.session_type || "standard");
-      setValue("notes", session.notes || "");
-      setValue("status", session.status);
-
       // Extract member ID from participants array (single member per session)
       const sessionWithParticipants = session as TrainingSession & {
         participants?: Array<{ id: string; name: string; email: string }>;
       };
       const memberId = sessionWithParticipants.participants?.[0]?.id || "";
-      setValue("member_id", memberId);
+
+      // Use reset() to populate all fields at once and avoid multiple re-renders
+      reset({
+        machine_id: session.machine_id,
+        trainer_id: session.trainer_id || null,
+        scheduled_start: session.scheduled_start,
+        scheduled_end: session.scheduled_end,
+        session_type: session.session_type || "standard",
+        notes: session.notes || "",
+        status: session.status,
+        member_id: memberId,
+      });
     }
-  }, [session, open, setValue]);
+  }, [session, open, reset]);
 
   // Handle form submission
   const onSubmit = async (data: UpdateSessionData) => {
@@ -193,9 +196,12 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
       !deleteSessionMutation.isPending &&
       !updateStatusMutation.isPending
     ) {
-      reset();
       setShowDeleteConfirm(false);
       onOpenChange(false);
+      // Reset form after closing to prevent flash of old data
+      setTimeout(() => {
+        reset();
+      }, 200);
     }
   };
 
@@ -240,6 +246,12 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
     return (
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="w-[90vw] sm:max-w-[800px]">
+          <DialogHeader>
+            <DialogTitle>Loading Session</DialogTitle>
+            <DialogDescription>
+              Please wait while we load the session details.
+            </DialogDescription>
+          </DialogHeader>
           <div className="flex items-center justify-center py-8">
             <Loader2 className="mr-2 h-6 w-6 animate-spin" />
             Loading session data...
@@ -388,34 +400,43 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
               )}
             />
 
-            {/* Trainer Information - Display only */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium">
-                <User className="h-4 w-4" />
-                Trainer
-              </label>
-              <div className="bg-muted flex items-center justify-between rounded p-3">
-                <div className="flex items-center gap-2">
-                  <User className="text-muted-foreground h-4 w-4" />
-                  <span className="font-medium">
-                    {session.trainer_id
-                      ? session.trainer_name ||
-                        formatTrainerName(
-                          trainers.find((t) => t.id === session.trainer_id) || {
-                            id: session.trainer_id || "",
-                          }
-                        )
-                      : "No trainer assigned"}
-                  </span>
-                </div>
-                <Badge variant="outline">
-                  {session.trainer_id ? "Assigned" : "Not Assigned"}
-                </Badge>
-              </div>
-              <p className="text-muted-foreground text-xs">
-                Trainer cannot be changed after session creation
-              </p>
-            </div>
+            {/* Trainer Selection */}
+            <FormField
+              control={form.control}
+              name="trainer_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Trainer
+                  </FormLabel>
+                  <Select
+                    onValueChange={(value) =>
+                      field.onChange(value === "none" ? null : value)
+                    }
+                    value={field.value || "none"}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select trainer (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">No trainer assigned</SelectItem>
+                      {trainers.map((trainer) => (
+                        <SelectItem key={trainer.id} value={trainer.id}>
+                          {formatTrainerName(trainer)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                  <p className="text-muted-foreground text-xs">
+                    Assign a trainer to this session (optional)
+                  </p>
+                </FormItem>
+              )}
+            />
 
             {/* Session Type Selection */}
             <FormField
@@ -495,44 +516,68 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
               <FormField
                 control={form.control}
                 name="scheduled_start"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Start Time *
-                    </FormLabel>
-                    <FormControl>
-                      <DateTimePicker
-                        value={field.value ? new Date(field.value) : undefined}
-                        onChange={(date) =>
-                          field.onChange(date ? date.toISOString() : "")
-                        }
-                        placeholder="Pick start date & time"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const dateValue = field.value
+                    ? new Date(field.value)
+                    : undefined;
+                  const isValidDate = dateValue && !isNaN(dateValue.getTime());
+
+                  return (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Start Time *
+                      </FormLabel>
+                      <FormControl>
+                        <DateTimePicker
+                          key={`start-${field.value || "empty"}`}
+                          value={isValidDate ? dateValue : undefined}
+                          onChange={(date) => {
+                            if (date && !isNaN(date.getTime())) {
+                              field.onChange(date.toISOString());
+                            } else {
+                              field.onChange("");
+                            }
+                          }}
+                          placeholder="Pick start date & time"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
                 control={form.control}
                 name="scheduled_end"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Time *</FormLabel>
-                    <FormControl>
-                      <DateTimePicker
-                        value={field.value ? new Date(field.value) : undefined}
-                        onChange={(date) =>
-                          field.onChange(date ? date.toISOString() : "")
-                        }
-                        placeholder="Pick end date & time"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const dateValue = field.value
+                    ? new Date(field.value)
+                    : undefined;
+                  const isValidDate = dateValue && !isNaN(dateValue.getTime());
+
+                  return (
+                    <FormItem>
+                      <FormLabel>End Time *</FormLabel>
+                      <FormControl>
+                        <DateTimePicker
+                          key={`end-${field.value || "empty"}`}
+                          value={isValidDate ? dateValue : undefined}
+                          onChange={(date) => {
+                            if (date && !isNaN(date.getTime())) {
+                              field.onChange(date.toISOString());
+                            } else {
+                              field.onChange("");
+                            }
+                          }}
+                          placeholder="Pick end date & time"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
             </div>
 
