@@ -19,3 +19,8 @@ export { SessionBookingForm } from "./forms/SessionBookingForm";
 export { default as SessionHistoryTable } from "./SessionHistoryTable";
 export { default as SessionAnalyticsCharts } from "./SessionAnalyticsCharts";
 export { default as SessionActionMenu } from "./SessionActionMenu";
+
+// Machine slot grid components (US-006)
+export { MachineSlotGrid } from "./MachineSlotGrid";
+export { MachineColumn } from "./MachineColumn";
+export { TimeSlot } from "./TimeSlot";

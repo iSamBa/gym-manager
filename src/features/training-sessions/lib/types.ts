@@ -10,6 +10,13 @@ export interface Machine {
   updated_at: string;
 }
 
+// Time slot for the machine slot grid (30-minute intervals)
+export interface TimeSlot {
+  start: Date;
+  end: Date;
+  label: string; // e.g., "6:00 AM - 6:30 AM"
+}
+
 // Participant in training session (from database view)
 export interface SessionParticipant {
   id: string;

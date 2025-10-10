@@ -6,7 +6,7 @@
 **Branch:** `feature/training-sessions-rework`
 **Started:** 2025-10-09
 **Target Completion:** TBD
-**Completed Stories:** 5/10 (50%)
+**Completed Stories:** 6/10 (60%)
 
 ---
 
@@ -29,11 +29,11 @@
 
 ### Phase 3: UI Development
 
-| Story  | Title                             | Status         | Completed | Notes                               |
-| ------ | --------------------------------- | -------------- | --------- | ----------------------------------- |
-| US-006 | Machine Slot Grid Component       | ⬜ Not Started | -         | Build 3-column grid layout          |
-| US-007 | Slot Rendering Logic              | ⬜ Not Started | -         | 30 time slots, member names, colors |
-| US-008 | Due-Date Notification Integration | ⬜ Not Started | -         | Badge with alert count              |
+| Story  | Title                             | Status         | Completed  | Notes                                   |
+| ------ | --------------------------------- | -------------- | ---------- | --------------------------------------- |
+| US-006 | Machine Slot Grid Component       | 🟢 Complete    | 2025-10-10 | 3-column grid layout, 6/6 tests passing |
+| US-007 | Slot Rendering Logic              | ⬜ Not Started | -          | 30 time slots, member names, colors     |
+| US-008 | Due-Date Notification Integration | ⬜ Not Started | -          | Badge with alert count                  |
 
 ### Phase 4: Forms & Admin
 
@@ -110,6 +110,22 @@ None currently
 ---
 
 ## 📝 Notes
+
+### 2025-10-10 - US-006 Complete
+
+- ✅ Created MachineSlotGrid component with 3-column responsive grid layout
+- ✅ Created MachineColumn component (memoized with React.memo for performance)
+- ✅ Created TimeSlot placeholder component (full implementation in US-007)
+- ✅ Generated 30 time slots (6 AM - 9 PM, 30-minute intervals) with slot-generator utility
+- ✅ TimeSlot interface added to types.ts
+- ✅ All slots rendered for unavailable machines with disabled interaction (Option 1 approach)
+- ✅ Time axis labels displayed on left side
+- ✅ Unavailable machines show badge and reduced opacity
+- ✅ 6/6 automated tests passing
+- ✅ Linting passed with 0 errors, 0 warnings
+- ✅ Performance optimized: React.memo on components, useMemo for slot generation
+- Migration name: N/A (component implementation only)
+- Actual effort: ~2 hours (under estimated 3-4 hours)
 
 ### 2025-10-10 - US-005 Complete
 
@@ -198,12 +214,14 @@ None currently
 6. [x] Complete US-003 implementation
 7. [x] Complete US-004 implementation (TypeScript Types Update)
 8. [x] Complete US-005 implementation (Hooks API Modifications)
-9. [ ] Begin US-006 implementation (Machine Slot Grid Component)
+9. [x] Complete US-006 implementation (Machine Slot Grid Component)
+10. [ ] Begin US-007 implementation (Slot Rendering Logic)
 
 **Milestone 1 Complete!** 🎉 All database changes finished.
 **Milestone 2 Complete!** 🎉 Backend (types + hooks) ready for UI.
+**Phase 3 Progress:** 1/3 complete (33%)
 
-**Command to continue:** `/implement-userstory US-006`
+**Command to continue:** `/implement-userstory US-007`
 
 ---
 
@@ -214,11 +232,11 @@ None currently
 | Planning          | 1 day        | -          | -          | ✅ Complete   |
 | Phase 1 (DB)      | 1-2 days     | 2025-10-09 | 2025-10-09 | ✅ 100% (3/3) |
 | Phase 2 (Backend) | 1 day        | 2025-10-10 | 2025-10-10 | ✅ 100% (2/2) |
-| Phase 3 (UI)      | 1-2 days     | -          | -          | ⬜ 0% (0/3)   |
+| Phase 3 (UI)      | 1-2 days     | 2025-10-10 | -          | ⏳ 33% (1/3)  |
 | Phase 4 (Forms)   | 1 day        | -          | -          | ⬜ 0% (0/2)   |
-| **Total**         | **4-6 days** | 2025-10-09 | -          | ⏳ 50% (5/10) |
+| **Total**         | **4-6 days** | 2025-10-09 | -          | ⏳ 60% (6/10) |
 
 ---
 
 **Last Updated:** 2025-10-10
-**Updated By:** Claude Code Agent (US-005 completion - Milestone 2 Complete!)
+**Updated By:** Claude Code Agent (US-006 completion - Phase 3 started)
