@@ -44,8 +44,8 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
         query = query.eq("status", filters.status);
       }
 
-      if (filters?.location) {
-        query = query.ilike("location", `%${filters.location}%`);
+      if (filters?.machine_id) {
+        query = query.eq("machine_id", filters.machine_id);
       }
 
       if (filters?.date_range) {
@@ -106,14 +106,13 @@ export const useCreateTrainingSession = () => {
       const { data: result, error } = await supabase.rpc(
         "create_training_session_with_members",
         {
-          p_trainer_id: data.trainer_id,
+          p_machine_id: data.machine_id,
+          p_trainer_id: data.trainer_id || null,
           p_scheduled_start: data.scheduled_start,
           p_scheduled_end: data.scheduled_end,
-          p_location: data.location,
-          p_max_participants: data.max_participants,
-          p_member_ids: data.member_ids,
-          p_notes: data.notes || null,
+          p_member_id: data.member_id,
           p_session_type: data.session_type,
+          p_notes: data.notes || null,
         }
       );
 
@@ -164,8 +163,8 @@ export const useUpdateTrainingSession = () => {
         throw new Error("User not authenticated");
       }
 
-      // Separate member_ids from other update data
-      const { member_ids, ...sessionData } = data;
+      // Separate member_id from other update data
+      const { member_id, ...sessionData } = data;
 
       // Update session data if there are fields to update
       let result = null;
@@ -192,9 +191,9 @@ export const useUpdateTrainingSession = () => {
         result = updateResult;
       }
 
-      // Handle member updates ONLY if member_ids is provided AND different from current
-      // Skip member processing for simple status/field updates
-      if (member_ids !== undefined && Array.isArray(member_ids)) {
+      // Handle member updates ONLY if member_id is provided
+      // Sessions now support only one member at a time
+      if (member_id !== undefined) {
         // Get current confirmed members
         const { data: currentMembers, error: currentMembersError } =
           await supabase
@@ -209,48 +208,42 @@ export const useUpdateTrainingSession = () => {
           );
         }
 
-        const currentMemberIds = currentMembers?.map((m) => m.member_id) || [];
+        const currentMemberId = currentMembers?.[0]?.member_id;
 
-        // Find members to remove (in current but not in new list)
-        const membersToRemove = currentMemberIds.filter(
-          (memberId) => !member_ids.includes(memberId)
-        );
+        // Only update if the member has changed
+        if (currentMemberId !== member_id) {
+          // Remove existing member if there is one
+          if (currentMemberId) {
+            const { error: removeError } = await supabase
+              .from("training_session_members")
+              .delete()
+              .eq("session_id", id)
+              .eq("member_id", currentMemberId)
+              .eq("booking_status", "confirmed");
 
-        // Find members to add (in new list but not in current)
-        const membersToAdd = member_ids.filter(
-          (memberId) => !currentMemberIds.includes(memberId)
-        );
-
-        // Remove members
-        if (membersToRemove.length > 0) {
-          const { error: removeError } = await supabase
-            .from("training_session_members")
-            .delete()
-            .eq("session_id", id)
-            .in("member_id", membersToRemove)
-            .eq("booking_status", "confirmed");
-
-          if (removeError) {
-            throw new Error(`Failed to remove members: ${removeError.message}`);
+            if (removeError) {
+              throw new Error(
+                `Failed to remove member: ${removeError.message}`
+              );
+            }
           }
-        }
 
-        // Add new members
-        if (membersToAdd.length > 0) {
-          const membersToInsert = membersToAdd.map((memberId) => ({
-            session_id: id,
-            member_id: memberId,
-            booking_status: "confirmed" as const,
-          }));
-
+          // Add new member
           const { error: addError } = await supabase
             .from("training_session_members")
-            .upsert(membersToInsert, {
-              onConflict: "session_id,member_id",
-            });
+            .upsert(
+              {
+                session_id: id,
+                member_id: member_id,
+                booking_status: "confirmed" as const,
+              },
+              {
+                onConflict: "session_id,member_id",
+              }
+            );
 
           if (addError) {
-            throw new Error(`Failed to add members: ${addError.message}`);
+            throw new Error(`Failed to add member: ${addError.message}`);
           }
         }
       }

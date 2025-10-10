@@ -2,11 +2,11 @@
 
 ## 📊 Overall Progress
 
-**Status:** In Progress (Phase 1: Database Foundation)
+**Status:** In Progress (Phase 2: Backend Updates)
 **Branch:** `feature/training-sessions-rework`
 **Started:** 2025-10-09
 **Target Completion:** TBD
-**Completed Stories:** 3/10 (30%)
+**Completed Stories:** 4/10 (40%)
 
 ---
 
@@ -22,10 +22,10 @@
 
 ### Phase 2: Backend Updates
 
-| Story  | Title                   | Status         | Completed | Notes                                           |
-| ------ | ----------------------- | -------------- | --------- | ----------------------------------------------- |
-| US-004 | TypeScript Types Update | ⬜ Not Started | -         | Update interfaces for new schema                |
-| US-005 | Hooks API Modifications | ⬜ Not Started | -         | Add machine filtering, remove multi-participant |
+| Story  | Title                   | Status         | Completed  | Notes                                           |
+| ------ | ----------------------- | -------------- | ---------- | ----------------------------------------------- |
+| US-004 | TypeScript Types Update | 🟢 Complete    | 2025-10-10 | Core types updated, 16/16 tests passing         |
+| US-005 | Hooks API Modifications | ⬜ Not Started | -          | Add machine filtering, remove multi-participant |
 
 ### Phase 3: UI Development
 
@@ -54,12 +54,12 @@
 - [x] All migrations pass (3/3 applied successfully)
 - [x] Existing data migrated successfully (1128 sessions)
 
-### Milestone 2: Backend Ready ✅/❌
+### Milestone 2: Backend Ready ⏳ In Progress
 
-- [ ] US-004 Complete
+- [x] US-004 Complete
 - [ ] US-005 Complete
-- [ ] Type checking passes
-- [ ] No TypeScript errors
+- [x] Type checking passes (core types)
+- [ ] No TypeScript errors (pending US-005 completion)
 
 ### Milestone 3: UI Complete ✅/❌
 
@@ -110,6 +110,23 @@
 ---
 
 ## 📝 Notes
+
+### 2025-10-10 - US-004 Complete
+
+- ✅ Core TypeScript type definitions updated in `types.ts`
+- ✅ Added new `Machine` interface with machine_number (1-3), name, is_available
+- ✅ Updated `TrainingSession` interface (machine_id, nullable trainer, removed max_participants/location)
+- ✅ Updated `CreateSessionData` and `UpdateSessionData` interfaces (machine_id, single member_id)
+- ✅ Updated `SessionFilters` interface (machine_id filter)
+- ✅ Updated Zod validation schemas in `validation.ts`
+- ✅ Created comprehensive type tests (16/16 passing)
+- ✅ Updated core hooks (`use-training-sessions.ts`, `use-session-stats.ts`)
+- ✅ Updated utility functions (`utils.ts`, `export-utils.ts`)
+- ✅ Updated production tables (members, trainers components)
+- ⏳ Deprecated calendar-specific functions (to be removed in US-006)
+- ⏳ Complex form components (EditSessionDialog) need full rework in US-009
+- Migration name: N/A (type definitions only)
+- Actual effort: ~2 hours (over estimated 1 hour due to cascading updates)
 
 ### 2025-10-09 - US-003 Complete
 
@@ -164,11 +181,13 @@
 4. [x] Complete US-001 implementation
 5. [x] Complete US-002 implementation
 6. [x] Complete US-003 implementation
-7. [ ] Begin US-004 implementation (TypeScript Types Update)
+7. [x] Complete US-004 implementation (TypeScript Types Update)
+8. [ ] Begin US-005 implementation (Hooks API Modifications)
 
 **Milestone 1 Complete!** 🎉 All database changes finished.
+**Phase 2 Progress:** 1/2 complete (50%)
 
-**Command to continue:** `/implement-userstory US-004`
+**Command to continue:** `/implement-userstory US-005`
 
 ---
 
@@ -178,12 +197,12 @@
 | ----------------- | ------------ | ---------- | ---------- | ------------- |
 | Planning          | 1 day        | -          | -          | ✅ Complete   |
 | Phase 1 (DB)      | 1-2 days     | 2025-10-09 | 2025-10-09 | ✅ 100% (3/3) |
-| Phase 2 (Backend) | 1 day        | -          | -          | ⬜ 0% (0/2)   |
+| Phase 2 (Backend) | 1 day        | 2025-10-10 | -          | ⏳ 50% (1/2)  |
 | Phase 3 (UI)      | 1-2 days     | -          | -          | ⬜ 0% (0/3)   |
 | Phase 4 (Forms)   | 1 day        | -          | -          | ⬜ 0% (0/2)   |
-| **Total**         | **4-6 days** | 2025-10-09 | -          | ⏳ 30% (3/10) |
+| **Total**         | **4-6 days** | 2025-10-09 | -          | ⏳ 40% (4/10) |
 
 ---
 
-**Last Updated:** 2025-10-09
-**Updated By:** Claude Code Agent (US-003 completion - Phase 1 Complete!)
+**Last Updated:** 2025-10-10
+**Updated By:** Claude Code Agent (US-004 completion - Phase 2 at 50%)

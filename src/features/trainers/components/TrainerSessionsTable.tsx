@@ -297,7 +297,7 @@ export function TrainerSessionsTable({
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <MapPin className="text-muted-foreground h-4 w-4" />
-                        <span>{session.location || "Not specified"}</span>
+                        <span>{session.machine_name || "Not specified"}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -313,8 +313,7 @@ export function TrainerSessionsTable({
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {session.participants?.length || 0}/
-                        {session.max_participants}
+                        {session.participants?.length || 0}/1
                       </div>
                     </TableCell>
                     <TableCell>

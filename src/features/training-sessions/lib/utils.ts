@@ -2,7 +2,6 @@ import { format, parseISO, isAfter, isBefore, isEqual } from "date-fns";
 import { SESSION_VISIBILITY_CONFIG, type CalendarViewMode } from "./constants";
 import type {
   TrainingSession,
-  TrainingSessionCalendarEvent,
   TrainingSessionWithDetails,
   SessionHistoryEntry,
   CreateSessionData,
@@ -34,36 +33,21 @@ interface SessionWithTrainerName extends TrainingSession {
   session_category?: string;
 }
 
-// Session data transformations for both detailed and basic sessions
+// NOTE: Calendar functionality is deprecated and will be removed in US-006
+// Keeping this as a stub to prevent breaking existing code
 export const transformSessionToCalendarEvent = (
   session: TrainingSession | TrainingSessionWithDetails | SessionWithTrainerName
-): TrainingSessionCalendarEvent => {
-  // Handle both detailed sessions with relationships and basic sessions from the view
-  const trainerName =
-    "trainer" in session && session.trainer?.user_profile
-      ? `${session.trainer.user_profile.first_name} ${session.trainer.user_profile.last_name}`
-      : "trainer_name" in session
-        ? (session as SessionWithTrainerName).trainer_name || "Unknown"
-        : "Unknown";
-
+): Record<string, unknown> => {
+  // Deprecated: Calendar events being replaced with machine slot grid
+  // Return minimal structure to prevent breaks until US-006 cleanup
   return {
     id: session.id,
-    title: `${trainerName} - ${session.current_participants}/${session.max_participants}`,
+    title: session.trainer_name || "Session",
     start: parseISO(session.scheduled_start),
     end: parseISO(session.scheduled_end),
-    trainer_name: trainerName,
+    trainer_name: session.trainer_name,
     participant_count: session.current_participants,
-    max_participants: session.max_participants,
-    location: session.location,
     status: session.status,
-    session_category:
-      "session_category" in session
-        ? (session as SessionWithTrainerName).session_category
-        : undefined,
-    resource: {
-      trainer_id: session.trainer_id,
-      session: session as TrainingSession,
-    },
   };
 };
 
@@ -224,18 +208,20 @@ export const calculateSessionMinHeight = (
   }
 };
 
-// EventPropGetter for react-big-calendar - properly overrides inline styles
+// NOTE: Calendar functionality is deprecated (US-006)
+// Keeping as stub for backwards compatibility
 export const createEventPropGetter = (
   viewMode: CalendarViewMode = "standard",
   currentView: string = "week"
 ) => {
   return (
-    event: TrainingSessionCalendarEvent,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    event: any, // Deprecated: was TrainingSessionCalendarEvent
     start: Date,
     end: Date,
     _isSelected: boolean // eslint-disable-line @typescript-eslint/no-unused-vars
   ) => {
-    // Only apply custom heights in TimeGrid views (day/week), not month
+    // Calendar being replaced with machine slot grid
     if (currentView === "month") {
       return {
         style: {},

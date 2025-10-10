@@ -45,8 +45,8 @@ export const useSessionStats = (filters?: SessionFilters) => {
         query = query.eq("status", filters.status);
       }
 
-      if (filters?.location) {
-        query = query.ilike("location", `%${filters.location}%`);
+      if (filters?.machine_id) {
+        query = query.eq("machine_id", filters.machine_id);
       }
 
       if (filters?.date_range) {

@@ -1,5 +1,15 @@
 import type { Member, TrainerWithProfile } from "@/features/database/lib/types";
 
+// Machine interface (represents training machines in the gym)
+export interface Machine {
+  id: string;
+  machine_number: 1 | 2 | 3;
+  name: string;
+  is_available: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // Participant in training session (from database view)
 export interface SessionParticipant {
   id: string;
@@ -10,14 +20,15 @@ export interface SessionParticipant {
 // Training session type matching database view
 export interface TrainingSession {
   id: string;
-  trainer_id: string;
+  machine_id: string; // Required: Machine assignment
+  machine_number?: 1 | 2 | 3; // Optional: From view join
+  machine_name?: string; // Optional: From view join
+  trainer_id: string | null; // Nullable: Trainer assigned at completion
   scheduled_start: string; // ISO string
   scheduled_end: string; // ISO string
   status: "scheduled" | "in_progress" | "completed" | "cancelled";
   session_type?: "trail" | "standard"; // Optional, may not be in all views
-  max_participants: number;
-  current_participants: number;
-  location: string | null;
+  current_participants: number; // Always 0 or 1 (single member per session)
   notes: string | null;
   trainer_user_id?: string; // From calendar view
   trainer_name?: string; // From calendar view join
@@ -35,24 +46,6 @@ export interface TrainingSessionWithDetails
   participants?: TrainingSessionMember[];
 }
 
-// Calendar-specific event format (simplified)
-export interface TrainingSessionCalendarEvent {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  trainer_name: string;
-  participant_count: number;
-  max_participants: number;
-  location: string | null;
-  status: string;
-  session_category?: string;
-  resource?: {
-    trainer_id: string;
-    session: TrainingSession;
-  };
-}
-
 // Member participation in session
 export interface TrainingSessionMember {
   id: string;
@@ -65,25 +58,24 @@ export interface TrainingSessionMember {
 
 // Simplified form data types
 export interface CreateSessionData {
-  trainer_id: string;
+  machine_id: string; // Required: Machine assignment
+  trainer_id?: string | null; // Optional: Trainer assigned at completion
   scheduled_start: string;
   scheduled_end: string;
-  location: string;
   session_type: "trail" | "standard";
-  max_participants: number;
-  member_ids: string[];
+  member_id: string; // Single member (not array)
   notes?: string;
 }
 
 export interface UpdateSessionData {
+  machine_id?: string; // Optional: Change machine assignment
+  trainer_id?: string | null; // Optional: Can clear trainer
   scheduled_start?: string;
   scheduled_end?: string;
-  location?: string;
   session_type?: "trail" | "standard";
-  max_participants?: number;
   notes?: string;
   status?: "scheduled" | "in_progress" | "completed" | "cancelled";
-  member_ids?: string[];
+  member_id?: string; // Single member (not array)
 }
 
 // Calendar view types
@@ -111,14 +103,14 @@ export interface BulkSessionOperationResult {
 
 // Simplified filter and search types
 export interface SessionFilters {
+  machine_id?: string; // NEW: Filter by machine
   trainer_id?: string;
-  member_id?: string; // NEW: Support filtering by member
+  member_id?: string; // Support filtering by member
   status?: "scheduled" | "completed" | "cancelled" | "all";
   date_range?: {
     start: Date;
     end: Date;
   };
-  location?: string;
 }
 
 // Simplified history and analytics types
@@ -127,10 +119,9 @@ export interface SessionHistoryEntry {
   scheduled_start: string;
   scheduled_end: string;
   status: string;
-  location: string | null;
+  machine_name?: string; // Machine used for session
   trainer_name: string;
-  participant_count: number;
-  max_participants: number;
+  participant_count: number; // Always 0 or 1
   attendance_rate: number;
   duration_minutes: number;
   session_category: string;

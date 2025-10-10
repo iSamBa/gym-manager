@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { useTrainingSessions } from "./use-training-sessions";
-import { transformSessionToCalendarEvent } from "../lib/utils";
 import type {
   SessionFilters,
-  TrainingSessionCalendarEvent,
   CalendarView,
+  TrainingSession,
 } from "../lib/types";
 
+// NOTE: Calendar functionality is being replaced with machine slot grid (US-006)
+// This hook is deprecated and will be removed in future user stories
 export const useCalendarEvents = (filters?: SessionFilters) => {
   const {
     data: sessions,
@@ -15,9 +16,10 @@ export const useCalendarEvents = (filters?: SessionFilters) => {
     refetch,
   } = useTrainingSessions(filters);
 
-  const events = useMemo((): TrainingSessionCalendarEvent[] => {
+  // Return sessions directly without transformation (calendar events deprecated)
+  const events = useMemo((): TrainingSession[] => {
     if (!sessions) return [];
-    return sessions.map(transformSessionToCalendarEvent);
+    return sessions;
   }, [sessions]);
 
   return {

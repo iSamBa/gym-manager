@@ -10,12 +10,11 @@ export const exportToCSV = (
     "Date",
     "Time",
     "Trainer",
-    "Location",
+    "Machine",
     "Category",
     "Status",
     "Duration (min)",
     "Participants",
-    "Max Participants",
     "Attendance Rate (%)",
     "Notes",
   ];
@@ -27,12 +26,11 @@ export const exportToCSV = (
         format(new Date(session.scheduled_start), "yyyy-MM-dd"),
         `${format(new Date(session.scheduled_start), "HH:mm")}-${format(new Date(session.scheduled_end), "HH:mm")}`,
         session.trainer_name || "",
-        session.location || "",
+        session.machine_name || "",
         session.session_category || "",
         session.status,
         session.duration_minutes,
         session.participant_count || 0,
-        session.max_participants,
         Math.round(session.attendance_rate || 0),
         (session.notes || "").replace(/,/g, ";").replace(/\n/g, " "),
       ].join(",")
@@ -202,7 +200,7 @@ export const exportToPDF = async (sessions: SessionHistoryEntry[]) => {
             <th>Trainer</th>
             <th>Category</th>
             <th>Status</th>
-            <th>Location</th>
+            <th>Machine</th>
             <th>Participants</th>
             <th>Attendance</th>
           </tr>
@@ -217,8 +215,8 @@ export const exportToPDF = async (sessions: SessionHistoryEntry[]) => {
               <td>${session.trainer_name || "N/A"}</td>
               <td><span class="category-${session.session_category?.toLowerCase() || "standard"}">${session.session_category || "Standard"}</span></td>
               <td><span class="status-${session.status}">${session.status}</span></td>
-              <td>${session.location || "N/A"}</td>
-              <td>${session.participant_count || 0}/${session.max_participants}</td>
+              <td>${session.machine_name || "N/A"}</td>
+              <td>${session.participant_count || 0}</td>
               <td>${Math.round(session.attendance_rate || 0)}%</td>
             </tr>
           `
@@ -332,7 +330,7 @@ export const printTable = (sessions: SessionHistoryEntry[]) => {
               <td>${format(new Date(session.scheduled_start), "HH:mm")}</td>
               <td>${session.trainer_name}</td>
               <td>${session.status}</td>
-              <td>${session.participant_count}/${session.max_participants}</td>
+              <td>${session.participant_count}</td>
               <td>${Math.round(session.attendance_rate || 0)}%</td>
             </tr>
           `

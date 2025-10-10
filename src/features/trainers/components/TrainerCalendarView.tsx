@@ -175,12 +175,12 @@ export function TrainerCalendarView({
                               </span>
                             </div>
 
-                            {/* Location */}
-                            {session.location && (
+                            {/* Machine */}
+                            {session.machine_name && (
                               <div className="mb-1 flex items-center gap-1">
                                 <MapPin className="h-3 w-3" />
                                 <span className="text-muted-foreground truncate">
-                                  {session.location}
+                                  {session.machine_name}
                                 </span>
                               </div>
                             )}

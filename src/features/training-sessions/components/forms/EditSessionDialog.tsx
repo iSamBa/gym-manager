@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Edit,
   Loader2,
-  Users,
   MapPin,
   Clock,
   User,
@@ -56,7 +55,6 @@ import {
 } from "../../hooks/use-training-sessions";
 import { useTrainers } from "@/features/trainers/hooks";
 import { TrainerAvailabilityCheck } from "./TrainerAvailabilityCheck";
-import MemberMultiSelect from "./MemberMultiSelect";
 import type { TrainingSession } from "../../lib/types";
 
 interface EditSessionDialogProps {
@@ -92,16 +90,16 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   const updateStatusMutation = useUpdateTrainingSessionStatus();
   const deleteSessionMutation = useDeleteTrainingSession();
 
-  // Form setup with validation
+  // Form setup with validation (machine-based single-member sessions)
   const form = useForm<UpdateSessionData>({
     resolver: zodResolver(updateSessionSchema),
     defaultValues: {
+      machine_id: "",
+      trainer_id: null,
       scheduled_start: "",
       scheduled_end: "",
-      location: "",
       session_type: "standard",
-      max_participants: 1,
-      member_ids: [],
+      member_id: "",
       notes: "",
       status: "scheduled",
     },
@@ -117,22 +115,20 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
   // Populate form when session data loads
   useEffect(() => {
     if (session && open) {
+      setValue("machine_id", session.machine_id);
+      setValue("trainer_id", session.trainer_id || null);
       setValue("scheduled_start", session.scheduled_start);
       setValue("scheduled_end", session.scheduled_end);
-      setValue("location", session.location || "");
       setValue("session_type", session.session_type || "standard");
-      setValue("max_participants", session.max_participants);
       setValue("notes", session.notes || "");
       setValue("status", session.status);
 
-      // Extract member IDs from participants array
+      // Extract member ID from participants array (single member per session)
       const sessionWithParticipants = session as TrainingSession & {
         participants?: Array<{ id: string; name: string; email: string }>;
       };
-      const memberIds = sessionWithParticipants.participants
-        ? sessionWithParticipants.participants.map((p) => p.id)
-        : [];
-      setValue("member_ids", memberIds);
+      const memberId = sessionWithParticipants.participants?.[0]?.id || "";
+      setValue("member_id", memberId);
     }
   }, [session, open, setValue]);
 
@@ -175,9 +171,9 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
           status: data.status,
         });
       } else {
-        // For status-only updates, don't send member_ids to avoid unnecessary member processing
+        // For status-only updates, don't send member_id to avoid unnecessary member processing
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { member_ids, ...sessionOnlyData } = data;
+        const { member_id, ...sessionOnlyData } = data;
         const updateData = sessionOnlyData;
 
         await updateSessionMutation.mutateAsync({
@@ -327,11 +323,10 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
                 {format(new Date(session.scheduled_end), "p")}
               </p>
               <p className="text-muted-foreground text-sm">
-                Location: {session.location || "Not specified"}
+                Machine: {session.machine_name || "Not specified"}
               </p>
               <p className="text-muted-foreground text-sm">
-                Participants: {session.current_participants}/
-                {session.max_participants}
+                Participants: {session.current_participants}/1
               </p>
             </div>
           </div>
@@ -387,7 +382,7 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
               <div className="space-y-1 text-right">
                 <p className="text-sm font-medium">Participants</p>
                 <Badge variant="outline">
-                  {session.current_participants}/{session.max_participants}
+                  {session.current_participants}/1
                 </Badge>
               </div>
             </div>
@@ -613,61 +608,10 @@ export const EditSessionDialog: React.FC<EditSessionDialogProps> = ({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="max_participants"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Max Participants *
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={session.current_participants} // Can't be less than current participants
-                        max={50}
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 1)
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                    <p className="text-muted-foreground text-xs">
-                      Must be at least {session.current_participants} (current
-                      participants)
-                    </p>
-                  </FormItem>
-                )}
-              />
+              {/* TODO US-009: Update form fields for machine-based single-member sessions */}
+              {/* Max participants and member selection fields temporarily disabled */}
+              {/* These will be replaced with machine_id selector and single member_id field */}
             </div>
-
-            {/* Member Selection */}
-            <FormField
-              control={form.control}
-              name="member_ids"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Current Members
-                  </FormLabel>
-                  <FormControl>
-                    <MemberMultiSelect
-                      selectedMemberIds={field.value || []}
-                      onMemberIdsChange={field.onChange}
-                      maxMembers={watchedFields.max_participants}
-                      error={formState.errors.member_ids?.message}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                  <p className="text-muted-foreground text-xs">
-                    Add or remove members from this training session
-                  </p>
-                </FormItem>
-              )}
-            />
 
             {/* Notes */}
             <FormField

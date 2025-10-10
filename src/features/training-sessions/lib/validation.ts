@@ -1,9 +1,17 @@
 import { z } from "zod";
 
 // Enhanced session creation schema with comprehensive validations
+// Updated for machine-based single-member sessions
 export const createSessionSchema = z
   .object({
-    trainer_id: z.string().uuid("Please select a valid trainer from the list"),
+    machine_id: z
+      .string()
+      .uuid("Please select a valid machine from the available options"),
+    trainer_id: z
+      .string()
+      .uuid("Please select a valid trainer from the list")
+      .optional()
+      .nullable(), // Optional: Trainer assigned at completion
     scheduled_start: z
       .string()
       .refine((val) => {
@@ -42,24 +50,12 @@ export const createSessionSchema = z
           return false;
         }
       }, "The end date format is invalid. Please use the date picker."),
-    location: z
-      .string()
-      .min(1, "Please specify where the training session will take place")
-      .refine((val) => val.trim().length > 0, {
-        message: "Location cannot be empty or contain only spaces",
-      })
-      .max(100, "Location name must be 100 characters or less"),
     session_type: z.enum(["trail", "standard"], {
       message: "Session type must be either trail or standard",
     }),
-    max_participants: z
-      .number()
-      .min(1, "Sessions must allow at least 1 participant")
-      .max(50, "Sessions cannot have more than 50 participants"),
-    member_ids: z
-      .array(z.string().uuid("Invalid member selection"))
-      .min(1, "Please select at least one member for the training session")
-      .max(50, "Maximum 50 members can be selected for a single session"),
+    member_id: z
+      .string()
+      .uuid("Invalid member selection - please select a valid member"),
     notes: z.string().optional(),
   })
   .refine(
@@ -72,17 +68,6 @@ export const createSessionSchema = z
     {
       message: "Session end time must be later than start time",
       path: ["scheduled_end"],
-    }
-  )
-  .refine(
-    (data) => {
-      // Validate member count doesn't exceed max participants
-      return data.member_ids.length <= data.max_participants;
-    },
-    {
-      message:
-        "You have selected more members than the maximum capacity allows",
-      path: ["member_ids"],
     }
   )
   .refine(
@@ -145,8 +130,17 @@ export const createSessionSchema = z
     }
   );
 
-// Simplified session update schema
+// Simplified session update schema (machine-based single-member sessions)
 export const updateSessionSchema = z.object({
+  machine_id: z
+    .string()
+    .uuid("Please select a valid machine from the available options")
+    .optional(),
+  trainer_id: z
+    .string()
+    .uuid("Please select a valid trainer from the list")
+    .optional()
+    .nullable(), // Can clear trainer assignment
   scheduled_start: z
     .string()
     .refine((val) => {
@@ -171,23 +165,10 @@ export const updateSessionSchema = z.object({
       }
     }, "Invalid end date/time format")
     .optional(),
-  location: z
-    .string()
-    .min(1, "Location is required")
-    .refine((val) => !val || val.trim().length > 0, {
-      message: "Location cannot be only whitespace",
-    })
-    .max(100, "Location name too long")
-    .optional(),
   session_type: z.enum(["trail", "standard"]).optional(),
-  max_participants: z
-    .number()
-    .min(1, "At least 1 participant required")
-    .max(50, "Maximum 50 participants allowed")
-    .optional(),
-  member_ids: z
-    .array(z.string().uuid("Invalid member selection"))
-    .max(50, "Maximum 50 members can be selected for a single session")
+  member_id: z
+    .string()
+    .uuid("Invalid member selection - please select a valid member")
     .optional(),
   notes: z.string().optional(),
   status: z
@@ -195,9 +176,11 @@ export const updateSessionSchema = z.object({
     .optional(),
 });
 
-// Simplified session filters schema
+// Simplified session filters schema (machine-based sessions)
 export const sessionFiltersSchema = z.object({
+  machine_id: z.string().uuid().optional(), // NEW: Filter by machine
   trainer_id: z.string().uuid().optional(),
+  member_id: z.string().uuid().optional(),
   status: z.enum(["scheduled", "completed", "cancelled", "all"]).optional(),
   date_range: z
     .object({
@@ -208,7 +191,6 @@ export const sessionFiltersSchema = z.object({
       message: "Start date must be before end date",
     })
     .optional(),
-  location: z.string().optional(),
 });
 
 // Export inferred types
