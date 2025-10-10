@@ -4,7 +4,6 @@ import type {
   TrainingSession,
   TrainingSessionWithDetails,
   TrainingSessionCalendarEvent,
-  SessionHistoryEntry,
   CreateSessionData,
 } from "./types";
 
@@ -174,8 +173,8 @@ export const calculateAttendanceRate = (
 };
 
 export const groupSessionsByDate = (
-  sessions: SessionHistoryEntry[]
-): Record<string, SessionHistoryEntry[]> => {
+  sessions: TrainingSession[]
+): Record<string, TrainingSession[]> => {
   return sessions.reduce(
     (groups, session) => {
       const date = format(parseISO(session.scheduled_start), "yyyy-MM-dd");
@@ -185,7 +184,7 @@ export const groupSessionsByDate = (
       groups[date].push(session);
       return groups;
     },
-    {} as Record<string, SessionHistoryEntry[]>
+    {} as Record<string, TrainingSession[]>
   );
 };
 

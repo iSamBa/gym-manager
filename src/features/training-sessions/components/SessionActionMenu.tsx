@@ -8,14 +8,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Eye, Edit, X, Calendar } from "lucide-react";
-import type { SessionHistoryEntry } from "../lib/types";
+import type { TrainingSession } from "../lib/types";
 
 interface SessionActionMenuProps {
-  session: SessionHistoryEntry;
-  onView?: (session: SessionHistoryEntry) => void;
-  onEdit?: (session: SessionHistoryEntry) => void;
-  onCancel?: (session: SessionHistoryEntry) => void;
-  onReschedule?: (session: SessionHistoryEntry) => void;
+  session: TrainingSession;
+  onView?: (session: TrainingSession) => void;
+  onEdit?: (session: TrainingSession) => void;
+  onCancel?: (session: TrainingSession) => void;
+  onReschedule?: (session: TrainingSession) => void;
 }
 
 const SessionActionMenu: React.FC<SessionActionMenuProps> = ({

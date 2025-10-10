@@ -9,9 +9,6 @@ export {
   TRAINING_SESSIONS_KEYS as trainingSessionKeys,
 } from "./use-training-sessions";
 
-// Session booking with credits
-export { useSessionBookingWithCredits } from "./use-session-booking-with-credits";
-
 // Machine management hooks
 export {
   useMachines,

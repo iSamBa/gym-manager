@@ -18,7 +18,7 @@ import { format, addDays, subDays } from "date-fns";
 
 // Import machine slot grid
 import { MachineSlotGrid } from "./MachineSlotGrid";
-import { EditSessionDialog } from "./forms/EditSessionDialog";
+import { SessionDialog } from "./forms/SessionDialog";
 import { SessionBookingDialog } from "./forms/SessionBookingDialog";
 import { useTrainingSessions } from "../hooks";
 import type { TrainingSession } from "../lib/types";
@@ -27,7 +27,7 @@ const TrainingSessionsView: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSession, setSelectedSession] =
     useState<TrainingSession | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showSessionDialog, setShowSessionDialog] = useState(false);
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [bookingDefaults, setBookingDefaults] = useState<{
     machine_id: string;
@@ -43,22 +43,18 @@ const TrainingSessionsView: React.FC = () => {
     return { start, end };
   }, []);
 
-  // Fetch sessions data
-  const {
-    data: sessions = [],
-    isLoading,
-    error,
-  } = useTrainingSessions({
+  // Fetch sessions data (MachineSlotGrid fetches its own data, but we keep this for cache warming)
+  const { isLoading, error } = useTrainingSessions({
     date_range: dateRange,
   });
 
   const handleSessionClick = (session: TrainingSession) => {
     setSelectedSession(session);
-    setShowEditDialog(true);
+    setShowSessionDialog(true);
   };
 
-  const handleCloseDialogs = () => {
-    setShowEditDialog(false);
+  const handleSessionDialogClose = () => {
+    setShowSessionDialog(false);
     setSelectedSession(null);
   };
 
@@ -177,12 +173,11 @@ const TrainingSessionsView: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Edit Session Dialog */}
-      <EditSessionDialog
-        open={showEditDialog}
+      {/* Session Dialog (View/Edit with Alerts) */}
+      <SessionDialog
+        open={showSessionDialog}
         onOpenChange={(open) => {
-          setShowEditDialog(open);
-          if (!open) handleCloseDialogs();
+          if (!open) handleSessionDialogClose();
         }}
         sessionId={selectedSession?.id}
       />

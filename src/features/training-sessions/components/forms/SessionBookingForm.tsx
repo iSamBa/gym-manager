@@ -39,9 +39,9 @@ import {
 import { cn } from "@/lib/utils";
 
 // Session credit validation functionality removed during hook consolidation
-import { useSessionBookingWithCredits } from "../../hooks/use-session-booking-with-credits";
 import { useMembers } from "@/features/members/hooks";
 import { useTrainers } from "@/features/trainers/hooks";
+import { useCreateTrainingSession } from "../../hooks/use-training-sessions";
 
 // Validation schema for session booking
 const sessionBookingSchema = z.object({
@@ -83,7 +83,7 @@ export function SessionBookingForm({
   const isValidatingCredits = false;
 
   // Enhanced booking mutation
-  const bookSessionMutation = useSessionBookingWithCredits();
+  const bookSessionMutation = useCreateTrainingSession();
 
   // Form setup
   const form = useForm<SessionBookingData>({
@@ -116,12 +116,15 @@ export function SessionBookingForm({
       const [endHours, endMinutes] = data.endTime.split(":");
       endDateTime.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0);
 
-      // Convert to ISO strings with proper timezone (UTC)
+      // Map old form data to new CreateSessionData structure
       const formattedData = {
-        ...data,
-        sessionDate: format(data.sessionDate, "yyyy-MM-dd"),
+        member_id: data.memberId,
+        trainer_id: data.trainerId || null,
         scheduled_start: startDateTime.toISOString(),
         scheduled_end: endDateTime.toISOString(),
+        session_type: data.sessionType,
+        machine_id: "00000000-0000-0000-0000-000000000000", // TODO: Add machine selection to form
+        notes: data.notes,
       };
 
       await bookSessionMutation.mutateAsync(formattedData);

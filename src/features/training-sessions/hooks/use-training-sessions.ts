@@ -300,8 +300,11 @@ export const useUpdateTrainingSession = () => {
       return result;
     },
     onSuccess: (data) => {
-      // Update specific session in cache
-      queryClient.setQueryData(TRAINING_SESSIONS_KEYS.detail(data.id), data);
+      // Invalidate detail query to refetch from training_sessions_calendar view
+      // This ensures we get the updated data with participants and machine info
+      queryClient.invalidateQueries({
+        queryKey: TRAINING_SESSIONS_KEYS.detail(data.id),
+      });
       // Invalidate lists to refresh data
       queryClient.invalidateQueries({
         queryKey: TRAINING_SESSIONS_KEYS.lists(),
