@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { TimeSlot } from "./TimeSlot";
+import { MachineAvailabilityToggle } from "./MachineAvailabilityToggle";
 import type {
   Machine,
   TimeSlot as TimeSlotType,
@@ -42,11 +43,14 @@ export const MachineColumn = memo<MachineColumnProps>(
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between text-lg">
             <span>{machine.name}</span>
-            {!machine.is_available && (
-              <Badge variant="secondary" className="text-xs">
-                Unavailable
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {!machine.is_available && (
+                <Badge variant="secondary" className="text-xs">
+                  Unavailable
+                </Badge>
+              )}
+              <MachineAvailabilityToggle machine={machine} />
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-1 flex-col gap-1 pt-0">

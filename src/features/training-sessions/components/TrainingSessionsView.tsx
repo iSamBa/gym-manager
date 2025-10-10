@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useState, lazy, Suspense } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, History, BarChart3, Users, Clock } from "lucide-react";
 
-// Lazy load heavy calendar component to reduce initial bundle size
-const TrainingSessionCalendar = lazy(() => import("./TrainingSessionCalendar"));
+// Import new machine slot grid (replaces old calendar view)
+import { MachineSlotGrid } from "./MachineSlotGrid";
 import SessionHistoryTable from "./SessionHistoryTable";
 import { EditSessionDialog } from "./forms/EditSessionDialog";
 import { useTrainingSessions, useSessionStats } from "../hooks";
@@ -18,6 +17,7 @@ import type { TrainingSession, SessionHistoryEntry } from "../lib/types";
 const TrainingSessionsView: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("sessions");
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSession, setSelectedSession] =
     useState<TrainingSession | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -39,8 +39,6 @@ const TrainingSessionsView: React.FC = () => {
       status: session.status,
       machine_name: session.machine_name,
       trainer_name: session.trainer_name || "Unknown Trainer",
-      participant_count: session.current_participants,
-      attendance_rate: session.current_participants === 1 ? 100 : 0,
       duration_minutes: durationMinutes,
       session_category: session.session_type || "standard",
       notes: session.notes || undefined,
@@ -80,15 +78,6 @@ const TrainingSessionsView: React.FC = () => {
     const session = { id: sessionEntry.session_id } as TrainingSession;
     setSelectedSession(session);
     setShowEditDialog(true);
-  };
-
-  const handleSlotSelect = (slotInfo: { start: Date; end: Date }) => {
-    // Navigate to new session page with pre-filled times
-    const searchParams = new URLSearchParams({
-      start: slotInfo.start.toISOString(),
-      end: slotInfo.end.toISOString(),
-    });
-    router.push(`/training-sessions/new?${searchParams.toString()}`);
   };
 
   const handleCloseDialogs = () => {
@@ -162,14 +151,21 @@ const TrainingSessionsView: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex min-h-0 flex-1 flex-col">
-                  <Suspense
-                    fallback={<Skeleton className="h-[400px] w-full" />}
-                  >
-                    <TrainingSessionCalendar
-                      onSelectSession={handleSessionClick}
-                      onSelectSlot={handleSlotSelect}
-                    />
-                  </Suspense>
+                  <MachineSlotGrid
+                    selectedDate={selectedDate}
+                    onSessionClick={handleSessionClick}
+                    onSlotClick={(machineId, timeSlot) => {
+                      // Navigate to new session with pre-filled data
+                      const searchParams = new URLSearchParams({
+                        machine_id: machineId,
+                        start: timeSlot.start.toISOString(),
+                        end: timeSlot.end.toISOString(),
+                      });
+                      router.push(
+                        `/training-sessions/new?${searchParams.toString()}`
+                      );
+                    }}
+                  />
                 </div>
               )}
             </TabsContent>

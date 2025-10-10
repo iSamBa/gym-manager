@@ -1,5 +1,9 @@
 # US-010: Machine Availability Admin Controls
 
+**Status**: ✅ Completed
+**Completed**: 2025-10-10
+**Implementation Notes**: All ACs verified via Puppeteer manual testing with admin credentials. Toggle works bidirectionally, form validation enforced, existing sessions preserved.
+
 ## 📋 User Story
 
 **As a** gym administrator

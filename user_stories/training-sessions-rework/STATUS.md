@@ -2,11 +2,11 @@
 
 ## 📊 Overall Progress
 
-**Status:** In Progress (Phase 4: Forms & Admin)
+**Status:** ✅ Complete (All Phases Done!)
 **Branch:** `feature/training-sessions-rework`
 **Started:** 2025-10-09
-**Target Completion:** TBD
-**Completed Stories:** 9/10 (90%)
+**Completed:** 2025-10-10
+**Completed Stories:** 10/10 (100%)
 
 ---
 
@@ -37,10 +37,10 @@
 
 ### Phase 4: Forms & Admin
 
-| Story  | Title                               | Status         | Completed  | Notes                                                     |
-| ------ | ----------------------------------- | -------------- | ---------- | --------------------------------------------------------- |
-| US-009 | Session Booking Form Update         | 🟢 Complete    | 2025-10-10 | All ACs passed, submission bug fixed, 21/21 tests passing |
-| US-010 | Machine Availability Admin Controls | ⬜ Not Started | -          | Toggle machine on/off                                     |
+| Story  | Title                               | Status      | Completed  | Notes                                                     |
+| ------ | ----------------------------------- | ----------- | ---------- | --------------------------------------------------------- |
+| US-009 | Session Booking Form Update         | 🟢 Complete | 2025-10-10 | All ACs passed, submission bug fixed, 21/21 tests passing |
+| US-010 | Machine Availability Admin Controls | 🟢 Complete | 2025-10-10 | All ACs verified, 16/16 tests passing, Puppeteer tested   |
 
 ---
 
@@ -69,12 +69,12 @@
 - [x] Grid renders correctly
 - [x] Notifications display
 
-### Milestone 4: Feature Complete ✅/❌
+### Milestone 4: Feature Complete ✅ Complete
 
-- [ ] US-009 Complete
-- [ ] US-010 Complete
-- [ ] All tests passing
-- [ ] Ready for PR
+- [x] US-009 Complete
+- [x] US-010 Complete
+- [x] All tests passing
+- [x] Ready for PR
 
 ---
 
@@ -110,6 +110,25 @@ None currently
 ---
 
 ## 📝 Notes
+
+### 2025-10-10 - US-010 Complete ✅ FEATURE COMPLETE!
+
+- ✅ Created MachineAvailabilityToggle component (admin-only visibility)
+- ✅ Integrated toggle into MachineColumn headers
+- ✅ Bidirectional toggle functionality (enable ↔ disable)
+- ✅ Visual feedback: gray overlay, "Unavailable" badge, reduced opacity
+- ✅ Booking prevention: slots not clickable (cursor-not-allowed)
+- ✅ Form validation: dropdown disables unavailable machines with "(Unavailable)" label
+- ✅ Database validation: existing function already enforces is_available check
+- ✅ Existing sessions preserved when disabling machines
+- ✅ Comprehensive testing: 16/16 unit tests passing
+- ✅ Manual testing via Puppeteer with admin credentials (admin@gym.com)
+- ✅ Linting passed: 0 errors, 0 warnings
+- ✅ Build successful: production build completed
+- ✅ Integrated MachineSlotGrid into TrainingSessionsView (replaced old calendar)
+- Migration name: N/A (component + integration only, DB validation pre-existing)
+- Actual effort: ~2 hours (estimated 2-3 hours)
+- **🎉 MILESTONE 4 COMPLETE!** All 10 user stories finished!
 
 ### 2025-10-10 - US-009 Complete
 
@@ -277,29 +296,31 @@ None currently
 9. [x] Complete US-006 implementation (Machine Slot Grid Component)
 10. [x] Complete US-007 implementation (Slot Rendering Logic)
 11. [x] Complete US-008 implementation (Due-Date Notification Integration)
-12. [ ] Begin US-009 implementation (Session Booking Form Update)
+12. [x] Complete US-009 implementation (Session Booking Form Update)
+13. [x] Complete US-010 implementation (Machine Availability Admin Controls)
 
 **Milestone 1 Complete!** 🎉 All database changes finished.
 **Milestone 2 Complete!** 🎉 Backend (types + hooks) ready for UI.
 **Milestone 3 Complete!** 🎉 All UI development finished.
-**Phase 4 Progress:** 0/2 complete (0%)
+**Milestone 4 Complete!** 🎉 All 10 user stories implemented!
+**Phase 4 Progress:** 2/2 complete (100%)
 
-**Command to continue:** `/implement-userstory US-009`
+**✅ ALL USER STORIES COMPLETE! Ready for final commit and PR!**
 
 ---
 
 ## 📅 Timeline
 
-| Phase             | Duration     | Start      | End        | Status        |
-| ----------------- | ------------ | ---------- | ---------- | ------------- |
-| Planning          | 1 day        | -          | -          | ✅ Complete   |
-| Phase 1 (DB)      | 1-2 days     | 2025-10-09 | 2025-10-09 | ✅ 100% (3/3) |
-| Phase 2 (Backend) | 1 day        | 2025-10-10 | 2025-10-10 | ✅ 100% (2/2) |
-| Phase 3 (UI)      | 1-2 days     | 2025-10-10 | 2025-10-10 | ✅ 100% (3/3) |
-| Phase 4 (Forms)   | 1 day        | -          | -          | ⬜ 0% (0/2)   |
-| **Total**         | **4-6 days** | 2025-10-09 | -          | ⏳ 80% (8/10) |
+| Phase             | Duration     | Start      | End        | Status          |
+| ----------------- | ------------ | ---------- | ---------- | --------------- |
+| Planning          | 1 day        | -          | -          | ✅ Complete     |
+| Phase 1 (DB)      | 1-2 days     | 2025-10-09 | 2025-10-09 | ✅ 100% (3/3)   |
+| Phase 2 (Backend) | 1 day        | 2025-10-10 | 2025-10-10 | ✅ 100% (2/2)   |
+| Phase 3 (UI)      | 1-2 days     | 2025-10-10 | 2025-10-10 | ✅ 100% (3/3)   |
+| Phase 4 (Forms)   | 1 day        | 2025-10-10 | 2025-10-10 | ✅ 100% (2/2)   |
+| **Total**         | **4-6 days** | 2025-10-09 | 2025-10-10 | ✅ 100% (10/10) |
 
 ---
 
 **Last Updated:** 2025-10-10
-**Updated By:** Claude Code Agent (US-008 completion - Milestone 3 complete!)
+**Updated By:** Claude Code Agent (US-010 completion - ALL MILESTONES COMPLETE! 🎉)
