@@ -105,7 +105,7 @@
 
 ## 🚧 Blockers
 
-**None currently**
+None currently
 
 ---
 
