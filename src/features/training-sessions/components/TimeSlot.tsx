@@ -7,6 +7,8 @@ import type {
 } from "../lib/types";
 import { useSessionAlerts } from "../hooks/use-session-alerts";
 import { SessionNotificationBadge } from "./SessionNotificationBadge";
+import { getSessionColorVariant } from "../lib/session-colors";
+import { Badge } from "@/components/ui/badge";
 
 interface TimeSlotProps {
   machine: Machine;
@@ -56,13 +58,28 @@ export const TimeSlot = memo<TimeSlotProps>(
       <div
         data-testid="time-slot"
         className={cn(
-          "relative h-16 cursor-pointer rounded border p-2 transition-shadow hover:shadow-md",
-          getStatusColor(session.status)
+          "relative flex h-16 cursor-pointer items-start justify-between gap-2 rounded border p-2 transition-shadow hover:shadow-md",
+          getSessionColor(session)
         )}
         onClick={onClick}
       >
-        <div className="truncate text-sm font-medium">{memberName}</div>
-        <div className="text-xs text-gray-600">{timeSlot.label}</div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="truncate text-base font-medium">{memberName}</div>
+          <div className="text-xs text-gray-600">{timeSlot.label}</div>
+        </div>
+
+        {/* Session type badge */}
+        {session.session_type && (
+          <Badge
+            variant="secondary"
+            className={cn(
+              "shrink-0 text-xs",
+              getSessionTypeBadgeColor(session.session_type)
+            )}
+          >
+            {getSessionTypeLabel(session.session_type)}
+          </Badge>
+        )}
 
         {/* Notification badge - only show for non-completed sessions with alerts */}
         {showAlertBadge && <SessionNotificationBadge count={alertCount} />}
@@ -73,15 +90,52 @@ export const TimeSlot = memo<TimeSlotProps>(
 
 TimeSlot.displayName = "TimeSlot";
 
-function getStatusColor(status: TrainingSession["status"]): string {
-  switch (status) {
-    case "scheduled":
-      return "bg-blue-100 border-blue-300 text-blue-800";
-    case "in_progress":
-      return "bg-orange-100 border-orange-300 text-orange-800";
-    case "completed":
+/**
+ * Gets Tailwind color classes based on session date
+ * - Past sessions (before today) → Gray
+ * - Today's sessions → Green
+ * - Future sessions → Yellow
+ * - Cancelled sessions → Gray + strikethrough
+ */
+function getSessionColor(session: TrainingSession): string {
+  // Handle cancelled sessions specially
+  if (session.status === "cancelled") {
+    return "bg-gray-100 border-gray-300 text-gray-800 line-through";
+  }
+
+  // Determine color based on date
+  const variant = getSessionColorVariant(session.scheduled_start);
+
+  switch (variant) {
+    case "past":
+      return "bg-gray-100 border-gray-300 text-gray-800";
+    case "today":
       return "bg-green-100 border-green-300 text-green-800";
-    case "cancelled":
-      return "bg-gray-100 border-gray-300 text-gray-500 line-through";
+    case "future":
+      return "bg-yellow-100 border-yellow-300 text-yellow-800";
+  }
+}
+
+/**
+ * Gets badge color for session type
+ */
+function getSessionTypeBadgeColor(sessionType: "trail" | "standard"): string {
+  switch (sessionType) {
+    case "trail":
+      return "bg-blue-100 text-blue-800 hover:bg-blue-200";
+    case "standard":
+      return "bg-slate-100 text-slate-800 hover:bg-slate-200";
+  }
+}
+
+/**
+ * Gets display label for session type
+ */
+function getSessionTypeLabel(sessionType: "trail" | "standard"): string {
+  switch (sessionType) {
+    case "trail":
+      return "Trail";
+    case "standard":
+      return "Standard";
   }
 }
