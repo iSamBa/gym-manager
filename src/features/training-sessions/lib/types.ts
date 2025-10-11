@@ -59,7 +59,7 @@ export interface TrainingSessionMember {
   id: string;
   session_id: string;
   member_id: string;
-  booking_status: "confirmed" | "cancelled" | "no_show" | "attended";
+  booking_status: "confirmed" | "cancelled";
   created_at: string;
   member?: Member;
 }

@@ -9,7 +9,6 @@ import {
   TrendingDown,
   Minus,
   Clock,
-  Target,
   Calendar,
   Award,
   User,
@@ -54,8 +53,6 @@ export function MemberSessionStats({
     completedSessions: stats.completedSessions,
     upcomingSessions: 0,
     hasUpcomingSessions: false,
-    attendanceRate: 0,
-    attendanceLevel: "good" as const,
     activityLevel: "moderate" as const,
     trainingHours: 0,
     avgSessionDuration: 1,
@@ -103,19 +100,6 @@ export function MemberSessionStats({
         return <TrendingDown className="h-4 w-4 text-red-600" />;
       default:
         return <Minus className="text-muted-foreground h-4 w-4" />;
-    }
-  };
-
-  const getAttendanceBadgeVariant = (level: string) => {
-    switch (level) {
-      case "excellent":
-        return "default";
-      case "good":
-        return "secondary";
-      case "average":
-        return "outline";
-      default:
-        return "destructive";
     }
   };
 
@@ -173,25 +157,6 @@ export function MemberSessionStats({
                 ? "Sessions scheduled"
                 : "No upcoming sessions"}
             </p>
-          </CardContent>
-        </Card>
-
-        {/* Attendance Rate */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Attendance Rate
-            </CardTitle>
-            <Target className="text-muted-foreground h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{insights.attendanceRate}%</div>
-            <Badge
-              variant={getAttendanceBadgeVariant(insights.attendanceLevel)}
-              className="text-xs"
-            >
-              {insights.attendanceLevel.replace("-", " ")}
-            </Badge>
           </CardContent>
         </Card>
 

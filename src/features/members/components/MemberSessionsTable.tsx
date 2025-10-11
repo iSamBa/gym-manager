@@ -131,31 +131,6 @@ export function MemberSessionsTable({
     return <Badge variant="outline">{status}</Badge>;
   };
 
-  const getAttendanceBadge = (attendanceStatus: string, status: string) => {
-    if (status !== "completed") return null;
-
-    switch (attendanceStatus) {
-      case "attended":
-        return (
-          <Badge variant="default" className="text-xs">
-            Attended
-          </Badge>
-        );
-      case "no_show":
-        return (
-          <Badge variant="destructive" className="text-xs">
-            No Show
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="text-xs">
-            Unknown
-          </Badge>
-        );
-    }
-  };
-
   const formatSessionDate = (dateString: string) => {
     const date = new Date(dateString);
 
@@ -317,10 +292,7 @@ export function MemberSessionsTable({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-1">
-                        {getStatusBadge(session.status, "confirmed", false)}
-                        {getAttendanceBadge("present", session.status)}
-                      </div>
+                      {getStatusBadge(session.status, "confirmed", false)}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">

@@ -190,33 +190,6 @@ describe("Training Session Utility Functions", () => {
   });
 
   describe("History and Analytics Utilities", () => {
-    describe("calculateAttendanceRate", () => {
-      it("should calculate attendance rate correctly", () => {
-        const result = calculateAttendanceRate(7, 10);
-        expect(result).toBe(70);
-      });
-
-      it("should round to nearest whole number", () => {
-        const result = calculateAttendanceRate(2, 3);
-        expect(result).toBe(67);
-      });
-
-      it("should return 100 for full attendance", () => {
-        const result = calculateAttendanceRate(10, 10);
-        expect(result).toBe(100);
-      });
-
-      it("should return 0 for zero attendance", () => {
-        const result = calculateAttendanceRate(0, 10);
-        expect(result).toBe(0);
-      });
-
-      it("should return 0 when max is 0", () => {
-        const result = calculateAttendanceRate(5, 0);
-        expect(result).toBe(0);
-      });
-    });
-
     describe("groupSessionsByDate", () => {
       const mockSessions: TrainingSession[] = [
         {

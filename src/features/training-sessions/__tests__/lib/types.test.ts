@@ -219,9 +219,7 @@ describe("Training Session Types", () => {
       expect(typeof participant.id).toBe("string");
       expect(typeof participant.session_id).toBe("string");
       expect(typeof participant.member_id).toBe("string");
-      expect(["confirmed", "cancelled", "no_show", "attended"]).toContain(
-        participant.booking_status
-      );
+      expect(["confirmed", "cancelled"]).toContain(participant.booking_status);
       expect(typeof participant.created_at).toBe("string");
     });
 
@@ -229,8 +227,6 @@ describe("Training Session Types", () => {
       const validStatuses: TrainingSessionMember["booking_status"][] = [
         "confirmed",
         "cancelled",
-        "no_show",
-        "attended",
       ];
 
       validStatuses.forEach((booking_status) => {

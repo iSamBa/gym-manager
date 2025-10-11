@@ -15,28 +15,31 @@ export function useMemberActivityMetrics(memberId: string) {
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
 
-      // Sessions this month
+      // Sessions this month - use session status instead of attendance_status
       const { count: sessionsCount } = await supabase
         .from("training_session_members")
-        .select("*", { count: "exact", head: true })
+        .select("training_sessions!inner(status, scheduled_start)", {
+          count: "exact",
+          head: true,
+        })
         .eq("member_id", memberId)
-        .eq("attendance_status", "attended")
+        .eq("training_sessions.status", "completed")
         .gte(
-          "check_in_time",
+          "training_sessions.scheduled_start",
           new Date(currentYear, currentMonth, 1).toISOString()
         )
         .lt(
-          "check_in_time",
+          "training_sessions.scheduled_start",
           new Date(currentYear, currentMonth + 1, 1).toISOString()
         );
 
-      // Last session
+      // Last session - use scheduled_start from training_sessions
       const { data: lastSession } = await supabase
         .from("training_session_members")
-        .select("check_in_time")
+        .select("training_sessions!inner(scheduled_start, status)")
         .eq("member_id", memberId)
-        .eq("attendance_status", "attended")
-        .order("check_in_time", { ascending: false })
+        .eq("training_sessions.status", "completed")
+        .order("training_sessions.scheduled_start", { ascending: false })
         .limit(1)
         .single();
 
@@ -50,8 +53,8 @@ export function useMemberActivityMetrics(memberId: string) {
 
       return {
         sessionsThisMonth: sessionsCount || 0,
-        lastSessionDate: lastSession?.check_in_time
-          ? new Date(lastSession.check_in_time)
+        lastSessionDate: lastSession?.training_sessions?.scheduled_start
+          ? new Date(lastSession.training_sessions.scheduled_start)
           : null,
         overduePaymentsCount: overdueCount || 0,
       };
