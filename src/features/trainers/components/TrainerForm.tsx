@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TrainerWithProfile } from "@/features/database/lib/types";
-import type { CreateTrainerData } from "@/features/database/lib/utils";
+import type { CreateTrainerData } from "@/features/trainers/lib/database-utils";
 
 const trainerFormSchema = z.object({
   // User Profile fields

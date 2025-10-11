@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import type { TrainingSession } from "./types";
-import { executeQuery } from "@/features/database/lib/utils";
+import { executeQuery } from "@/features/database/lib/query-helpers";
 
 export const trainingSessionUtils = {
   // Update training session status - follows exact same pattern as member status update

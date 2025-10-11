@@ -6,7 +6,7 @@ import {
   createMemberComment,
   updateMemberComment,
   deleteMemberComment,
-} from "@/features/database/lib/utils";
+} from "@/features/members/lib/comments-utils";
 import type { MemberComment } from "@/features/database/lib/types";
 import { toast } from "sonner";
 

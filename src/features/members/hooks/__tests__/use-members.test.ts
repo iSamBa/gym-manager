@@ -11,7 +11,7 @@ const mockMemberUtils = {
   bulkUpdateStatus: vi.fn(),
 };
 
-vi.mock("@/features/database/lib/utils", () => ({
+vi.mock("@/features/members/lib/database-utils", () => ({
   memberUtils: mockMemberUtils,
 }));
 

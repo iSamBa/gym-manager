@@ -13,7 +13,7 @@ import { useUpdateMember, useMemberCacheUtils } from "@/features/members/hooks";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { Member } from "@/features/database/lib/types";
-import type { UpdateMemberData } from "@/features/database/lib/utils";
+import type { UpdateMemberData } from "@/features/members/lib/database-utils";
 
 interface EditMemberDialogProps {
   member: Member | null;

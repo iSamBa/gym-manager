@@ -74,7 +74,10 @@ Key features:
 ### Using Database Utils
 
 ```typescript
-import { memberUtils, subscriptionUtils } from "@/features/database/lib/utils";
+import {
+  memberUtils,
+  subscriptionUtils,
+} from "@/features/database/lib/query-helpers";
 
 // Get active members
 const activeMembers = await memberUtils.getActiveMembersCount();

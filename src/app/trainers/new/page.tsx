@@ -8,7 +8,7 @@ import { ProgressiveTrainerForm } from "@/features/trainers/components/Progressi
 import { useCreateTrainer } from "@/features/trainers/hooks";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { AlertCircle, CheckCircle } from "lucide-react";
-import type { CreateTrainerData } from "@/features/database/lib/utils";
+import type { CreateTrainerData } from "@/features/trainers/lib/database-utils";
 
 export default function AddTrainerPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);

@@ -49,7 +49,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { TrainerWithProfile } from "@/features/database/lib/types";
-import type { TrainerFilters } from "@/features/database/lib/utils";
+import type { TrainerFilters } from "@/features/trainers/lib/database-utils";
 
 type SortField =
   | "name"

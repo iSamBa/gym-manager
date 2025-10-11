@@ -66,7 +66,9 @@ export function useMemberValidation() {
         }
 
         // If not found in cache, check database
-        const { memberUtils } = await import("@/features/database/lib/utils");
+        const { memberUtils } = await import(
+          "@/features/members/lib/database-utils"
+        );
         return await memberUtils.checkEmailExists(email, excludeId);
       } catch (error) {
         console.error("Error checking email:", error);
@@ -90,7 +92,9 @@ export function useMemberPrefetch() {
       queryClient.prefetchQuery({
         queryKey: memberKeys.detail(id),
         queryFn: async () => {
-          const { memberUtils } = await import("@/features/database/lib/utils");
+          const { memberUtils } = await import(
+            "@/features/members/lib/database-utils"
+          );
           return memberUtils.getMemberById(id);
         },
         staleTime: 10 * 60 * 1000, // 10 minutes
@@ -104,7 +108,9 @@ export function useMemberPrefetch() {
       queryClient.prefetchQuery({
         queryKey: memberKeys.withSubscription(id),
         queryFn: async () => {
-          const { memberUtils } = await import("@/features/database/lib/utils");
+          const { memberUtils } = await import(
+            "@/features/members/lib/database-utils"
+          );
           return memberUtils.getMemberWithSubscription(id);
         },
         staleTime: 10 * 60 * 1000,
@@ -152,7 +158,9 @@ export function useMemberPrefetch() {
       queryClient.prefetchQuery({
         queryKey: memberKeys.withSubscription(id),
         queryFn: async () => {
-          const { memberUtils } = await import("@/features/database/lib/utils");
+          const { memberUtils } = await import(
+            "@/features/members/lib/database-utils"
+          );
           return memberUtils.getMemberWithSubscription(id);
         },
         staleTime: 5 * 60 * 1000, // 5 minutes for hover prefetch
@@ -313,7 +321,9 @@ export function useMemberCacheUtils() {
       return queryClient.prefetchQuery({
         queryKey: memberKeys.detail(id),
         queryFn: async () => {
-          const { memberUtils } = await import("@/features/database/lib/utils");
+          const { memberUtils } = await import(
+            "@/features/members/lib/database-utils"
+          );
           return memberUtils.getMemberById(id);
         },
         staleTime: 10 * 60 * 1000,
