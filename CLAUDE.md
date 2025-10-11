@@ -307,39 +307,145 @@ Business logic hooks specific to a feature domain (useMemberForm, usePaymentProc
 
 **🚨 CRITICAL: ALL new features MUST use feature branches!**
 
-### Branch Naming
+### Branch Strategy
 
-- `feature/[name]` - New features (feature/member-management)
-- `bugfix/[name]` - Bug fixes (bugfix/login-validation-error)
-- `hotfix/[name]` - Critical issues (hotfix/security-vulnerability)
+This project uses a **dev → main** branching strategy for stable releases:
 
-### Workflow
+| Branch Type | Purpose                   | Merges To | Deploy Target       |
+| ----------- | ------------------------- | --------- | ------------------- |
+| `main`      | Production-ready code     | N/A       | Production          |
+| `dev`       | Integration & staging     | `main`    | Staging/Testing     |
+| `feature/*` | New features              | `dev`     | N/A                 |
+| `bugfix/*`  | Bug fixes                 | `dev`     | N/A                 |
+| `hotfix/*`  | Critical production fixes | `main`    | Production (urgent) |
 
-1. Create branch: `git checkout -b feature/your-feature-name`
-2. Push branch: `git push -u origin feature/your-feature-name`
-3. Merge via pull request to `main`
-4. Delete branch after merge
+### Branch Naming Conventions
 
-**⚠️ NEVER commit directly to `main` for new features!**
+- `feature/[name]` - New features (e.g., `feature/member-management`)
+- `bugfix/[name]` - Bug fixes (e.g., `bugfix/login-validation-error`)
+- `hotfix/[name]` - Critical production issues (e.g., `hotfix/security-vulnerability`)
+
+### Standard Workflow (Features & Bugfixes)
+
+```bash
+# 1. Create branch from dev
+git checkout dev
+git pull origin dev
+git checkout -b feature/your-feature-name
+
+# 2. Develop and commit
+# ... make changes ...
+git add .
+git commit -m "feat(scope): description"
+
+# 3. Push and create PR to dev
+git push -u origin feature/your-feature-name
+# Create pull request: feature/your-feature-name → dev
+
+# 4. After merge, delete feature branch
+git branch -d feature/your-feature-name
+git push origin --delete feature/your-feature-name
+```
+
+**⚠️ NEVER commit directly to `dev` or `main`! Always use pull requests.**
+
+### Hotfix Workflow (Production Emergencies)
+
+For critical bugs that need immediate production fixes:
+
+```bash
+# 1. Create hotfix from main
+git checkout main
+git pull origin main
+git checkout -b hotfix/critical-bug-name
+
+# 2. Fix and test thoroughly
+# ... make minimal changes ...
+git add .
+git commit -m "fix(scope)!: critical bug description"
+
+# 3. PR to main (urgent)
+git push -u origin hotfix/critical-bug-name
+# Create pull request: hotfix/critical-bug-name → main
+
+# 4. After merge to main, sync back to dev
+git checkout dev
+git pull origin dev
+git merge main
+git push origin dev
+
+# 5. Delete hotfix branch
+git branch -d hotfix/critical-bug-name
+git push origin --delete hotfix/critical-bug-name
+```
+
+### Release Workflow (dev → main)
+
+Promote `dev` to `main` when ready for production release:
+
+**Merge Criteria** (all must be satisfied):
+
+- [ ] All tests passing in dev
+- [ ] QA approval received
+- [ ] No known critical bugs
+- [ ] Staging deployment verified
+- [ ] Release notes prepared
+
+**Release Process:**
+
+```bash
+# 1. Create PR from dev to main
+# Review changes carefully - this goes to production!
+
+# 2. After merge, tag the release
+git checkout main
+git pull origin main
+git tag -a v1.2.3 -m "Release v1.2.3: Description"
+git push origin v1.2.3
+
+# 3. Sync dev with main to ensure alignment
+git checkout dev
+git merge main
+git push origin dev
+```
+
+### Branch Maintenance
+
+- **Delete merged branches**: Feature/bugfix branches should be deleted immediately after merge
+- **Keep dev synchronized**: Regularly sync dev with main after releases
+- **Use descriptive names**: Branch names should clearly indicate their purpose
+- **Keep branches short-lived**: Merge within 1-2 weeks to avoid merge conflicts
 
 ## Development Workflow
 
 ### Daily Process
 
 ```bash
-# Start of day
-git checkout main && git pull origin main
+# Start of day - always work from dev branch
+git checkout dev && git pull origin dev
 
-# Feature development
+# Create feature branch from dev
 git checkout -b feature/your-feature-name
+
+# Development
 npm run dev
 # Make changes, test frequently
 npm run lint && npm test  # Before each commit
 
-# End of day
-git add . && git commit -m "type(scope): description"
+# Commit and push
+git add .
+git commit -m "type(scope): description"
 git push -u origin feature/your-feature-name
+
+# Create pull request to dev (not main!)
+# After PR approval and merge, delete the feature branch
 ```
+
+**Important Notes:**
+
+- Always branch from and merge to `dev` for features/bugfixes
+- Only create PRs to `main` for hotfixes (emergency production fixes)
+- Keep your feature branch updated: `git checkout dev && git pull && git checkout - && git merge dev`
 
 ### Code Quality Checklist
 
