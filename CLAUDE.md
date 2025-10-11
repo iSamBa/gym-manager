@@ -642,3 +642,4 @@ fi
 - [Troubleshooting Guide](./docs/TROUBLESHOOTING.md) - Common issues and solutions
 - [Team Collaboration](./docs/COLLABORATION.md) - PR templates, code review guidelines
 - [Deployment Guide](./docs/DEPLOYMENT.md) - Production deployment and monitoring
+- you should never skip a test

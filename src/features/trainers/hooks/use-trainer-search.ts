@@ -97,7 +97,7 @@ export function useTrainerPrefetch() {
         queryKey: trainerKeys.detail(id),
         queryFn: async () => {
           const { trainerUtils } = await import(
-            "@/features/database/lib/utils"
+            "@/features/trainers/lib/database-utils"
           );
           return trainerUtils.getTrainerById(id);
         },
@@ -113,7 +113,7 @@ export function useTrainerPrefetch() {
         queryKey: trainerKeys.withProfile(id),
         queryFn: async () => {
           const { trainerUtils } = await import(
-            "@/features/database/lib/utils"
+            "@/features/trainers/lib/database-utils"
           );
           return trainerUtils.getTrainerWithProfile(id);
         },
@@ -163,7 +163,7 @@ export function useTrainerPrefetch() {
         queryKey: trainerKeys.withProfile(id),
         queryFn: async () => {
           const { trainerUtils } = await import(
-            "@/features/database/lib/utils"
+            "@/features/trainers/lib/database-utils"
           );
           return trainerUtils.getTrainerWithProfile(id);
         },
@@ -326,7 +326,7 @@ export function useTrainerCacheUtils() {
         queryKey: trainerKeys.detail(id),
         queryFn: async () => {
           const { trainerUtils } = await import(
-            "@/features/database/lib/utils"
+            "@/features/trainers/lib/database-utils"
           );
           return trainerUtils.getTrainerById(id);
         },

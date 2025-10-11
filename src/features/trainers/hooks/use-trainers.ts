@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
   trainerUtils,
   type TrainerFilters,
-} from "@/features/database/lib/utils";
+} from "@/features/trainers/lib/database-utils";
 import type {
   Trainer,
   TrainerWithProfile,

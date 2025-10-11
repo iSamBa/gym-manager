@@ -120,6 +120,50 @@ export const subscriptionUtils = {
   },
 
   /**
+   * Restore a session to a subscription (decrement used_sessions)
+   * Used when a training session is cancelled
+   */
+  async restoreSession(subscriptionId: string) {
+    // Get current subscription state
+    const { data: subscription, error: fetchError } = await supabase
+      .from("member_subscriptions")
+      .select("*")
+      .eq("id", subscriptionId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const sub = subscription as MemberSubscriptionWithSnapshot;
+
+    // Validate session restoration
+    if (sub.used_sessions <= 0) {
+      throw new Error("No sessions to restore");
+    }
+
+    // Decrement used sessions
+    const newUsedSessions = sub.used_sessions - 1;
+
+    // Reactivate if was expired due to full consumption
+    const shouldReactivate =
+      sub.status === "expired" &&
+      sub.used_sessions === sub.total_sessions_snapshot;
+
+    const { data, error } = await supabase
+      .from("member_subscriptions")
+      .update({
+        used_sessions: newUsedSessions,
+        status: shouldReactivate ? "active" : sub.status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", subscriptionId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as MemberSubscriptionWithSnapshot;
+  },
+
+  /**
    * Calculate upgrade credit from remaining sessions
    */
   calculateUpgradeCredit(subscription: MemberSubscriptionWithSnapshot): number {

@@ -4,14 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ProgressiveTrainingSessionForm } from "@/features/training-sessions/components";
+import { Button } from "@/components/ui/button";
+import { SessionBookingDialog } from "@/features/training-sessions/components";
 import { useCreateTrainingSession } from "@/features/training-sessions/hooks/use-training-sessions";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { AlertCircle, CheckCircle } from "lucide-react";
-import type { CreateSessionData } from "@/features/training-sessions/lib/validation";
 
 export default function AddTrainingSessionPage() {
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(true);
   const router = useRouter();
 
   // Require admin role for this page
@@ -35,29 +35,16 @@ export default function AddTrainingSessionPage() {
     return null; // Will redirect to login
   }
 
-  const handleSubmit = async (data: CreateSessionData) => {
-    try {
-      setIsSubmitted(true);
-
-      // Create training session
-      await createSessionMutation.mutateAsync(data);
-
-      // Show success state briefly before redirecting
-      setTimeout(() => {
-        router.push(`/training-sessions`);
-      }, 1500);
-    } catch (error) {
-      setIsSubmitted(false);
-      console.error("Failed to create training session:", error);
+  const handleDialogClose = (open: boolean) => {
+    if (!open) {
+      // User cancelled or closed the dialog
+      router.push("/training-sessions");
     }
-  };
-
-  const handleCancel = () => {
-    router.push("/training-sessions");
+    setDialogOpen(open);
   };
 
   // Show success state after submission
-  if (isSubmitted && createSessionMutation.isSuccess) {
+  if (createSessionMutation.isSuccess) {
     return (
       <MainLayout>
         <div className="container mx-auto py-4">
@@ -69,13 +56,12 @@ export default function AddTrainingSessionPage() {
                   Training Session Created Successfully!
                 </h1>
                 <p className="text-muted-foreground">
-                  The new training session has been scheduled. You&apos;ll be
-                  redirected to the sessions list shortly.
+                  The new training session has been scheduled.
                 </p>
               </div>
-              <div className="text-muted-foreground animate-pulse text-sm">
-                Redirecting...
-              </div>
+              <Button onClick={() => router.push("/training-sessions")}>
+                Go to Sessions
+              </Button>
             </div>
           </div>
         </div>
@@ -86,6 +72,21 @@ export default function AddTrainingSessionPage() {
   return (
     <MainLayout>
       <div className="container mx-auto py-4">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Book New Training Session</h1>
+            <p className="text-muted-foreground mt-2">
+              Create a new training session booking
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/training-sessions")}
+          >
+            Cancel
+          </Button>
+        </div>
+
         {/* Error Display */}
         {createSessionMutation.error && (
           <div className="mb-6">
@@ -100,11 +101,10 @@ export default function AddTrainingSessionPage() {
           </div>
         )}
 
-        {/* Progressive Training Session Form */}
-        <ProgressiveTrainingSessionForm
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          isLoading={createSessionMutation.isPending}
+        {/* Session Booking Dialog */}
+        <SessionBookingDialog
+          open={dialogOpen}
+          onOpenChange={handleDialogClose}
         />
       </div>
     </MainLayout>

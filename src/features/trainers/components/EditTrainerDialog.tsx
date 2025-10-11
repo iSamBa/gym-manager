@@ -16,7 +16,7 @@ import {
 import { AlertCircle, CheckCircle, Edit } from "lucide-react";
 import { toast } from "sonner";
 import type { TrainerWithProfile } from "@/features/database/lib/types";
-import type { UpdateTrainerData } from "@/features/database/lib/utils";
+import type { UpdateTrainerData } from "@/features/trainers/lib/database-utils";
 
 interface EditTrainerDialogProps {
   trainer: TrainerWithProfile | null;

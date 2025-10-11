@@ -12,7 +12,7 @@ const mockCommentUtils = {
   deleteMemberComment: vi.fn(),
 };
 
-vi.mock("@/features/database/lib/utils", () => ({
+vi.mock("@/features/members/lib/comments-utils", () => ({
   fetchMemberComments: (memberId: string) =>
     mockCommentUtils.fetchMemberComments(memberId),
   fetchActiveCommentAlerts: (memberId: string) =>

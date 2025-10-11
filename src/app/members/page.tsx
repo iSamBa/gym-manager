@@ -22,7 +22,7 @@ import {
   useSimpleMemberFilters,
   useExportMembers,
 } from "@/features/members/hooks";
-import { memberUtils } from "@/features/database/lib/utils";
+import { memberUtils } from "@/features/members/lib/database-utils";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import {
   Users,

@@ -64,7 +64,7 @@ import type {
   MemberStatus,
   MemberWithEnhancedDetails,
 } from "@/features/database/lib/types";
-import type { MemberFilters } from "@/features/database/lib/utils";
+import type { MemberFilters } from "@/features/members/lib/database-utils";
 import type { ColumnVisibility } from "./ColumnVisibilityToggle";
 import { DEFAULT_VISIBILITY } from "./ColumnVisibilityToggle";
 

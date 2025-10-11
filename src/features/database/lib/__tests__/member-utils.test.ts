@@ -60,7 +60,9 @@ describe("Member Utils Database Operations", () => {
 
   it("should get member by ID", async () => {
     mockQuery.order.mockResolvedValue({ data: [mockMember], error: null });
-    const { memberUtils } = await import("../utils");
+    const { memberUtils } = await import(
+      "@/features/members/lib/database-utils"
+    );
 
     const result = await memberUtils.getMemberById("test-id");
 
@@ -101,7 +103,9 @@ describe("Member Utils Database Operations", () => {
       error: null,
     });
 
-    const { memberUtils } = await import("../utils");
+    const { memberUtils } = await import(
+      "@/features/members/lib/database-utils"
+    );
 
     const result = await memberUtils.getMembers();
 
@@ -122,7 +126,9 @@ describe("Member Utils Database Operations", () => {
   });
 
   it("should create member", async () => {
-    const { memberUtils } = await import("../utils");
+    const { memberUtils } = await import(
+      "@/features/members/lib/database-utils"
+    );
     const newData = {
       first_name: "Test",
       last_name: "User",
@@ -136,7 +142,9 @@ describe("Member Utils Database Operations", () => {
   });
 
   it("should update member", async () => {
-    const { memberUtils } = await import("../utils");
+    const { memberUtils } = await import(
+      "@/features/members/lib/database-utils"
+    );
     const updateData = { first_name: "Updated" };
 
     const result = await memberUtils.updateMember("test-id", updateData);
@@ -147,7 +155,9 @@ describe("Member Utils Database Operations", () => {
   });
 
   it("should update member status", async () => {
-    const { memberUtils } = await import("../utils");
+    const { memberUtils } = await import(
+      "@/features/members/lib/database-utils"
+    );
 
     const result = await memberUtils.updateMemberStatus("test-id", "suspended");
 
@@ -160,7 +170,9 @@ describe("Member Utils Database Operations", () => {
       .fn()
       .mockResolvedValue({ data: [mockMember], error: null });
     mockQuery.or.mockReturnValue(mockQuery);
-    const { memberUtils } = await import("../utils");
+    const { memberUtils } = await import(
+      "@/features/members/lib/database-utils"
+    );
 
     const result = await memberUtils.searchMembers("John");
 

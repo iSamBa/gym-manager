@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { trainingSessionUtils } from "../lib/database-utils";
 import { subscriptionKeys } from "@/features/memberships/hooks/use-subscriptions";
+import { subscriptionUtils } from "@/features/memberships/lib/subscription-utils";
+import { memberKeys } from "@/features/members/hooks/use-members";
 import type {
   TrainingSession,
   CreateSessionData,
@@ -44,8 +46,8 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
         query = query.eq("status", filters.status);
       }
 
-      if (filters?.location) {
-        query = query.ilike("location", `%${filters.location}%`);
+      if (filters?.machine_id) {
+        query = query.eq("machine_id", filters.machine_id);
       }
 
       if (filters?.date_range) {
@@ -106,14 +108,13 @@ export const useCreateTrainingSession = () => {
       const { data: result, error } = await supabase.rpc(
         "create_training_session_with_members",
         {
-          p_trainer_id: data.trainer_id,
+          p_machine_id: data.machine_id,
+          p_trainer_id: data.trainer_id || null,
           p_scheduled_start: data.scheduled_start,
           p_scheduled_end: data.scheduled_end,
-          p_location: data.location,
-          p_max_participants: data.max_participants,
-          p_member_ids: data.member_ids,
-          p_notes: data.notes || null,
+          p_member_ids: [data.member_id], // Database function expects an array
           p_session_type: data.session_type,
+          p_notes: data.notes || null,
         }
       );
 
@@ -134,9 +135,35 @@ export const useCreateTrainingSession = () => {
 
       return result;
     },
-    onSuccess: () => {
+    onSuccess: async (_result, variables) => {
+      // Consume session from member's active subscription
+      try {
+        const subscription =
+          await subscriptionUtils.getMemberActiveSubscription(
+            variables.member_id
+          );
+
+        if (subscription) {
+          await subscriptionUtils.consumeSession(subscription.id);
+
+          // Invalidate subscription queries for cache updates
+          queryClient.invalidateQueries({
+            queryKey: ["subscriptions", "member", variables.member_id],
+          });
+          queryClient.invalidateQueries({
+            queryKey: subscriptionKeys.memberActive(variables.member_id),
+          });
+        }
+      } catch (error) {
+        // Log error but don't fail the whole operation
+        console.error("Failed to consume session:", error);
+      }
+
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: TRAINING_SESSIONS_KEYS.all });
+
+      // Invalidate members table to update scheduled_sessions_count
+      queryClient.invalidateQueries({ queryKey: memberKeys.all });
     },
   });
 };
@@ -164,8 +191,8 @@ export const useUpdateTrainingSession = () => {
         throw new Error("User not authenticated");
       }
 
-      // Separate member_ids from other update data
-      const { member_ids, ...sessionData } = data;
+      // Separate member_id from other update data
+      const { member_id, ...sessionData } = data;
 
       // Update session data if there are fields to update
       let result = null;
@@ -192,9 +219,9 @@ export const useUpdateTrainingSession = () => {
         result = updateResult;
       }
 
-      // Handle member updates ONLY if member_ids is provided AND different from current
-      // Skip member processing for simple status/field updates
-      if (member_ids !== undefined && Array.isArray(member_ids)) {
+      // Handle member updates ONLY if member_id is provided
+      // Sessions now support only one member at a time
+      if (member_id !== undefined) {
         // Get current confirmed members
         const { data: currentMembers, error: currentMembersError } =
           await supabase
@@ -209,48 +236,42 @@ export const useUpdateTrainingSession = () => {
           );
         }
 
-        const currentMemberIds = currentMembers?.map((m) => m.member_id) || [];
+        const currentMemberId = currentMembers?.[0]?.member_id;
 
-        // Find members to remove (in current but not in new list)
-        const membersToRemove = currentMemberIds.filter(
-          (memberId) => !member_ids.includes(memberId)
-        );
+        // Only update if the member has changed
+        if (currentMemberId !== member_id) {
+          // Remove existing member if there is one
+          if (currentMemberId) {
+            const { error: removeError } = await supabase
+              .from("training_session_members")
+              .delete()
+              .eq("session_id", id)
+              .eq("member_id", currentMemberId)
+              .eq("booking_status", "confirmed");
 
-        // Find members to add (in new list but not in current)
-        const membersToAdd = member_ids.filter(
-          (memberId) => !currentMemberIds.includes(memberId)
-        );
-
-        // Remove members
-        if (membersToRemove.length > 0) {
-          const { error: removeError } = await supabase
-            .from("training_session_members")
-            .delete()
-            .eq("session_id", id)
-            .in("member_id", membersToRemove)
-            .eq("booking_status", "confirmed");
-
-          if (removeError) {
-            throw new Error(`Failed to remove members: ${removeError.message}`);
+            if (removeError) {
+              throw new Error(
+                `Failed to remove member: ${removeError.message}`
+              );
+            }
           }
-        }
 
-        // Add new members
-        if (membersToAdd.length > 0) {
-          const membersToInsert = membersToAdd.map((memberId) => ({
-            session_id: id,
-            member_id: memberId,
-            booking_status: "confirmed" as const,
-          }));
-
+          // Add new member
           const { error: addError } = await supabase
             .from("training_session_members")
-            .upsert(membersToInsert, {
-              onConflict: "session_id,member_id",
-            });
+            .upsert(
+              {
+                session_id: id,
+                member_id: member_id,
+                booking_status: "confirmed" as const,
+              },
+              {
+                onConflict: "session_id,member_id",
+              }
+            );
 
           if (addError) {
-            throw new Error(`Failed to add members: ${addError.message}`);
+            throw new Error(`Failed to add member: ${addError.message}`);
           }
         }
       }
@@ -279,8 +300,11 @@ export const useUpdateTrainingSession = () => {
       return result;
     },
     onSuccess: (data) => {
-      // Update specific session in cache
-      queryClient.setQueryData(TRAINING_SESSIONS_KEYS.detail(data.id), data);
+      // Invalidate detail query to refetch from training_sessions_calendar view
+      // This ensures we get the updated data with participants and machine info
+      queryClient.invalidateQueries({
+        queryKey: TRAINING_SESSIONS_KEYS.detail(data.id),
+      });
       // Invalidate lists to refresh data
       queryClient.invalidateQueries({
         queryKey: TRAINING_SESSIONS_KEYS.lists(),
@@ -419,23 +443,74 @@ export const useUpdateTrainingSessionStatus = () => {
 };
 
 // Delete training session mutation
+// Delete/Cancel training session mutation
 export const useDeleteTrainingSession = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      // Get session details first to find member_id for credit restoration
+      const { data: session, error: fetchError } = await supabase
+        .from("training_sessions_calendar")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) {
+        throw new Error(
+          `Failed to fetch session details: ${fetchError.message}`
+        );
+      }
+
+      // Extract member ID from participants array
+      const memberId = session?.participants?.[0]?.id;
+
+      // Delete session (cascade will delete training_session_members)
+      const { error: deleteError } = await supabase
         .from("training_sessions")
         .delete()
         .eq("id", id);
 
-      if (error) {
-        throw new Error(`Failed to delete training session: ${error.message}`);
+      if (deleteError) {
+        throw new Error(
+          `Failed to delete training session: ${deleteError.message}`
+        );
       }
+
+      return { sessionId: id, memberId };
     },
-    onSuccess: () => {
+    onSuccess: async ({ sessionId, memberId }) => {
+      // Restore session credit to member's subscription
+      if (memberId) {
+        try {
+          const subscription =
+            await subscriptionUtils.getMemberActiveSubscription(memberId);
+
+          if (subscription) {
+            await subscriptionUtils.restoreSession(subscription.id);
+
+            // Invalidate subscription queries for cache updates
+            queryClient.invalidateQueries({
+              queryKey: ["subscriptions", "member", memberId],
+            });
+            queryClient.invalidateQueries({
+              queryKey: subscriptionKeys.memberActive(memberId),
+            });
+          }
+        } catch (error) {
+          // Log error but don't fail the whole operation
+          console.error("Failed to restore session credit:", error);
+        }
+      }
+
       // Invalidate all training session queries
       queryClient.invalidateQueries({ queryKey: TRAINING_SESSIONS_KEYS.all });
+      queryClient.invalidateQueries({
+        queryKey: TRAINING_SESSIONS_KEYS.detail(sessionId),
+      });
+
+      // Invalidate members table to update scheduled_sessions_count
+      queryClient.invalidateQueries({ queryKey: memberKeys.all });
     },
   });
 };

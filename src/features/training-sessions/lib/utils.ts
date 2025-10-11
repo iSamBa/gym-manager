@@ -1,12 +1,5 @@
-import { format, parseISO, isAfter, isBefore, isEqual } from "date-fns";
-import { SESSION_VISIBILITY_CONFIG, type CalendarViewMode } from "./constants";
-import type {
-  TrainingSession,
-  TrainingSessionCalendarEvent,
-  TrainingSessionWithDetails,
-  SessionHistoryEntry,
-  CreateSessionData,
-} from "./types";
+import { format, parseISO } from "date-fns";
+import type { TrainingSession } from "./types";
 
 // Date/time utilities
 export const formatSessionTime = (start: string, end: string): string => {
@@ -26,126 +19,6 @@ export const calculateSessionDuration = (
   const startDate = parseISO(start);
   const endDate = parseISO(end);
   return Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60)); // minutes
-};
-
-// Extended type for sessions with trainer name (from database views)
-interface SessionWithTrainerName extends TrainingSession {
-  trainer_name?: string;
-  session_category?: string;
-}
-
-// Session data transformations for both detailed and basic sessions
-export const transformSessionToCalendarEvent = (
-  session: TrainingSession | TrainingSessionWithDetails | SessionWithTrainerName
-): TrainingSessionCalendarEvent => {
-  // Handle both detailed sessions with relationships and basic sessions from the view
-  const trainerName =
-    "trainer" in session && session.trainer?.user_profile
-      ? `${session.trainer.user_profile.first_name} ${session.trainer.user_profile.last_name}`
-      : "trainer_name" in session
-        ? (session as SessionWithTrainerName).trainer_name || "Unknown"
-        : "Unknown";
-
-  return {
-    id: session.id,
-    title: `${trainerName} - ${session.current_participants}/${session.max_participants}`,
-    start: parseISO(session.scheduled_start),
-    end: parseISO(session.scheduled_end),
-    trainer_name: trainerName,
-    participant_count: session.current_participants,
-    max_participants: session.max_participants,
-    location: session.location,
-    status: session.status,
-    session_category:
-      "session_category" in session
-        ? (session as SessionWithTrainerName).session_category
-        : undefined,
-    resource: {
-      trainer_id: session.trainer_id,
-      session: session as TrainingSession,
-    },
-  };
-};
-
-// Validation utilities
-export const isTimeSlotAvailable = (
-  newStart: string,
-  newEnd: string,
-  existingSessions: TrainingSession[],
-  excludeSessionId?: string
-): boolean => {
-  const newStartDate = parseISO(newStart);
-  const newEndDate = parseISO(newEnd);
-
-  return !existingSessions.some((session) => {
-    if (excludeSessionId && session.id === excludeSessionId) {
-      return false;
-    }
-
-    if (session.status === "cancelled") {
-      return false;
-    }
-
-    const existingStart = parseISO(session.scheduled_start);
-    const existingEnd = parseISO(session.scheduled_end);
-
-    // Check for overlap
-    return (
-      (isAfter(newStartDate, existingStart) &&
-        isBefore(newStartDate, existingEnd)) ||
-      (isAfter(newEndDate, existingStart) &&
-        isBefore(newEndDate, existingEnd)) ||
-      (isBefore(newStartDate, existingStart) &&
-        isAfter(newEndDate, existingEnd)) ||
-      isEqual(newStartDate, existingStart) ||
-      isEqual(newEndDate, existingEnd)
-    );
-  });
-};
-
-export const getSessionConflicts = (
-  newStart: string,
-  newEnd: string,
-  existingSessions: TrainingSession[],
-  excludeSessionId?: string
-): TrainingSession[] => {
-  const newStartDate = parseISO(newStart);
-  const newEndDate = parseISO(newEnd);
-
-  return existingSessions.filter((session) => {
-    if (excludeSessionId && session.id === excludeSessionId) {
-      return false;
-    }
-
-    if (session.status === "cancelled") {
-      return false;
-    }
-
-    const existingStart = parseISO(session.scheduled_start);
-    const existingEnd = parseISO(session.scheduled_end);
-
-    // Check for overlap
-    return (
-      (isAfter(newStartDate, existingStart) &&
-        isBefore(newStartDate, existingEnd)) ||
-      (isAfter(newEndDate, existingStart) &&
-        isBefore(newEndDate, existingEnd)) ||
-      (isBefore(newStartDate, existingStart) &&
-        isAfter(newEndDate, existingEnd)) ||
-      isEqual(newStartDate, existingStart) ||
-      isEqual(newEndDate, existingEnd)
-    );
-  });
-};
-
-// Form data utilities (simplified)
-export const prepareSessionData = (
-  formData: CreateSessionData
-): CreateSessionData => {
-  return {
-    ...formData,
-    // Validation of start/end times handled by Zod schemas
-  };
 };
 
 // Session status utilities
@@ -192,8 +65,8 @@ export const calculateAttendanceRate = (
 };
 
 export const groupSessionsByDate = (
-  sessions: SessionHistoryEntry[]
-): Record<string, SessionHistoryEntry[]> => {
+  sessions: TrainingSession[]
+): Record<string, TrainingSession[]> => {
   return sessions.reduce(
     (groups, session) => {
       const date = format(parseISO(session.scheduled_start), "yyyy-MM-dd");
@@ -203,92 +76,6 @@ export const groupSessionsByDate = (
       groups[date].push(session);
       return groups;
     },
-    {} as Record<string, SessionHistoryEntry[]>
+    {} as Record<string, TrainingSession[]>
   );
-};
-
-// Dynamic minimum height calculation utilities
-export const calculateSessionMinHeight = (
-  durationMinutes: number,
-  viewMode: CalendarViewMode = "standard"
-): number => {
-  const config = SESSION_VISIBILITY_CONFIG.minHeights[viewMode];
-  const thresholds = SESSION_VISIBILITY_CONFIG.thresholds;
-
-  if (durationMinutes <= thresholds.veryShort) {
-    return config.veryShort;
-  } else if (durationMinutes <= thresholds.short) {
-    return config.short;
-  } else {
-    return config.normal;
-  }
-};
-
-// EventPropGetter for react-big-calendar - properly overrides inline styles
-export const createEventPropGetter = (
-  viewMode: CalendarViewMode = "standard",
-  currentView: string = "week"
-) => {
-  return (
-    event: TrainingSessionCalendarEvent,
-    start: Date,
-    end: Date,
-    _isSelected: boolean // eslint-disable-line @typescript-eslint/no-unused-vars
-  ) => {
-    // Only apply custom heights in TimeGrid views (day/week), not month
-    if (currentView === "month") {
-      return {
-        style: {},
-        className: "",
-      };
-    }
-
-    const durationMinutes = Math.floor(
-      (end.getTime() - start.getTime()) / (1000 * 60)
-    );
-    const minHeight = calculateSessionMinHeight(durationMinutes, viewMode);
-    const displayClass = getSessionDisplayClass(durationMinutes, viewMode);
-
-    return {
-      style: {
-        minHeight: minHeight > 0 ? `${minHeight}px` : undefined,
-        height:
-          minHeight > 0 ? `max(${minHeight}px, 100%) !important` : undefined,
-      },
-      className: displayClass,
-    };
-  };
-};
-
-// Legacy function - kept for backwards compatibility but will be removed
-export const getSessionDynamicStyle = (
-  start: Date,
-  end: Date,
-  viewMode: CalendarViewMode = "standard"
-): React.CSSProperties => {
-  const durationMinutes = Math.floor(
-    (end.getTime() - start.getTime()) / (1000 * 60)
-  );
-  const minHeight = calculateSessionMinHeight(durationMinutes, viewMode);
-
-  return {
-    minHeight: minHeight > 0 ? `${minHeight}px` : "auto",
-    height: minHeight > 0 ? `max(${minHeight}px, 100%)` : "100%",
-  };
-};
-
-export const getSessionDisplayClass = (
-  durationMinutes: number,
-  viewMode: CalendarViewMode = "standard"
-): string => {
-  const thresholds = SESSION_VISIBILITY_CONFIG.thresholds;
-  const baseClass = viewMode === "compact" ? "event-compact" : "event-standard";
-
-  if (durationMinutes <= thresholds.veryShort) {
-    return `${baseClass} event-very-short`;
-  } else if (durationMinutes <= thresholds.short) {
-    return `${baseClass} event-short`;
-  } else {
-    return `${baseClass} event-normal`;
-  }
 };

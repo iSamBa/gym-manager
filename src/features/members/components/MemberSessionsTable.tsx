@@ -122,9 +122,6 @@ export function MemberSessionsTable({
     if (bookingStatus === "cancelled" || status === "cancelled") {
       return <Badge variant="outline">Cancelled</Badge>;
     }
-    if (bookingStatus === "waitlisted") {
-      return <Badge variant="secondary">Waitlisted</Badge>;
-    }
     if (isUpcoming) {
       return <Badge variant="default">Upcoming</Badge>;
     }
@@ -316,7 +313,7 @@ export function MemberSessionsTable({
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <MapPin className="text-muted-foreground h-4 w-4" />
-                        <span>{session.location || "Not specified"}</span>
+                        <span>{session.machine_name || "Not specified"}</span>
                       </div>
                     </TableCell>
                     <TableCell>

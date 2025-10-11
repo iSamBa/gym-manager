@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import type { TrainerFilters } from "@/features/database/lib/utils";
+import type { TrainerFilters } from "@/features/trainers/lib/database-utils";
 
 // Simple filter types for UI components
 export interface SimpleTrainerFilters {
@@ -227,5 +227,3 @@ export function useSimpleTrainerFilters() {
     filterOptions,
   };
 }
-
-// SimpleTrainerFilters type is already exported in the interface declaration above

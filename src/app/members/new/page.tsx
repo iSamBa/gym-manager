@@ -8,7 +8,7 @@ import { ProgressiveMemberForm } from "@/features/members/components";
 import { useCreateMember } from "@/features/members/hooks";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { AlertCircle, CheckCircle } from "lucide-react";
-import type { CreateMemberData } from "@/features/database/lib/utils";
+import type { CreateMemberData } from "@/features/members/lib/database-utils";
 
 export default function AddMemberPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);

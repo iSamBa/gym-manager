@@ -7,7 +7,10 @@ import {
 import { keepPreviousData } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { memberUtils, type MemberFilters } from "@/features/database/lib/utils";
+import {
+  memberUtils,
+  type MemberFilters,
+} from "@/features/members/lib/database-utils";
 import type { Member, MemberStatus } from "@/features/database/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { exportMembersToCSV } from "../lib/csv-utils";

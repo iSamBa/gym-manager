@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { memberUtils, DatabaseError } from "../utils";
+import { memberUtils } from "@/features/members/lib/database-utils";
 import { supabase } from "@/lib/supabase";
 import type { MemberWithEnhancedDetails } from "../types";
 
@@ -173,15 +173,15 @@ describe("memberUtils.getMembers - US-003 API Integration", () => {
 
   /**
    * Test 4: Error Handling
-   * Verifies that DatabaseError is thrown when the RPC call fails
+   * Verifies that Error is thrown when the RPC call fails
    */
-  it("should throw DatabaseError on failure", async () => {
+  it("should throw Error on failure", async () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: null,
       error: { message: "Function not found", code: "42883", details: {} },
     } as any);
 
-    await expect(memberUtils.getMembers()).rejects.toThrow(DatabaseError);
+    await expect(memberUtils.getMembers()).rejects.toThrow(Error);
     await expect(memberUtils.getMembers()).rejects.toThrow(
       "Function not found"
     );

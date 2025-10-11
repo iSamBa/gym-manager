@@ -45,7 +45,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TrainerWithProfile } from "@/features/database/lib/types";
-import type { CreateTrainerData } from "@/features/database/lib/utils";
+import type { CreateTrainerData } from "@/features/trainers/lib/database-utils";
 import { toast } from "sonner";
 
 // Schema for each step

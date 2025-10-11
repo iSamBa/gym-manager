@@ -55,12 +55,7 @@ export type ClassStatus =
   | "in_progress"
   | "completed"
   | "cancelled";
-export type BookingStatus =
-  | "confirmed"
-  | "waitlisted"
-  | "cancelled"
-  | "no_show"
-  | "attended";
+export type BookingStatus = "confirmed" | "cancelled" | "no_show" | "attended";
 export type SessionType =
   | "personal_training"
   | "small_group"
