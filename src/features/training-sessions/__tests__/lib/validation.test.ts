@@ -11,13 +11,12 @@ import {
 describe("Training Session Validation Schemas", () => {
   describe("createSessionSchema", () => {
     const validSessionData: CreateSessionData = {
-      trainer_id: "550e8400-e29b-41d4-a716-446655440000",
+      machine_id: "550e8400-e29b-41d4-a716-446655440000",
+      trainer_id: "550e8400-e29b-41d4-a716-446655440001",
       scheduled_start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
       scheduled_end: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(), // Tomorrow + 1 hour
-      location: "Main Gym",
       session_type: "standard",
-      max_participants: 10,
-      member_ids: ["550e8400-e29b-41d4-a716-446655440001"],
+      member_id: "550e8400-e29b-41d4-a716-446655440002",
       notes: "Morning strength session",
     };
 
@@ -29,20 +28,45 @@ describe("Training Session Validation Schemas", () => {
       }
     });
 
-    describe("trainer_id validation", () => {
+    describe("machine_id validation", () => {
       it("should reject invalid UUID", () => {
-        const invalidData = { ...validSessionData, trainer_id: "invalid-uuid" };
+        const invalidData = { ...validSessionData, machine_id: "invalid-uuid" };
         const result = createSessionSchema.safeParse(invalidData);
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "Please select a valid trainer from the list"
+            "Please select a valid machine from the available options"
           );
         }
       });
 
-      it("should reject empty trainer_id", () => {
-        const invalidData = { ...validSessionData, trainer_id: "" };
+      it("should reject empty machine_id", () => {
+        const invalidData = { ...validSessionData, machine_id: "" };
+        const result = createSessionSchema.safeParse(invalidData);
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect(result.error.issues[0].message).toBe(
+            "Please select a valid machine from the available options"
+          );
+        }
+      });
+    });
+
+    describe("trainer_id validation (optional)", () => {
+      it("should accept null trainer_id", () => {
+        const validData = { ...validSessionData, trainer_id: null };
+        const result = createSessionSchema.safeParse(validData);
+        expect(result.success).toBe(true);
+      });
+
+      it("should accept undefined trainer_id", () => {
+        const { trainer_id, ...dataWithoutTrainer } = validSessionData;
+        const result = createSessionSchema.safeParse(dataWithoutTrainer);
+        expect(result.success).toBe(true);
+      });
+
+      it("should reject invalid UUID when trainer_id provided", () => {
+        const invalidData = { ...validSessionData, trainer_id: "invalid-uuid" };
         const result = createSessionSchema.safeParse(invalidData);
         expect(result.success).toBe(false);
         if (!result.success) {
@@ -123,137 +147,60 @@ describe("Training Session Validation Schemas", () => {
       });
     });
 
-    describe("location validation", () => {
-      it("should reject empty location", () => {
-        const invalidData = { ...validSessionData, location: "" };
-        const result = createSessionSchema.safeParse(invalidData);
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.issues[0].message).toBe(
-            "Please specify where the training session will take place"
-          );
-        }
-      });
-
-      it("should reject location longer than 100 characters", () => {
-        const longLocation = "a".repeat(101);
-        const invalidData = { ...validSessionData, location: longLocation };
-        const result = createSessionSchema.safeParse(invalidData);
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.issues[0].message).toBe(
-            "Location name must be 100 characters or less"
-          );
-        }
-      });
-
-      it("should accept location with exactly 100 characters", () => {
-        const maxLocation = "a".repeat(100);
-        const validData = { ...validSessionData, location: maxLocation };
+    describe("session_type validation", () => {
+      it("should accept 'trail' session type", () => {
+        const validData = {
+          ...validSessionData,
+          session_type: "trail" as const,
+        };
         const result = createSessionSchema.safeParse(validData);
         expect(result.success).toBe(true);
       });
-    });
 
-    describe("max_participants validation", () => {
-      it("should reject zero participants", () => {
-        const invalidData = { ...validSessionData, max_participants: 0 };
-        const result = createSessionSchema.safeParse(invalidData);
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.issues[0].message).toBe(
-            "Sessions must allow at least 1 participant"
-          );
-        }
-      });
-
-      it("should reject negative participants", () => {
-        const invalidData = { ...validSessionData, max_participants: -1 };
-        const result = createSessionSchema.safeParse(invalidData);
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.issues[0].message).toBe(
-            "Sessions must allow at least 1 participant"
-          );
-        }
-      });
-
-      it("should reject more than 50 participants", () => {
-        const invalidData = { ...validSessionData, max_participants: 51 };
-        const result = createSessionSchema.safeParse(invalidData);
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.issues[0].message).toBe(
-            "Sessions cannot have more than 50 participants"
-          );
-        }
-      });
-
-      it("should accept exactly 50 participants", () => {
-        const validData = { ...validSessionData, max_participants: 50 };
+      it("should accept 'standard' session type", () => {
+        const validData = {
+          ...validSessionData,
+          session_type: "standard" as const,
+        };
         const result = createSessionSchema.safeParse(validData);
         expect(result.success).toBe(true);
       });
-    });
 
-    describe("member_ids validation", () => {
-      it("should reject empty member array", () => {
-        const invalidData = { ...validSessionData, member_ids: [] };
+      it("should reject invalid session type", () => {
+        const invalidData = { ...validSessionData, session_type: "invalid" };
         const result = createSessionSchema.safeParse(invalidData);
         expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.issues[0].message).toBe(
-            "Please select at least one member for the training session"
-          );
-        }
       });
+    });
 
-      it("should reject invalid UUID in member_ids", () => {
+    describe("member_id validation", () => {
+      it("should reject invalid UUID", () => {
         const invalidData = {
           ...validSessionData,
-          member_ids: ["invalid-uuid"],
+          member_id: "invalid-uuid",
         };
         const result = createSessionSchema.safeParse(invalidData);
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues[0].message).toBe(
-            "Invalid member selection"
+            "Invalid member selection - please select a valid member"
           );
         }
       });
 
-      it("should reject more than 50 members", () => {
-        const tooManyMembers = Array(51).fill(
-          "550e8400-e29b-41d4-a716-446655440001"
-        );
-        const invalidData = { ...validSessionData, member_ids: tooManyMembers };
+      it("should reject empty member_id", () => {
+        const invalidData = { ...validSessionData, member_id: "" };
         const result = createSessionSchema.safeParse(invalidData);
         expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.issues[0].message).toBe(
-            "Maximum 50 members can be selected for a single session"
-          );
-        }
       });
 
-      it("should reject when member count exceeds max_participants", () => {
-        const invalidData = {
+      it("should accept valid UUID", () => {
+        const validData = {
           ...validSessionData,
-          max_participants: 2,
-          member_ids: [
-            "550e8400-e29b-41d4-a716-446655440001",
-            "550e8400-e29b-41d4-a716-446655440002",
-            "550e8400-e29b-41d4-a716-446655440003",
-          ],
+          member_id: "550e8400-e29b-41d4-a716-446655440099",
         };
-        const result = createSessionSchema.safeParse(invalidData);
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.issues[0].message).toBe(
-            "You have selected more members than the maximum capacity allows"
-          );
-          expect(result.error.issues[0].path).toEqual(["member_ids"]);
-        }
+        const result = createSessionSchema.safeParse(validData);
+        expect(result.success).toBe(true);
       });
     });
 
@@ -290,8 +237,8 @@ describe("Training Session Validation Schemas", () => {
 
     it("should validate partial update data", () => {
       const updateData: UpdateSessionData = {
-        location: "Updated Gym",
-        max_participants: 15,
+        machine_id: "550e8400-e29b-41d4-a716-446655440000",
+        notes: "Updated notes",
         status: "in_progress",
       };
       const result = updateSessionSchema.safeParse(updateData);
@@ -331,13 +278,14 @@ describe("Training Session Validation Schemas", () => {
 
     it("should validate complete filters", () => {
       const filters: SessionFiltersData = {
-        trainer_id: "550e8400-e29b-41d4-a716-446655440000",
+        machine_id: "550e8400-e29b-41d4-a716-446655440000",
+        trainer_id: "550e8400-e29b-41d4-a716-446655440001",
+        member_id: "550e8400-e29b-41d4-a716-446655440002",
         status: "scheduled",
         date_range: {
           start: new Date("2024-12-01"),
           end: new Date("2024-12-31"),
         },
-        location: "Main Gym",
       };
       const result = sessionFiltersSchema.safeParse(filters);
       expect(result.success).toBe(true);

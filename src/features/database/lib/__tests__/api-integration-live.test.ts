@@ -1,68 +1,157 @@
 /**
- * US-003: Live Integration Test
- * Tests memberUtils.getMembers() with real Supabase database
+ * US-003: Database Function Business Logic Tests
+ * Tests for memberUtils.getMembers() behavior with mocked Supabase client
  *
- * This test verifies the actual database function works correctly
+ * Tests business logic without requiring live database connection
  */
 
-import { describe, it, expect } from "vitest";
-import { memberUtils } from "../utils";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { memberUtils } from "@/features/members/lib/database-utils";
+import { supabase } from "@/lib/supabase";
 
-describe("memberUtils.getMembers - Live Integration Test", () => {
+// Mock the Supabase client
+vi.mock("@/lib/supabase", () => ({
+  supabase: {
+    rpc: vi.fn(),
+  },
+}));
+
+describe("memberUtils.getMembers - Business Logic Tests", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   /**
-   * Integration Test: End-to-End Fetch from Real Database
-   * Verifies that the database function exists and returns data in the correct format
+   * Test 1: Fetch Members with Enhanced Details
+   * Verifies that the function correctly transforms database response
    */
-  it("should fetch real data from database with enhanced details", async () => {
-    // When: Fetch members from live database with a limit
+  it("should fetch members with enhanced details", async () => {
+    // Given: Mocked database response
+    const mockMembers = [
+      {
+        id: "member-1",
+        first_name: "John",
+        last_name: "Doe",
+        email: "john@example.com",
+        phone: "555-1234",
+        date_of_birth: "1990-01-01",
+        gender: "male",
+        status: "active",
+        join_date: "2024-01-01",
+        member_type: "full",
+        profile_picture_url: null,
+        address: null,
+        notes: null,
+        medical_conditions: null,
+        fitness_goals: null,
+        preferred_contact_method: "email",
+        marketing_consent: true,
+        waiver_signed: true,
+        waiver_signed_date: "2024-01-01",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+        subscription_end_date: "2024-12-31",
+        remaining_sessions: 10,
+        balance_due: 100,
+        last_session_date: "2024-01-15T10:00:00Z",
+        next_session_date: "2024-01-20T14:00:00Z",
+        scheduled_sessions_count: 3,
+        last_payment_date: "2024-01-01",
+      },
+    ];
+
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: mockMembers,
+      error: null,
+    } as any);
+
+    // When: Fetch members with limit
     const result = await memberUtils.getMembers({
       limit: 5,
       orderBy: "name",
       orderDirection: "asc",
     });
 
-    // Then: Should return an array (may be empty if no members exist)
+    // Then: Should return array with enhanced details
     expect(Array.isArray(result)).toBe(true);
+    expect(result).toHaveLength(1);
 
-    // If members exist, verify structure
-    if (result.length > 0) {
-      const member = result[0];
+    const member = result[0];
 
-      // Verify base member fields exist
-      expect(member).toHaveProperty("id");
-      expect(member).toHaveProperty("first_name");
-      expect(member).toHaveProperty("last_name");
-      expect(member).toHaveProperty("email");
-      expect(member).toHaveProperty("status");
-      expect(member).toHaveProperty("join_date");
+    // Verify base member fields
+    expect(member).toHaveProperty("id");
+    expect(member).toHaveProperty("first_name");
+    expect(member).toHaveProperty("last_name");
+    expect(member).toHaveProperty("email");
+    expect(member).toHaveProperty("status");
+    expect(member).toHaveProperty("join_date");
 
-      // Verify enhanced fields exist (may be null)
-      expect(member).toHaveProperty("active_subscription");
-      expect(member).toHaveProperty("session_stats");
-      expect(member).toHaveProperty("last_payment_date");
+    // Verify enhanced fields
+    expect(member).toHaveProperty("active_subscription");
+    expect(member).toHaveProperty("session_stats");
+    expect(member).toHaveProperty("last_payment_date");
 
-      // If active_subscription exists, verify its structure
-      if (member.active_subscription) {
-        expect(member.active_subscription).toHaveProperty("end_date");
-        expect(member.active_subscription).toHaveProperty("remaining_sessions");
-        expect(member.active_subscription).toHaveProperty("balance_due");
-      }
+    // Verify active_subscription structure
+    expect(member.active_subscription).toEqual({
+      end_date: "2024-12-31",
+      remaining_sessions: 10,
+      balance_due: 100,
+    });
 
-      // If session_stats exists, verify its structure
-      if (member.session_stats) {
-        expect(member.session_stats).toHaveProperty("last_session_date");
-        expect(member.session_stats).toHaveProperty("next_session_date");
-        expect(member.session_stats).toHaveProperty("scheduled_sessions_count");
-      }
-    }
+    // Verify session_stats structure
+    expect(member.session_stats).toEqual({
+      last_session_date: "2024-01-15T10:00:00Z",
+      next_session_date: "2024-01-20T14:00:00Z",
+      scheduled_sessions_count: 3,
+    });
+
+    expect(member.last_payment_date).toBe("2024-01-01");
   });
 
   /**
-   * Integration Test: Filter Parameters Work Correctly
-   * Verifies that all filter parameters are properly handled by the database function
+   * Test 2: Filter Parameters Work Correctly
+   * Verifies that filter parameters are properly passed to database function
    */
   it("should respect filter parameters", async () => {
+    const mockActiveMembers = [
+      {
+        id: "member-1",
+        first_name: "Active",
+        last_name: "User",
+        email: "active@example.com",
+        phone: null,
+        date_of_birth: null,
+        gender: null,
+        status: "active",
+        join_date: "2024-01-01",
+        member_type: "full",
+        profile_picture_url: null,
+        address: null,
+        notes: null,
+        medical_conditions: null,
+        fitness_goals: null,
+        preferred_contact_method: "email",
+        marketing_consent: false,
+        waiver_signed: true,
+        waiver_signed_date: null,
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+        subscription_end_date: null,
+        remaining_sessions: null,
+        balance_due: null,
+        last_session_date: null,
+        next_session_date: null,
+        scheduled_sessions_count: null,
+        last_payment_date: null,
+      },
+    ];
+
     // Test with search filter
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: [],
+      error: null,
+    } as any);
+
     const searchResult = await memberUtils.getMembers({
       search: "test",
       limit: 10,
@@ -70,6 +159,11 @@ describe("memberUtils.getMembers - Live Integration Test", () => {
     expect(Array.isArray(searchResult)).toBe(true);
 
     // Test with status filter
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: mockActiveMembers,
+      error: null,
+    } as any);
+
     const statusResult = await memberUtils.getMembers({
       status: "active",
       limit: 10,
@@ -79,14 +173,60 @@ describe("memberUtils.getMembers - Live Integration Test", () => {
     statusResult.forEach((member) => {
       expect(member.status).toBe("active");
     });
+
+    // Verify RPC was called with correct filter
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "get_members_with_details",
+      expect.objectContaining({
+        p_status: ["active"],
+      })
+    );
   });
 
   /**
-   * Integration Test: Enhanced Filters Work Correctly
+   * Test 3: Enhanced Filters Work Correctly
    * Verifies that new enhanced filter parameters work
    */
   it("should handle enhanced filter parameters", async () => {
     // Test hasActiveSubscription filter
+    const withSubscriptionData = [
+      {
+        id: "member-1",
+        first_name: "Has",
+        last_name: "Subscription",
+        email: "has@example.com",
+        phone: null,
+        date_of_birth: null,
+        gender: null,
+        status: "active",
+        join_date: "2024-01-01",
+        member_type: "full",
+        profile_picture_url: null,
+        address: null,
+        notes: null,
+        medical_conditions: null,
+        fitness_goals: null,
+        preferred_contact_method: "email",
+        marketing_consent: false,
+        waiver_signed: true,
+        waiver_signed_date: null,
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+        subscription_end_date: "2024-12-31",
+        remaining_sessions: 5,
+        balance_due: 0,
+        last_session_date: null,
+        next_session_date: null,
+        scheduled_sessions_count: null,
+        last_payment_date: null,
+      },
+    ];
+
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: withSubscriptionData,
+      error: null,
+    } as any);
+
     const withSubscription = await memberUtils.getMembers({
       hasActiveSubscription: true,
       limit: 5,
@@ -98,6 +238,44 @@ describe("memberUtils.getMembers - Live Integration Test", () => {
     });
 
     // Test hasActiveSubscription: false filter
+    const withoutSubscriptionData = [
+      {
+        id: "member-2",
+        first_name: "No",
+        last_name: "Subscription",
+        email: "no@example.com",
+        phone: null,
+        date_of_birth: null,
+        gender: null,
+        status: "active",
+        join_date: "2024-01-01",
+        member_type: "trial",
+        profile_picture_url: null,
+        address: null,
+        notes: null,
+        medical_conditions: null,
+        fitness_goals: null,
+        preferred_contact_method: "email",
+        marketing_consent: false,
+        waiver_signed: true,
+        waiver_signed_date: null,
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+        subscription_end_date: null,
+        remaining_sessions: null,
+        balance_due: null,
+        last_session_date: null,
+        next_session_date: null,
+        scheduled_sessions_count: null,
+        last_payment_date: null,
+      },
+    ];
+
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: withoutSubscriptionData,
+      error: null,
+    } as any);
+
     const withoutSubscription = await memberUtils.getMembers({
       hasActiveSubscription: false,
       limit: 5,
@@ -110,77 +288,96 @@ describe("memberUtils.getMembers - Live Integration Test", () => {
   });
 
   /**
-   * Integration Test: Sorting Works Correctly
-   * Verifies that orderBy and orderDirection parameters work
+   * Test 4: Sorting Works Correctly
+   * Verifies that orderBy and orderDirection parameters are passed correctly
    */
-  it("should sort results correctly", async () => {
+  it("should pass sorting parameters correctly", async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: [],
+      error: null,
+    } as any);
+
     // Test ascending sort by name
-    const ascResult = await memberUtils.getMembers({
+    await memberUtils.getMembers({
       orderBy: "name",
       orderDirection: "asc",
       limit: 5,
     });
 
-    if (ascResult.length > 1) {
-      // Verify ascending order
-      for (let i = 1; i < ascResult.length; i++) {
-        const prevName =
-          `${ascResult[i - 1].first_name} ${ascResult[i - 1].last_name}`.toLowerCase();
-        const currName =
-          `${ascResult[i].first_name} ${ascResult[i].last_name}`.toLowerCase();
-        expect(prevName.localeCompare(currName)).toBeLessThanOrEqual(0);
-      }
-    }
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "get_members_with_details",
+      expect.objectContaining({
+        p_order_by: "name",
+        p_order_direction: "asc",
+      })
+    );
+
+    vi.clearAllMocks();
 
     // Test descending sort by join_date
-    const descResult = await memberUtils.getMembers({
+    await memberUtils.getMembers({
       orderBy: "join_date",
       orderDirection: "desc",
       limit: 5,
     });
 
-    if (descResult.length > 1) {
-      // Verify descending order
-      for (let i = 1; i < descResult.length; i++) {
-        const prevDate = new Date(descResult[i - 1].join_date);
-        const currDate = new Date(descResult[i].join_date);
-        expect(prevDate.getTime()).toBeGreaterThanOrEqual(currDate.getTime());
-      }
-    }
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "get_members_with_details",
+      expect.objectContaining({
+        p_order_by: "join_date",
+        p_order_direction: "desc",
+      })
+    );
   });
 
   /**
-   * Integration Test: Pagination Works Correctly
-   * Verifies that limit and offset parameters work
+   * Test 5: Pagination Works Correctly
+   * Verifies that limit and offset parameters are passed correctly
    */
   it("should handle pagination correctly", async () => {
+    const page1Data = [{ id: "member-1" }];
+    const page2Data = [{ id: "member-4" }];
+
     // Get first page
-    const page1 = await memberUtils.getMembers({
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({
+      data: page1Data as any,
+      error: null,
+    } as any);
+
+    await memberUtils.getMembers({
       limit: 3,
       offset: 0,
       orderBy: "name",
       orderDirection: "asc",
     });
 
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "get_members_with_details",
+      expect.objectContaining({
+        p_limit: 3,
+        p_offset: 0,
+      })
+    );
+
     // Get second page
-    const page2 = await memberUtils.getMembers({
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({
+      data: page2Data as any,
+      error: null,
+    } as any);
+
+    await memberUtils.getMembers({
       limit: 3,
       offset: 3,
       orderBy: "name",
       orderDirection: "asc",
     });
 
-    expect(Array.isArray(page1)).toBe(true);
-    expect(Array.isArray(page2)).toBe(true);
-
-    // If both pages have members, they should be different
-    if (page1.length > 0 && page2.length > 0) {
-      const page1Ids = page1.map((m) => m.id);
-      const page2Ids = page2.map((m) => m.id);
-
-      // No overlap between pages
-      const overlap = page1Ids.filter((id) => page2Ids.includes(id));
-      expect(overlap).toHaveLength(0);
-    }
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "get_members_with_details",
+      expect.objectContaining({
+        p_limit: 3,
+        p_offset: 3,
+      })
+    );
   });
 });
