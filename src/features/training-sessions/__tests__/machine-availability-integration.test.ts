@@ -230,12 +230,10 @@ describe("Machine Availability - Business Logic Tests", () => {
             }),
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi
-                  .fn()
-                  .mockResolvedValue({
-                    data: selectMockReturnValue,
-                    error: null,
-                  }),
+                single: vi.fn().mockResolvedValue({
+                  data: selectMockReturnValue,
+                  error: null,
+                }),
               }),
             }),
           } as any;
