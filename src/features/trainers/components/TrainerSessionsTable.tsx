@@ -37,11 +37,19 @@ import {
   Edit,
 } from "lucide-react";
 import { useTrainingSessions } from "@/features/training-sessions/hooks";
-import type { SessionFilters } from "@/features/training-sessions/lib/types";
-import {
-  getSessionDurationMinutes,
-  getSessionMemberNames,
+import type {
+  SessionFilters,
+  TrainingSession,
 } from "@/features/training-sessions/lib/types";
+import { calculateSessionDuration } from "@/features/training-sessions/lib/utils";
+
+// Helper functions for session data
+const getSessionMemberNames = (session: TrainingSession): string => {
+  if (!session.participants || session.participants.length === 0) {
+    return "No members";
+  }
+  return session.participants.map((p) => p.name).join(", ");
+};
 
 // Basic trainer session filters type for this component
 type LocalTrainerSessionFilters = {
@@ -308,7 +316,11 @@ export function TrainerSessionsTable({
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {getSessionDurationMinutes(session)} min
+                        {calculateSessionDuration(
+                          session.scheduled_start,
+                          session.scheduled_end
+                        )}{" "}
+                        min
                       </div>
                     </TableCell>
                     <TableCell>

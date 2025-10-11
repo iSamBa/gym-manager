@@ -1,7 +1,6 @@
 import React, { memo, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import {
   CalendarPlus,
   Loader2,
@@ -52,32 +51,12 @@ import { useMachines } from "../../hooks/use-machines";
 import { useMembers } from "@/features/members/hooks/use-members";
 import { useTrainers } from "@/features/trainers/hooks/use-trainers";
 import { useCreateTrainingSession } from "../../hooks/use-training-sessions";
+import {
+  createSessionSchema,
+  type CreateSessionData,
+} from "../../lib/validation";
 
-// Validation schema for session booking
-const bookingSchema = z
-  .object({
-    machine_id: z.string().min(1, "Machine is required"),
-    member_id: z.string().min(1, "Member is required"),
-    trainer_id: z.string().nullable().optional(),
-    scheduled_start: z.string().min(1, "Start time is required"),
-    scheduled_end: z.string().min(1, "End time is required"),
-    session_type: z.enum(["trail", "standard"]),
-    notes: z.string().optional(),
-  })
-  .refine(
-    (data) => {
-      // Validate end time is after start time
-      const start = new Date(data.scheduled_start);
-      const end = new Date(data.scheduled_end);
-      return end > start;
-    },
-    {
-      message: "End time must be after start time",
-      path: ["scheduled_end"],
-    }
-  );
-
-type BookingFormData = z.infer<typeof bookingSchema>;
+type BookingFormData = CreateSessionData;
 
 export interface SessionBookingDialogProps {
   open: boolean;
@@ -111,7 +90,7 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
 
     // Form setup
     const form = useForm<BookingFormData>({
-      resolver: zodResolver(bookingSchema),
+      resolver: zodResolver(createSessionSchema),
       defaultValues: {
         machine_id: "",
         member_id: "",

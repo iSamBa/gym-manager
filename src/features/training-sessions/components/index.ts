@@ -1,11 +1,8 @@
 // Component exports for training session components
 // This file serves as the central export point for all training session components
 
-export { default as TrainingSessionCalendar } from "./TrainingSessionCalendar";
-
 // Main view components
 export { default as TrainingSessionsView } from "./TrainingSessionsView";
-export { default as SessionBreadcrumbs } from "./SessionBreadcrumbs";
 
 // Form components
 export { default as SessionDialog } from "./forms/SessionDialog";

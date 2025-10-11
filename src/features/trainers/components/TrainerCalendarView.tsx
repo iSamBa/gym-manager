@@ -17,8 +17,16 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useTrainingSessions } from "@/features/training-sessions/hooks";
-import { getSessionMemberNames } from "@/features/training-sessions/lib/types";
+import type { TrainingSession } from "@/features/training-sessions/lib/types";
 import { format, startOfWeek, addDays, isToday, isSameDay } from "date-fns";
+
+// Helper function for session data
+const getSessionMemberNames = (session: TrainingSession): string => {
+  if (!session.participants || session.participants.length === 0) {
+    return "No members";
+  }
+  return session.participants.map((p) => p.name).join(", ");
+};
 
 interface TrainerCalendarViewProps {
   trainerId: string;

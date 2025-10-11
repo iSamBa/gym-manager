@@ -86,22 +86,6 @@ export interface UpdateSessionData {
   member_id?: string; // Single member (not array)
 }
 
-// Calendar view types
-export type CalendarView = "month" | "week" | "day";
-
-export interface CalendarViewState {
-  currentView: CalendarView;
-  currentDate: Date;
-  selectedSession: TrainingSession | null;
-}
-
-// Training session calendar event (for react-big-calendar)
-export interface TrainingSessionCalendarEvent extends TrainingSession {
-  start: Date;
-  end: Date;
-  title: string;
-}
-
 // API response types
 export interface SessionAvailabilityCheck {
   available: boolean;
@@ -126,22 +110,4 @@ export interface SessionFilters {
     start: Date;
     end: Date;
   };
-}
-
-// Utility functions for computed properties
-export function getSessionDurationMinutes(session: TrainingSession): number {
-  const start = new Date(session.scheduled_start);
-  const end = new Date(session.scheduled_end);
-  return Math.round((end.getTime() - start.getTime()) / (1000 * 60));
-}
-
-export function getSessionMemberNames(session: TrainingSession): string {
-  if (!session.participants || session.participants.length === 0) {
-    return "No members";
-  }
-  return session.participants.map((p) => p.name).join(", ");
-}
-
-export function getSessionMemberCount(session: TrainingSession): number {
-  return session.participants?.length || 0;
 }

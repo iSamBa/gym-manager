@@ -15,3 +15,6 @@ export {
   useUpdateMachine,
   MACHINES_KEYS as machinesKeys,
 } from "./use-machines";
+
+// Session alerts hook
+export { useSessionAlerts } from "./use-session-alerts";
