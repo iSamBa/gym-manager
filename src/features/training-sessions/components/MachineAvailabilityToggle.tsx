@@ -1,12 +1,6 @@
 import React, { memo, useCallback } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { useUpdateMachine } from "../hooks/use-machines";
 import { toast } from "sonner";
@@ -24,7 +18,6 @@ interface MachineAvailabilityToggleProps {
  * - Toggle switch with instant visual feedback
  * - Optimistic UI updates via useUpdateMachine hook
  * - Success toast notifications with clear messaging
- * - Tooltip explaining the toggle action
  *
  * @see US-010: Machine Availability Admin Controls
  * @see AC-1: Admin Toggle Control
@@ -67,32 +60,21 @@ export const MachineAvailabilityToggle = memo<MachineAvailabilityToggleProps>(
     if (!isAdmin) return null;
 
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={machine.is_available}
-                onCheckedChange={handleToggle}
-                disabled={isPending}
-                aria-label={
-                  machine.is_available
-                    ? `Disable ${machine.name} for bookings`
-                    : `Enable ${machine.name} for bookings`
-                }
-              />
-              <Label className="cursor-pointer text-xs" htmlFor={undefined}>
-                {machine.is_available ? "Available" : "Disabled"}
-              </Label>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            {machine.is_available
-              ? "Click to disable bookings (maintenance mode)"
-              : "Click to enable bookings"}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <div className="flex items-center gap-2">
+        <Switch
+          checked={machine.is_available}
+          onCheckedChange={handleToggle}
+          disabled={isPending}
+          aria-label={
+            machine.is_available
+              ? `Disable ${machine.name} for bookings`
+              : `Enable ${machine.name} for bookings`
+          }
+        />
+        <Label className="cursor-pointer text-xs" htmlFor={undefined}>
+          {machine.is_available ? "Available" : "Disabled"}
+        </Label>
+      </div>
     );
   }
 );

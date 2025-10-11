@@ -256,10 +256,14 @@ describe("SessionBookingDialog - Business Logic Tests", () => {
       expect(screen.getByText(/unavailable/i)).toBeInTheDocument();
     });
 
-    it("should show member status badges", () => {
+    it("should show member names without status badges", () => {
       renderDialog();
-      expect(screen.getByText("active")).toBeInTheDocument();
-      expect(screen.getByText("inactive")).toBeInTheDocument();
+      // Verify member names are shown
+      expect(screen.getByText("John Doe")).toBeInTheDocument();
+      expect(screen.getByText("Jane Smith")).toBeInTheDocument();
+      // Verify status badges are NOT shown
+      expect(screen.queryByText("active")).not.toBeInTheDocument();
+      expect(screen.queryByText("inactive")).not.toBeInTheDocument();
     });
   });
 

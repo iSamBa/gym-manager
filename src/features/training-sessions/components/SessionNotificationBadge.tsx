@@ -1,10 +1,4 @@
 import React from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface SessionNotificationBadgeProps {
   count: number;
@@ -20,22 +14,11 @@ export const SessionNotificationBadge: React.FC<
   if (count === 0) return null;
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            data-testid="notification-badge"
-            className="absolute -top-2 -right-2 flex h-6 w-6 cursor-help items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow-lg"
-          >
-            {count}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>
-            {count} upcoming reminder{count > 1 ? "s" : ""}
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div
+      data-testid="notification-badge"
+      className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow-lg"
+    >
+      {count}
+    </div>
   );
 };

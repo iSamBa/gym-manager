@@ -237,27 +237,6 @@ describe("MachineAvailabilityToggle", () => {
     });
   });
 
-  describe("AC-1: Admin Toggle Control - Tooltip (Rendered)", () => {
-    beforeEach(() => {
-      vi.mocked(useAuth).mockReturnValue({
-        user: { id: "admin-1", email: "admin@gym.com", role: "admin" },
-        isAuthenticated: true,
-      } as any);
-    });
-
-    it("should render tooltip trigger for available machine", () => {
-      renderComponent(mockMachine);
-      // Verify tooltip component is rendered (trigger exists)
-      expect(screen.getByRole("switch")).toBeInTheDocument();
-    });
-
-    it("should render tooltip trigger for unavailable machine", () => {
-      renderComponent(mockUnavailableMachine);
-      // Verify tooltip component is rendered (trigger exists)
-      expect(screen.getByRole("switch")).toBeInTheDocument();
-    });
-  });
-
   describe("Accessibility", () => {
     beforeEach(() => {
       vi.mocked(useAuth).mockReturnValue({

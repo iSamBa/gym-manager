@@ -41,7 +41,6 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { TimePicker } from "@/components/ui/time-picker";
@@ -55,6 +54,7 @@ import {
   createSessionSchema,
   type CreateSessionData,
 } from "../../lib/validation";
+import { MemberCombobox } from "./MemberCombobox";
 
 type BookingFormData = CreateSessionData;
 
@@ -80,7 +80,9 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
   function SessionBookingDialog({ open, onOpenChange, defaultValues }) {
     // Fetch data
     const { data: machines = [], isLoading: machinesLoading } = useMachines();
-    const { data: members = [], isLoading: membersLoading } = useMembers();
+    const { data: members = [], isLoading: membersLoading } = useMembers({
+      limit: 10000, // Fetch all members for dropdown
+    });
     const { data: trainers = [], isLoading: trainersLoading } = useTrainers({
       status: "active",
     });
@@ -171,14 +173,6 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
       }
     }, [createSessionMutation.isPending, reset, onOpenChange]);
 
-    // Format member display name with status badge
-    const formatMemberName = useCallback(
-      (member: { first_name: string; last_name: string; status: string }) => {
-        return `${member.first_name} ${member.last_name}`;
-      },
-      []
-    );
-
     // Format trainer display name
     const formatTrainerName = useCallback(
       (trainer: {
@@ -262,36 +256,15 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
                       <User className="h-4 w-4" />
                       Member *
                     </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={membersLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a member" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {members.map((member) => (
-                          <SelectItem key={member.id} value={member.id}>
-                            <div className="flex items-center gap-2">
-                              <span>{formatMemberName(member)}</span>
-                              <Badge
-                                variant={
-                                  member.status === "active"
-                                    ? "default"
-                                    : "secondary"
-                                }
-                                className="text-xs"
-                              >
-                                {member.status}
-                              </Badge>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <MemberCombobox
+                        members={members}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={membersLoading}
+                        placeholder="Select a member"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -407,9 +380,78 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
                 )}
               />
 
-              {/* Time Slot Fields (AC-4) */}
+              {/* Session Date */}
+              <FormField
+                control={form.control}
+                name="scheduled_start"
+                render={({ field }) => {
+                  const sessionDate = field.value
+                    ? new Date(field.value)
+                    : undefined;
+
+                  return (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Session Date *</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !sessionDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {sessionDate
+                                ? format(sessionDate, "PPP")
+                                : "Pick a date"}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={sessionDate}
+                            onSelect={(date) => {
+                              if (date) {
+                                // Preserve time when changing date
+                                const newDateTime = new Date(date);
+                                if (sessionDate) {
+                                  newDateTime.setHours(sessionDate.getHours());
+                                  newDateTime.setMinutes(
+                                    sessionDate.getMinutes()
+                                  );
+                                }
+                                field.onChange(newDateTime.toISOString());
+
+                                // Also update end date to match
+                                const endDateTime = watch("scheduled_end");
+                                if (endDateTime) {
+                                  const endDate = new Date(endDateTime);
+                                  const updatedEnd = new Date(date);
+                                  updatedEnd.setHours(endDate.getHours());
+                                  updatedEnd.setMinutes(endDate.getMinutes());
+                                  setValue(
+                                    "scheduled_end",
+                                    updatedEnd.toISOString()
+                                  );
+                                }
+                              }
+                            }}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+
+              {/* Time Fields */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {/* Start Date & Time */}
+                {/* Start Time */}
                 <FormField
                   control={form.control}
                   name="scheduled_start"
@@ -423,45 +465,7 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
 
                     return (
                       <FormItem className="flex flex-col">
-                        <FormLabel>Start Date & Time *</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full justify-start text-left font-normal",
-                                  !startDate && "text-muted-foreground"
-                                )}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {startDate
-                                  ? format(startDate, "PPP")
-                                  : "Pick a date"}
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={startDate}
-                              onSelect={(date) => {
-                                if (date) {
-                                  // Preserve time when changing date
-                                  const newDateTime = new Date(date);
-                                  if (startDate) {
-                                    newDateTime.setHours(startDate.getHours());
-                                    newDateTime.setMinutes(
-                                      startDate.getMinutes()
-                                    );
-                                  }
-                                  field.onChange(newDateTime.toISOString());
-                                }
-                              }}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
+                        <FormLabel>Start Time *</FormLabel>
                         <TimePicker
                           value={startTime}
                           onChange={(time) => {
@@ -480,11 +484,14 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
                   }}
                 />
 
-                {/* End Date & Time */}
+                {/* End Time */}
                 <FormField
                   control={form.control}
                   name="scheduled_end"
                   render={({ field }) => {
+                    const startDate = watch("scheduled_start")
+                      ? new Date(watch("scheduled_start"))
+                      : undefined;
                     const endDate = field.value
                       ? new Date(field.value)
                       : undefined;
@@ -492,51 +499,14 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
 
                     return (
                       <FormItem className="flex flex-col">
-                        <FormLabel>End Date & Time *</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full justify-start text-left font-normal",
-                                  !endDate && "text-muted-foreground"
-                                )}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {endDate
-                                  ? format(endDate, "PPP")
-                                  : "Pick a date"}
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={endDate}
-                              onSelect={(date) => {
-                                if (date) {
-                                  // Preserve time when changing date
-                                  const newDateTime = new Date(date);
-                                  if (endDate) {
-                                    newDateTime.setHours(endDate.getHours());
-                                    newDateTime.setMinutes(
-                                      endDate.getMinutes()
-                                    );
-                                  }
-                                  field.onChange(newDateTime.toISOString());
-                                }
-                              }}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
+                        <FormLabel>End Time *</FormLabel>
                         <TimePicker
                           value={endTime}
                           onChange={(time) => {
                             const [hours, minutes] = time.split(":");
-                            const newDateTime = endDate
-                              ? new Date(endDate)
+                            // Use the session date from scheduled_start
+                            const newDateTime = startDate
+                              ? new Date(startDate)
                               : new Date();
                             newDateTime.setHours(parseInt(hours));
                             newDateTime.setMinutes(parseInt(minutes));

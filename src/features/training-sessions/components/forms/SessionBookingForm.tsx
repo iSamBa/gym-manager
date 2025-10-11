@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { useMembers } from "@/features/members/hooks";
 import { useTrainers } from "@/features/trainers/hooks";
 import { useCreateTrainingSession } from "../../hooks/use-training-sessions";
+import { MemberCombobox } from "./MemberCombobox";
 
 // Validation schema for session booking
 const sessionBookingSchema = z.object({
@@ -75,7 +76,9 @@ export function SessionBookingForm({
   );
 
   // Fetch data
-  const { data: members = [], isLoading: membersLoading } = useMembers();
+  const { data: members = [], isLoading: membersLoading } = useMembers({
+    limit: 10000, // Fetch all members for dropdown
+  });
   const { data: trainers = [], isLoading: trainersLoading } = useTrainers();
 
   // Credit validation removed during hook consolidation - simplified validation will be in booking logic
@@ -134,13 +137,6 @@ export function SessionBookingForm({
     }
   };
 
-  const formatMemberName = (member: {
-    first_name: string;
-    last_name: string;
-  }) => {
-    return `${member.first_name} ${member.last_name}`;
-  };
-
   const formatTrainerName = (trainer: {
     id: string;
     user_profile?: { first_name?: string; last_name?: string };
@@ -173,27 +169,18 @@ export function SessionBookingForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Member *</FormLabel>
-                  <Select
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      setSelectedMemberId(value);
-                    }}
-                    value={field.value}
-                    disabled={membersLoading}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a member" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {members.map((member) => (
-                        <SelectItem key={member.id} value={member.id}>
-                          {formatMemberName(member)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <MemberCombobox
+                      members={members}
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        setSelectedMemberId(value);
+                      }}
+                      disabled={membersLoading}
+                      placeholder="Select a member"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

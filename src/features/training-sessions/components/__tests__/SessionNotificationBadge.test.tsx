@@ -31,13 +31,6 @@ describe("SessionNotificationBadge", () => {
     expect(badge).toHaveClass("rounded-full");
   });
 
-  it("has cursor-help for accessibility", () => {
-    render(<SessionNotificationBadge count={1} />);
-
-    const badge = screen.getByTestId("notification-badge");
-    expect(badge).toHaveClass("cursor-help");
-  });
-
   it("renders with single digit count", () => {
     render(<SessionNotificationBadge count={1} />);
     expect(screen.getByText("1")).toBeInTheDocument();

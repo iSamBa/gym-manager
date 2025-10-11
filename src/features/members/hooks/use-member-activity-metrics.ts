@@ -51,10 +51,15 @@ export function useMemberActivityMetrics(memberId: string) {
         .in("payment_status", ["pending", "failed"])
         .lt("due_date", new Date().toISOString().split("T")[0]);
 
+      // Type assertion: training_sessions is a single object when using .single()
+      const sessionData = lastSession?.training_sessions as
+        | { scheduled_start: string; status: string }
+        | undefined;
+
       return {
         sessionsThisMonth: sessionsCount || 0,
-        lastSessionDate: lastSession?.training_sessions?.scheduled_start
-          ? new Date(lastSession.training_sessions.scheduled_start)
+        lastSessionDate: sessionData?.scheduled_start
+          ? new Date(sessionData.scheduled_start)
           : null,
         overduePaymentsCount: overdueCount || 0,
       };
