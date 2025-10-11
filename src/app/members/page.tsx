@@ -197,7 +197,7 @@ export default function MembersPage() {
               {/* Search Input */}
               <div className="max-w-md flex-1">
                 <SearchInput
-                  placeholder="Search members by name..."
+                  placeholder="Search members by name or phone..."
                   value={searchQuery}
                   onChange={setSearchQuery}
                 />

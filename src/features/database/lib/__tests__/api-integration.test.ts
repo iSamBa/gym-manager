@@ -300,4 +300,63 @@ describe("memberUtils.getMembers - US-003 API Integration", () => {
       p_order_direction: "asc",
     });
   });
+
+  /**
+   * Additional Test: Phone Number Search
+   * Verifies that phone number search is supported by the database function
+   */
+  it("should support phone number search", async () => {
+    const mockData = [
+      {
+        id: "uuid-phone-1",
+        first_name: "Alice",
+        last_name: "Johnson",
+        email: "alice@example.com",
+        phone: "+212-600123456",
+        date_of_birth: null,
+        gender: null,
+        status: "active",
+        join_date: "2024-01-01",
+        member_type: "full",
+        profile_picture_url: null,
+        address: null,
+        notes: null,
+        medical_conditions: null,
+        fitness_goals: null,
+        preferred_contact_method: "email",
+        marketing_consent: false,
+        waiver_signed: false,
+        waiver_signed_date: null,
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+        subscription_end_date: null,
+        remaining_sessions: null,
+        balance_due: null,
+        last_session_date: null,
+        next_session_date: null,
+        scheduled_sessions_count: null,
+        last_payment_date: null,
+      },
+    ];
+
+    const rpcSpy = vi
+      .mocked(supabase.rpc)
+      .mockResolvedValue({ data: mockData, error: null } as any);
+
+    // Search by phone number
+    const result = await memberUtils.getMembers({ search: "600" });
+
+    // Verify the search parameter is passed to the database function
+    expect(rpcSpy).toHaveBeenCalledWith(
+      "get_members_with_details",
+      expect.objectContaining({
+        p_search: "600",
+      })
+    );
+
+    // Verify the result contains the member with matching phone
+    expect(result).toHaveLength(1);
+    expect(result[0].phone).toContain("600");
+    expect(result[0].first_name).toBe("Alice");
+  });
 });
