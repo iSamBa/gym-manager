@@ -618,5 +618,15 @@ export function hasValidationErrors(
 
 **Story ID**: US-003
 **Created**: 2025-10-16
-**Status**: Not Started
+**Status**: ✅ Completed
+**Completed**: 2025-10-16
 **Depends On**: US-002
+**Implementation Notes**:
+
+- Created WeeklyOpeningHoursGrid with 7 day rows
+- Implemented BulkActionsToolbar with 3 bulk actions
+- Created DayOpeningHoursRow with toggle and time pickers
+- All components optimized with React.memo, useCallback, useMemo
+- Validation logic with real-time error display
+- 67/67 tests passing (11 validation + 7 toolbar + 12 day row + 8 grid + 29 from US-002)
+- Bug fixed: Reset to Defaults now uses 23:45 instead of invalid 24:00

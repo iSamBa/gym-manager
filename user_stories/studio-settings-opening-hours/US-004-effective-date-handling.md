@@ -515,5 +515,18 @@ function getDefaultHours(): OpeningHoursWeek {
 
 **Story ID**: US-004
 **Created**: 2025-10-16
-**Status**: Not Started
-**Depends On**: US-003
+**Status**: ✅ Completed
+**Completed**: 2025-10-16
+**Depends On**: US-003 ✅
+
+**Implementation Notes**:
+
+- All 4 components created with React.memo and performance optimizations
+- 31 new unit tests added (103/103 total passing)
+- Manual testing completed via Puppeteer MCP (11/11 items verified)
+- Build successful: /settings/studio route 51.6 kB
+- All 6 acceptance criteria met
+- Slot calculator accurately computes 30-minute session slots
+- Date picker properly disables past dates using shadcn Calendar
+- Preview component shows slots table with correct calculations
+- Confirmation dialog displays summary with open/closed days

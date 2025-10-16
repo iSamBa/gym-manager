@@ -1,45 +1,38 @@
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+"use client";
+
+import { MainLayout } from "@/components/layout/main-layout";
 import { StudioSettingsLayout } from "@/features/settings";
+import { useRequireAdmin } from "@/hooks/use-require-auth";
 
 /**
  * Studio Settings Page
  * Admin-only page for managing studio configuration
  * Includes opening hours, general settings, and payment settings
  */
-export default async function StudioSettingsPage() {
-  const supabase = await createSupabaseServerClient();
+export default function StudioSettingsPage() {
+  // Require admin role for entire page
+  const { isLoading: isAuthLoading, hasRequiredRole } =
+    useRequireAdmin("/login");
 
-  // Check authentication
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    redirect("/login");
+  if (isAuthLoading) {
+    return (
+      <MainLayout>
+        <div className="flex min-h-[400px] items-center justify-center">
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
+        </div>
+      </MainLayout>
+    );
   }
 
-  // Check admin role
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("role")
-    .eq("id", session.user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    // Non-admin users are redirected to home
-    redirect("/");
+  if (!hasRequiredRole) {
+    return null; // Will redirect to login
   }
 
   return (
-    <div className="container py-6">
-      <StudioSettingsLayout />
-    </div>
+    <MainLayout>
+      <div className="space-y-6">
+        <StudioSettingsLayout />
+      </div>
+    </MainLayout>
   );
 }
-
-// Metadata for the page
-export const metadata = {
-  title: "Studio Settings | Gym Manager",
-  description: "Configure your gym's operational settings and preferences",
-};

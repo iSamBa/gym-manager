@@ -62,8 +62,8 @@ describe("StudioSettingsLayout", () => {
 
     // Check for lucide icons (they render as SVGs)
     const svgs = container.querySelectorAll("svg");
-    // Header icon + 3 tab icons = 4 SVGs minimum
-    expect(svgs.length).toBeGreaterThanOrEqual(4);
+    // 3 tab icons (no header icon) = 3 SVGs minimum
+    expect(svgs.length).toBeGreaterThanOrEqual(3);
   });
 
   it("should handle tab state changes", () => {

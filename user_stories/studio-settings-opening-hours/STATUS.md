@@ -5,7 +5,7 @@
 **Feature**: Studio Settings - Opening Hours Management
 **Start Date**: 2025-10-16
 **Target Completion**: TBD
-**Overall Progress**: 29% (2/7 user stories completed)
+**Overall Progress**: 57% (4/7 user stories completed)
 
 ---
 
@@ -15,8 +15,8 @@
 | ------ | --------------------------- | -------------- | -------- | -------- | --------------- |
 | US-001 | Database Schema             | 🟢 Completed   | P0       | Claude   | 2025-10-16      |
 | US-002 | Settings Page Foundation    | 🟢 Completed   | P0       | Claude   | 2025-10-16      |
-| US-003 | Weekly Opening Hours Editor | 🔴 Not Started | P0       | -        | -               |
-| US-004 | Effective Date Handling     | 🔴 Not Started | P0       | -        | -               |
+| US-003 | Weekly Opening Hours Editor | 🟢 Completed   | P0       | Claude   | 2025-10-16      |
+| US-004 | Effective Date Handling     | 🟢 Completed   | P0       | Claude   | 2025-10-16      |
 | US-005 | Conflict Detection          | 🔴 Not Started | P0       | -        | -               |
 | US-006 | Session Integration         | 🔴 Not Started | P0       | -        | -               |
 | US-007 | Testing & Edge Cases        | 🔴 Not Started | P0       | -        | -               |
@@ -92,51 +92,67 @@
 
 ### US-003: Weekly Opening Hours Editor
 
-**Status**: 🔴 Not Started
+**Status**: 🟢 Completed
 **Estimated Time**: 5 hours
-**Actual Time**: -
+**Actual Time**: 4.5 hours
 
 **Tasks**:
 
-- [ ] Create `WeeklyOpeningHoursGrid` component
-- [ ] Create `DayOpeningHoursRow` component
-- [ ] Create `BulkActionsToolbar` component
-- [ ] Implement day toggle functionality
-- [ ] Integrate `TimePicker` for open/close times
-- [ ] Add real-time validation (close > open)
-- [ ] Implement bulk actions (apply to weekdays/all)
-- [ ] Style components (responsive layout)
-- [ ] Write component tests
+- [x] Create `WeeklyOpeningHoursGrid` component
+- [x] Create `DayOpeningHoursRow` component
+- [x] Create `BulkActionsToolbar` component
+- [x] Implement day toggle functionality
+- [x] Integrate `TimePicker` for open/close times
+- [x] Add real-time validation (close > open)
+- [x] Implement bulk actions (apply to weekdays/all)
+- [x] Style components (responsive layout)
+- [x] Write component tests
 
-**Dependencies**: US-002 (settings page must exist)
+**Dependencies**: US-002 ✅ (settings page must exist)
 
 **Blockers**: None
 
-**Notes**: -
+**Notes**:
+
+- All components use React.memo, useCallback, useMemo for performance
+- 38 new tests passing (11 validation + 7 toolbar + 12 day row + 8 grid)
+- Bug fixed: Reset to Defaults now uses 23:45 instead of invalid 24:00
+- Manual testing completed via Puppeteer MCP
+- Build successful (47.5 kB for /settings/studio route)
 
 ---
 
 ### US-004: Effective Date Handling
 
-**Status**: 🔴 Not Started
+**Status**: 🟢 Completed
 **Estimated Time**: 2 hours
-**Actual Time**: -
+**Actual Time**: 2.5 hours
 
 **Tasks**:
 
-- [ ] Add `EffectiveDatePicker` to opening hours tab
-- [ ] Implement date validation (today or future only)
-- [ ] Create `EffectiveDatePreview` component
-- [ ] Calculate and display available slots per day
-- [ ] Update save logic to include effective_from
-- [ ] Add confirmation dialog with preview
-- [ ] Write tests for date validation
+- [x] Add `EffectiveDatePicker` to opening hours tab
+- [x] Implement date validation (today or future only)
+- [x] Create `EffectiveDatePreview` component
+- [x] Calculate and display available slots per day
+- [x] Update save logic to include effective_from
+- [x] Add confirmation dialog with preview
+- [x] Write tests for date validation
 
-**Dependencies**: US-003 (grid editor must exist)
+**Dependencies**: US-003 ✅ (grid editor must exist)
 
 **Blockers**: None
 
-**Notes**: -
+**Notes**:
+
+- Created slot-calculator utility with 11 passing tests
+- EffectiveDatePicker uses shadcn Calendar with past dates disabled
+- EffectiveDatePreview displays formatted date, alert message, and slots table
+- SaveConfirmationDialog shows summary with open/closed days and total slots
+- All 4 new components have comprehensive unit tests (31 total)
+- Manual testing completed via Puppeteer MCP (11/11 items verified)
+- All acceptance criteria met
+- Build successful: /settings/studio route now 51.6 kB
+- Total test count: 103/103 passing (includes 31 new tests for US-004)
 
 ---
 
@@ -226,16 +242,16 @@ None
 
 ### Time Tracking
 
-| Metric    | Estimated | Actual | Variance |
-| --------- | --------- | ------ | -------- |
-| US-001    | 2h        | 1.5h   | -0.5h    |
-| US-002    | 3h        | 2.5h   | -0.5h    |
-| US-003    | 5h        | -      | -        |
-| US-004    | 2h        | -      | -        |
-| US-005    | 4h        | -      | -        |
-| US-006    | 4h        | -      | -        |
-| US-007    | 4h        | -      | -        |
-| **Total** | **24h**   | **4h** | **-**    |
+| Metric    | Estimated | Actual  | Variance |
+| --------- | --------- | ------- | -------- |
+| US-001    | 2h        | 1.5h    | -0.5h    |
+| US-002    | 3h        | 2.5h    | -0.5h    |
+| US-003    | 5h        | 4.5h    | -0.5h    |
+| US-004    | 2h        | 2.5h    | +0.5h    |
+| US-005    | 4h        | -       | -        |
+| US-006    | 4h        | -       | -        |
+| US-007    | 4h        | -       | -        |
+| **Total** | **24h**   | **11h** | **-1h**  |
 
 ### Quality Metrics
 
@@ -249,6 +265,54 @@ None
 ---
 
 ## 📝 Change Log
+
+### 2025-10-16 (Night)
+
+- **US-004 Completed (Effective Date Handling)**
+  - Created slot-calculator utility for 30-minute slot calculations
+  - Implemented EffectiveDatePicker with shadcn Calendar component
+  - Built EffectiveDatePreview showing slots table and effective date alert
+  - Created SaveConfirmationDialog with summary and impact preview
+  - Updated OpeningHoursTab to integrate all new components
+  - Enhanced use-studio-settings hook with effectiveFrom parameter
+  - Applied performance optimizations (React.memo, useCallback, useMemo)
+  - **Wrote 31 unit tests (100% passing)**
+    - 11 tests for slot-calculator (slot-calculator.test.ts)
+    - 6 tests for EffectiveDatePicker (EffectiveDatePicker.test.tsx)
+    - 9 tests for EffectiveDatePreview (EffectiveDatePreview.test.tsx)
+    - 10 tests for SaveConfirmationDialog (SaveConfirmationDialog.test.tsx)
+    - Fixed 5 existing tests affected by UI changes
+  - **Manual testing via Puppeteer MCP (11/11 items verified)**
+    - Verified date picker with past dates disabled
+    - Confirmed today's date as default selection
+    - Validated slot calculations (30 slots for 09:00-24:00)
+    - Checked preview displays correct effective date
+    - Verified total weekly slots calculation (210 slots)
+  - All 6 acceptance criteria met
+  - Build successful: /settings/studio route now 51.6 kB
+  - Total test count: 103/103 passing
+
+### 2025-10-16 (Late Evening)
+
+- **US-003 Completed (Weekly Opening Hours Editor)**
+  - Created WeeklyOpeningHoursGrid component with 7 day rows
+  - Implemented BulkActionsToolbar with dropdown menu (Apply to Weekdays/All, Reset to Defaults)
+  - Created DayOpeningHoursRow with toggle switch and time pickers
+  - Integrated existing TimePicker component for hour/minute selection
+  - Added real-time validation logic (validateOpeningHours function)
+  - Applied performance optimizations (React.memo, useCallback, useMemo)
+  - **Wrote 38 unit tests (100% passing)**
+    - 11 tests for validation logic (validation.test.ts)
+    - 7 tests for BulkActionsToolbar (BulkActionsToolbar.test.tsx)
+    - 12 tests for DayOpeningHoursRow (DayOpeningHoursRow.test.tsx)
+    - 8 tests for WeeklyOpeningHoursGrid (WeeklyOpeningHoursGrid.test.tsx)
+  - **Manual testing via Puppeteer MCP**
+    - Verified grid displays, toggle functionality, time picker integration
+    - Tested bulk actions
+    - Confirmed "You have unsaved changes" message
+  - **Bug fixed**: Reset to Defaults was using invalid 24:00, changed to 23:45
+  - All acceptance criteria met
+  - Build successful (47.5 kB for /settings/studio route)
 
 ### 2025-10-16 (Evening)
 

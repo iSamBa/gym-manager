@@ -4,7 +4,7 @@ import { memo, useCallback, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { OpeningHoursTab } from "./OpeningHoursTab";
-import { Settings, Clock, CreditCard, Building } from "lucide-react";
+import { Clock, CreditCard, Building } from "lucide-react";
 
 function StudioSettingsLayoutComponent() {
   const [activeTab, setActiveTab] = useState("opening-hours");
@@ -18,10 +18,7 @@ function StudioSettingsLayoutComponent() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2">
-          <Settings className="h-6 w-6" />
-          <h1 className="text-3xl font-bold">Studio Settings</h1>
-        </div>
+        <h1 className="text-3xl font-bold">Studio Settings</h1>
         <p className="text-muted-foreground mt-2">
           Configure your gym&apos;s operational settings and preferences
         </p>

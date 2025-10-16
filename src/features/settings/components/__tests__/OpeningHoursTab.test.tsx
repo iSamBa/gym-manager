@@ -54,6 +54,12 @@ describe("OpeningHoursTab", () => {
       setting_key: "opening_hours",
       setting_value: {
         monday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+        tuesday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+        wednesday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+        thursday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+        friday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+        saturday: { is_open: true, open_time: "10:00", close_time: "18:00" },
+        sunday: { is_open: false, open_time: null, close_time: null },
       },
       effective_from: "2025-01-01",
       is_active: true,
@@ -78,12 +84,7 @@ describe("OpeningHoursTab", () => {
     expect(
       screen.getByText(/Set the days and times when your studio is open/)
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("Opening hours editor will appear here (US-003)")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Current setting loaded: opening_hours")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Save Changes")).toBeInTheDocument();
   });
 
   it("should render content without settings (null data)", () => {
@@ -99,14 +100,11 @@ describe("OpeningHoursTab", () => {
 
     render(<OpeningHoursTab />);
 
-    expect(screen.getByText("Studio Opening Hours")).toBeInTheDocument();
     expect(
-      screen.getByText("Opening hours editor will appear here (US-003)")
+      screen.getByText(
+        "No opening hours configuration found. Please contact support."
+      )
     ).toBeInTheDocument();
-    // Should not show "Current setting loaded" when data is null
-    expect(
-      screen.queryByText(/Current setting loaded/)
-    ).not.toBeInTheDocument();
   });
 
   it("should have proper card structure", () => {
