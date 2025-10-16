@@ -479,5 +479,9 @@ export const MachineSlotGrid: React.FC<MachineSlotGridProps> = ({
 
 **Story ID**: US-006
 **Created**: 2025-10-16
-**Status**: Not Started
+**Status**: ✅ Completed
+**Completed**: 2025-10-17
 **Depends On**: US-005
+**Implementation Notes**: Refactored slot generation to async, querying opening hours from database. Added useOpeningHours hook with React Query caching (5-min stale time). MachineSlotGrid now handles async slot loading with loading states and "Studio Closed" message for closed days. All 14 slot-generator tests + 14 MachineSlotGrid tests passing. Total 971/971 tests passing. Build successful.
+
+**Manual Testing**: User verified "Studio is closed on Sunday, October 19, 2025. No training sessions available." message displays correctly when navigating to closed day. Visual confirmation matches automated test expectations.

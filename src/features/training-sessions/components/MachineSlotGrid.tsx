@@ -1,6 +1,8 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { startOfDay, endOfDay } from "date-fns";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
+import { startOfDay, endOfDay, format } from "date-fns";
 import { useMachines } from "../hooks/use-machines";
 import { useTrainingSessions } from "../hooks/use-training-sessions";
 import { generateTimeSlots } from "../lib/slot-generator";
@@ -18,14 +20,18 @@ interface MachineSlotGridProps {
  * Features:
  * - 3-column responsive layout
  * - Time axis labels on left
- * - Performance optimized with useMemo
- * - Displays all machines (available and unavailable)
+ * - Dynamic slot generation based on opening hours
+ * - Handles closed days
+ * - Performance optimized
  */
 export const MachineSlotGrid: React.FC<MachineSlotGridProps> = ({
   selectedDate,
   onSlotClick,
   onSessionClick,
 }) => {
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(true);
+
   // Fetch machines and sessions for the selected date
   const { data: machines, isLoading: machinesLoading } = useMachines();
   const { data: sessions, isLoading: sessionsLoading } = useTrainingSessions({
@@ -35,13 +41,37 @@ export const MachineSlotGrid: React.FC<MachineSlotGridProps> = ({
     },
   });
 
-  // Memoize time slots generation (30 slots from 6 AM to 9 PM)
-  const timeSlots = useMemo(
-    () => generateTimeSlots(selectedDate),
-    [selectedDate]
-  );
+  // Generate time slots asynchronously
+  useEffect(() => {
+    let mounted = true;
 
-  const isLoading = machinesLoading || sessionsLoading;
+    async function loadSlots() {
+      setIsLoadingSlots(true);
+      try {
+        const slots = await generateTimeSlots(selectedDate);
+        if (mounted) {
+          setTimeSlots(slots);
+        }
+      } catch (error) {
+        console.error("Failed to generate time slots:", error);
+        if (mounted) {
+          setTimeSlots([]);
+        }
+      } finally {
+        if (mounted) {
+          setIsLoadingSlots(false);
+        }
+      }
+    }
+
+    loadSlots();
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedDate]);
+
+  const isLoading = machinesLoading || sessionsLoading || isLoadingSlots;
 
   // Loading state
   if (isLoading) {
@@ -55,6 +85,21 @@ export const MachineSlotGrid: React.FC<MachineSlotGridProps> = ({
             </p>
           </div>
         </div>
+      </Card>
+    );
+  }
+
+  // Studio closed on this day
+  if (timeSlots.length === 0) {
+    return (
+      <Card className="p-6">
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Studio is closed on {format(selectedDate, "EEEE, MMMM d, yyyy")}. No
+            training sessions available.
+          </AlertDescription>
+        </Alert>
       </Card>
     );
   }
