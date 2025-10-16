@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useCallback, useMemo } from "react";
+import { memo, useState, useCallback, useMemo, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useStudioSettings } from "../hooks/use-studio-settings";
+import { useConflictDetection } from "../hooks/use-conflict-detection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Save } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -19,6 +20,7 @@ import { WeeklyOpeningHoursGrid } from "./WeeklyOpeningHoursGrid";
 import { EffectiveDatePicker } from "./EffectiveDatePicker";
 import { EffectiveDatePreview } from "./EffectiveDatePreview";
 import { SaveConfirmationDialog } from "./SaveConfirmationDialog";
+import { ConflictDetectionDialog } from "./ConflictDetectionDialog";
 import { hasValidationErrors, validateOpeningHours } from "../lib/validation";
 import { toast } from "sonner";
 import type { OpeningHoursWeek } from "../lib/types";
@@ -36,6 +38,8 @@ function OpeningHoursTabComponent() {
   const [editedHours, setEditedHours] = useState<OpeningHoursWeek | null>(null);
   const [effectiveDate, setEffectiveDate] = useState<Date>(new Date());
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showConflictDialog, setShowConflictDialog] = useState(false);
+  const [isCheckingConflicts, setIsCheckingConflicts] = useState(false);
 
   // Use edited hours if available, otherwise use settings data
   const currentHours = useMemo(() => {
@@ -55,12 +59,55 @@ function OpeningHoursTabComponent() {
     return hasValidationErrors(validationErrors);
   }, [validationErrors]);
 
+  // Conflict detection hook (manual trigger)
+  const {
+    data: conflicts,
+    refetch: checkConflicts,
+    isFetching: isFetchingConflicts,
+  } = useConflictDetection(
+    editedHours || currentHours || ({} as OpeningHoursWeek),
+    effectiveDate,
+    false // Disabled by default, trigger manually
+  );
+
   // Handle changes to opening hours
   const handleChange = useCallback((newHours: OpeningHoursWeek) => {
     setEditedHours(newHours);
   }, []);
 
-  // Handle save confirmation
+  // Handle save button click - trigger conflict detection
+  const handleSaveClick = useCallback(async () => {
+    if (!editedHours) return;
+
+    setIsCheckingConflicts(true);
+    try {
+      await checkConflicts();
+    } catch (err) {
+      console.error("Failed to check conflicts:", err);
+      toast.error("Failed to check for conflicts. Please try again.");
+      setIsCheckingConflicts(false);
+    }
+  }, [editedHours, checkConflicts]);
+
+  // Handle conflict detection results
+  useEffect(() => {
+    if (!isCheckingConflicts) return;
+    if (isFetchingConflicts) return;
+
+    setIsCheckingConflicts(false);
+
+    if (conflicts !== undefined) {
+      if (conflicts.length === 0) {
+        // No conflicts - show confirmation dialog
+        setShowConfirmDialog(true);
+      } else {
+        // Conflicts found - show conflict dialog
+        setShowConflictDialog(true);
+      }
+    }
+  }, [conflicts, isFetchingConflicts, isCheckingConflicts]);
+
+  // Handle actual save (after conflict check passed and user confirmed)
   const handleSave = useCallback(async () => {
     if (!editedHours) return;
 
@@ -152,11 +199,20 @@ function OpeningHoursTabComponent() {
             {hasUnsavedChanges && "You have unsaved changes"}
           </div>
           <Button
-            onClick={() => setShowConfirmDialog(true)}
-            disabled={!hasUnsavedChanges || hasErrors || isUpdating}
+            onClick={handleSaveClick}
+            disabled={
+              !hasUnsavedChanges ||
+              hasErrors ||
+              isUpdating ||
+              isCheckingConflicts
+            }
           >
             <Save className="mr-2 h-4 w-4" />
-            {isUpdating ? "Saving..." : "Save Changes"}
+            {isCheckingConflicts
+              ? "Checking conflicts..."
+              : isUpdating
+                ? "Saving..."
+                : "Save Changes"}
           </Button>
         </CardFooter>
       </Card>
@@ -167,7 +223,16 @@ function OpeningHoursTabComponent() {
         effectiveDate={effectiveDate}
       />
 
-      {/* Confirmation Dialog */}
+      {/* Conflict Detection Dialog */}
+      {conflicts && conflicts.length > 0 && (
+        <ConflictDetectionDialog
+          open={showConflictDialog}
+          onOpenChange={setShowConflictDialog}
+          conflicts={conflicts}
+        />
+      )}
+
+      {/* Confirmation Dialog (shown only when no conflicts) */}
       <SaveConfirmationDialog
         open={showConfirmDialog}
         onOpenChange={setShowConfirmDialog}

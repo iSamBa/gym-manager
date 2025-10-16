@@ -1,12 +1,42 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React from "react";
 import { OpeningHoursTab } from "../OpeningHoursTab";
 import * as useStudioSettings from "../../hooks/use-studio-settings";
+import * as useConflictDetection from "../../hooks/use-conflict-detection";
 
-// Mock the hook
+// Mock the hooks
 vi.mock("../../hooks/use-studio-settings");
+vi.mock("../../hooks/use-conflict-detection");
 
 describe("OpeningHoursTab", () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+
+    // Mock conflict detection hook with default values
+    vi.mocked(useConflictDetection.useConflictDetection).mockReturnValue({
+      data: undefined,
+      refetch: vi.fn(),
+      isFetching: false,
+      isLoading: false,
+      isError: false,
+      error: null,
+      isSuccess: false,
+      status: "pending",
+    } as any);
+  });
+
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+
   it("should render loading state", () => {
     vi.mocked(useStudioSettings.useStudioSettings).mockReturnValue({
       data: undefined,
@@ -18,7 +48,7 @@ describe("OpeningHoursTab", () => {
       updateError: null,
     });
 
-    render(<OpeningHoursTab />);
+    render(<OpeningHoursTab />, { wrapper });
 
     // Should show skeleton loaders
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(
@@ -39,7 +69,7 @@ describe("OpeningHoursTab", () => {
       updateError: null,
     });
 
-    render(<OpeningHoursTab />);
+    render(<OpeningHoursTab />, { wrapper });
 
     expect(
       screen.getByText(
@@ -78,7 +108,7 @@ describe("OpeningHoursTab", () => {
       updateError: null,
     });
 
-    render(<OpeningHoursTab />);
+    render(<OpeningHoursTab />, { wrapper });
 
     expect(screen.getByText("Studio Opening Hours")).toBeInTheDocument();
     expect(
@@ -98,7 +128,7 @@ describe("OpeningHoursTab", () => {
       updateError: null,
     });
 
-    render(<OpeningHoursTab />);
+    render(<OpeningHoursTab />, { wrapper });
 
     expect(
       screen.getByText(
@@ -118,7 +148,7 @@ describe("OpeningHoursTab", () => {
       updateError: null,
     });
 
-    const { container } = render(<OpeningHoursTab />);
+    const { container } = render(<OpeningHoursTab />, { wrapper });
 
     // Should have card structure
     expect(container.querySelector("[class*='card']")).toBeInTheDocument();

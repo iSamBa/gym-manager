@@ -17,13 +17,12 @@ interface DayOpeningHoursRowProps {
 }
 
 export const DayOpeningHoursRow = memo(function DayOpeningHoursRow({
-  day: _day, // Kept for interface compatibility but not used
   dayLabel,
   config,
   onChange,
   error,
   disabled = false,
-}: DayOpeningHoursRowProps) {
+}: Omit<DayOpeningHoursRowProps, "day">) {
   const handleToggle = useCallback(
     (checked: boolean) => {
       if (!checked) {
