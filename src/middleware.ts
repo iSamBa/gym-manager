@@ -8,9 +8,11 @@ import { NextResponse, type NextRequest } from "next/server";
  * Redirects unauthenticated users to /login with redirect parameter.
  *
  * Security improvements:
- * - Server-side JWT validation (cannot be bypassed by client manipulation)
+ * - Server-side JWT validation with getUser() (validates token with Supabase servers)
+ * - Proper cookie handling pattern (setAll updates both request and response)
  * - Cookie-based session (more secure than localStorage)
  * - No flash of protected content before redirect
+ * - Automatic token refresh handling
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -24,13 +26,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Create Supabase client for server-side auth check
-  const response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+  // Response object that will be recreated when cookies are set
+  let supabaseResponse = NextResponse.next({
+    request,
   });
 
+  // Create Supabase client for server-side auth check
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -40,29 +41,44 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
+          // IMPORTANT: Set cookies on request first (for immediate reads in this request)
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+
+          // CRITICAL: Recreate response with updated request
+          // This ensures server components receive the refreshed cookies
+          supabaseResponse = NextResponse.next({
+            request,
+          });
+
+          // Set cookies on response (for browser to receive)
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, options)
           );
         },
       },
     }
   );
 
-  // Check if user is authenticated
+  // Check if user is authenticated - IMPORTANT: Use getUser() not getSession()
+  // getUser() validates the token with Supabase servers, getSession() just reads cookies
+  // This call may also trigger token refresh via the setAll callback above
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  // If no session, redirect to login with original path preserved
-  if (!session) {
+  // If no user or error, redirect to login with original path preserved
+  if (error || !user) {
     const redirectUrl = new URL("/login", request.url);
     // Preserve current path for redirect after login
     redirectUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // User is authenticated, allow request
-  return response;
+  // User is authenticated, return response with potentially refreshed cookies
+  return supabaseResponse;
 }
 
 // Configure which routes to run middleware on

@@ -496,6 +496,7 @@ export interface MemberWithSubscription extends Member {
   subscription?: MemberSubscription & {
     plan?: SubscriptionPlan;
   };
+  last_payment_date?: string | null;
 }
 
 // ClassWithDetails simplified - ClassType removed

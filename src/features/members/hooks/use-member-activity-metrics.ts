@@ -15,31 +15,33 @@ export function useMemberActivityMetrics(memberId: string) {
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
 
-      // Sessions this month - use session status instead of attendance_status
+      // Sessions this month - query from training_sessions for proper filtering
       const { count: sessionsCount } = await supabase
-        .from("training_session_members")
-        .select("training_sessions!inner(status, scheduled_start)", {
+        .from("training_sessions")
+        .select("*, training_session_members!inner(member_id)", {
           count: "exact",
           head: true,
         })
-        .eq("member_id", memberId)
-        .eq("training_sessions.status", "completed")
+        .eq("training_session_members.member_id", memberId)
+        .eq("status", "completed")
         .gte(
-          "training_sessions.scheduled_start",
+          "scheduled_start",
           new Date(currentYear, currentMonth, 1).toISOString()
         )
         .lt(
-          "training_sessions.scheduled_start",
+          "scheduled_start",
           new Date(currentYear, currentMonth + 1, 1).toISOString()
         );
 
-      // Last session - use scheduled_start from training_sessions
+      // Last session - query from training_sessions for proper ordering
       const { data: lastSession } = await supabase
-        .from("training_session_members")
-        .select("training_sessions!inner(scheduled_start, status)")
-        .eq("member_id", memberId)
-        .eq("training_sessions.status", "completed")
-        .order("training_sessions.scheduled_start", { ascending: false })
+        .from("training_sessions")
+        .select(
+          "scheduled_start, status, training_session_members!inner(member_id)"
+        )
+        .eq("training_session_members.member_id", memberId)
+        .eq("status", "completed")
+        .order("scheduled_start", { ascending: false })
         .limit(1)
         .single();
 
@@ -51,15 +53,10 @@ export function useMemberActivityMetrics(memberId: string) {
         .in("payment_status", ["pending", "failed"])
         .lt("due_date", new Date().toISOString().split("T")[0]);
 
-      // Type assertion: training_sessions is a single object when using .single()
-      const sessionData = lastSession?.training_sessions as
-        | { scheduled_start: string; status: string }
-        | undefined;
-
       return {
         sessionsThisMonth: sessionsCount || 0,
-        lastSessionDate: sessionData?.scheduled_start
-          ? new Date(sessionData.scheduled_start)
+        lastSessionDate: lastSession?.scheduled_start
+          ? new Date(lastSession.scheduled_start)
           : null,
         overduePaymentsCount: overdueCount || 0,
       };

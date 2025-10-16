@@ -67,6 +67,14 @@ export const SubscriptionStatusCard = memo(function SubscriptionStatusCard({
                       : "No end date"}
                   </span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Last Payment</span>
+                  <span>
+                    {member.last_payment_date
+                      ? formatDate(new Date(member.last_payment_date))
+                      : "No payments yet"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
