@@ -307,6 +307,51 @@ Business logic hooks specific to a feature domain (useMemberForm, usePaymentProc
 
 **🚨 CRITICAL: ALL new features MUST use feature branches!**
 
+### ⚠️ MANDATORY PRE-CODING CHECK (NO EXCEPTIONS)
+
+**BEFORE writing ANY code, modifying ANY files, or applying ANY database migrations:**
+
+1. **Check current branch:**
+
+   ```bash
+   git branch --show-current
+   ```
+
+2. **Verify you are on a feature branch:**
+   - ✅ `feature/*` - Allowed for new features
+   - ✅ `bugfix/*` - Allowed for bug fixes
+   - ✅ `hotfix/*` - Allowed for production emergencies ONLY
+   - ❌ `dev` - **FORBIDDEN** for direct commits
+   - ❌ `main` - **FORBIDDEN** for direct commits
+   - ❌ Any other branch - **FORBIDDEN**
+
+3. **If NOT on a feature branch, STOP and create one:**
+   ```bash
+   git checkout dev
+   git pull origin dev
+   git checkout -b feature/your-feature-name
+   ```
+
+**⚠️ This check is MANDATORY for:**
+
+- All code changes (TypeScript, JavaScript, CSS, etc.)
+- Database migrations (Supabase MCP)
+- Configuration files
+- Documentation files (if part of feature work)
+- Test files
+- ANY file modification
+
+**🚫 NEVER proceed without a feature branch. NO EXCEPTIONS. NO SHORTCUTS.**
+
+**Why This Matters:**
+
+- ❌ Database migrations cannot be reviewed before production
+- ❌ Changes cannot be rolled back cleanly
+- ❌ No PR review process
+- ❌ Work cannot be isolated
+- ❌ Violates team workflow
+- ❌ Creates audit trail problems
+
 ### Branch Strategy
 
 This project uses a **dev → main** branching strategy for stable releases:

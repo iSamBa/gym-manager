@@ -75,6 +75,107 @@ I will automatically verify:
 
 ---
 
+## 🔀 Step 0: Git Branch Setup (MANDATORY - ABSOLUTELY NO EXCEPTIONS)
+
+**⚠️ CRITICAL: This step MUST be completed BEFORE any implementation work begins. No code, no database migrations, no file changes until on a feature branch.**
+
+### Automatic Branch Check
+
+I will check the current git branch:
+
+```bash
+git branch --show-current
+```
+
+### Branch Validation Rules
+
+**✅ ALLOWED branches:**
+
+- `feature/*` - For new features
+- `bugfix/*` - For bug fixes
+- `hotfix/*` - For production emergencies only
+
+**❌ FORBIDDEN branches:**
+
+- `main` - Production branch (direct commits prohibited)
+- `dev` - Integration branch (direct commits prohibited)
+- `master` - Legacy production branch (direct commits prohibited)
+- Any other non-standard branch
+
+### If NOT on a Feature Branch
+
+**I MUST IMMEDIATELY:**
+
+1. **STOP all implementation work**
+2. **Show the current branch** to the user
+3. **Create the feature branch** with this exact workflow:
+
+```bash
+# 1. Switch to dev branch
+git checkout dev
+
+# 2. Pull latest changes
+git pull origin dev
+
+# 3. Create feature branch (use feature name from user story folder)
+git checkout -b feature/{feature-folder-name}
+
+# Example for studio-settings-opening-hours:
+# git checkout -b feature/studio-settings-opening-hours
+```
+
+4. **Verify branch created:**
+
+```bash
+git branch --show-current
+```
+
+5. **Only proceed with implementation AFTER successful branch creation**
+
+### Branch Naming Convention
+
+Feature branch name MUST match the user story folder structure:
+
+| User Story Folder                             | Branch Name                             |
+| --------------------------------------------- | --------------------------------------- |
+| `user_stories/studio-settings-opening-hours/` | `feature/studio-settings-opening-hours` |
+| `user_stories/members-table-rework/`          | `feature/members-table-rework`          |
+| `user_stories/payment-dashboard/`             | `feature/payment-dashboard`             |
+
+### Exception Handling
+
+**Only exception to branch requirement:**
+
+User explicitly says: **"Skip branch check - {justification}"**
+
+Examples of valid justifications:
+
+- Hotfix for production (use `hotfix/*` branch)
+- Emergency database fix (use `hotfix/*` branch)
+- Infrastructure maintenance (document reason)
+
+**I will still push back and recommend proper workflow.**
+
+### Why This Matters
+
+❌ **Without feature branch:**
+
+- Cannot create PR for review
+- Changes mixed with other work
+- Cannot rollback cleanly
+- Violates team workflow
+- Database migrations can't be reviewed before production
+
+✅ **With feature branch:**
+
+- Clean isolation of changes
+- PR review before merge
+- Easy rollback if needed
+- Proper audit trail
+- Follows team standards
+
+---
+
 ## 📖 Step 1: Context Analysis
 
 I will:
