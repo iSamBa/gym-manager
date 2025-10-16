@@ -133,7 +133,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       <div className="bg-background space-y-2 border-t p-2">
         <ThemeToggleSidebar />
         <Button variant="ghost" className="w-full justify-start gap-2" asChild>
-          <Link href="/settings" onClick={onNavigate}>
+          <Link href="/settings/studio" onClick={onNavigate}>
             <Settings className="h-4 w-4" />
             Settings
           </Link>

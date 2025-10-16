@@ -511,5 +511,19 @@ export async function updateStudioSettings(
 
 **Story ID**: US-002
 **Created**: 2025-10-16
-**Status**: Not Started
-**Depends On**: US-001
+**Last Updated**: 2025-10-16
+**Status**: ✅ Completed
+**Completed**: 2025-10-16
+**Branch**: feature/studio-settings-opening-hours
+**Depends On**: US-001 ✅
+
+**Implementation Notes**:
+
+- Created complete feature folder structure with barrel exports
+- Implemented React Query hook with 5-minute caching
+- Applied React.memo and useCallback for performance optimization
+- Server-side auth check with admin-only access
+- All acceptance criteria met and verified
+- Build successful: route at 16.1 kB (dynamic)
+- TypeScript strict mode: 0 errors
+- Linting: 0 errors, 0 warnings
