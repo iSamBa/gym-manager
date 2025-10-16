@@ -111,14 +111,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               new Promise((_, reject) =>
                 setTimeout(
                   () => reject(new Error("Profile load timeout")),
-                  2000
+                  5000
                 )
               ),
             ]);
             setAuthError(null);
           } catch (profileError) {
             console.error("Error loading user profile:", profileError);
-            // Continue anyway - don't block the UI
+            // Set fallback user data from session to allow authentication to proceed
+            setUser({
+              id: session.user.id,
+              email: session.user.email || "",
+              role: (session.user.user_metadata?.role as string) || "member",
+              first_name: session.user.user_metadata?.first_name || "",
+              last_name: session.user.user_metadata?.last_name || "",
+              avatar_url: session.user.user_metadata?.avatar_url || null,
+              is_active: true,
+            });
+            // Retry profile load in background after a delay
+            setTimeout(() => loadUserProfile(session.user), 2000);
           }
         }
 
@@ -147,8 +158,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         case "SIGNED_IN":
           if (session?.user) {
-            await loadUserProfile(session.user);
-            setAuthError(null);
+            try {
+              await Promise.race([
+                loadUserProfile(session.user),
+                new Promise((_, reject) =>
+                  setTimeout(
+                    () => reject(new Error("Profile load timeout")),
+                    5000
+                  )
+                ),
+              ]);
+              setAuthError(null);
+            } catch (profileError) {
+              console.error(
+                "Error loading user profile on sign in:",
+                profileError
+              );
+              // Set fallback user data from session to allow authentication to proceed
+              setUser({
+                id: session.user.id,
+                email: session.user.email || "",
+                role: (session.user.user_metadata?.role as string) || "member",
+                first_name: session.user.user_metadata?.first_name || "",
+                last_name: session.user.user_metadata?.last_name || "",
+                avatar_url: session.user.user_metadata?.avatar_url || null,
+                is_active: true,
+              });
+              // Retry profile load in background after a delay
+              setTimeout(() => loadUserProfile(session.user), 2000);
+            }
           }
           break;
 
@@ -158,17 +196,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           break;
 
         case "TOKEN_REFRESHED":
-          // Token successfully refreshed
+          // Token successfully refreshed - reload profile
           if (session?.user) {
-            await loadUserProfile(session.user);
-            setAuthError(null);
+            try {
+              await Promise.race([
+                loadUserProfile(session.user),
+                new Promise((_, reject) =>
+                  setTimeout(
+                    () => reject(new Error("Profile load timeout")),
+                    5000
+                  )
+                ),
+              ]);
+              setAuthError(null);
+            } catch (profileError) {
+              console.warn(
+                "Error loading user profile on token refresh:",
+                profileError
+              );
+              // Keep existing user data on token refresh failure - don't disrupt the session
+            }
           }
           break;
 
         case "USER_UPDATED":
-          // User profile updated
+          // User profile updated - reload profile
           if (session?.user) {
-            await loadUserProfile(session.user);
+            try {
+              await Promise.race([
+                loadUserProfile(session.user),
+                new Promise((_, reject) =>
+                  setTimeout(
+                    () => reject(new Error("Profile load timeout")),
+                    5000
+                  )
+                ),
+              ]);
+            } catch (profileError) {
+              console.warn("Error loading updated user profile:", profileError);
+              // Keep existing user data on profile update failure
+            }
           }
           break;
 
@@ -178,8 +245,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         case "MFA_CHALLENGE_VERIFIED":
           if (session?.user) {
-            await loadUserProfile(session.user);
-            setAuthError(null);
+            try {
+              await Promise.race([
+                loadUserProfile(session.user),
+                new Promise((_, reject) =>
+                  setTimeout(
+                    () => reject(new Error("Profile load timeout")),
+                    5000
+                  )
+                ),
+              ]);
+              setAuthError(null);
+            } catch (profileError) {
+              console.error(
+                "Error loading user profile after MFA:",
+                profileError
+              );
+              // Set fallback user data from session
+              setUser({
+                id: session.user.id,
+                email: session.user.email || "",
+                role: (session.user.user_metadata?.role as string) || "member",
+                first_name: session.user.user_metadata?.first_name || "",
+                last_name: session.user.user_metadata?.last_name || "",
+                avatar_url: session.user.user_metadata?.avatar_url || null,
+                is_active: true,
+              });
+              // Retry profile load in background
+              setTimeout(() => loadUserProfile(session.user), 2000);
+            }
           }
           break;
 
