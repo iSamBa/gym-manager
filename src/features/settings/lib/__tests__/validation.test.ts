@@ -133,6 +133,74 @@ describe("validateOpeningHours", () => {
     expect(errors.friday).toBe("Invalid time format (expected HH:MM)");
     expect(Object.keys(errors).length).toBe(3);
   });
+
+  // Edge Case: Midnight closing time (23:45 is valid, 24:00 would be next day)
+  it("accepts 23:45 as valid closing time (close to midnight)", () => {
+    const validHours: OpeningHoursWeek = {
+      monday: { is_open: true, open_time: "09:00", close_time: "23:45" },
+      tuesday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+      wednesday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+      thursday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+      friday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+      saturday: { is_open: true, open_time: "10:00", close_time: "18:00" },
+      sunday: { is_open: false, open_time: null, close_time: null },
+    };
+
+    const errors = validateOpeningHours(validHours);
+
+    expect(errors.monday).toBeUndefined();
+  });
+
+  // Edge Case: Very short hours (< 1 hour but still valid)
+  it("accepts very short hours (30 minutes)", () => {
+    const shortHours: OpeningHoursWeek = {
+      monday: { is_open: true, open_time: "09:00", close_time: "09:30" },
+      tuesday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+      wednesday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+      thursday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+      friday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+      saturday: { is_open: true, open_time: "10:00", close_time: "18:00" },
+      sunday: { is_open: false, open_time: null, close_time: null },
+    };
+
+    const errors = validateOpeningHours(shortHours);
+
+    expect(errors.monday).toBeUndefined();
+  });
+
+  // Edge Case: All days have different hours
+  it("accepts all days with different hours", () => {
+    const differentHours: OpeningHoursWeek = {
+      monday: { is_open: true, open_time: "08:00", close_time: "20:00" },
+      tuesday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+      wednesday: { is_open: true, open_time: "10:00", close_time: "22:00" },
+      thursday: { is_open: true, open_time: "07:00", close_time: "19:00" },
+      friday: { is_open: true, open_time: "09:30", close_time: "23:30" },
+      saturday: { is_open: true, open_time: "10:00", close_time: "18:00" },
+      sunday: { is_open: true, open_time: "11:00", close_time: "17:00" },
+    };
+
+    const errors = validateOpeningHours(differentHours);
+
+    expect(errors).toEqual({});
+  });
+
+  // Edge Case: Early morning opening
+  it("accepts early morning opening (5 AM)", () => {
+    const earlyHours: OpeningHoursWeek = {
+      monday: { is_open: true, open_time: "05:00", close_time: "21:00" },
+      tuesday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+      wednesday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+      thursday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+      friday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+      saturday: { is_open: true, open_time: "10:00", close_time: "18:00" },
+      sunday: { is_open: false, open_time: null, close_time: null },
+    };
+
+    const errors = validateOpeningHours(earlyHours);
+
+    expect(errors.monday).toBeUndefined();
+  });
 });
 
 describe("hasValidationErrors", () => {

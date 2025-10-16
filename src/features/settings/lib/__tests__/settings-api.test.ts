@@ -129,7 +129,7 @@ describe("settings-api", () => {
       });
 
       vi.mocked(supabase.from).mockReturnValue({
-        insert: mockInsert,
+        upsert: mockInsert,
         select: mockSelect,
         single: mockSingle,
       } as never);
@@ -148,12 +148,18 @@ describe("settings-api", () => {
 
       expect(supabase.auth.getUser).toHaveBeenCalled();
       expect(supabase.from).toHaveBeenCalledWith("studio_settings");
-      expect(mockInsert).toHaveBeenCalledWith({
-        setting_key: "opening_hours",
-        setting_value: value,
-        effective_from: "2025-02-01",
-        created_by: "user123",
-      });
+      expect(mockInsert).toHaveBeenCalledWith(
+        {
+          setting_key: "opening_hours",
+          setting_value: value,
+          effective_from: "2025-02-01",
+          created_by: "user123",
+        },
+        {
+          onConflict: "setting_key,effective_from",
+          ignoreDuplicates: false,
+        }
+      );
       expect(result).toEqual(mockData);
     });
 
@@ -183,7 +189,7 @@ describe("settings-api", () => {
       });
 
       vi.mocked(supabase.from).mockReturnValue({
-        insert: mockInsert,
+        upsert: mockInsert,
         select: mockSelect,
         single: mockSingle,
       } as never);
@@ -197,25 +203,31 @@ describe("settings-api", () => {
         null
       );
 
-      expect(mockInsert).toHaveBeenCalledWith({
-        setting_key: "business_name",
-        setting_value: { name: "My Gym" },
-        effective_from: null,
-        created_by: "user123",
-      });
+      expect(mockInsert).toHaveBeenCalledWith(
+        {
+          setting_key: "business_name",
+          setting_value: { name: "My Gym" },
+          effective_from: null,
+          created_by: "user123",
+        },
+        {
+          onConflict: "setting_key,effective_from",
+          ignoreDuplicates: false,
+        }
+      );
       expect(result).toEqual(mockData);
     });
 
-    it("should throw error on insert failure", async () => {
+    it("should throw error on upsert failure", async () => {
       const mockUser = { id: "user123" };
-      const mockError = new Error("Insert failed");
+      const mockError = new Error("Upsert failed");
 
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
         data: { user: mockUser },
         error: null,
       } as never);
 
-      const mockInsert = vi.fn().mockReturnThis();
+      const mockUpsert = vi.fn().mockReturnThis();
       const mockSelect = vi.fn().mockReturnThis();
       const mockSingle = vi.fn().mockResolvedValue({
         data: null,
@@ -223,17 +235,17 @@ describe("settings-api", () => {
       });
 
       vi.mocked(supabase.from).mockReturnValue({
-        insert: mockInsert,
+        upsert: mockUpsert,
         select: mockSelect,
         single: mockSingle,
       } as never);
 
-      mockInsert.mockReturnValue({ select: mockSelect });
+      mockUpsert.mockReturnValue({ select: mockSelect });
       mockSelect.mockReturnValue({ single: mockSingle });
 
       await expect(
         updateStudioSettings("opening_hours", {}, new Date())
-      ).rejects.toThrow("Insert failed");
+      ).rejects.toThrow("Upsert failed");
     });
   });
 });
