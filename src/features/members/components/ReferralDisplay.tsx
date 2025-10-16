@@ -1,11 +1,12 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import type { Member, ReferralSource } from "@/features/database/lib/types";
+import { useMembers } from "@/features/members/hooks";
 
 interface ReferralDisplayProps {
   member: Member;
@@ -29,10 +30,20 @@ export const ReferralDisplay = memo(function ReferralDisplay({
   member,
   className,
 }: ReferralDisplayProps) {
+  // Fetch members to get the referred member's name
+  const { data: allMembers = [] } = useMembers({ limit: 10000 });
+
+  // Find the referred member
+  const referredByMember = useMemo(
+    () => allMembers.find((m) => m.id === member.referred_by_member_id),
+    [allMembers, member.referred_by_member_id]
+  );
+
   return (
-    <div className={cn("grid grid-cols-2 gap-4", className)}>
-      <div className="space-y-1">
-        <span className="text-muted-foreground text-sm">Referral Source</span>
+    <>
+      {/* Referral Source */}
+      <div className={cn("space-y-1", className)}>
+        <span className="text-muted-foreground">Referral Source</span>
         <div>
           <Badge variant="outline">
             {formatReferralSource(member.referral_source)}
@@ -40,18 +51,21 @@ export const ReferralDisplay = memo(function ReferralDisplay({
         </div>
       </div>
 
+      {/* Referred By Member */}
       {member.referred_by_member_id && (
         <div className="space-y-1">
-          <span className="text-muted-foreground text-sm">Referred By</span>
+          <span className="text-muted-foreground">Referred By</span>
           <div>
-            <Button variant="link" className="h-auto p-0 text-sm" asChild>
+            <Button variant="link" className="h-auto p-0" asChild>
               <Link href={`/members/${member.referred_by_member_id}`}>
-                View Member
+                {referredByMember
+                  ? `${referredByMember.first_name} ${referredByMember.last_name}`
+                  : "View Member"}
               </Link>
             </Button>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 });

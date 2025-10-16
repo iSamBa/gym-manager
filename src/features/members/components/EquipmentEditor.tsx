@@ -16,6 +16,7 @@ import type {
   UniformSize,
   VestSize,
   HipBeltSize,
+  TrainingPreference,
 } from "@/features/database/lib/types";
 
 interface EquipmentEditorProps {
@@ -133,6 +134,30 @@ export function EquipmentEditor({
           </SelectContent>
         </Select>
       </div>
+
+      {/* Training Preference - only for female members */}
+      {member.gender === "female" && (
+        <div className="md:col-span-2">
+          <span className="text-muted-foreground">Training Preference:</span>
+          <Select
+            value={member.training_preference || ""}
+            onValueChange={(value) =>
+              handleFieldChange(
+                "training_preference",
+                value as TrainingPreference
+              )
+            }
+          >
+            <SelectTrigger className="mt-1 h-8">
+              <SelectValue placeholder="Select preference..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mixed">Mixed Sessions</SelectItem>
+              <SelectItem value="women_only">Women Only Sessions</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
     </div>
   );
 }

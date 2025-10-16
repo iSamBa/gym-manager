@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import type { Member } from "@/features/database/lib/types";
 import { useUpdateMember } from "@/features/members/hooks";
 import { PersonalDetailsEditor } from "./PersonalDetailsEditor";
+import { ReferralDisplay } from "./ReferralDisplay";
+import { ReferralEditor } from "./ReferralEditor";
 
 interface PersonalDetailsCardProps {
   member: Member;
@@ -46,6 +48,8 @@ export const PersonalDetailsCard = memo(function PersonalDetailsCard({
           date_of_birth: formData.date_of_birth,
           gender: formData.gender,
           medical_conditions: formData.medical_conditions,
+          referral_source: formData.referral_source,
+          referred_by_member_id: formData.referred_by_member_id,
         },
       });
       setIsEditing(false);
@@ -92,6 +96,9 @@ export const PersonalDetailsCard = memo(function PersonalDetailsCard({
               member={formData}
               onChange={handleFormChange}
             />
+            <div className="mt-4">
+              <ReferralEditor member={formData} onChange={handleFormChange} />
+            </div>
             <div className="mt-4 flex justify-end gap-2">
               <Button variant="outline" onClick={handleCancel}>
                 Cancel
@@ -141,6 +148,9 @@ export const PersonalDetailsCard = memo(function PersonalDetailsCard({
                 {formatDate(new Date(member.created_at))}
               </p>
             </div>
+
+            {/* Referral Information - rendered as grid items */}
+            <ReferralDisplay member={member} />
 
             {/* Medical Conditions */}
             {member.medical_conditions && (

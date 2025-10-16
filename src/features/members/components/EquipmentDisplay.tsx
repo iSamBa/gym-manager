@@ -3,7 +3,11 @@
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { Member, VestSize } from "@/features/database/lib/types";
+import type {
+  Member,
+  VestSize,
+  TrainingPreference,
+} from "@/features/database/lib/types";
 
 interface EquipmentDisplayProps {
   member: Member;
@@ -19,6 +23,11 @@ const formatVestSize = (size: VestSize): string => {
     V2_DOUBLE_EXT: "V2 with Double Extension",
   };
   return mapping[size];
+};
+
+const formatTrainingPreference = (pref?: TrainingPreference): string => {
+  if (!pref) return "Not Specified";
+  return pref === "mixed" ? "Mixed Sessions" : "Women Only Sessions";
 };
 
 export const EquipmentDisplay = memo(function EquipmentDisplay({
@@ -63,6 +72,22 @@ export const EquipmentDisplay = memo(function EquipmentDisplay({
           <Badge variant="outline">{member.hip_belt_size}</Badge>
         </div>
       </div>
+
+      {/* Training Preferences - only for female members */}
+      {member.gender === "female" && (
+        <div className="space-y-1 md:col-span-2">
+          <span className="text-muted-foreground text-sm">
+            Training Preference
+          </span>
+          <div>
+            <Badge
+              variant={member.training_preference ? "default" : "secondary"}
+            >
+              {formatTrainingPreference(member.training_preference)}
+            </Badge>
+          </div>
+        </div>
+      )}
     </div>
   );
 });
