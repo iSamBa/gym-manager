@@ -49,6 +49,10 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
   ] as const;
 
+  const studioNav = [
+    { name: "Settings", href: "/settings/studio", icon: Settings },
+  ] as const;
+
   const isActiveRoute = (href: string) => {
     return pathname === href || (href !== "/" && pathname.startsWith(href));
   };
@@ -126,18 +130,22 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
             </h4>
             {renderNavItems(insightsNav)}
           </div>
+
+          <Separator className="my-4" />
+
+          {/* Studio Section */}
+          <div className="space-y-1">
+            <h4 className="text-muted-foreground px-4 py-2 text-sm font-semibold">
+              Studio
+            </h4>
+            {renderNavItems(studioNav)}
+          </div>
         </div>
       </div>
 
       {/* Bottom utilities - sticky */}
       <div className="bg-background space-y-2 border-t p-2">
         <ThemeToggleSidebar />
-        <Button variant="ghost" className="w-full justify-start gap-2" asChild>
-          <Link href="/settings/studio" onClick={onNavigate}>
-            <Settings className="h-4 w-4" />
-            Settings
-          </Link>
-        </Button>
         <UserProfileDropdown />
       </div>
     </div>

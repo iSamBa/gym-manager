@@ -25,8 +25,9 @@ export async function fetchStudioSettings(
 }
 
 /**
- * Creates a new studio setting entry
- * For historical tracking, creates new rows rather than updating existing ones
+ * Creates or updates a studio setting entry
+ * Uses upsert to handle the unique constraint on (setting_key, effective_from)
+ * For historical tracking, creates new rows for different effective dates
  */
 export async function updateStudioSettings(
   settingKey: string,
@@ -37,16 +38,24 @@ export async function updateStudioSettings(
     data: { user },
   } = await supabase.auth.getUser();
 
+  const effectiveFromDate = effectiveFrom
+    ? effectiveFrom.toISOString().split("T")[0]
+    : null;
+
   const { data, error } = await supabase
     .from("studio_settings")
-    .insert({
-      setting_key: settingKey,
-      setting_value: value,
-      effective_from: effectiveFrom
-        ? effectiveFrom.toISOString().split("T")[0]
-        : null,
-      created_by: user?.id || null,
-    })
+    .upsert(
+      {
+        setting_key: settingKey,
+        setting_value: value,
+        effective_from: effectiveFromDate,
+        created_by: user?.id || null,
+      },
+      {
+        onConflict: "setting_key,effective_from",
+        ignoreDuplicates: false,
+      }
+    )
     .select()
     .single();
 
