@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fetchStudioSettings, updateStudioSettings } from "../settings-api";
+import {
+  fetchStudioSettings,
+  fetchActiveSettings,
+  fetchScheduledSettings,
+  updateStudioSettings,
+} from "../settings-api";
 import { supabase } from "@/lib/supabase";
 
 // Mock the supabase client
@@ -17,8 +22,8 @@ describe("settings-api", () => {
     vi.clearAllMocks();
   });
 
-  describe("fetchStudioSettings", () => {
-    it("should fetch active settings by key", async () => {
+  describe("fetchStudioSettings (deprecated)", () => {
+    it("should fetch active settings by key (delegates to fetchActiveSettings)", async () => {
       const mockData = {
         id: "123",
         setting_key: "opening_hours",
@@ -39,7 +44,8 @@ describe("settings-api", () => {
         .fn()
         .mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
-      const mockEq2 = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockLte = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ lte: mockLte });
       const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
 
@@ -65,7 +71,8 @@ describe("settings-api", () => {
         .fn()
         .mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
-      const mockEq2 = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockLte = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ lte: mockLte });
       const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
 
@@ -88,7 +95,8 @@ describe("settings-api", () => {
         .fn()
         .mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
-      const mockEq2 = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockLte = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ lte: mockLte });
       const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
 
@@ -99,6 +107,142 @@ describe("settings-api", () => {
       await expect(fetchStudioSettings("opening_hours")).rejects.toThrow(
         "Database error"
       );
+    });
+  });
+
+  describe("fetchActiveSettings", () => {
+    it("should fetch settings where effective_from <= today", async () => {
+      const mockData = {
+        id: "123",
+        setting_key: "opening_hours",
+        setting_value: {
+          monday: { is_open: true, open_time: "09:00", close_time: "21:00" },
+        },
+        effective_from: "2025-01-01",
+        is_active: true,
+        created_at: "2025-01-01",
+        updated_at: "2025-01-01",
+      };
+
+      const mockMaybeSingle = vi.fn().mockResolvedValue({
+        data: mockData,
+        error: null,
+      });
+      const mockLimit = vi
+        .fn()
+        .mockReturnValue({ maybeSingle: mockMaybeSingle });
+      const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockLte = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
+
+      vi.mocked(supabase.from).mockReturnValue({
+        select: mockSelect,
+      } as never);
+
+      const result = await fetchActiveSettings("opening_hours");
+
+      expect(supabase.from).toHaveBeenCalledWith("studio_settings");
+      expect(result).toEqual(mockData);
+      expect(mockSelect).toHaveBeenCalled();
+      expect(mockEq1).toHaveBeenCalledWith("setting_key", "opening_hours");
+      expect(mockEq2).toHaveBeenCalledWith("is_active", true);
+      expect(mockLte).toHaveBeenCalledWith(
+        "effective_from",
+        expect.stringContaining("2025")
+      );
+    });
+
+    it("should return null when no active settings found", async () => {
+      const mockMaybeSingle = vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      });
+      const mockLimit = vi
+        .fn()
+        .mockReturnValue({ maybeSingle: mockMaybeSingle });
+      const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockLte = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
+
+      vi.mocked(supabase.from).mockReturnValue({
+        select: mockSelect,
+      } as never);
+
+      const result = await fetchActiveSettings("opening_hours");
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("fetchScheduledSettings", () => {
+    it("should fetch settings where effective_from > today", async () => {
+      const mockData = {
+        id: "456",
+        setting_key: "opening_hours",
+        setting_value: {
+          monday: { is_open: true, open_time: "10:00", close_time: "20:00" },
+        },
+        effective_from: "2025-11-01",
+        is_active: true,
+        created_at: "2025-10-16",
+        updated_at: "2025-10-16",
+      };
+
+      const mockMaybeSingle = vi.fn().mockResolvedValue({
+        data: mockData,
+        error: null,
+      });
+      const mockLimit = vi
+        .fn()
+        .mockReturnValue({ maybeSingle: mockMaybeSingle });
+      const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockGt = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ gt: mockGt });
+      const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
+
+      vi.mocked(supabase.from).mockReturnValue({
+        select: mockSelect,
+      } as never);
+
+      const result = await fetchScheduledSettings("opening_hours");
+
+      expect(supabase.from).toHaveBeenCalledWith("studio_settings");
+      expect(result).toEqual(mockData);
+      expect(mockSelect).toHaveBeenCalled();
+      expect(mockEq1).toHaveBeenCalledWith("setting_key", "opening_hours");
+      expect(mockEq2).toHaveBeenCalledWith("is_active", true);
+      expect(mockGt).toHaveBeenCalledWith(
+        "effective_from",
+        expect.stringContaining("2025")
+      );
+    });
+
+    it("should return null when no scheduled settings found", async () => {
+      const mockMaybeSingle = vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      });
+      const mockLimit = vi
+        .fn()
+        .mockReturnValue({ maybeSingle: mockMaybeSingle });
+      const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockGt = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ gt: mockGt });
+      const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
+
+      vi.mocked(supabase.from).mockReturnValue({
+        select: mockSelect,
+      } as never);
+
+      const result = await fetchScheduledSettings("opening_hours");
+
+      expect(result).toBeNull();
     });
   });
 

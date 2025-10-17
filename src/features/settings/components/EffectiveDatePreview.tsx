@@ -3,7 +3,7 @@
 import { memo, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info, Calendar as CalendarIcon } from "lucide-react";
+import { Info } from "lucide-react";
 import { format } from "date-fns";
 import type { OpeningHoursWeek, DayOfWeek } from "../lib/types";
 import { calculateAvailableSlots } from "../lib/slot-calculator";
@@ -11,6 +11,7 @@ import { calculateAvailableSlots } from "../lib/slot-calculator";
 interface EffectiveDatePreviewProps {
   openingHours: OpeningHoursWeek;
   effectiveDate: Date;
+  isScheduled?: boolean;
 }
 
 const DAY_LABELS: Record<DayOfWeek, string> = {
@@ -26,6 +27,7 @@ const DAY_LABELS: Record<DayOfWeek, string> = {
 export const EffectiveDatePreview = memo(function EffectiveDatePreview({
   openingHours,
   effectiveDate,
+  isScheduled = false,
 }: EffectiveDatePreviewProps) {
   const slotsPerDay = useMemo(() => {
     return calculateAvailableSlots(openingHours);
@@ -38,17 +40,17 @@ export const EffectiveDatePreview = memo(function EffectiveDatePreview({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <CalendarIcon className="h-5 w-5" />
-          Changes Preview
+        <CardTitle className="text-lg">
+          {isScheduled ? "Scheduled Changes" : "Changes Preview"}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Effective Date Alert */}
-        <Alert>
+        <Alert variant="info">
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Changes will take effect on{" "}
+            {isScheduled ? "Scheduled changes will" : "Changes will"} take
+            effect on{" "}
             <strong>{format(effectiveDate, "EEEE, MMMM d, yyyy")}</strong>.
             Existing bookings before this date will remain unchanged.
           </AlertDescription>
@@ -57,7 +59,9 @@ export const EffectiveDatePreview = memo(function EffectiveDatePreview({
         {/* Slots Table */}
         <div>
           <h4 className="mb-3 text-sm font-medium">
-            Available Session Slots Per Day
+            {isScheduled
+              ? `Scheduled Hours (${format(effectiveDate, "MMM d, yyyy")})`
+              : "Available Session Slots Per Day"}
           </h4>
           <div className="rounded-lg border">
             <table className="w-full text-sm">

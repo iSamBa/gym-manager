@@ -110,11 +110,13 @@ describe("OpeningHoursTab", () => {
 
     render(<OpeningHoursTab />, { wrapper });
 
-    expect(screen.getByText("Studio Opening Hours")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Set the days and times when your studio is open/)
-    ).toBeInTheDocument();
-    expect(screen.getByText("Save Changes")).toBeInTheDocument();
+    expect(screen.getByText("Current Opening Hours")).toBeInTheDocument();
+    // In display mode (default), should show the opening hours table
+    expect(screen.getByText("Day")).toBeInTheDocument();
+    expect(screen.getByText("Hours")).toBeInTheDocument();
+    expect(screen.getByText("Available Slots")).toBeInTheDocument();
+    // Save Changes button should not be visible in display mode
+    expect(screen.queryByText("Save Changes")).not.toBeInTheDocument();
   });
 
   it("should render content without settings (null data)", () => {

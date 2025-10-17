@@ -2,17 +2,20 @@ import { supabase } from "@/lib/supabase";
 import type { StudioSettings } from "./types";
 
 /**
- * Fetches the active studio setting by key
- * Returns the most recent active setting based on effective_from date
+ * Fetches the currently active studio setting by key
+ * Returns the most recent setting where effective_from <= today
  */
-export async function fetchStudioSettings(
+export async function fetchActiveSettings(
   settingKey: string
 ): Promise<StudioSettings | null> {
+  const today = new Date().toISOString().split("T")[0];
+
   const { data, error } = await supabase
     .from("studio_settings")
     .select("*")
     .eq("setting_key", settingKey)
     .eq("is_active", true)
+    .lte("effective_from", today)
     .order("effective_from", { ascending: false, nullsFirst: false })
     .limit(1)
     .maybeSingle();
@@ -22,6 +25,42 @@ export async function fetchStudioSettings(
   }
 
   return data;
+}
+
+/**
+ * Fetches scheduled studio settings (future effective dates)
+ * Returns the earliest scheduled setting where effective_from > today
+ */
+export async function fetchScheduledSettings(
+  settingKey: string
+): Promise<StudioSettings | null> {
+  const today = new Date().toISOString().split("T")[0];
+
+  const { data, error } = await supabase
+    .from("studio_settings")
+    .select("*")
+    .eq("setting_key", settingKey)
+    .eq("is_active", true)
+    .gt("effective_from", today)
+    .order("effective_from", { ascending: true, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+/**
+ * @deprecated Use fetchActiveSettings instead
+ * Kept for backward compatibility
+ */
+export async function fetchStudioSettings(
+  settingKey: string
+): Promise<StudioSettings | null> {
+  return fetchActiveSettings(settingKey);
 }
 
 /**

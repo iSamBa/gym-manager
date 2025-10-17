@@ -14,31 +14,64 @@ describe("EffectiveDatePreview", () => {
     sunday: { is_open: false, open_time: null, close_time: null },
   };
 
-  it("should render the component with header", () => {
+  it("should render the component with header for editing mode", () => {
     const testDate = new Date("2025-10-20");
 
     render(
       <EffectiveDatePreview
         openingHours={mockOpeningHours}
         effectiveDate={testDate}
+        isScheduled={false}
       />
     );
 
     expect(screen.getByText("Changes Preview")).toBeInTheDocument();
   });
 
-  it("should display formatted effective date in alert", () => {
+  it("should render the component with 'Scheduled Changes' header when isScheduled=true", () => {
     const testDate = new Date("2025-10-20");
 
     render(
       <EffectiveDatePreview
         openingHours={mockOpeningHours}
         effectiveDate={testDate}
+        isScheduled={true}
+      />
+    );
+
+    expect(screen.getByText("Scheduled Changes")).toBeInTheDocument();
+  });
+
+  it("should display formatted effective date in alert with 'Changes will' when not scheduled", () => {
+    const testDate = new Date("2025-10-20");
+
+    render(
+      <EffectiveDatePreview
+        openingHours={mockOpeningHours}
+        effectiveDate={testDate}
+        isScheduled={false}
       />
     );
 
     expect(
       screen.getByText(/Changes will take effect on/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Monday, October 20, 2025/i)).toBeInTheDocument();
+  });
+
+  it("should display formatted effective date with 'Scheduled changes will' when isScheduled=true", () => {
+    const testDate = new Date("2025-10-20");
+
+    render(
+      <EffectiveDatePreview
+        openingHours={mockOpeningHours}
+        effectiveDate={testDate}
+        isScheduled={true}
+      />
+    );
+
+    expect(
+      screen.getByText(/Scheduled changes will take effect on/i)
     ).toBeInTheDocument();
     expect(screen.getByText(/Monday, October 20, 2025/i)).toBeInTheDocument();
   });
@@ -170,5 +203,39 @@ describe("EffectiveDatePreview", () => {
     expect(dashes).toHaveLength(7);
     // Total should be 0
     expect(screen.getByText("0 slots")).toBeInTheDocument();
+  });
+
+  it("should display scheduled hours heading when isScheduled=true", () => {
+    const testDate = new Date("2025-10-20");
+
+    render(
+      <EffectiveDatePreview
+        openingHours={mockOpeningHours}
+        effectiveDate={testDate}
+        isScheduled={true}
+      />
+    );
+
+    // Should show scheduled hours heading with date
+    expect(
+      screen.getByText(/Scheduled Hours \(Oct 20, 2025\)/i)
+    ).toBeInTheDocument();
+  });
+
+  it("should display available slots heading when isScheduled=false", () => {
+    const testDate = new Date("2025-10-20");
+
+    render(
+      <EffectiveDatePreview
+        openingHours={mockOpeningHours}
+        effectiveDate={testDate}
+        isScheduled={false}
+      />
+    );
+
+    // Should show available session slots heading
+    expect(
+      screen.getByText("Available Session Slots Per Day")
+    ).toBeInTheDocument();
   });
 });
