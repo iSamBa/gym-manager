@@ -6,6 +6,7 @@ import {
   isToday,
   formatForDatabase,
   formatTimestampForDatabase,
+  getStartOfDay,
 } from "../date-utils";
 
 describe("date-utils", () => {
@@ -256,6 +257,65 @@ describe("date-utils", () => {
       const date1 = new Date(2025, 9, 18, 0, 0); // Midnight
       const date2 = new Date(2025, 9, 18, 23, 59); // Almost midnight
       expect(compareDates(date1, date2)).toBe(0);
+    });
+  });
+
+  describe("getStartOfDay", () => {
+    it("should return date at midnight (00:00:00.000)", () => {
+      const date = new Date(2025, 9, 18, 14, 30, 45, 123); // Oct 18, 2025 2:30:45.123 PM
+      const result = getStartOfDay(date);
+
+      expect(result.getFullYear()).toBe(2025);
+      expect(result.getMonth()).toBe(9); // October (0-indexed)
+      expect(result.getDate()).toBe(18);
+      expect(result.getHours()).toBe(0);
+      expect(result.getMinutes()).toBe(0);
+      expect(result.getSeconds()).toBe(0);
+      expect(result.getMilliseconds()).toBe(0);
+    });
+
+    it("should default to today when no date provided", () => {
+      vi.setSystemTime(new Date(2025, 9, 18, 14, 30, 0)); // Oct 18, 2025 2:30 PM
+      const result = getStartOfDay();
+
+      expect(result.getFullYear()).toBe(2025);
+      expect(result.getMonth()).toBe(9);
+      expect(result.getDate()).toBe(18);
+      expect(result.getHours()).toBe(0);
+      expect(result.getMinutes()).toBe(0);
+      expect(result.getSeconds()).toBe(0);
+      expect(result.getMilliseconds()).toBe(0);
+    });
+
+    it("should not mutate original date", () => {
+      const original = new Date(2025, 9, 18, 14, 30, 0);
+      const originalTime = original.getTime();
+
+      getStartOfDay(original);
+
+      expect(original.getTime()).toBe(originalTime);
+    });
+
+    it("should work with dates at midnight", () => {
+      const date = new Date(2025, 9, 18, 0, 0, 0, 0);
+      const result = getStartOfDay(date);
+
+      expect(result.getTime()).toBe(date.getTime());
+    });
+
+    it("should be useful for date picker validation", () => {
+      vi.setSystemTime(new Date(2025, 9, 18, 14, 30, 0)); // Oct 18, 2025 2:30 PM
+      const today = getStartOfDay();
+
+      const yesterday = new Date(2025, 9, 17, 10, 0, 0);
+      const tomorrow = new Date(2025, 9, 19, 10, 0, 0);
+
+      // Yesterday should be before today (disabled in date picker)
+      expect(yesterday < today).toBe(true);
+
+      // Tomorrow should be after today (enabled in date picker)
+      expect(tomorrow > today).toBe(true);
+      expect(tomorrow >= today).toBe(true);
     });
   });
 

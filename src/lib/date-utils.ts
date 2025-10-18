@@ -129,3 +129,27 @@ export function formatForDatabase(date: Date): string {
 export function formatTimestampForDatabase(date: Date = new Date()): string {
   return date.toISOString();
 }
+
+/**
+ * Get start of day (midnight) for a given date
+ *
+ * Returns a Date object with time set to 00:00:00.000 in local timezone.
+ * Useful for date comparisons in UI components (date pickers, validators).
+ *
+ * @param date - Date to get start of day for (defaults to today)
+ * @returns Date object at midnight (00:00:00.000)
+ *
+ * @example
+ * ```typescript
+ * getStartOfDay()  // Today at 00:00:00.000
+ * getStartOfDay(new Date(2025, 9, 20))  // Oct 20, 2025 at 00:00:00.000
+ *
+ * // Use for date picker validation:
+ * disabled={(date) => date < getStartOfDay()}
+ * ```
+ */
+export function getStartOfDay(date: Date = new Date()): Date {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
