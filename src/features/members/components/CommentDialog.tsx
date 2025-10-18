@@ -19,6 +19,7 @@ import type {
   MemberWithSubscription,
 } from "@/features/database/lib/types";
 import { toast } from "sonner";
+import { getStartOfDay } from "@/lib/date-utils";
 
 interface CommentDialogProps {
   member: MemberWithSubscription;
@@ -71,8 +72,7 @@ export function CommentDialog({
     }
     // If due date is set, must be today or future
     if (formData.due_date) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const today = getStartOfDay();
       if (formData.due_date < today) {
         return false;
       }
@@ -94,8 +94,7 @@ export function CommentDialog({
 
     // Check due date is not in the past
     if (formData.due_date) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const today = getStartOfDay();
       if (formData.due_date < today) {
         toast.error("Due date must be today or in the future");
         return;
