@@ -24,6 +24,7 @@ import { ConflictDetectionDialog } from "./ConflictDetectionDialog";
 import { hasValidationErrors, validateOpeningHours } from "../lib/validation";
 import { toast } from "sonner";
 import type { OpeningHoursWeek } from "../lib/types";
+import { getLocalDateString, getStartOfDay } from "@/lib/date-utils";
 
 function OpeningHoursTabComponent() {
   const {
@@ -39,9 +40,8 @@ function OpeningHoursTabComponent() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedHours, setEditedHours] = useState<OpeningHoursWeek | null>(null);
   const [effectiveDate, setEffectiveDate] = useState<Date>(() => {
-    const tomorrow = new Date();
+    const tomorrow = getStartOfDay(new Date());
     tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
     return tomorrow;
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -151,14 +151,12 @@ function OpeningHoursTabComponent() {
     if (!scheduledSettings) return false;
     if (!scheduledSettings.effective_from) return false;
 
-    // Use ISO date strings for consistent comparison (avoids timezone issues)
-    const todayStr = new Date().toISOString().split("T")[0];
+    // Use local date strings for consistent comparison (avoids timezone issues)
+    const todayStr = getLocalDateString(new Date());
     const effectiveFromStr =
       typeof scheduledSettings.effective_from === "string"
         ? scheduledSettings.effective_from
-        : new Date(scheduledSettings.effective_from)
-            .toISOString()
-            .split("T")[0];
+        : getLocalDateString(new Date(scheduledSettings.effective_from));
 
     // Show only if scheduled for future date
     return effectiveFromStr > todayStr;

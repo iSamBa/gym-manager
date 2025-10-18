@@ -48,21 +48,17 @@ export const EffectiveDatePreview = memo(function EffectiveDatePreview({
         {/* Effective Date Alert */}
         <Alert variant="info">
           <Info className="h-4 w-4" />
-          <AlertDescription>
+          <AlertDescription className="flex whitespace-nowrap">
             {isScheduled ? "Scheduled changes will" : "Changes will"} take
             effect on{" "}
-            <strong>{format(effectiveDate, "EEEE, MMMM d, yyyy")}</strong>.
-            Existing bookings before this date will remain unchanged.
+            <strong className="ml-1">
+              {format(effectiveDate, "EEEE, MMMM d, yyyy")}
+            </strong>
           </AlertDescription>
         </Alert>
 
         {/* Slots Table */}
         <div>
-          <h4 className="mb-3 text-sm font-medium">
-            {isScheduled
-              ? `Scheduled Hours (${format(effectiveDate, "MMM d, yyyy")})`
-              : "Available Session Slots Per Day"}
-          </h4>
           <div className="rounded-lg border">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 border-b">

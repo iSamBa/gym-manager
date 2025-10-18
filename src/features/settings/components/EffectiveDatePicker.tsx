@@ -26,9 +26,8 @@ export const EffectiveDatePicker = memo(function EffectiveDatePicker({
   disabled = false,
 }: EffectiveDatePickerProps) {
   // Tomorrow is the minimum selectable date (today is not allowed)
-  const tomorrow = new Date();
+  const tomorrow = getStartOfDay(new Date());
   tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
 
   return (
     <div className="space-y-2">

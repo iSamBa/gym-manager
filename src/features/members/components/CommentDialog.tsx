@@ -19,7 +19,7 @@ import type {
   MemberWithSubscription,
 } from "@/features/database/lib/types";
 import { toast } from "sonner";
-import { getStartOfDay } from "@/lib/date-utils";
+import { getStartOfDay, formatForDatabase } from "@/lib/date-utils";
 
 interface CommentDialogProps {
   member: MemberWithSubscription;
@@ -108,7 +108,7 @@ export function CommentDialog({
           author: formData.author.trim(),
           body: formData.body.trim(),
           due_date: formData.due_date
-            ? formData.due_date.toISOString().split("T")[0]
+            ? formatForDatabase(formData.due_date)
             : undefined,
           created_by: undefined,
         });
@@ -119,7 +119,7 @@ export function CommentDialog({
             author: formData.author.trim(),
             body: formData.body.trim(),
             due_date: formData.due_date
-              ? formData.due_date.toISOString().split("T")[0]
+              ? formatForDatabase(formData.due_date)
               : undefined,
           },
         });

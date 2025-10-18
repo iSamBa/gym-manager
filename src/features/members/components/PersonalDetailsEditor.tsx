@@ -13,6 +13,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import type { Member, Gender } from "@/features/database/lib/types";
+import { formatForDatabase } from "@/lib/date-utils";
 
 interface PersonalDetailsEditorProps {
   member: Member;
@@ -34,9 +35,9 @@ export function PersonalDetailsEditor({
 
   const handleDateChange = useCallback(
     (date: Date | undefined) => {
-      // Convert Date to ISO string for database
+      // Convert Date to local date string for database
       onChange({
-        date_of_birth: date ? date.toISOString().split("T")[0] : undefined,
+        date_of_birth: date ? formatForDatabase(date) : undefined,
       });
     },
     [onChange]

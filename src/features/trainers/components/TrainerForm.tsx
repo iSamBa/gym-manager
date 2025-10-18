@@ -41,6 +41,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { TrainerWithProfile } from "@/features/database/lib/types";
 import type { CreateTrainerData } from "@/features/trainers/lib/database-utils";
+import { formatForDatabase } from "@/lib/date-utils";
 
 const trainerFormSchema = z.object({
   // User Profile fields
@@ -712,9 +713,7 @@ export function TrainerForm({
                             field.value ? new Date(field.value) : undefined
                           }
                           onChange={(date) =>
-                            field.onChange(
-                              date ? date.toISOString().split("T")[0] : ""
-                            )
+                            field.onChange(date ? formatForDatabase(date) : "")
                           }
                           placeholder="Select date"
                           className="w-full"
@@ -739,9 +738,7 @@ export function TrainerForm({
                             field.value ? new Date(field.value) : undefined
                           }
                           onChange={(date) =>
-                            field.onChange(
-                              date ? date.toISOString().split("T")[0] : ""
-                            )
+                            field.onChange(date ? formatForDatabase(date) : "")
                           }
                           placeholder="Select expiry date"
                           className="w-full"

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { getLocalDateString } from "@/lib/date-utils";
 
 interface ActivityMetrics {
   sessionsThisMonth: number;
@@ -51,7 +52,7 @@ export function useMemberActivityMetrics(memberId: string) {
         .select("*", { count: "exact", head: true })
         .eq("member_id", memberId)
         .in("payment_status", ["pending", "failed"])
-        .lt("due_date", new Date().toISOString().split("T")[0]);
+        .lt("due_date", getLocalDateString(new Date()));
 
       return {
         sessionsThisMonth: sessionsCount || 0,

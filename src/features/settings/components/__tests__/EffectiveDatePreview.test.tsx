@@ -76,23 +76,6 @@ describe("EffectiveDatePreview", () => {
     expect(screen.getByText(/Monday, October 20, 2025/i)).toBeInTheDocument();
   });
 
-  it("should show notice about existing bookings", () => {
-    const testDate = new Date("2025-10-20");
-
-    render(
-      <EffectiveDatePreview
-        openingHours={mockOpeningHours}
-        effectiveDate={testDate}
-      />
-    );
-
-    expect(
-      screen.getByText(
-        /Existing bookings before this date will remain unchanged/i
-      )
-    ).toBeInTheDocument();
-  });
-
   it("should display table with all days of the week", () => {
     const testDate = new Date("2025-10-20");
 
@@ -203,39 +186,5 @@ describe("EffectiveDatePreview", () => {
     expect(dashes).toHaveLength(7);
     // Total should be 0
     expect(screen.getByText("0 slots")).toBeInTheDocument();
-  });
-
-  it("should display scheduled hours heading when isScheduled=true", () => {
-    const testDate = new Date("2025-10-20");
-
-    render(
-      <EffectiveDatePreview
-        openingHours={mockOpeningHours}
-        effectiveDate={testDate}
-        isScheduled={true}
-      />
-    );
-
-    // Should show scheduled hours heading with date
-    expect(
-      screen.getByText(/Scheduled Hours \(Oct 20, 2025\)/i)
-    ).toBeInTheDocument();
-  });
-
-  it("should display available slots heading when isScheduled=false", () => {
-    const testDate = new Date("2025-10-20");
-
-    render(
-      <EffectiveDatePreview
-        openingHours={mockOpeningHours}
-        effectiveDate={testDate}
-        isScheduled={false}
-      />
-    );
-
-    // Should show available session slots heading
-    expect(
-      screen.getByText("Available Session Slots Per Day")
-    ).toBeInTheDocument();
   });
 });
