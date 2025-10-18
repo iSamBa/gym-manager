@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { MemberComment } from "@/features/database/lib/types";
+import { getLocalDateString } from "@/lib/date-utils";
 
 /**
  * Fetch notification alerts for a training session
@@ -20,7 +21,7 @@ export function useSessionAlerts(
       }
 
       // Extract just the date portion from session timestamp for comparison
-      const sessionDateOnly = new Date(sessionDate).toISOString().split("T")[0];
+      const sessionDateOnly = getLocalDateString(new Date(sessionDate));
 
       // Query member_comments with:
       // 1. due_date IS NOT NULL
