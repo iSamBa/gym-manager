@@ -1,5 +1,9 @@
 import { supabase } from "@/lib/supabase";
 import type { MemberSubscriptionWithSnapshot } from "@/features/database/lib/types";
+import {
+  formatForDatabase,
+  formatTimestampForDatabase,
+} from "@/lib/date-utils";
 
 export interface PaymentAlertInput {
   memberId: string;
@@ -40,7 +44,7 @@ export const notificationUtils = {
         sessionDate: input.sessionDate,
         severity: "warning",
       },
-      created_at: new Date().toISOString(),
+      created_at: formatTimestampForDatabase(new Date()),
     };
 
     const { error } = await supabase.from("notifications").insert(notification);
@@ -90,7 +94,7 @@ export const notificationUtils = {
         daysUntilExpiry: input.daysUntilExpiry,
         severity: input.remainingSessions === 0 ? "high" : "medium",
       },
-      created_at: new Date().toISOString(),
+      created_at: formatTimestampForDatabase(new Date()),
     });
 
     if (error) {
@@ -114,8 +118,8 @@ export const notificationUtils = {
       `
       )
       .eq("status", "active")
-      .lte("end_date", sevenDaysFromNow.toISOString())
-      .gt("end_date", new Date().toISOString());
+      .lte("end_date", formatForDatabase(sevenDaysFromNow))
+      .gt("end_date", formatForDatabase(new Date()));
 
     if (error) {
       console.error("Failed to fetch expiring subscriptions:", error);
@@ -151,7 +155,7 @@ export const notificationUtils = {
         daysRemaining,
         severity: daysRemaining <= 3 ? "high" : "medium",
       },
-      created_at: new Date().toISOString(),
+      created_at: formatTimestampForDatabase(new Date()),
     });
 
     if (error) {
@@ -178,7 +182,7 @@ export const notificationUtils = {
       message: notification.message,
       priority: notification.priority,
       read: false,
-      created_at: new Date().toISOString(),
+      created_at: formatTimestampForDatabase(new Date()),
     });
 
     if (error) {
