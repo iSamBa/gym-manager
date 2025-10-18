@@ -303,6 +303,172 @@ Business logic hooks specific to a feature domain (useMemberForm, usePaymentProc
 
 **Decision**: Multiple features = `src/hooks/`, Single feature = `src/features/[feature]/hooks/`
 
+## Date Handling Standards
+
+### Overview
+
+This application uses **local timezone** date handling to prevent timezone-related bugs. All date utilities are centralized in `src/lib/date-utils.ts` with 100% test coverage.
+
+**Key Principle**: User-facing dates (join dates, subscription dates, scheduled changes) should display and store in the user's local timezone, NOT UTC.
+
+### Core Functions
+
+| Function                           | Purpose                                      | Use For                                   |
+| ---------------------------------- | -------------------------------------------- | ----------------------------------------- |
+| `getLocalDateString(date)`         | Convert Date to YYYY-MM-DD in local timezone | Extracting date strings, database queries |
+| `compareDates(a, b)`               | Compare two dates (string or Date)           | Sorting, filtering, conditional logic     |
+| `isFutureDate(date)`               | Check if date is after today                 | Validation, filtering upcoming items      |
+| `isToday(date)`                    | Check if date is today                       | Highlighting current items                |
+| `formatForDatabase(date)`          | Format for PostgreSQL `date` column          | join_date, start_date, end_date, due_date |
+| `formatTimestampForDatabase(date)` | Format for PostgreSQL `timestamptz` column   | created_at, updated_at, scheduled_start   |
+| `getStartOfDay(date)`              | Get Date at midnight (00:00:00.000)          | Date picker validation, UI comparisons    |
+
+### Common Patterns
+
+**Pattern 1: Database Date Storage**
+
+```typescript
+import {
+  formatForDatabase,
+  formatTimestampForDatabase,
+} from "@/lib/date-utils";
+
+// For date columns (no time component)
+const member = {
+  join_date: formatForDatabase(new Date()), // "2025-10-18"
+  subscription_start: formatForDatabase(new Date(2025, 9, 20)), // "2025-10-20"
+};
+
+// For timestamptz columns (with time)
+const comment = {
+  created_at: formatTimestampForDatabase(), // "2025-10-18T01:26:00.000Z"
+  updated_at: formatTimestampForDatabase(new Date()),
+};
+```
+
+**Pattern 2: Date Picker Validation**
+
+```typescript
+import { getStartOfDay } from '@/lib/date-utils';
+
+<Calendar
+  selected={selectedDate}
+  onSelect={setSelectedDate}
+  disabled={(date) => date < getStartOfDay()}  // Prevent past dates
+/>
+```
+
+**Pattern 3: Database Queries with Dates**
+
+```typescript
+import { getLocalDateString } from "@/lib/date-utils";
+
+// Query for items on a specific date
+const sessionDate = getLocalDateString(new Date(sessionTimestamp));
+
+const { data } = await supabase
+  .from("member_comments")
+  .select("*")
+  .gte("due_date", sessionDate); // Use string comparison
+```
+
+**Pattern 4: Date Comparisons**
+
+```typescript
+import { compareDates, isFutureDate } from "@/lib/date-utils";
+
+// Sort by date
+members.sort((a, b) => compareDates(a.join_date, b.join_date));
+
+// Filter future items
+const upcomingSubscriptions = subscriptions.filter((sub) =>
+  isFutureDate(sub.start_date)
+);
+```
+
+### Database Column Types
+
+**Use `date` columns for:**
+
+- User-selected dates (join_date, birth_date, start_date, end_date)
+- Scheduled dates (effective_from, due_date)
+- **Storage**: Local date (YYYY-MM-DD)
+- **Function**: `formatForDatabase()`
+
+**Use `timestamptz` columns for:**
+
+- System timestamps (created_at, updated_at, deleted_at)
+- Event times (scheduled_start, cancelled_at, completed_at)
+- **Storage**: ISO timestamp with timezone
+- **Function**: `formatTimestampForDatabase()`
+
+### Anti-Patterns
+
+**❌ NEVER do these:**
+
+```typescript
+// ❌ BAD: Using UTC for user-facing dates
+const date = new Date().toISOString().split("T")[0]; // UTC, may be wrong day
+
+// ❌ BAD: Manual timezone manipulation
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+const comparison = today.getTime(); // Fragile, verbose
+
+// ❌ BAD: Inconsistent date formatting
+const date = `${year}-${month}-${day}`; // Manual formatting, error-prone
+
+// ❌ BAD: Client-side timezone conversion
+const localDate = new Date(utcDate).toLocaleDateString(); // Inconsistent format
+```
+
+**✅ DO this instead:**
+
+```typescript
+// ✅ GOOD: Use date-utils functions
+import {
+  getLocalDateString,
+  getStartOfDay,
+  formatForDatabase,
+} from "@/lib/date-utils";
+
+const dateString = getLocalDateString(new Date()); // "2025-10-18"
+const midnight = getStartOfDay(); // Clean, tested
+const dbDate = formatForDatabase(new Date()); // Consistent
+```
+
+### Migration Guide
+
+When updating existing code:
+
+1. **Find problematic patterns**:
+
+   ```bash
+   # Search for UTC date conversions
+   grep -r "toISOString().split" src/
+
+   # Search for manual midnight calculations
+   grep -r "setHours(0, 0, 0, 0)" src/
+   ```
+
+2. **Replace with date-utils**:
+
+   ```typescript
+   // Before
+   const dateStr = new Date().toISOString().split("T")[0];
+
+   // After
+   import { getLocalDateString } from "@/lib/date-utils";
+   const dateStr = getLocalDateString(new Date());
+   ```
+
+3. **Test thoroughly**:
+   - Run unit tests: `npm test`
+   - Verify database queries return correct results
+   - Check UI displays dates correctly
+
+For detailed migration examples, see `docs/DATE-HANDLING-MIGRATION.md`.
+
 ## Git Branching
 
 **🚨 CRITICAL: ALL new features MUST use feature branches!**
