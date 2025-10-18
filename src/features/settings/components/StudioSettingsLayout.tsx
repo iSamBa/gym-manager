@@ -4,7 +4,8 @@ import { memo, useCallback, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { OpeningHoursTab } from "./OpeningHoursTab";
-import { Clock, CreditCard, Building } from "lucide-react";
+import { PlanningTab } from "./PlanningTab";
+import { Clock, CreditCard, Building, Settings } from "lucide-react";
 
 function StudioSettingsLayoutComponent() {
   const [activeTab, setActiveTab] = useState("opening-hours");
@@ -35,6 +36,10 @@ function StudioSettingsLayoutComponent() {
             <Clock className="h-4 w-4" />
             Opening Hours
           </TabsTrigger>
+          <TabsTrigger value="planning" className="gap-2">
+            <Settings className="h-4 w-4" />
+            Planning
+          </TabsTrigger>
           <TabsTrigger value="general" disabled className="gap-2">
             <Building className="h-4 w-4" />
             General
@@ -53,6 +58,10 @@ function StudioSettingsLayoutComponent() {
 
         <TabsContent value="opening-hours">
           <OpeningHoursTab />
+        </TabsContent>
+
+        <TabsContent value="planning">
+          <PlanningTab />
         </TabsContent>
 
         <TabsContent value="general">
