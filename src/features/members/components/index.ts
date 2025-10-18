@@ -65,3 +65,7 @@ export { MemberPayments } from "./MemberPayments";
 // Comments components (US-011)
 export { MemberCommentsCard } from "./MemberCommentsCard";
 export { CommentDialog } from "./CommentDialog";
+
+// Body Checkup components (US-002)
+export { BodyCheckupDialog } from "./BodyCheckupDialog";
+export { BodyCheckupHistory } from "./BodyCheckupHistory";

@@ -18,3 +18,6 @@ export {
 
 // Session alerts hook
 export { useSessionAlerts } from "./use-session-alerts";
+
+// Studio session limit hook (US-004)
+export { useStudioSessionLimit } from "./use-studio-session-limit";

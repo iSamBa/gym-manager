@@ -47,3 +47,6 @@ export {
   useUpdateComment,
   useDeleteComment,
 } from "./use-member-comments";
+
+// Body checkups (US-002)
+export { useBodyCheckups } from "./use-body-checkups";

@@ -18,3 +18,9 @@ export { MachineSlotGrid } from "./MachineSlotGrid";
 export { MachineColumn } from "./MachineColumn";
 export { TimeSlot } from "./TimeSlot";
 export { SessionNotificationBadge } from "./SessionNotificationBadge";
+
+// Planning indicators (US-003)
+export { PlanningIndicatorIcons } from "./PlanningIndicatorIcons";
+
+// Session limit warning (US-004)
+export { SessionLimitWarning } from "./SessionLimitWarning";

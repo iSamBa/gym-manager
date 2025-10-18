@@ -35,6 +35,7 @@ export interface TrainingSession {
   trainer_id: string | null; // Nullable: Trainer assigned at completion
   scheduled_start: string; // ISO string
   scheduled_end: string; // ISO string
+  session_date?: string; // Date string (YYYY-MM-DD)
   status: "scheduled" | "in_progress" | "completed" | "cancelled";
   session_type?: "trail" | "standard"; // Optional, may not be in all views
   notes: string | null;
@@ -43,6 +44,12 @@ export interface TrainingSession {
   participants?: SessionParticipant[]; // From calendar view (array of participants)
   created_at?: string;
   updated_at?: string;
+  // Planning indicator data (optional, from get_sessions_with_planning_indicators)
+  member_id?: string;
+  subscription_end_date?: string | null;
+  latest_payment_date?: string | null;
+  latest_checkup_date?: string | null;
+  sessions_since_checkup?: number | null;
 }
 
 // No separate progress notes - using simple notes field instead
@@ -110,4 +117,18 @@ export interface SessionFilters {
     start: Date;
     end: Date;
   };
+}
+
+// Studio session limit (for capacity management)
+export interface StudioSessionLimit {
+  current_count: number;
+  max_allowed: number;
+  can_book: boolean;
+  percentage: number;
+}
+
+// Week range for session limit calculations (Monday-Sunday)
+export interface WeekRange {
+  start: string; // YYYY-MM-DD
+  end: string; // YYYY-MM-DD
 }

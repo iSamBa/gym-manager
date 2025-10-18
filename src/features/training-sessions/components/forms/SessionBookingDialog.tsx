@@ -55,6 +55,8 @@ import {
   type CreateSessionData,
 } from "../../lib/validation";
 import { MemberCombobox } from "./MemberCombobox";
+import { SessionLimitWarning } from "../SessionLimitWarning";
+import { useStudioSessionLimit } from "../../hooks/use-studio-session-limit";
 
 type BookingFormData = CreateSessionData;
 
@@ -124,6 +126,10 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
 
     // Watch scheduled_start to auto-calculate scheduled_end (30-min duration)
     const scheduledStart = watch("scheduled_start");
+    const selectedDate = scheduledStart ? new Date(scheduledStart) : new Date();
+
+    // Check studio session limit for the selected date
+    const { data: sessionLimit } = useStudioSessionLimit(selectedDate);
 
     useEffect(() => {
       if (scheduledStart && !defaultValues?.scheduled_end) {
@@ -201,6 +207,9 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
               assignment.
             </DialogDescription>
           </DialogHeader>
+
+          {/* Studio capacity warning */}
+          {scheduledStart && <SessionLimitWarning date={selectedDate} />}
 
           <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -555,14 +564,19 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
                 </Button>
                 <Button
                   type="submit"
-                  disabled={createSessionMutation.isPending}
+                  disabled={
+                    createSessionMutation.isPending ||
+                    (sessionLimit && !sessionLimit.can_book)
+                  }
                 >
                   {createSessionMutation.isPending && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  {createSessionMutation.isPending
-                    ? "Booking..."
-                    : "Book Session"}
+                  {sessionLimit && !sessionLimit.can_book
+                    ? "Capacity Reached"
+                    : createSessionMutation.isPending
+                      ? "Booking..."
+                      : "Book Session"}
                 </Button>
               </div>
             </form>

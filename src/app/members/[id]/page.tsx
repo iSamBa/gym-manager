@@ -23,18 +23,22 @@ import {
   MemberAlertsCard,
   EquipmentEditor,
   MemberCommentsCard,
+  BodyCheckupDialog,
+  BodyCheckupHistory,
 } from "@/features/members/components";
 import {
   useMemberWithSubscription,
   useDeleteMember,
   useMemberPrefetch,
   useUpdateMember,
+  useBodyCheckups,
 } from "@/features/members/hooks";
 import { ArrowLeft, AlertCircle, Package, Edit } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { Member } from "@/features/database/lib/types";
+import type { BodyCheckup } from "@/features/members/lib/types";
 
 interface MemberDetailPageProps {
   params: Promise<{ id: string }>;
@@ -47,6 +51,10 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditingEquipment, setIsEditingEquipment] = useState(false);
   const [equipmentFormData, setEquipmentFormData] = useState<Member | null>(
+    null
+  );
+  const [isCheckupDialogOpen, setIsCheckupDialogOpen] = useState(false);
+  const [editingCheckup, setEditingCheckup] = useState<BodyCheckup | null>(
     null
   );
 
@@ -63,6 +71,16 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
   const deleteMutation = useDeleteMember();
   const updateMember = useUpdateMember();
   const { prefetchAdjacentMembers } = useMemberPrefetch();
+  const {
+    checkups,
+    isLoading: checkupsLoading,
+    isCreating: isCreatingCheckup,
+    isUpdating: isUpdatingCheckup,
+    isDeleting: isDeletingCheckup,
+    createCheckup,
+    updateCheckup,
+    deleteCheckup,
+  } = useBodyCheckups(id);
 
   useEffect(() => {
     if (member) {
@@ -127,6 +145,39 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
   const handleEquipmentFormChange = useCallback((updated: Partial<Member>) => {
     setEquipmentFormData((prev) => (prev ? { ...prev, ...updated } : null));
   }, []);
+
+  const handleAddCheckup = useCallback(() => {
+    setEditingCheckup(null);
+    setIsCheckupDialogOpen(true);
+  }, []);
+
+  const handleEditCheckup = useCallback((checkup: BodyCheckup) => {
+    setEditingCheckup(checkup);
+    setIsCheckupDialogOpen(true);
+  }, []);
+
+  const handleSaveCheckup = useCallback(
+    async (data: {
+      member_id: string;
+      checkup_date: string;
+      weight?: number | null;
+      notes?: string | null;
+    }) => {
+      if (editingCheckup) {
+        await updateCheckup(editingCheckup.id, data);
+      } else {
+        await createCheckup(data);
+      }
+    },
+    [editingCheckup, createCheckup, updateCheckup]
+  );
+
+  const handleDeleteCheckup = useCallback(
+    async (checkupId: string) => {
+      await deleteCheckup(checkupId);
+    },
+    [deleteCheckup]
+  );
 
   if (isLoading) {
     return (
@@ -268,6 +319,23 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
 
                 {/* Comments & Notes Card */}
                 <MemberCommentsCard member={member} />
+
+                {/* Body Checkup Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Body Checkups</h3>
+                    <Button onClick={handleAddCheckup} size="sm">
+                      Add Checkup
+                    </Button>
+                  </div>
+                  <BodyCheckupHistory
+                    checkups={checkups}
+                    isLoading={checkupsLoading}
+                    onEdit={handleEditCheckup}
+                    onDelete={handleDeleteCheckup}
+                    isDeleting={isDeletingCheckup}
+                  />
+                </div>
               </TabsContent>
 
               {/* Training Sessions Tab */}
@@ -327,6 +395,16 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
         cancelText="Cancel"
         variant="destructive"
         isLoading={deleteMutation.isPending}
+      />
+
+      {/* Body Checkup Dialog */}
+      <BodyCheckupDialog
+        open={isCheckupDialogOpen}
+        onOpenChange={setIsCheckupDialogOpen}
+        memberId={id}
+        checkup={editingCheckup}
+        onSave={handleSaveCheckup}
+        isLoading={isCreatingCheckup || isUpdatingCheckup}
       />
     </MainLayout>
   );

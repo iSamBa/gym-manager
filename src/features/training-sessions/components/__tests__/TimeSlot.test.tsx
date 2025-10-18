@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TimeSlot } from "../TimeSlot";
 import type {
   Machine,
@@ -12,7 +13,28 @@ vi.mock("../../hooks/use-session-alerts", () => ({
   useSessionAlerts: vi.fn(),
 }));
 
+// Mock usePlanningSettings hook
+vi.mock("@/features/settings/hooks/use-planning-settings", () => ({
+  usePlanningSettings: vi.fn(() => ({
+    data: null,
+    isLoading: false,
+  })),
+}));
+
 import { useSessionAlerts } from "../../hooks/use-session-alerts";
+
+// Helper to render with QueryClient
+const renderWithQueryClient = (ui: React.ReactElement) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+  );
+};
 
 const mockMachine: Machine = {
   id: "machine-1",
@@ -45,7 +67,7 @@ describe("TimeSlot", () => {
     it("renders empty slot with time label", () => {
       const onClick = vi.fn();
 
-      render(
+      renderWithQueryClient(
         <TimeSlot
           machine={mockMachine}
           timeSlot={mockTimeSlot}
@@ -59,7 +81,7 @@ describe("TimeSlot", () => {
     it("is clickable when machine is available", () => {
       const onClick = vi.fn();
 
-      render(
+      renderWithQueryClient(
         <TimeSlot
           machine={mockMachine}
           timeSlot={mockTimeSlot}
@@ -77,7 +99,7 @@ describe("TimeSlot", () => {
       const onClick = vi.fn();
       const unavailableMachine = { ...mockMachine, is_available: false };
 
-      render(
+      renderWithQueryClient(
         <TimeSlot
           machine={unavailableMachine}
           timeSlot={mockTimeSlot}
@@ -94,7 +116,7 @@ describe("TimeSlot", () => {
     it("shows disabled state for unavailable machine", () => {
       const unavailableMachine = { ...mockMachine, is_available: false };
 
-      const { container } = render(
+      const { container } = renderWithQueryClient(
         <TimeSlot
           machine={unavailableMachine}
           timeSlot={mockTimeSlot}
@@ -128,7 +150,7 @@ describe("TimeSlot", () => {
     };
 
     it("renders booked slot with member name", () => {
-      render(
+      renderWithQueryClient(
         <TimeSlot
           machine={mockMachine}
           timeSlot={mockTimeSlot}
@@ -147,7 +169,7 @@ describe("TimeSlot", () => {
         participants: [],
       };
 
-      render(
+      renderWithQueryClient(
         <TimeSlot
           machine={mockMachine}
           timeSlot={mockTimeSlot}
@@ -162,7 +184,7 @@ describe("TimeSlot", () => {
     it("is clickable to view session details", () => {
       const onClick = vi.fn();
 
-      render(
+      renderWithQueryClient(
         <TimeSlot
           machine={mockMachine}
           timeSlot={mockTimeSlot}
@@ -234,7 +256,7 @@ describe("TimeSlot", () => {
         ],
       } as any);
 
-      render(
+      renderWithQueryClient(
         <TimeSlot
           machine={mockMachine}
           timeSlot={mockTimeSlot}
@@ -253,7 +275,7 @@ describe("TimeSlot", () => {
         data: [],
       } as any);
 
-      const { container } = render(
+      const { container } = renderWithQueryClient(
         <TimeSlot
           machine={mockMachine}
           timeSlot={mockTimeSlot}
@@ -275,7 +297,7 @@ describe("TimeSlot", () => {
         data: [],
       } as any);
 
-      const { container } = render(
+      const { container } = renderWithQueryClient(
         <TimeSlot
           machine={mockMachine}
           timeSlot={mockTimeSlot}
