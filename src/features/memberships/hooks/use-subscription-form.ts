@@ -4,6 +4,7 @@ import type {
   CreateSubscriptionInput,
   PaymentMethod,
 } from "@/features/database/lib/types";
+import { formatForDatabase } from "@/lib/date-utils";
 
 export interface SubscriptionFormData {
   planId: string;
@@ -81,7 +82,7 @@ export function useSubscriptionForm(memberId: string) {
   const buildCreateInput = (): CreateSubscriptionInput => ({
     member_id: memberId,
     plan_id: formData.planId,
-    start_date: formData.startDate.toISOString(),
+    start_date: formatForDatabase(formData.startDate),
     initial_payment_amount: formData.initialPayment,
     payment_method: formData.paymentMethod,
     notes: formData.notes || undefined,

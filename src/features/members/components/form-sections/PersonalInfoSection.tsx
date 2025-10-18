@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatForDatabase } from "@/lib/date-utils";
 
 const genderOptions = [
   { value: "male", label: "Male" },
@@ -81,9 +82,7 @@ export const PersonalInfoSection = memo(function PersonalInfoSection({
                   <DatePicker
                     value={field.value ? new Date(field.value) : undefined}
                     onChange={(date) => {
-                      field.onChange(
-                        date ? date.toISOString().split("T")[0] : ""
-                      );
+                      field.onChange(date ? formatForDatabase(date) : "");
                     }}
                     placeholder="Select date of birth"
                     format="PPP"

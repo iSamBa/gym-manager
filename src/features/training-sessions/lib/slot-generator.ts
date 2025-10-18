@@ -1,40 +1,108 @@
-import { format, startOfDay } from "date-fns";
+import { format, startOfDay, getDay } from "date-fns";
 import type { TimeSlot } from "./types";
+import { supabase } from "@/lib/supabase";
 
-export const TIME_SLOT_CONFIG = {
+// Default configuration (fallback when no settings exist)
+const DEFAULT_SLOT_CONFIG = {
   START_HOUR: 9,
   END_HOUR: 24, // midnight
   SLOT_DURATION_MINUTES: 30,
 } as const;
 
+const DAY_INDEX_MAP: Record<number, string> = {
+  0: "sunday",
+  1: "monday",
+  2: "tuesday",
+  3: "wednesday",
+  4: "thursday",
+  5: "friday",
+  6: "saturday",
+};
+
+interface TimeSlotConfig {
+  START_HOUR: number;
+  END_HOUR: number;
+  SLOT_DURATION_MINUTES: number;
+}
+
+/**
+ * Get time slot configuration for a specific date
+ * Queries opening hours from database with effective date handling
+ *
+ * @param date - The date to get configuration for
+ * @returns Configuration object or null if day is closed
+ */
+export async function getTimeSlotConfig(
+  date: Date
+): Promise<TimeSlotConfig | null> {
+  try {
+    // Get active opening hours for this date
+    const { data, error } = await supabase.rpc("get_active_opening_hours", {
+      target_date: format(date, "yyyy-MM-dd"),
+    });
+
+    if (error) {
+      console.error("Failed to fetch opening hours:", error);
+      return DEFAULT_SLOT_CONFIG;
+    }
+
+    if (!data || Object.keys(data).length === 0) {
+      // No settings found - use defaults
+      return DEFAULT_SLOT_CONFIG;
+    }
+
+    // Get day of week
+    const dayOfWeek = getDay(date);
+    const dayName = DAY_INDEX_MAP[dayOfWeek];
+    const dayConfig = data[dayName];
+
+    if (!dayConfig || !dayConfig.is_open) {
+      // Day is closed
+      return null;
+    }
+
+    // Parse times
+    const [openHour] = dayConfig.open_time.split(":").map(Number);
+    const [closeHour] = dayConfig.close_time.split(":").map(Number);
+
+    return {
+      START_HOUR: openHour,
+      END_HOUR: closeHour,
+      SLOT_DURATION_MINUTES: 30,
+    };
+  } catch (err) {
+    console.error("Error getting time slot config:", err);
+    return DEFAULT_SLOT_CONFIG;
+  }
+}
+
 /**
  * Generates 30-minute time slots for a given day
- * Default: 9:00 AM to 12:00 AM (midnight) (30 slots)
+ * Now async - fetches opening hours from database
  *
  * @param date - The date to generate slots for
- * @returns Array of TimeSlot objects
+ * @returns Array of TimeSlot objects, or empty array if day is closed
  */
-export function generateTimeSlots(date: Date = new Date()): TimeSlot[] {
+export async function generateTimeSlots(
+  date: Date = new Date()
+): Promise<TimeSlot[]> {
+  const config = await getTimeSlotConfig(date);
+
+  // Day is closed
+  if (config === null) {
+    return [];
+  }
+
   const slots: TimeSlot[] = [];
   const baseDate = startOfDay(date);
 
-  for (
-    let hour = TIME_SLOT_CONFIG.START_HOUR;
-    hour < TIME_SLOT_CONFIG.END_HOUR;
-    hour++
-  ) {
-    for (
-      let minute = 0;
-      minute < 60;
-      minute += TIME_SLOT_CONFIG.SLOT_DURATION_MINUTES
-    ) {
+  for (let hour = config.START_HOUR; hour < config.END_HOUR; hour++) {
+    for (let minute = 0; minute < 60; minute += config.SLOT_DURATION_MINUTES) {
       const start = new Date(baseDate);
       start.setHours(hour, minute, 0, 0);
 
       const end = new Date(start);
-      end.setMinutes(
-        start.getMinutes() + TIME_SLOT_CONFIG.SLOT_DURATION_MINUTES
-      );
+      end.setMinutes(start.getMinutes() + config.SLOT_DURATION_MINUTES);
 
       slots.push({
         start,
@@ -46,7 +114,7 @@ export function generateTimeSlots(date: Date = new Date()): TimeSlot[] {
     }
   }
 
-  return slots; // Returns 30 slots
+  return slots;
 }
 
 /**

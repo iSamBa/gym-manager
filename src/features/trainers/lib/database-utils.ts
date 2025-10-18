@@ -11,6 +11,7 @@ import type {
   TrainerSpecialization,
   EmergencyContact,
 } from "@/features/database/lib/types";
+import { getLocalDateString } from "@/lib/date-utils";
 
 // Enhanced trainer filters for TanStack Query integration
 export interface TrainerFilters {
@@ -626,10 +627,7 @@ export const trainerUtils = {
       return await supabase
         .from("trainers")
         .select("*")
-        .lte(
-          "cpr_certification_expires",
-          futureDate.toISOString().split("T")[0]
-        )
+        .lte("cpr_certification_expires", getLocalDateString(futureDate))
         .not("cpr_certification_expires", "is", null)
         .order("cpr_certification_expires", { ascending: true });
     });

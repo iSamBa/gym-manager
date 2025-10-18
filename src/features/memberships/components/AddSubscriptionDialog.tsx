@@ -54,6 +54,7 @@ import {
 import { AdvancedMemberSearch } from "@/features/members/components/AdvancedMemberSearch";
 import { cn } from "@/lib/utils";
 import type { PaymentMethod, Member } from "@/features/database/lib/types";
+import { formatForDatabase } from "@/lib/date-utils";
 
 interface AddSubscriptionDialogProps {
   open: boolean;
@@ -75,7 +76,7 @@ export function AddSubscriptionDialog({
     defaultValues: {
       member_id: "",
       plan_id: "",
-      start_date: new Date().toISOString(),
+      start_date: formatForDatabase(new Date()),
       initial_payment_amount: 0,
       payment_method: "cash" as PaymentMethod,
       include_signup_fee: true,

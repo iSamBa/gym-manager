@@ -6,6 +6,10 @@ import type {
   PaymentMethod,
   PaymentStatus,
 } from "@/features/database/lib/types";
+import {
+  formatForDatabase,
+  formatTimestampForDatabase,
+} from "@/lib/date-utils";
 
 export const paymentUtils = {
   /**
@@ -38,9 +42,9 @@ export const paymentUtils = {
       member_id: memberId,
       amount: input.amount,
       payment_method: input.payment_method,
-      payment_date: input.payment_date || new Date().toISOString(),
+      payment_date: input.payment_date || formatForDatabase(new Date()),
       payment_status: "completed" as const,
-      due_date: input.subscription_id ? new Date().toISOString() : null, // Only set due_date for subscription payments
+      due_date: input.subscription_id ? formatForDatabase(new Date()) : null, // Only set due_date for subscription payments
       reference_number: input.reference_number,
       notes: input.notes,
       // Note: created_by column doesn't exist in subscription_payments table
@@ -91,7 +95,7 @@ export const paymentUtils = {
       .from("member_subscriptions")
       .update({
         paid_amount: totalPaid,
-        updated_at: new Date().toISOString(),
+        updated_at: formatTimestampForDatabase(),
       })
       .eq("id", subscriptionId);
 
@@ -228,7 +232,7 @@ export const paymentUtils = {
       member_id: originalPayment.member_id,
       amount: -refundAmount, // Negative amount for refund
       payment_method: originalPayment.payment_method,
-      payment_date: new Date().toISOString(),
+      payment_date: formatForDatabase(new Date()),
       payment_status: "completed" as const,
       description: `Refund for payment ${originalPayment.receipt_number}`,
       refund_reason: reason,
@@ -238,7 +242,7 @@ export const paymentUtils = {
         original_payment_id: paymentId,
         original_receipt: originalPayment.receipt_number,
         refund_reason: reason,
-        refunded_at: new Date().toISOString(),
+        refunded_at: formatTimestampForDatabase(),
       },
     };
 

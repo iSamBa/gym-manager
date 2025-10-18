@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MachineSlotGrid } from "../MachineSlotGrid";
 import { useMachines, useUpdateMachine } from "../../hooks/use-machines";
 import { useTrainingSessions } from "../../hooks/use-training-sessions";
 import { useSessionAlerts } from "../../hooks/use-session-alerts";
 import { useAuth } from "@/hooks/use-auth";
-import { generateTimeSlots } from "../../lib/slot-generator";
+import * as slotGenerator from "../../lib/slot-generator";
 import { startOfDay, endOfDay } from "date-fns";
-import type { Machine, TrainingSession } from "../../lib/types";
+import type { Machine, TrainingSession, TimeSlot } from "../../lib/types";
 
 // Mock hooks
 vi.mock("../../hooks/use-machines");
@@ -16,10 +16,25 @@ vi.mock("../../hooks/use-training-sessions");
 vi.mock("../../hooks/use-session-alerts");
 vi.mock("@/hooks/use-auth");
 
+// Mock slot generator
+vi.mock("../../lib/slot-generator", () => ({
+  generateTimeSlots: vi.fn(),
+  getTimeSlotConfig: vi.fn(),
+}));
+
 // Mock UI components to focus on business logic
 vi.mock("@/components/ui/card", () => ({
   Card: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="card">{children}</div>
+  ),
+}));
+
+vi.mock("@/components/ui/alert", () => ({
+  Alert: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="alert">{children}</div>
+  ),
+  AlertDescription: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="alert-description">{children}</div>
   ),
 }));
 
@@ -86,6 +101,23 @@ const mockSessions: TrainingSession[] = [
   },
 ];
 
+const mockTimeSlots: TimeSlot[] = [
+  {
+    start: new Date("2025-01-15T09:00:00"),
+    end: new Date("2025-01-15T09:30:00"),
+    label: "09:00 - 09:30",
+    hour: 9,
+    minute: 0,
+  },
+  {
+    start: new Date("2025-01-15T09:30:00"),
+    end: new Date("2025-01-15T10:00:00"),
+    label: "09:30 - 10:00",
+    hour: 9,
+    minute: 30,
+  },
+];
+
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -122,6 +154,9 @@ describe("MachineSlotGrid - Business Logic Tests", () => {
       data: { alert_count: 0 },
       isLoading: false,
     } as any);
+
+    // Mock generateTimeSlots to return mock slots by default
+    vi.mocked(slotGenerator.generateTimeSlots).mockResolvedValue(mockTimeSlots);
   });
 
   describe("Hook Integration", () => {
@@ -221,7 +256,7 @@ describe("MachineSlotGrid - Business Logic Tests", () => {
       expect(container.textContent).toContain("Loading machine grid...");
     });
 
-    it("should show empty state when no machines exist", () => {
+    it("should show empty state when no machines exist", async () => {
       vi.mocked(useMachines).mockReturnValue({
         data: [],
         isLoading: false,
@@ -240,10 +275,13 @@ describe("MachineSlotGrid - Business Logic Tests", () => {
         { wrapper: createWrapper() }
       );
 
-      expect(container.textContent).toContain("No machines configured");
+      // Wait for async slot loading to complete
+      await waitFor(() => {
+        expect(container.textContent).toContain("No machines configured");
+      });
     });
 
-    it("should show empty state when machines is undefined", () => {
+    it("should show empty state when machines is undefined", async () => {
       vi.mocked(useMachines).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -262,12 +300,15 @@ describe("MachineSlotGrid - Business Logic Tests", () => {
         { wrapper: createWrapper() }
       );
 
-      expect(container.textContent).toContain("No machines configured");
+      // Wait for async slot loading to complete
+      await waitFor(() => {
+        expect(container.textContent).toContain("No machines configured");
+      });
     });
   });
 
   describe("Data Filtering and Transformation", () => {
-    it("should filter sessions by machine_id for each machine", () => {
+    it("should filter sessions by machine_id for each machine", async () => {
       const machinesWithMultipleSessions = [
         { ...mockMachines[0], id: "machine-1" },
         { ...mockMachines[1], id: "machine-2" },
@@ -309,18 +350,21 @@ describe("MachineSlotGrid - Business Logic Tests", () => {
         { wrapper: createWrapper() }
       );
 
-      // Machine 1 should have 2 sessions
-      expect(getByTestId("machine-sessions-machine-1").textContent).toBe(
-        "2 sessions"
-      );
+      // Wait for async slot loading
+      await waitFor(() => {
+        // Machine 1 should have 2 sessions
+        expect(getByTestId("machine-sessions-machine-1").textContent).toBe(
+          "2 sessions"
+        );
 
-      // Machine 2 should have 1 session
-      expect(getByTestId("machine-sessions-machine-2").textContent).toBe(
-        "1 sessions"
-      );
+        // Machine 2 should have 1 session
+        expect(getByTestId("machine-sessions-machine-2").textContent).toBe(
+          "1 sessions"
+        );
+      });
     });
 
-    it("should pass empty array when no sessions exist for a machine", () => {
+    it("should pass empty array when no sessions exist for a machine", async () => {
       vi.mocked(useMachines).mockReturnValue({
         data: mockMachines,
         isLoading: false,
@@ -339,19 +383,22 @@ describe("MachineSlotGrid - Business Logic Tests", () => {
         { wrapper: createWrapper() }
       );
 
-      // All machines should have 0 sessions
-      expect(getByTestId("machine-sessions-machine-1").textContent).toBe(
-        "0 sessions"
-      );
-      expect(getByTestId("machine-sessions-machine-2").textContent).toBe(
-        "0 sessions"
-      );
-      expect(getByTestId("machine-sessions-machine-3").textContent).toBe(
-        "0 sessions"
-      );
+      // Wait for async slot loading
+      await waitFor(() => {
+        // All machines should have 0 sessions
+        expect(getByTestId("machine-sessions-machine-1").textContent).toBe(
+          "0 sessions"
+        );
+        expect(getByTestId("machine-sessions-machine-2").textContent).toBe(
+          "0 sessions"
+        );
+        expect(getByTestId("machine-sessions-machine-3").textContent).toBe(
+          "0 sessions"
+        );
+      });
     });
 
-    it("should handle undefined sessions data gracefully", () => {
+    it("should handle undefined sessions data gracefully", async () => {
       vi.mocked(useMachines).mockReturnValue({
         data: mockMachines,
         isLoading: false,
@@ -370,15 +417,18 @@ describe("MachineSlotGrid - Business Logic Tests", () => {
         { wrapper: createWrapper() }
       );
 
-      // Should default to empty array when sessions is undefined
-      expect(getByTestId("machine-sessions-machine-1").textContent).toBe(
-        "0 sessions"
-      );
+      // Wait for async slot loading
+      await waitFor(() => {
+        // Should default to empty array when sessions is undefined
+        expect(getByTestId("machine-sessions-machine-1").textContent).toBe(
+          "0 sessions"
+        );
+      });
     });
   });
 
   describe("Props Passed to MachineColumn", () => {
-    it("should pass correct machine data to each MachineColumn", () => {
+    it("should pass correct machine data to each MachineColumn", async () => {
       vi.mocked(useMachines).mockReturnValue({
         data: mockMachines,
         isLoading: false,
@@ -397,30 +447,33 @@ describe("MachineSlotGrid - Business Logic Tests", () => {
         { wrapper: createWrapper() }
       );
 
-      // Verify each machine column renders with correct machine data
-      expect(getByTestId("machine-column-machine-1")).toBeInTheDocument();
-      expect(getByTestId("machine-name-machine-1").textContent).toBe(
-        "Machine 1"
-      );
-      expect(getByTestId("machine-available-machine-1").textContent).toBe(
-        "Available"
-      );
+      // Wait for async slot loading
+      await waitFor(() => {
+        // Verify each machine column renders with correct machine data
+        expect(getByTestId("machine-column-machine-1")).toBeInTheDocument();
+        expect(getByTestId("machine-name-machine-1").textContent).toBe(
+          "Machine 1"
+        );
+        expect(getByTestId("machine-available-machine-1").textContent).toBe(
+          "Available"
+        );
 
-      expect(getByTestId("machine-column-machine-2")).toBeInTheDocument();
-      expect(getByTestId("machine-name-machine-2").textContent).toBe(
-        "Machine 2"
-      );
-      expect(getByTestId("machine-available-machine-2").textContent).toBe(
-        "Unavailable"
-      );
+        expect(getByTestId("machine-column-machine-2")).toBeInTheDocument();
+        expect(getByTestId("machine-name-machine-2").textContent).toBe(
+          "Machine 2"
+        );
+        expect(getByTestId("machine-available-machine-2").textContent).toBe(
+          "Unavailable"
+        );
 
-      expect(getByTestId("machine-column-machine-3")).toBeInTheDocument();
-      expect(getByTestId("machine-name-machine-3").textContent).toBe(
-        "Machine 3"
-      );
-      expect(getByTestId("machine-available-machine-3").textContent).toBe(
-        "Available"
-      );
+        expect(getByTestId("machine-column-machine-3")).toBeInTheDocument();
+        expect(getByTestId("machine-name-machine-3").textContent).toBe(
+          "Machine 3"
+        );
+        expect(getByTestId("machine-available-machine-3").textContent).toBe(
+          "Available"
+        );
+      });
     });
 
     it("should pass callback functions to MachineColumn", () => {
@@ -453,7 +506,7 @@ describe("MachineSlotGrid - Business Logic Tests", () => {
   });
 
   describe("Time Slot Generation", () => {
-    it("should generate time slots for the selected date", () => {
+    it("should generate time slots for the selected date asynchronously", async () => {
       const selectedDate = new Date("2025-01-15");
       vi.mocked(useMachines).mockReturnValue({
         data: mockMachines,
@@ -473,12 +526,70 @@ describe("MachineSlotGrid - Business Logic Tests", () => {
         { wrapper: createWrapper() }
       );
 
-      // Verify generateTimeSlots is called with correct date (indirectly tested)
-      // The component uses useMemo(() => generateTimeSlots(selectedDate), [selectedDate])
-      const slots = generateTimeSlots(selectedDate);
-      expect(slots).toHaveLength(30);
-      expect(slots[0].label).toBe("09:00 - 09:30");
-      expect(slots[29].label).toBe("23:30 - 00:00");
+      // Wait for async slot generation
+      await waitFor(() => {
+        expect(slotGenerator.generateTimeSlots).toHaveBeenCalledWith(
+          selectedDate
+        );
+      });
+    });
+
+    it("should display Studio Closed message when day is closed", async () => {
+      const selectedDate = new Date("2025-01-12"); // Sunday - closed
+      vi.mocked(useMachines).mockReturnValue({
+        data: mockMachines,
+        isLoading: false,
+      } as any);
+      vi.mocked(useTrainingSessions).mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as any);
+
+      // Mock generateTimeSlots to return empty array (closed day)
+      vi.mocked(slotGenerator.generateTimeSlots).mockResolvedValueOnce([]);
+
+      const { container } = render(
+        <MachineSlotGrid
+          selectedDate={selectedDate}
+          onSlotClick={vi.fn()}
+          onSessionClick={vi.fn()}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      // Wait for async slot generation and closed message
+      await waitFor(() => {
+        expect(container.textContent).toContain("Studio is closed");
+        expect(container.textContent).toContain("Sunday, January 12, 2025");
+      });
+    });
+
+    it("should show loading state while slots are being generated", () => {
+      vi.mocked(useMachines).mockReturnValue({
+        data: mockMachines,
+        isLoading: false,
+      } as any);
+      vi.mocked(useTrainingSessions).mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as any);
+
+      // Mock generateTimeSlots to return a promise that doesn't resolve immediately
+      vi.mocked(slotGenerator.generateTimeSlots).mockImplementation(
+        () => new Promise(() => {})
+      );
+
+      const { container } = render(
+        <MachineSlotGrid
+          selectedDate={new Date("2025-01-15")}
+          onSlotClick={vi.fn()}
+          onSessionClick={vi.fn()}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      // Should show loading state initially
+      expect(container.textContent).toContain("Loading machine grid...");
     });
   });
 });

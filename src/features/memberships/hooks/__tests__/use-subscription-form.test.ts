@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import { useSubscriptionForm } from "../use-subscription-form";
 import type { SubscriptionPlanWithSessions } from "@/features/database/lib/types";
+import { formatForDatabase } from "@/lib/date-utils";
 
 // Mock the useSubscriptionPlans hook
 vi.mock("../use-subscriptions", () => ({
@@ -397,7 +398,7 @@ describe("useSubscriptionForm", () => {
       expect(input).toEqual({
         member_id: "member-123",
         plan_id: "plan-premium",
-        start_date: testDate.toISOString(),
+        start_date: formatForDatabase(testDate),
         initial_payment_amount: 50,
         payment_method: "card",
         notes: "Test subscription",
