@@ -12,6 +12,11 @@ import type {
   MemberWithSubscription,
   MemberWithEnhancedDetails,
 } from "@/features/database/lib/types";
+import {
+  formatForDatabase,
+  formatTimestampForDatabase,
+  getLocalDateString,
+} from "@/lib/date-utils";
 
 // Enhanced member filters with new capabilities (US-002)
 export interface MemberFilters {
@@ -265,8 +270,7 @@ export const memberUtils = {
         .insert({
           ...cleanedData,
           status: memberData.status || "active",
-          join_date:
-            memberData.join_date || new Date().toISOString().split("T")[0],
+          join_date: memberData.join_date || formatForDatabase(new Date()),
           preferred_contact_method:
             memberData.preferred_contact_method || "email",
           marketing_consent: memberData.marketing_consent ?? false,
@@ -321,7 +325,7 @@ export const memberUtils = {
         .from("members")
         .update({
           ...cleanedData,
-          updated_at: new Date().toISOString(),
+          updated_at: formatTimestampForDatabase(new Date()),
         })
         .eq("id", id)
         .select("*")
@@ -335,7 +339,7 @@ export const memberUtils = {
         .from("members")
         .update({
           status,
-          updated_at: new Date().toISOString(),
+          updated_at: formatTimestampForDatabase(new Date()),
         })
         .eq("id", id)
         .select("*")
@@ -384,7 +388,7 @@ export const memberUtils = {
         .from("members")
         .update({
           status,
-          updated_at: new Date().toISOString(),
+          updated_at: formatTimestampForDatabase(new Date()),
         })
         .in("id", memberIds)
         .select("*");
@@ -437,13 +441,12 @@ export const memberUtils = {
   async getNewMembersThisMonth(): Promise<Member[]> {
     const firstDayOfMonth = new Date();
     firstDayOfMonth.setDate(1);
-    firstDayOfMonth.setHours(0, 0, 0, 0);
 
     return executeQuery(async () => {
       return await supabase
         .from("members")
         .select("*")
-        .gte("join_date", firstDayOfMonth.toISOString().split("T")[0])
+        .gte("join_date", getLocalDateString(firstDayOfMonth))
         .order("join_date", { ascending: false });
     });
   },

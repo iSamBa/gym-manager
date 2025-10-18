@@ -10,6 +10,10 @@ import {
   getMemberActiveSubscription,
   getMemberSubscriptionHistory,
 } from "@/features/database/lib/subscription-db-utils";
+import {
+  formatForDatabase,
+  formatTimestampForDatabase,
+} from "@/lib/date-utils";
 
 export const subscriptionUtils = {
   /**
@@ -33,16 +37,20 @@ export const subscriptionUtils = {
       duration_days_snapshot: plan.duration_months * 30, // Calculate days from months
 
       // Set initial values
-      start_date: input.start_date || new Date().toISOString(),
+      start_date: input.start_date || formatForDatabase(new Date()),
       end_date: input.start_date
-        ? new Date(
-            new Date(input.start_date).setMonth(
-              new Date(input.start_date).getMonth() + plan.duration_months
+        ? formatForDatabase(
+            new Date(
+              new Date(input.start_date).setMonth(
+                new Date(input.start_date).getMonth() + plan.duration_months
+              )
             )
-          ).toISOString()
-        : new Date(
-            new Date().setMonth(new Date().getMonth() + plan.duration_months)
-          ).toISOString(),
+          )
+        : formatForDatabase(
+            new Date(
+              new Date().setMonth(new Date().getMonth() + plan.duration_months)
+            )
+          ),
 
       status: "active" as const,
       used_sessions: 0,
@@ -68,7 +76,7 @@ export const subscriptionUtils = {
         subscription_id: data.id,
         amount: input.initial_payment_amount,
         payment_method: input.payment_method || "cash",
-        payment_date: input.start_date || new Date().toISOString(),
+        payment_date: input.start_date || formatForDatabase(new Date()),
         notes: "Initial payment for subscription",
       });
     }
@@ -109,7 +117,7 @@ export const subscriptionUtils = {
       .update({
         used_sessions: newUsedSessions,
         status: isCompleted ? "expired" : "active",
-        updated_at: new Date().toISOString(),
+        updated_at: formatTimestampForDatabase(new Date()),
       })
       .eq("id", subscriptionId)
       .select()
@@ -153,7 +161,7 @@ export const subscriptionUtils = {
       .update({
         used_sessions: newUsedSessions,
         status: shouldReactivate ? "active" : sub.status,
-        updated_at: new Date().toISOString(),
+        updated_at: formatTimestampForDatabase(new Date()),
       })
       .eq("id", subscriptionId)
       .select()
@@ -205,7 +213,7 @@ export const subscriptionUtils = {
     const newSubscription = await this.createSubscriptionWithSnapshot({
       member_id: currentSub.data.member_id,
       plan_id: input.new_plan_id,
-      start_date: input.effective_date || new Date().toISOString(),
+      start_date: input.effective_date || formatForDatabase(new Date()),
       initial_payment_amount: Math.max(0, newPlan.price - credit),
       include_signup_fee: false,
       signup_fee_paid: 0,
@@ -218,7 +226,7 @@ export const subscriptionUtils = {
       .update({
         status: "cancelled" as const, // Use existing enum value until 'upgraded' is added
         upgraded_to_id: newSubscription.id,
-        updated_at: new Date().toISOString(),
+        updated_at: formatTimestampForDatabase(new Date()),
       })
       .eq("id", input.current_subscription_id);
 
@@ -233,9 +241,9 @@ export const subscriptionUtils = {
       .from("member_subscriptions")
       .update({
         status: "paused",
-        pause_start_date: new Date().toISOString(),
+        pause_start_date: formatForDatabase(new Date()),
         pause_reason: reason,
-        updated_at: new Date().toISOString(),
+        updated_at: formatTimestampForDatabase(new Date()),
       })
       .eq("id", subscriptionId)
       .eq("status", "active")
@@ -254,8 +262,8 @@ export const subscriptionUtils = {
       .from("member_subscriptions")
       .update({
         status: "active",
-        pause_end_date: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        pause_end_date: formatForDatabase(new Date()),
+        updated_at: formatTimestampForDatabase(new Date()),
       })
       .eq("id", subscriptionId)
       .eq("status", "paused")
@@ -286,8 +294,8 @@ export const subscriptionUtils = {
         member_id: subscription.member_id,
         amount: input.amount,
         payment_method: input.payment_method,
-        payment_date: input.payment_date || new Date().toISOString(),
-        due_date: input.payment_date || new Date().toISOString(),
+        payment_date: input.payment_date || formatForDatabase(new Date()),
+        due_date: input.payment_date || formatForDatabase(new Date()),
         payment_status: "completed",
         reference_number: input.reference_number,
         notes: input.notes,
@@ -328,7 +336,7 @@ export const subscriptionUtils = {
       .from("member_subscriptions")
       .update({
         paid_amount: totalPaid,
-        updated_at: new Date().toISOString(),
+        updated_at: formatTimestampForDatabase(new Date()),
       })
       .eq("id", subscriptionId);
 

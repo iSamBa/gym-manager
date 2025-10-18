@@ -2,6 +2,7 @@
 import { supabase } from "@/lib/supabase";
 import { DatabaseError } from "@/features/database/lib/query-helpers";
 import type { MemberComment } from "@/features/database/lib/types";
+import { getLocalDateString } from "@/lib/date-utils";
 
 /**
  * Fetch all comments for a specific member, ordered by creation date (newest first)
@@ -25,7 +26,7 @@ export async function fetchMemberComments(
 export async function fetchActiveCommentAlerts(
   memberId: string
 ): Promise<MemberComment[]> {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateString();
   const { data, error } = await supabase
     .from("member_comments")
     .select("*")

@@ -1,22 +1,22 @@
 # Date Handling Standardization - Status
 
 **Last Updated**: 2025-10-18
-**Overall Progress**: 14% (1/7 stories complete)
-**Status**: In Progress - Milestone 1 Complete
+**Overall Progress**: 28% (2/7 stories complete, 1 blocked)
+**Status**: In Progress - Milestone 1 Complete, Milestone 2 Partial
 
 ---
 
 ## 📊 User Stories Progress
 
-| Story  | Title                                  | Priority | Status         | Completed  | Notes                           |
-| ------ | -------------------------------------- | -------- | -------------- | ---------- | ------------------------------- |
-| US-001 | Core Date Utility Library              | P0       | ✅ Complete    | 2025-10-18 | 100% coverage, 46 tests passing |
-| US-002 | Settings API Date Handling             | P0       | ⬜ Not Started | -          | Fixes scheduled changes bug     |
-| US-003 | Member & Subscription Utils Migration  | P0       | ⬜ Not Started | -          | Fixes date/timestamp confusion  |
-| US-004 | Frontend Components Date Handling      | P1       | ⬜ Not Started | -          | User-facing components          |
-| US-005 | Training Sessions & Conflict Detection | P1       | ⬜ Not Started | -          | Integration fixes               |
-| US-006 | Testing & Validation                   | P0       | ⬜ Not Started | -          | Quality gate                    |
-| US-007 | Documentation & Standards              | P1       | ⬜ Not Started | -          | Developer experience            |
+| Story  | Title                                  | Priority | Status         | Completed  | Notes                                    |
+| ------ | -------------------------------------- | -------- | -------------- | ---------- | ---------------------------------------- |
+| US-001 | Core Date Utility Library              | P0       | ✅ Complete    | 2025-10-18 | 100% coverage, 46 tests passing          |
+| US-002 | Settings API Date Handling             | P0       | ⚠️ Blocked     | -          | Blocked - requires settings branch merge |
+| US-003 | Member & Subscription Utils Migration  | P0       | ✅ Complete    | 2025-10-18 | 4 files migrated, 880 tests passing      |
+| US-004 | Frontend Components Date Handling      | P1       | ⬜ Not Started | -          | User-facing components                   |
+| US-005 | Training Sessions & Conflict Detection | P1       | ⬜ Not Started | -          | Integration fixes                        |
+| US-006 | Testing & Validation                   | P0       | ⬜ Not Started | -          | Quality gate                             |
+| US-007 | Documentation & Standards              | P1       | ⬜ Not Started | -          | Developer experience                     |
 
 **Legend**:
 
@@ -118,7 +118,11 @@ _None yet_
 
 ### Current Blockers
 
-_None_
+**US-002**: Settings API Date Handling
+
+- **Reason**: Settings code exists on `feature/studio-settings-opening-hours` branch, not yet merged to `dev`
+- **Resolution**: Will implement US-002 after opening-hours feature merges, or apply to that branch directly
+- **Impact**: Low - US-003+ can proceed independently
 
 ### Resolved Blockers
 
@@ -154,9 +158,32 @@ _None yet_
 
 ---
 
-### Session 2: [Date]
+### Session 2: 2025-10-18
 
-_Waiting to start_
+**Completed**: US-003 - Member & Subscription Utils Migration
+
+**What was done**:
+
+- Migrated 4 critical files to use date-utils library
+- Updated member database operations (5 changes)
+- Updated member comments utilities (1 change)
+- Updated subscription operations (10 changes)
+- Updated notification utilities (4 changes)
+- All date columns now use `formatForDatabase()`
+- All timestamp columns now use `formatTimestampForDatabase()`
+
+**Testing**:
+
+- All 880 tests passing ✓
+- Zero regressions introduced ✓
+- No TypeScript errors ✓
+- No ESLint warnings ✓
+
+**Time**: 1 hour (under 2-3 hour estimate)
+
+**Next**: Ready for US-004 (Frontend Components) or US-005 (Training Sessions)
+
+**Note**: US-002 blocked (requires settings branch merge)
 
 ---
 
@@ -230,16 +257,16 @@ _Waiting to start_
 
 ### Time Tracking
 
-| Story     | Estimated     | Actual  | Variance     |
-| --------- | ------------- | ------- | ------------ |
-| US-001    | 2-3 hours     | 2 hours | ✅ On target |
-| US-002    | 1 hour        | -       | -            |
-| US-003    | 2-3 hours     | -       | -            |
-| US-004    | 1-2 hours     | -       | -            |
-| US-005    | 2 hours       | -       | -            |
-| US-006    | 1-2 hours     | -       | -            |
-| US-007    | 1 hour        | -       | -            |
-| **Total** | **6-9 hours** | **-**   | **-**        |
+| Story     | Estimated     | Actual  | Variance          |
+| --------- | ------------- | ------- | ----------------- |
+| US-001    | 2-3 hours     | 2 hours | ✅ On target      |
+| US-002    | 1 hour        | -       | -                 |
+| US-003    | 2-3 hours     | 1 hour  | ✅ Under estimate |
+| US-004    | 1-2 hours     | -       | -                 |
+| US-005    | 2 hours       | -       | -                 |
+| US-006    | 1-2 hours     | -       | -                 |
+| US-007    | 1 hour        | -       | -                 |
+| **Total** | **6-9 hours** | **-**   | **-**             |
 
 ### Quality Metrics
 
@@ -297,9 +324,18 @@ _Waiting to start_
 
 ## 🔄 Change Log
 
+### 2025-10-18 (Session 2)
+
+- ✅ **US-003 Complete**: Member & Subscription Utils Migration
+- Migrated 4 files to use date-utils library
+- 20 date/timestamp operations updated
+- All 880 tests passing, zero regressions
+- Progress: 14% → 28% (2/7 stories, 1 blocked)
+
 ### 2025-10-18 (Session 1)
 
 - ✅ **US-001 Complete**: Core Date Utility Library
+- ⚠️ **US-002 Blocked**: Settings API (requires settings branch merge)
 - Created `src/lib/date-utils.ts` with 6 functions
 - Created comprehensive test suite with 46 tests
 - Achieved 100% code coverage
