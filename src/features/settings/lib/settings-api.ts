@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import type { StudioSettings } from "./types";
+import { getLocalDateString, formatForDatabase } from "@/lib/date-utils";
 
 /**
  * Fetches the currently active studio setting by key
@@ -8,7 +9,7 @@ import type { StudioSettings } from "./types";
 export async function fetchActiveSettings(
   settingKey: string
 ): Promise<StudioSettings | null> {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateString();
 
   const { data, error } = await supabase
     .from("studio_settings")
@@ -34,7 +35,7 @@ export async function fetchActiveSettings(
 export async function fetchScheduledSettings(
   settingKey: string
 ): Promise<StudioSettings | null> {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateString();
 
   const { data, error } = await supabase
     .from("studio_settings")
@@ -78,7 +79,7 @@ export async function updateStudioSettings(
   } = await supabase.auth.getUser();
 
   const effectiveFromDate = effectiveFrom
-    ? effectiveFrom.toISOString().split("T")[0]
+    ? formatForDatabase(effectiveFrom)
     : null;
 
   const { data, error } = await supabase

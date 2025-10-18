@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   fetchStudioSettings,
   fetchActiveSettings,
@@ -6,6 +6,7 @@ import {
   updateStudioSettings,
 } from "../settings-api";
 import { supabase } from "@/lib/supabase";
+import { getLocalDateString } from "@/lib/date-utils";
 
 // Mock the supabase client
 vi.mock("@/lib/supabase", () => ({
@@ -20,6 +21,10 @@ vi.mock("@/lib/supabase", () => ({
 describe("settings-api", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe("fetchStudioSettings (deprecated)", () => {
@@ -390,6 +395,134 @@ describe("settings-api", () => {
       await expect(
         updateStudioSettings("opening_hours", {}, new Date())
       ).rejects.toThrow("Upsert failed");
+    });
+  });
+
+  describe("Timezone-safe date handling", () => {
+    it("should use getLocalDateString() for date comparisons", async () => {
+      // Set a known time
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2025-10-18T12:00:00Z"));
+
+      const today = getLocalDateString();
+
+      const mockData = {
+        id: "tz-test-1",
+        setting_key: "opening_hours",
+        setting_value: { test: true },
+        effective_from: "2025-10-20",
+        is_active: true,
+        created_at: "2025-10-18",
+        updated_at: "2025-10-18",
+      };
+
+      const mockMaybeSingle = vi.fn().mockResolvedValue({
+        data: mockData,
+        error: null,
+      });
+      const mockLimit = vi
+        .fn()
+        .mockReturnValue({ maybeSingle: mockMaybeSingle });
+      const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockGt = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ gt: mockGt });
+      const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
+
+      vi.mocked(supabase.from).mockReturnValue({
+        select: mockSelect,
+      } as never);
+
+      await fetchScheduledSettings("opening_hours");
+
+      // Verify that the function uses the local date string, not UTC
+      expect(mockGt).toHaveBeenCalledWith("effective_from", today);
+    });
+
+    it("should use getLocalDateString() for active settings", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2025-10-18T12:00:00Z"));
+
+      const today = getLocalDateString();
+
+      const mockData = {
+        id: "tz-test-2",
+        setting_key: "opening_hours",
+        setting_value: { test: true },
+        effective_from: "2025-10-15",
+        is_active: true,
+        created_at: "2025-10-15",
+        updated_at: "2025-10-15",
+      };
+
+      const mockMaybeSingle = vi.fn().mockResolvedValue({
+        data: mockData,
+        error: null,
+      });
+      const mockLimit = vi
+        .fn()
+        .mockReturnValue({ maybeSingle: mockMaybeSingle });
+      const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockLte = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
+
+      vi.mocked(supabase.from).mockReturnValue({
+        select: mockSelect,
+      } as never);
+
+      await fetchActiveSettings("opening_hours");
+
+      // Verify that the function uses the local date string, not UTC
+      expect(mockLte).toHaveBeenCalledWith("effective_from", today);
+    });
+
+    it("should use formatForDatabase() when updating settings", async () => {
+      const mockUser = { id: "user123" };
+      vi.useFakeTimers();
+      const testDate = new Date("2025-11-01T10:00:00Z");
+      vi.setSystemTime(testDate);
+
+      vi.mocked(supabase.auth.getUser).mockResolvedValue({
+        data: { user: mockUser },
+        error: null,
+      } as never);
+
+      const mockInsert = vi.fn().mockReturnThis();
+      const mockSelect = vi.fn().mockReturnThis();
+      const mockSingle = vi.fn().mockResolvedValue({
+        data: {
+          id: "test",
+          setting_key: "test",
+          setting_value: {},
+          effective_from: "2025-11-01",
+          is_active: true,
+          created_at: "2025-11-01",
+          updated_at: "2025-11-01",
+        },
+        error: null,
+      });
+
+      vi.mocked(supabase.from).mockReturnValue({
+        upsert: mockInsert,
+        select: mockSelect,
+        single: mockSingle,
+      } as never);
+
+      mockInsert.mockReturnValue({ select: mockSelect });
+      mockSelect.mockReturnValue({ single: mockSingle });
+
+      const effectiveDate = new Date("2025-11-01");
+      await updateStudioSettings("test", {}, effectiveDate);
+
+      // Verify formatForDatabase was used (returns local date string)
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          effective_from: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        }),
+        expect.anything()
+      );
     });
   });
 });
