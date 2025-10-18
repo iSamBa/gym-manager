@@ -38,7 +38,12 @@ function OpeningHoursTabComponent() {
   // Local state for editing
   const [isEditing, setIsEditing] = useState(false);
   const [editedHours, setEditedHours] = useState<OpeningHoursWeek | null>(null);
-  const [effectiveDate, setEffectiveDate] = useState<Date>(new Date());
+  const [effectiveDate, setEffectiveDate] = useState<Date>(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return tomorrow;
+  });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showConflictDialog, setShowConflictDialog] = useState(false);
   const [isCheckingConflicts, setIsCheckingConflicts] = useState(false);

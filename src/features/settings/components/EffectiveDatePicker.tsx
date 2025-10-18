@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { getStartOfDay } from "@/lib/date-utils";
 
 interface EffectiveDatePickerProps {
   value: Date;
@@ -24,8 +25,7 @@ export const EffectiveDatePicker = memo(function EffectiveDatePicker({
   onChange,
   disabled = false,
 }: EffectiveDatePickerProps) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getStartOfDay();
 
   return (
     <div className="space-y-2">
