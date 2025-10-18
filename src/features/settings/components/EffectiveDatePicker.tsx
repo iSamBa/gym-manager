@@ -25,7 +25,10 @@ export const EffectiveDatePicker = memo(function EffectiveDatePicker({
   onChange,
   disabled = false,
 }: EffectiveDatePickerProps) {
-  const today = getStartOfDay();
+  // Tomorrow is the minimum selectable date (today is not allowed)
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
 
   return (
     <div className="space-y-2">
@@ -50,14 +53,14 @@ export const EffectiveDatePicker = memo(function EffectiveDatePicker({
             mode="single"
             selected={value}
             onSelect={(date) => date && onChange(date)}
-            disabled={(date) => date < today}
+            disabled={(date) => date < tomorrow}
             initialFocus
           />
         </PopoverContent>
       </Popover>
       <p className="text-muted-foreground text-sm">
-        Choose when these changes should take effect. Changes cannot be
-        scheduled for past dates.
+        Choose when these changes should take effect. Changes must be scheduled
+        for tomorrow or later.
       </p>
     </div>
   );
