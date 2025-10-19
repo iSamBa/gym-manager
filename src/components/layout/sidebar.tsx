@@ -21,7 +21,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { UserProfileDropdown } from "./UserProfileDropdown";
-import { ThemeToggleSidebar } from "@/components/ui/theme-toggle";
+import { ThemeSwitcher } from "@/components/kibo-ui/theme-switcher";
+import { useTheme } from "@/components/providers/theme-provider";
 
 interface SidebarProps {
   className?: string;
@@ -30,6 +31,7 @@ interface SidebarProps {
 
 export function Sidebar({ className, onNavigate }: SidebarProps) {
   const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
 
   const overviewNav = [{ name: "Dashboard", href: "/", icon: Home }] as const;
 
@@ -144,8 +146,8 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       </div>
 
       {/* Bottom utilities - sticky */}
-      <div className="bg-background space-y-2 border-t p-2">
-        <ThemeToggleSidebar />
+      <div className="bg-background flex flex-col items-center gap-2 border-t p-2">
+        <ThemeSwitcher value={theme} onChange={setTheme} />
         <UserProfileDropdown />
       </div>
     </div>
