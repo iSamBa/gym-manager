@@ -14,6 +14,7 @@ import {
 import type { Member, MemberStatus } from "@/features/database/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { exportMembersToCSV } from "../lib/csv-utils";
+import { formatTimestampForDatabase } from "@/lib/date-utils";
 
 // Query key factory for consistent cache management
 export const memberKeys = {
@@ -178,7 +179,7 @@ export function useUpdateMember() {
         queryClient.setQueryData(memberKeys.detail(id), {
           ...previousMember,
           ...data,
-          updated_at: new Date().toISOString(),
+          updated_at: formatTimestampForDatabase(),
         });
       }
 
@@ -187,7 +188,7 @@ export function useUpdateMember() {
         queryClient.setQueryData(memberKeys.withSubscription(id), {
           ...previousMemberWithSub,
           ...data,
-          updated_at: new Date().toISOString(),
+          updated_at: formatTimestampForDatabase(),
         });
       }
 
@@ -274,7 +275,7 @@ export function useUpdateMemberStatus() {
         queryClient.setQueryData(memberKeys.detail(id), {
           ...previousMember,
           status,
-          updated_at: new Date().toISOString(),
+          updated_at: formatTimestampForDatabase(),
         });
       }
 
@@ -283,7 +284,7 @@ export function useUpdateMemberStatus() {
         queryClient.setQueryData(memberKeys.withSubscription(id), {
           ...previousMemberWithSub,
           status,
-          updated_at: new Date().toISOString(),
+          updated_at: formatTimestampForDatabase(),
         });
       }
 
@@ -375,7 +376,7 @@ export function useBulkUpdateMemberStatus() {
 
           const updateMember = (member: Member) =>
             memberIds.includes(member.id)
-              ? { ...member, status, updated_at: new Date().toISOString() }
+              ? { ...member, status, updated_at: formatTimestampForDatabase() }
               : member;
 
           // Handle infinite query structure

@@ -17,6 +17,7 @@ import type {
 } from "@/features/database/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { exportTrainersToCSV } from "../lib/csv-utils";
+import { formatTimestampForDatabase } from "@/lib/date-utils";
 
 // Query key factory for consistent cache management
 export const trainerKeys = {
@@ -221,7 +222,7 @@ export function useUpdateTrainer() {
         queryClient.setQueryData(trainerKeys.detail(id), {
           ...previousTrainer,
           ...data,
-          updated_at: new Date().toISOString(),
+          updated_at: formatTimestampForDatabase(),
         });
 
         // Update in lists too (handle both regular arrays and infinite query structures)
@@ -296,7 +297,7 @@ export function useUpdateTrainerAvailability() {
         queryClient.setQueryData(trainerKeys.detail(id), {
           ...previousTrainer,
           is_accepting_new_clients: isAccepting,
-          updated_at: new Date().toISOString(),
+          updated_at: formatTimestampForDatabase(),
         });
       }
 
@@ -390,7 +391,7 @@ export function useBulkUpdateTrainerAvailability() {
               ? {
                   ...trainer,
                   is_accepting_new_clients: isAccepting,
-                  updated_at: new Date().toISOString(),
+                  updated_at: formatTimestampForDatabase(),
                 }
               : trainer;
 

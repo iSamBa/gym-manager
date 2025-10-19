@@ -8,6 +8,10 @@ import {
   mapSessionRpcResponse,
   type RpcSessionResponse,
 } from "../lib/rpc-mappers";
+import {
+  getLocalDateString,
+  formatTimestampForDatabase,
+} from "@/lib/date-utils";
 import type {
   TrainingSession,
   CreateSessionData,
@@ -39,8 +43,8 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
         const { data, error } = await supabase.rpc(
           "get_sessions_with_planning_indicators",
           {
-            p_start_date: filters.date_range.start.toISOString().split("T")[0],
-            p_end_date: filters.date_range.end.toISOString().split("T")[0],
+            p_start_date: getLocalDateString(filters.date_range.start),
+            p_end_date: getLocalDateString(filters.date_range.end),
           }
         );
 
@@ -387,7 +391,7 @@ export const useUpdateTrainingSessionStatus = () => {
         queryClient.setQueryData(TRAINING_SESSIONS_KEYS.detail(id), {
           ...previousSession,
           status,
-          updated_at: new Date().toISOString(),
+          updated_at: formatTimestampForDatabase(),
         });
       }
 
