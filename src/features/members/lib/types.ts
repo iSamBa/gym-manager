@@ -28,3 +28,24 @@ export interface CreateBodyCheckupInput {
   notes?: string | null;
   created_by?: string | null;
 }
+
+// ========== Auto-Inactivation Types ==========
+
+/**
+ * Result from running auto-inactivation process
+ */
+export interface AutoInactivationResult {
+  inactivated_count: number;
+  member_ids: string[];
+  member_names: string[];
+}
+
+/**
+ * Member candidate for auto-inactivation (dry-run preview)
+ */
+export interface InactivationCandidate {
+  member_id: string;
+  member_name: string;
+  last_session_date: string | null; // ISO date string or null if never attended
+  days_inactive: number | null; // Null if never attended
+}

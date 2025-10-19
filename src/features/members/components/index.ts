@@ -69,3 +69,8 @@ export { CommentDialog } from "./CommentDialog";
 // Body Checkup components (US-002)
 export { BodyCheckupDialog } from "./BodyCheckupDialog";
 export { BodyCheckupHistory } from "./BodyCheckupHistory";
+
+// Auto-Inactivation components (US-005)
+export { AutoInactivationSection } from "./AutoInactivationSection";
+export { PreviewInactivationDialog } from "./PreviewInactivationDialog";
+export { ReactivateMemberButton } from "./ReactivateMemberButton";

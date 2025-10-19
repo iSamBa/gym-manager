@@ -25,6 +25,7 @@ import {
   MemberCommentsCard,
   BodyCheckupDialog,
   BodyCheckupHistory,
+  ReactivateMemberButton,
 } from "@/features/members/components";
 import {
   useMemberWithSubscription,
@@ -248,6 +249,16 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
           onSessionSuccess={refetch}
           onPaymentSuccess={refetch}
         />
+
+        {/* Reactivate Button for Inactive Members */}
+        {member.status === "inactive" && (
+          <div className="flex justify-end">
+            <ReactivateMemberButton
+              memberId={member.id}
+              memberName={`${member.first_name} ${member.last_name}`}
+            />
+          </div>
+        )}
 
         {/* Main Content: 2-Column Layout with Tabs */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

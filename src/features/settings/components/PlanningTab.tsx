@@ -21,6 +21,7 @@ import { PlanningParameterEdit } from "./PlanningParameterEdit";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import type { PlanningSettings } from "../lib/types";
+import { AutoInactivationSection } from "@/features/members/components/AutoInactivationSection";
 
 export function PlanningTab() {
   const { settings, isLoading, updateSettings, isUpdating, error } =
@@ -172,159 +173,164 @@ export function PlanningTab() {
   }
 
   return (
-    <Card className="max-w-4xl">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Planning Parameters</CardTitle>
-        {!isEditing && (
-          <Button variant="ghost" size="sm" onClick={handleEdit}>
-            <Edit className="h-4 w-4" />
-          </Button>
-        )}
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-0">
-          {isEditing ? (
-            <>
-              {/* Edit Mode */}
-              <PlanningParameterEdit
-                icon={Hourglass}
-                iconColor="text-red-500"
-                label="Subscription Expiration Warning"
-                description="Show warning this many days before subscription ends"
-                value={currentSettings.subscription_warning_days}
-                unit="days"
-                min={1}
-                max={999}
-                onChange={(value) =>
-                  handleFieldChange("subscription_warning_days", value)
-                }
-                error={validationErrors.subscription_warning_days}
-              />
-
-              <PlanningParameterEdit
-                icon={Scale}
-                iconColor="text-yellow-500"
-                label="Body Checkup Reminder"
-                description="Sessions after last checkup to show reminder"
-                value={currentSettings.body_checkup_sessions}
-                unit="sessions"
-                min={1}
-                max={999}
-                onChange={(value) =>
-                  handleFieldChange("body_checkup_sessions", value)
-                }
-                error={validationErrors.body_checkup_sessions}
-              />
-
-              <PlanningParameterEdit
-                icon={Coins}
-                iconColor="text-green-500"
-                label="Payment Reminder"
-                description="Days after last payment to show reminder"
-                value={currentSettings.payment_reminder_days}
-                unit="days"
-                min={1}
-                max={999}
-                onChange={(value) =>
-                  handleFieldChange("payment_reminder_days", value)
-                }
-                error={validationErrors.payment_reminder_days}
-              />
-
-              <PlanningParameterEdit
-                label="Maximum Sessions Per Week"
-                description="Studio-wide booking limit per week"
-                value={currentSettings.max_sessions_per_week}
-                unit="sessions"
-                min={1}
-                max={9999}
-                onChange={(value) =>
-                  handleFieldChange("max_sessions_per_week", value)
-                }
-                error={validationErrors.max_sessions_per_week}
-              />
-
-              <PlanningParameterEdit
-                label="Auto-Inactivation Threshold"
-                description="Months without attendance before auto-inactivation"
-                value={currentSettings.inactivity_months}
-                unit="months"
-                min={1}
-                max={99}
-                onChange={(value) =>
-                  handleFieldChange("inactivity_months", value)
-                }
-                error={validationErrors.inactivity_months}
-              />
-            </>
-          ) : (
-            <>
-              {/* Display Mode */}
-              <PlanningParameterDisplay
-                icon={Hourglass}
-                iconColor="text-red-500"
-                label="Subscription Expiration Warning"
-                description="Show warning this many days before subscription ends"
-                value={currentSettings.subscription_warning_days}
-                unit="days"
-              />
-
-              <PlanningParameterDisplay
-                icon={Scale}
-                iconColor="text-yellow-500"
-                label="Body Checkup Reminder"
-                description="Sessions after last checkup to show reminder"
-                value={currentSettings.body_checkup_sessions}
-                unit="sessions"
-              />
-
-              <PlanningParameterDisplay
-                icon={Coins}
-                iconColor="text-green-500"
-                label="Payment Reminder"
-                description="Days after last payment to show reminder"
-                value={currentSettings.payment_reminder_days}
-                unit="days"
-              />
-
-              <PlanningParameterDisplay
-                label="Maximum Sessions Per Week"
-                description="Studio-wide booking limit per week"
-                value={currentSettings.max_sessions_per_week}
-                unit="sessions"
-              />
-
-              <PlanningParameterDisplay
-                label="Auto-Inactivation Threshold"
-                description="Months without attendance before auto-inactivation"
-                value={currentSettings.inactivity_months}
-                unit="months"
-              />
-            </>
+    <div className="max-w-4xl space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Planning Parameters</CardTitle>
+          {!isEditing && (
+            <Button variant="ghost" size="sm" onClick={handleEdit}>
+              <Edit className="h-4 w-4" />
+            </Button>
           )}
-        </div>
-      </CardContent>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-0">
+            {isEditing ? (
+              <>
+                {/* Edit Mode */}
+                <PlanningParameterEdit
+                  icon={Hourglass}
+                  iconColor="text-red-500"
+                  label="Subscription Expiration Warning"
+                  description="Show warning this many days before subscription ends"
+                  value={currentSettings.subscription_warning_days}
+                  unit="days"
+                  min={1}
+                  max={999}
+                  onChange={(value) =>
+                    handleFieldChange("subscription_warning_days", value)
+                  }
+                  error={validationErrors.subscription_warning_days}
+                />
 
-      {/* Footer with Save/Cancel buttons in edit mode */}
-      {isEditing && (
-        <CardFooter className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isUpdating}
-          >
-            <X className="mr-2 h-4 w-4" />
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isUpdating || Object.keys(validationErrors).length > 0}
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {isUpdating ? "Saving..." : "Save Changes"}
-          </Button>
-        </CardFooter>
-      )}
-    </Card>
+                <PlanningParameterEdit
+                  icon={Scale}
+                  iconColor="text-yellow-500"
+                  label="Body Checkup Reminder"
+                  description="Sessions after last checkup to show reminder"
+                  value={currentSettings.body_checkup_sessions}
+                  unit="sessions"
+                  min={1}
+                  max={999}
+                  onChange={(value) =>
+                    handleFieldChange("body_checkup_sessions", value)
+                  }
+                  error={validationErrors.body_checkup_sessions}
+                />
+
+                <PlanningParameterEdit
+                  icon={Coins}
+                  iconColor="text-green-500"
+                  label="Payment Reminder"
+                  description="Days after last payment to show reminder"
+                  value={currentSettings.payment_reminder_days}
+                  unit="days"
+                  min={1}
+                  max={999}
+                  onChange={(value) =>
+                    handleFieldChange("payment_reminder_days", value)
+                  }
+                  error={validationErrors.payment_reminder_days}
+                />
+
+                <PlanningParameterEdit
+                  label="Maximum Sessions Per Week"
+                  description="Studio-wide booking limit per week"
+                  value={currentSettings.max_sessions_per_week}
+                  unit="sessions"
+                  min={1}
+                  max={9999}
+                  onChange={(value) =>
+                    handleFieldChange("max_sessions_per_week", value)
+                  }
+                  error={validationErrors.max_sessions_per_week}
+                />
+
+                <PlanningParameterEdit
+                  label="Auto-Inactivation Threshold"
+                  description="Months without attendance before auto-inactivation"
+                  value={currentSettings.inactivity_months}
+                  unit="months"
+                  min={1}
+                  max={99}
+                  onChange={(value) =>
+                    handleFieldChange("inactivity_months", value)
+                  }
+                  error={validationErrors.inactivity_months}
+                />
+              </>
+            ) : (
+              <>
+                {/* Display Mode */}
+                <PlanningParameterDisplay
+                  icon={Hourglass}
+                  iconColor="text-red-500"
+                  label="Subscription Expiration Warning"
+                  description="Show warning this many days before subscription ends"
+                  value={currentSettings.subscription_warning_days}
+                  unit="days"
+                />
+
+                <PlanningParameterDisplay
+                  icon={Scale}
+                  iconColor="text-yellow-500"
+                  label="Body Checkup Reminder"
+                  description="Sessions after last checkup to show reminder"
+                  value={currentSettings.body_checkup_sessions}
+                  unit="sessions"
+                />
+
+                <PlanningParameterDisplay
+                  icon={Coins}
+                  iconColor="text-green-500"
+                  label="Payment Reminder"
+                  description="Days after last payment to show reminder"
+                  value={currentSettings.payment_reminder_days}
+                  unit="days"
+                />
+
+                <PlanningParameterDisplay
+                  label="Maximum Sessions Per Week"
+                  description="Studio-wide booking limit per week"
+                  value={currentSettings.max_sessions_per_week}
+                  unit="sessions"
+                />
+
+                <PlanningParameterDisplay
+                  label="Auto-Inactivation Threshold"
+                  description="Months without attendance before auto-inactivation"
+                  value={currentSettings.inactivity_months}
+                  unit="months"
+                />
+              </>
+            )}
+          </div>
+        </CardContent>
+
+        {/* Footer with Save/Cancel buttons in edit mode */}
+        {isEditing && (
+          <CardFooter className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isUpdating}
+            >
+              <X className="mr-2 h-4 w-4" />
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isUpdating || Object.keys(validationErrors).length > 0}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {isUpdating ? "Saving..." : "Save Changes"}
+            </Button>
+          </CardFooter>
+        )}
+      </Card>
+
+      {/* Auto-Inactivation Section */}
+      <AutoInactivationSection />
+    </div>
   );
 }
