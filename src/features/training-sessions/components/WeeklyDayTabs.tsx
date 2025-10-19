@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, eachDayOfInterval, endOfWeek } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getLocalDateString, isToday } from "@/lib/date-utils";
+import { useDailyStatistics } from "../hooks/use-daily-statistics";
 
 /**
  * Props for WeeklyDayTabs component
@@ -41,14 +42,33 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
   weekStart,
   onDateSelect,
 }: WeeklyDayTabsProps) {
+  // Calculate week end (Sunday)
+  const weekEnd = useMemo(
+    () => endOfWeek(weekStart, { weekStartsOn: 1 }),
+    [weekStart]
+  );
+
+  // Fetch daily statistics for the week
+  const { data: statistics, isLoading } = useDailyStatistics(
+    weekStart,
+    weekEnd
+  );
+
+  // Create lookup map for O(1) statistics access
+  const statsMap = useMemo(() => {
+    const map = new Map();
+    statistics?.forEach((stat) => map.set(stat.date, stat));
+    return map;
+  }, [statistics]);
+
   // Calculate all 7 days of the week (Monday to Sunday)
   // weekStartsOn: 1 ensures Monday is the first day
   const weekDays = useMemo(() => {
     return eachDayOfInterval({
       start: weekStart,
-      end: endOfWeek(weekStart, { weekStartsOn: 1 }),
+      end: weekEnd,
     });
-  }, [weekStart]);
+  }, [weekStart, weekEnd]);
 
   // Handle tab change - convert date string back to Date object
   const handleTabChange = useCallback(
@@ -69,6 +89,7 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
         {weekDays.map((day) => {
           const dateKey = getLocalDateString(day);
           const todayIndicator = isToday(day);
+          const stats = statsMap.get(dateKey);
 
           return (
             <TabsTrigger
@@ -89,6 +110,29 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
               <span className="text-lg leading-none font-bold">
                 {format(day, "d")}
               </span>
+
+              {/* Statistics */}
+              {isLoading ? (
+                <div className="bg-muted h-6 w-12 animate-pulse rounded" />
+              ) : stats ? (
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="text-sm font-medium">{stats.total}</span>
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="text-orange-600">{stats.standard}</span>
+                    <span className="text-muted-foreground">|</span>
+                    <span className="text-blue-600">{stats.trial}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="text-sm font-medium">0</span>
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="text-orange-600">0</span>
+                    <span className="text-muted-foreground">|</span>
+                    <span className="text-blue-600">0</span>
+                  </div>
+                </div>
+              )}
             </TabsTrigger>
           );
         })}

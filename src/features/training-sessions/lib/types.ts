@@ -132,3 +132,11 @@ export interface WeekRange {
   start: string; // YYYY-MM-DD
   end: string; // YYYY-MM-DD
 }
+
+// Daily session statistics for calendar views
+export interface DailyStatistics {
+  date: string; // YYYY-MM-DD format
+  total: number; // Total non-cancelled sessions
+  standard: number; // Count of standard sessions
+  trial: number; // Count of trial sessions
+}

@@ -1,8 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WeeklyDayTabs } from "../WeeklyDayTabs";
 import { startOfWeek } from "date-fns";
+import { supabase } from "@/lib/supabase";
+
+// Mock Supabase client
+vi.mock("@/lib/supabase", () => ({
+  supabase: {
+    rpc: vi.fn(),
+  },
+}));
 
 describe("WeeklyDayTabs", () => {
   // Mock date for consistent testing
@@ -10,13 +19,45 @@ describe("WeeklyDayTabs", () => {
   const mockWeekStart = startOfWeek(mockSelectedDate, { weekStartsOn: 1 }); // Monday, January 13, 2025
   const mockOnDateSelect = vi.fn();
 
+  // Helper to render with QueryClient
+  const renderWithQueryClient = (ui: React.ReactElement) => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const result = render(
+      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+    );
+
+    return {
+      ...result,
+      rerender: (rerenderUi: React.ReactElement) =>
+        result.rerender(
+          <QueryClientProvider client={queryClient}>
+            {rerenderUi}
+          </QueryClientProvider>
+        ),
+    };
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Mock supabase.rpc to return empty statistics
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: [],
+      error: null,
+      count: null,
+      status: 200,
+      statusText: "OK",
+    } as any);
   });
 
   describe("Tab Rendering", () => {
     it("renders 7 day tabs", () => {
-      render(
+      renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={mockSelectedDate}
           weekStart={mockWeekStart}
@@ -35,7 +76,7 @@ describe("WeeklyDayTabs", () => {
     });
 
     it("shows correct day numbers", () => {
-      render(
+      renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={mockSelectedDate}
           weekStart={mockWeekStart}
@@ -54,7 +95,7 @@ describe("WeeklyDayTabs", () => {
     });
 
     it("displays day names in abbreviated uppercase format", () => {
-      render(
+      renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={mockSelectedDate}
           weekStart={mockWeekStart}
@@ -76,7 +117,7 @@ describe("WeeklyDayTabs", () => {
       const today = new Date();
       const weekStart = startOfWeek(today, { weekStartsOn: 1 });
 
-      const { container } = render(
+      const { container } = renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={today}
           weekStart={weekStart}
@@ -99,7 +140,7 @@ describe("WeeklyDayTabs", () => {
       const today = new Date();
       const weekStart = startOfWeek(today, { weekStartsOn: 1 });
 
-      const { container } = render(
+      const { container } = renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={today}
           weekStart={weekStart}
@@ -119,7 +160,7 @@ describe("WeeklyDayTabs", () => {
       const pastWeekStart = new Date(2020, 0, 6); // Monday, January 6, 2020
       const pastDate = new Date(2020, 0, 8); // Wednesday, January 8, 2020
 
-      const { container } = render(
+      const { container } = renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={pastDate}
           weekStart={pastWeekStart}
@@ -139,7 +180,7 @@ describe("WeeklyDayTabs", () => {
     it("calls onDateSelect when tab is clicked", async () => {
       const user = userEvent.setup();
 
-      render(
+      renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={mockSelectedDate}
           weekStart={mockWeekStart}
@@ -161,7 +202,7 @@ describe("WeeklyDayTabs", () => {
     });
 
     it("updates selected tab when selectedDate prop changes", () => {
-      const { rerender } = render(
+      const { rerender } = renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={mockSelectedDate}
           weekStart={mockWeekStart}
@@ -191,7 +232,7 @@ describe("WeeklyDayTabs", () => {
     it("clicking the same tab again has no additional effect", async () => {
       const user = userEvent.setup();
 
-      render(
+      renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={mockSelectedDate}
           weekStart={mockWeekStart}
@@ -217,7 +258,7 @@ describe("WeeklyDayTabs", () => {
       // Use a different week start
       const differentWeekStart = new Date(2025, 0, 20); // Monday, January 20, 2025
 
-      render(
+      renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={new Date(2025, 0, 22)}
           weekStart={differentWeekStart}
@@ -239,7 +280,7 @@ describe("WeeklyDayTabs", () => {
       // Week that crosses from January to February
       const weekStart = new Date(2025, 0, 27); // Monday, January 27, 2025
 
-      render(
+      renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={new Date(2025, 0, 29)}
           weekStart={weekStart}
@@ -260,7 +301,7 @@ describe("WeeklyDayTabs", () => {
 
   describe("Accessibility", () => {
     it("each tab has descriptive aria-label", () => {
-      render(
+      renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={mockSelectedDate}
           weekStart={mockWeekStart}
@@ -293,7 +334,7 @@ describe("WeeklyDayTabs", () => {
     });
 
     it("tabs are keyboard navigable", () => {
-      const { container } = render(
+      const { container } = renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={mockSelectedDate}
           weekStart={mockWeekStart}
@@ -317,7 +358,7 @@ describe("WeeklyDayTabs", () => {
     });
 
     it("uses semantic HTML structure with role attributes", () => {
-      const { container } = render(
+      const { container } = renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={mockSelectedDate}
           weekStart={mockWeekStart}
@@ -343,7 +384,7 @@ describe("WeeklyDayTabs", () => {
     });
 
     it("week calculations are memoized (verified by re-render behavior)", () => {
-      const { rerender } = render(
+      const { rerender } = renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={mockSelectedDate}
           weekStart={mockWeekStart}
@@ -372,7 +413,7 @@ describe("WeeklyDayTabs", () => {
         renderCount++;
       });
 
-      const { rerender } = render(
+      const { rerender } = renderWithQueryClient(
         <WeeklyDayTabs
           selectedDate={mockSelectedDate}
           weekStart={mockWeekStart}
