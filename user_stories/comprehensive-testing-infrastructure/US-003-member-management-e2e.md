@@ -227,25 +227,23 @@ test.describe("Member Management - Search & Filter", () => {
     await resetDatabase();
 
     // Create test members with specific data
-    await testSupabase
-      .from("members")
-      .insert([
-        MemberFactory.build({
-          first_name: "John",
-          last_name: "Doe",
-          status: "active",
-        }),
-        MemberFactory.build({
-          first_name: "Jane",
-          last_name: "Smith",
-          status: "inactive",
-        }),
-        MemberFactory.build({
-          first_name: "Bob",
-          last_name: "Johnson",
-          status: "active",
-        }),
-      ]);
+    await testSupabase.from("members").insert([
+      MemberFactory.build({
+        first_name: "John",
+        last_name: "Doe",
+        status: "active",
+      }),
+      MemberFactory.build({
+        first_name: "Jane",
+        last_name: "Smith",
+        status: "inactive",
+      }),
+      MemberFactory.build({
+        first_name: "Bob",
+        last_name: "Johnson",
+        status: "active",
+      }),
+    ]);
 
     await loginAsAdmin(page);
   });
