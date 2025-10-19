@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -15,6 +15,7 @@ import {
   Calendar as CalendarIcon,
 } from "lucide-react";
 import { format, addDays, subDays } from "date-fns";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Import machine slot grid
 import { MachineSlotGrid } from "./MachineSlotGrid";
@@ -24,6 +25,8 @@ import { useTrainingSessions } from "../hooks";
 import type { TrainingSession } from "../lib/types";
 
 const TrainingSessionsView: React.FC = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSession, setSelectedSession] =
     useState<TrainingSession | null>(null);
@@ -48,6 +51,17 @@ const TrainingSessionsView: React.FC = () => {
     date_range: dateRange,
   });
 
+  // Check URL params for sessionId and auto-open dialog
+  useEffect(() => {
+    const sessionId = searchParams.get("sessionId");
+    if (sessionId) {
+      // Create a minimal session object with just the ID
+      // SessionDialog will fetch the full session data
+      setSelectedSession({ id: sessionId } as TrainingSession);
+      setShowSessionDialog(true);
+    }
+  }, [searchParams]);
+
   const handleSessionClick = (session: TrainingSession) => {
     setSelectedSession(session);
     setShowSessionDialog(true);
@@ -56,6 +70,11 @@ const TrainingSessionsView: React.FC = () => {
   const handleSessionDialogClose = () => {
     setShowSessionDialog(false);
     setSelectedSession(null);
+    // Clean up URL params when dialog closes
+    const sessionId = searchParams.get("sessionId");
+    if (sessionId) {
+      router.push("/training-sessions");
+    }
   };
 
   if (error) {

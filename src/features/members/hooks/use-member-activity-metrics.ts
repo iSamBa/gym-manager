@@ -39,7 +39,7 @@ export function useMemberActivityMetrics(memberId: string) {
         );
 
       // Last session - query from training_sessions for proper ordering
-      const { data: lastSession } = await supabase
+      const { data: lastSessionData } = await supabase
         .from("training_sessions")
         .select(
           "scheduled_start, status, training_session_members!inner(member_id)"
@@ -47,8 +47,9 @@ export function useMemberActivityMetrics(memberId: string) {
         .eq("training_session_members.member_id", memberId)
         .eq("status", "completed")
         .order("scheduled_start", { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
+
+      const lastSession = lastSessionData?.[0] || null;
 
       // Overdue payments
       const { count: overdueCount } = await supabase

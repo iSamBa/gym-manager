@@ -113,6 +113,15 @@ export function PaymentHistoryTable({
     setShowReceiptDialog(true);
   };
 
+  const handleDownloadReceipt = async (
+    payment: SubscriptionPaymentWithReceiptAndPlan
+  ) => {
+    // Dynamically import PDF generator to reduce initial bundle size
+    const { generatePaymentReceiptPDF } = await import("../lib/pdf-generator");
+
+    generatePaymentReceiptPDF({ payment });
+  };
+
   const handleRefund = (payment: SubscriptionPaymentWithReceiptAndPlan) => {
     setSelectedPayment(payment);
     setShowRefundDialog(true);
@@ -188,15 +197,18 @@ export function PaymentHistoryTable({
                         <Eye
                           className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer"
                           onClick={() => handleViewReceipt(payment)}
+                          title="View receipt"
                         />
                         <Download
                           className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer"
-                          onClick={() => handleViewReceipt(payment)}
+                          onClick={() => handleDownloadReceipt(payment)}
+                          title="Download PDF"
                         />
                         {payment.payment_status === "completed" && (
                           <Undo2
                             className="h-4 w-4 cursor-pointer text-red-500 hover:text-red-600"
                             onClick={() => handleRefund(payment)}
+                            title="Refund payment"
                           />
                         )}
                       </div>
