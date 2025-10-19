@@ -15,17 +15,8 @@ export type EquipmentStatus =
   | "maintenance"
   | "out_of_order"
   | "retired";
-export type MaintenanceStatus =
-  | "scheduled"
-  | "in_progress"
-  | "completed"
-  | "cancelled";
-export type MaintenanceType =
-  | "routine"
-  | "repair"
-  | "inspection"
-  | "calibration"
-  | "deep_clean";
+// MaintenanceStatus - REMOVED: maintenance system not implemented
+// MaintenanceType - REMOVED: maintenance system not implemented
 export type SubscriptionStatus =
   | "active"
   | "paused"
@@ -44,11 +35,7 @@ export type PaymentMethod =
   | "bank_transfer"
   | "online"
   | "check";
-export type ClassDifficulty =
-  | "beginner"
-  | "intermediate"
-  | "advanced"
-  | "all_levels";
+// ClassDifficulty - REMOVED: classes table has no difficulty column
 export type ClassStatus =
   | "scheduled"
   | "in_progress"
@@ -60,11 +47,7 @@ export type BookingStatus =
   | "cancelled"
   | "no_show"
   | "attended";
-export type SessionType =
-  | "personal_training"
-  | "small_group"
-  | "consultation"
-  | "assessment";
+// SessionType - REMOVED: unused, training_sessions use inline types 'trail' | 'standard'
 
 // Member Profile Enhancement - Equipment & Referral Tracking
 export type UniformSize = "XS" | "S" | "M" | "L" | "XL";
