@@ -2,7 +2,7 @@
 // This file contains TypeScript types for all database entities
 
 // Enums
-export type UserRole = "admin" | "trainer";
+export type UserRole = "admin" | "trainer" | "member";
 export type MemberStatus =
   | "active"
   | "inactive"
@@ -31,8 +31,7 @@ export type SubscriptionStatus =
   | "paused"
   | "cancelled"
   | "expired"
-  | "pending"
-  | "completed";
+  | "pending";
 export type PaymentStatus =
   | "pending"
   | "completed"
@@ -55,7 +54,12 @@ export type ClassStatus =
   | "in_progress"
   | "completed"
   | "cancelled";
-export type BookingStatus = "confirmed" | "cancelled";
+export type BookingStatus =
+  | "confirmed"
+  | "waitlisted"
+  | "cancelled"
+  | "no_show"
+  | "attended";
 export type SessionType =
   | "personal_training"
   | "small_group"

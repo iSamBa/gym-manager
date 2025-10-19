@@ -89,8 +89,6 @@ export function ActiveSubscriptionCard({
         return <Badge variant="default">Active</Badge>;
       case "paused":
         return <Badge variant="secondary">Paused</Badge>;
-      case "completed":
-        return <Badge variant="outline">Completed</Badge>;
       case "expired":
         return <Badge variant="outline">Expired</Badge>;
       case "cancelled":
