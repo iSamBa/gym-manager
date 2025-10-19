@@ -46,7 +46,12 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
           );
         }
 
-        let sessions = (data || []) as TrainingSession[];
+        // Map session_id to id for compatibility with TrainingSession interface
+        type DbSession = Omit<TrainingSession, "id"> & { session_id: string };
+        let sessions = ((data || []) as DbSession[]).map((session) => ({
+          ...session,
+          id: session.session_id,
+        })) as TrainingSession[];
 
         // Apply additional filters
         if (filters.trainer_id) {
