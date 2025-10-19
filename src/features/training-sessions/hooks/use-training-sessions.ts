@@ -4,6 +4,10 @@ import { trainingSessionUtils } from "../lib/database-utils";
 import { subscriptionKeys } from "@/features/memberships/hooks/use-subscriptions";
 import { subscriptionUtils } from "@/features/memberships/lib/subscription-utils";
 import { memberKeys } from "@/features/members/hooks/use-members";
+import {
+  mapSessionRpcResponse,
+  type RpcSessionResponse,
+} from "../lib/rpc-mappers";
 import type {
   TrainingSession,
   CreateSessionData,
@@ -46,12 +50,10 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
           );
         }
 
-        // Map session_id to id for compatibility with TrainingSession interface
-        type DbSession = Omit<TrainingSession, "id"> & { session_id: string };
-        let sessions = ((data || []) as DbSession[]).map((session) => ({
-          ...session,
-          id: session.session_id,
-        })) as TrainingSession[];
+        // Map RPC response (session_id → id) using centralized utility
+        let sessions = mapSessionRpcResponse<TrainingSession>(
+          (data || []) as RpcSessionResponse<TrainingSession>[]
+        );
 
         // Apply additional filters
         if (filters.trainer_id) {
