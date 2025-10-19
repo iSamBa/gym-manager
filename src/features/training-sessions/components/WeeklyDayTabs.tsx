@@ -65,7 +65,7 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
       value={getLocalDateString(selectedDate)}
       onValueChange={handleTabChange}
     >
-      <TabsList className="grid w-full grid-cols-7">
+      <TabsList className="grid h-auto w-full grid-cols-7">
         {weekDays.map((day) => {
           const dateKey = getLocalDateString(day);
           const todayIndicator = isToday(day);
@@ -75,7 +75,7 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
               key={dateKey}
               value={dateKey}
               className={cn(
-                "flex flex-col items-center gap-0.5 py-2",
+                "flex min-h-[80px] flex-col items-center gap-1 py-4",
                 todayIndicator &&
                   "border-primary bg-primary/10 text-primary font-semibold"
               )}

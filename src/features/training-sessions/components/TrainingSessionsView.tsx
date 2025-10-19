@@ -181,7 +181,7 @@ const TrainingSessionsView: React.FC = () => {
               </div>
 
               {/* Weekly Day Tabs */}
-              <div className="mb-4">
+              <div className="mb-8">
                 <WeeklyDayTabs
                   selectedDate={selectedDate}
                   weekStart={weekStart}
