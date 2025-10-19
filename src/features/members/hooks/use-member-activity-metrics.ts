@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { getLocalDateString } from "@/lib/date-utils";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ActivityMetrics {
   sessionsThisMonth: number;
@@ -9,8 +10,11 @@ interface ActivityMetrics {
 }
 
 export function useMemberActivityMetrics(memberId: string) {
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
   return useQuery({
     queryKey: ["member-activity-metrics", memberId],
+    enabled: !!memberId && isAuthenticated && !isAuthLoading, // Only run when authenticated
     queryFn: async (): Promise<ActivityMetrics> => {
       const now = new Date();
       const currentMonth = now.getMonth();
@@ -35,7 +39,7 @@ export function useMemberActivityMetrics(memberId: string) {
         );
 
       // Last session - query from training_sessions for proper ordering
-      const { data: lastSession } = await supabase
+      const { data: lastSessionData } = await supabase
         .from("training_sessions")
         .select(
           "scheduled_start, status, training_session_members!inner(member_id)"
@@ -43,8 +47,9 @@ export function useMemberActivityMetrics(memberId: string) {
         .eq("training_session_members.member_id", memberId)
         .eq("status", "completed")
         .order("scheduled_start", { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
+
+      const lastSession = lastSessionData?.[0] || null;
 
       // Overdue payments
       const { count: overdueCount } = await supabase

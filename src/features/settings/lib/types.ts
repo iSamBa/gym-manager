@@ -35,3 +35,23 @@ export type DayOfWeek =
   | "friday"
   | "saturday"
   | "sunday";
+
+// Planning Settings Types
+export interface PlanningSettings {
+  id: string;
+  subscription_warning_days: number;
+  body_checkup_sessions: number;
+  payment_reminder_days: number;
+  max_sessions_per_week: number;
+  inactivity_months: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdatePlanningSettingsInput {
+  subscription_warning_days?: number;
+  body_checkup_sessions?: number;
+  payment_reminder_days?: number;
+  max_sessions_per_week?: number;
+  inactivity_months?: number;
+}

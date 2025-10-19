@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { useTrainingSessions } from "@/features/training-sessions/hooks";
 import type { SessionFilters } from "@/features/training-sessions/lib/types";
+import { useRouter } from "next/navigation";
 
 // Basic session filters type for this component
 type LocalSessionFilters = {
@@ -60,6 +61,7 @@ export function MemberSessionsTable({
   initialFilters = {},
   pageSize = 10,
 }: MemberSessionsTableProps) {
+  const router = useRouter();
   const [filters, setFilters] = useState<LocalSessionFilters>(initialFilters);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
@@ -309,9 +311,11 @@ export function MemberSessionsTable({
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          // Handle view session details
-                          console.log("View session:", session.id);
+                          router.push(
+                            `/training-sessions?sessionId=${session.id}`
+                          );
                         }}
+                        title="View session details"
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>

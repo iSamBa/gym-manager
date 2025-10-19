@@ -63,7 +63,6 @@ describe("Database Utility Functions: subscription-db-utils", () => {
           price: 50.0,
           is_active: true,
           sessions_count: 10,
-          duration_type: "informational",
         },
         {
           id: "plan-2",
@@ -72,7 +71,6 @@ describe("Database Utility Functions: subscription-db-utils", () => {
           price: 100.0,
           is_active: true,
           sessions_count: 20,
-          duration_type: "informational",
         },
       ];
 
@@ -100,7 +98,6 @@ describe("Database Utility Functions: subscription-db-utils", () => {
         id: "plan-1",
         name: "Enhanced Plan",
         sessions_count: 15,
-        duration_type: "constraint",
         is_active: true,
       };
 
@@ -109,9 +106,7 @@ describe("Database Utility Functions: subscription-db-utils", () => {
       const result = await mockUtilityFunctions.getActivePlans();
 
       expect(result[0]).toHaveProperty("sessions_count");
-      expect(result[0]).toHaveProperty("duration_type");
       expect(result[0].sessions_count).toBe(15);
-      expect(result[0].duration_type).toBe("constraint");
     });
 
     it("should be ordered by sort_order ascending", async () => {
@@ -185,7 +180,6 @@ describe("Database Utility Functions: subscription-db-utils", () => {
         id: "plan-123",
         name: "Enhanced Plan",
         sessions_count: 25,
-        duration_type: "constraint",
       };
 
       mockUtilityFunctions.getPlanById.mockResolvedValue(mockPlan);
@@ -193,7 +187,6 @@ describe("Database Utility Functions: subscription-db-utils", () => {
       const result = await mockUtilityFunctions.getPlanById("plan-123");
 
       expect(result).toHaveProperty("sessions_count", 25);
-      expect(result).toHaveProperty("duration_type", "constraint");
     });
 
     it("should handle database errors gracefully", async () => {
@@ -630,9 +623,7 @@ describe("Database Utility Functions: subscription-db-utils", () => {
 
       // Verify all required fields for SubscriptionPlanWithSessions
       expect(activePlans[0]).toHaveProperty("sessions_count");
-      expect(activePlans[0]).toHaveProperty("duration_type");
       expect(singlePlan).toHaveProperty("sessions_count");
-      expect(singlePlan).toHaveProperty("duration_type");
     });
 
     it("should return MemberSubscriptionWithSnapshot type for subscriptions", async () => {

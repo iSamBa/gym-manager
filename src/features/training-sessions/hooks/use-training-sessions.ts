@@ -4,6 +4,14 @@ import { trainingSessionUtils } from "../lib/database-utils";
 import { subscriptionKeys } from "@/features/memberships/hooks/use-subscriptions";
 import { subscriptionUtils } from "@/features/memberships/lib/subscription-utils";
 import { memberKeys } from "@/features/members/hooks/use-members";
+import {
+  mapSessionRpcResponse,
+  type RpcSessionResponse,
+} from "../lib/rpc-mappers";
+import {
+  getLocalDateString,
+  formatTimestampForDatabase,
+} from "@/lib/date-utils";
 import type {
   TrainingSession,
   CreateSessionData,
@@ -29,6 +37,53 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
   return useQuery({
     queryKey: TRAINING_SESSIONS_KEYS.list(filters || {}),
     queryFn: async () => {
+      // If date_range is provided, use the planning indicators function
+      // This includes planning data (subscription_end_date, latest_payment_date, etc.)
+      if (filters?.date_range) {
+        const { data, error } = await supabase.rpc(
+          "get_sessions_with_planning_indicators",
+          {
+            p_start_date: getLocalDateString(filters.date_range.start),
+            p_end_date: getLocalDateString(filters.date_range.end),
+          }
+        );
+
+        if (error) {
+          throw new Error(
+            `Failed to fetch training sessions: ${error.message}`
+          );
+        }
+
+        // Map RPC response (session_id → id) using centralized utility
+        let sessions = mapSessionRpcResponse<TrainingSession>(
+          (data || []) as RpcSessionResponse<TrainingSession>[]
+        );
+
+        // Apply additional filters
+        if (filters.trainer_id) {
+          sessions = sessions.filter(
+            (s) => s.trainer_id === filters.trainer_id
+          );
+        }
+
+        if (filters.status && filters.status !== "all") {
+          sessions = sessions.filter((s) => s.status === filters.status);
+        }
+
+        if (filters.machine_id) {
+          sessions = sessions.filter(
+            (s) => s.machine_id === filters.machine_id
+          );
+        }
+
+        if (filters.member_id) {
+          sessions = sessions.filter((s) => s.member_id === filters.member_id);
+        }
+
+        return sessions;
+      }
+
+      // Fallback to view for non-date-range queries
       let query = supabase
         .from("training_sessions_calendar")
         .select("*")
@@ -48,12 +103,6 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
 
       if (filters?.machine_id) {
         query = query.eq("machine_id", filters.machine_id);
-      }
-
-      if (filters?.date_range) {
-        query = query
-          .gte("scheduled_start", filters.date_range.start.toISOString())
-          .lte("scheduled_end", filters.date_range.end.toISOString());
       }
 
       const { data, error } = await query;
@@ -342,7 +391,7 @@ export const useUpdateTrainingSessionStatus = () => {
         queryClient.setQueryData(TRAINING_SESSIONS_KEYS.detail(id), {
           ...previousSession,
           status,
-          updated_at: new Date().toISOString(),
+          updated_at: formatTimestampForDatabase(),
         });
       }
 

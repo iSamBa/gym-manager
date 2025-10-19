@@ -153,3 +153,32 @@ export function getStartOfDay(date: Date = new Date()): Date {
   result.setHours(0, 0, 0, 0);
   return result;
 }
+
+/**
+ * Calculate number of days between two dates
+ *
+ * Works with both string dates (YYYY-MM-DD) and Date objects.
+ * Returns positive number if endDate is after startDate, negative if before.
+ *
+ * @param startDate - Start date (string or Date object)
+ * @param endDate - End date (string or Date object)
+ * @returns Number of days between dates (rounded up)
+ *
+ * @example
+ * ```typescript
+ * daysBetween("2025-10-18", "2025-10-20")  // 2
+ * daysBetween("2025-10-20", "2025-10-18")  // -2
+ * daysBetween(new Date(2025, 9, 18), "2025-10-23")  // 5
+ * ```
+ */
+export function daysBetween(
+  startDate: string | Date,
+  endDate: string | Date
+): number {
+  const start = typeof startDate === "string" ? new Date(startDate) : startDate;
+  const end = typeof endDate === "string" ? new Date(endDate) : endDate;
+
+  const diffTime = end.getTime() - start.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}

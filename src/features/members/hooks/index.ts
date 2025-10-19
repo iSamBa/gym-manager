@@ -47,3 +47,13 @@ export {
   useUpdateComment,
   useDeleteComment,
 } from "./use-member-comments";
+
+// Body checkups (US-002)
+export { useBodyCheckups } from "./use-body-checkups";
+
+// Auto-inactivation (US-005)
+export {
+  useInactivationCandidates,
+  useRunAutoInactivation,
+  useReactivateMember,
+} from "./use-auto-inactivation";

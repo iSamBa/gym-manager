@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import type {
   Machine,
@@ -9,6 +9,9 @@ import { useSessionAlerts } from "../hooks/use-session-alerts";
 import { SessionNotificationBadge } from "./SessionNotificationBadge";
 import { getSessionColorVariant } from "../lib/session-colors";
 import { Badge } from "@/components/ui/badge";
+import { usePlanningSettings } from "@/features/settings/hooks/use-planning-settings";
+import { calculatePlanningIndicators } from "../lib/planning-indicators";
+import { PlanningIndicatorIcons } from "./PlanningIndicatorIcons";
 
 interface TimeSlotProps {
   machine: Machine;
@@ -30,6 +33,27 @@ export const TimeSlot = memo<TimeSlotProps>(
       memberId,
       session?.scheduled_start
     );
+
+    // Get planning settings
+    const { settings } = usePlanningSettings();
+
+    // Calculate planning indicators
+    const planningIndicators = useMemo(() => {
+      if (!session || !settings || !session.session_date) return null;
+
+      const planningData = {
+        subscriptionEndDate: session.subscription_end_date,
+        latestPaymentDate: session.latest_payment_date,
+        latestCheckupDate: session.latest_checkup_date,
+        sessionsSinceCheckup: session.sessions_since_checkup,
+      };
+
+      return calculatePlanningIndicators(
+        planningData,
+        session.session_date,
+        settings
+      );
+    }, [session, settings]);
 
     // Empty slot
     if (!session) {
@@ -58,28 +82,36 @@ export const TimeSlot = memo<TimeSlotProps>(
       <div
         data-testid="time-slot"
         className={cn(
-          "relative flex h-16 cursor-pointer items-start justify-between gap-2 rounded border p-2 transition-shadow hover:shadow-md",
+          "relative flex h-16 cursor-pointer flex-col gap-1 rounded border p-2 transition-shadow hover:shadow-md",
           getSessionColor(session)
         )}
         onClick={onClick}
       >
-        <div className="flex min-w-0 flex-1 flex-col">
+        {/* Top row: Member name + Planning icons + Session badge */}
+        <div className="flex min-w-0 items-center gap-2">
           <div className="truncate text-base font-medium">{memberName}</div>
-          <div className="text-xs text-gray-600">{timeSlot.label}</div>
+
+          {/* Planning indicator icons */}
+          {planningIndicators && (
+            <PlanningIndicatorIcons indicators={planningIndicators} />
+          )}
+
+          {/* Session type badge */}
+          {session.session_type && (
+            <Badge
+              variant="secondary"
+              className={cn(
+                "ml-auto shrink-0 text-xs",
+                getSessionTypeBadgeColor(session.session_type)
+              )}
+            >
+              {getSessionTypeLabel(session.session_type)}
+            </Badge>
+          )}
         </div>
 
-        {/* Session type badge */}
-        {session.session_type && (
-          <Badge
-            variant="secondary"
-            className={cn(
-              "shrink-0 text-xs",
-              getSessionTypeBadgeColor(session.session_type)
-            )}
-          >
-            {getSessionTypeLabel(session.session_type)}
-          </Badge>
-        )}
+        {/* Bottom row: Time label */}
+        <div className="text-xs text-gray-600">{timeSlot.label}</div>
 
         {/* Notification badge - only show for non-completed sessions with alerts */}
         {showAlertBadge && <SessionNotificationBadge count={alertCount} />}

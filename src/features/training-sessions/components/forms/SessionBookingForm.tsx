@@ -44,6 +44,8 @@ import { useMembers } from "@/features/members/hooks";
 import { useTrainers } from "@/features/trainers/hooks";
 import { useCreateTrainingSession } from "../../hooks/use-training-sessions";
 import { MemberCombobox } from "./MemberCombobox";
+import { SessionLimitWarning } from "../SessionLimitWarning";
+import { useStudioSessionLimit } from "../../hooks/use-studio-session-limit";
 
 // Validation schema for session booking
 const sessionBookingSchema = z.object({
@@ -75,12 +77,18 @@ export function SessionBookingForm({
   const [selectedMemberId, setSelectedMemberId] = useState(
     initialMemberId || ""
   );
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   // Fetch data
   const { data: members = [], isLoading: membersLoading } = useMembers({
     limit: 10000, // Fetch all members for dropdown
   });
   const { data: trainers = [], isLoading: trainersLoading } = useTrainers();
+
+  // Check session limit for selected date
+  const { data: sessionLimit } = useStudioSessionLimit(
+    selectedDate || new Date()
+  );
 
   // Credit validation removed during hook consolidation - simplified validation will be in booking logic
   const creditValidation = null;
@@ -161,6 +169,9 @@ export function SessionBookingForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* Studio capacity warning */}
+        {selectedDate && <SessionLimitWarning date={selectedDate} />}
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Member Selection */}
@@ -281,7 +292,10 @@ export function SessionBookingForm({
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                          field.onChange(date);
+                          setSelectedDate(date);
+                        }}
                         disabled={(date) => date < getStartOfDay()}
                         initialFocus
                       />
@@ -410,14 +424,20 @@ export function SessionBookingForm({
               )}
               <Button
                 type="submit"
-                disabled={bookSessionMutation.isPending || isValidatingCredits}
+                disabled={
+                  bookSessionMutation.isPending ||
+                  isValidatingCredits ||
+                  (sessionLimit && !sessionLimit.can_book)
+                }
               >
                 {bookSessionMutation.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                {bookSessionMutation.isPending
-                  ? "Booking Session..."
-                  : "Book Session"}
+                {sessionLimit && !sessionLimit.can_book
+                  ? "Capacity Reached"
+                  : bookSessionMutation.isPending
+                    ? "Booking Session..."
+                    : "Book Session"}
               </Button>
             </div>
           </form>

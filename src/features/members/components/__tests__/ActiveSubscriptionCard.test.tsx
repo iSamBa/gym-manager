@@ -186,16 +186,16 @@ describe("ActiveSubscriptionCard", () => {
       expect(badge).toHaveClass("bg-secondary", "text-secondary-foreground");
     });
 
-    it("shows completed badge for completed subscription", () => {
+    it("shows expired badge for expired subscription", () => {
       render(
         <ActiveSubscriptionCard
-          subscription={{ ...baseSubscription, status: "completed" }}
+          subscription={{ ...baseSubscription, status: "expired" }}
           member={mockMember}
         />,
         { wrapper: createQueryWrapper() }
       );
 
-      const badge = screen.getByText("Completed");
+      const badge = screen.getByText("Expired");
       expect(badge).toBeInTheDocument();
       expect(badge).toHaveClass("text-foreground");
     });

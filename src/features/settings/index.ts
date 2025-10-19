@@ -1,8 +1,12 @@
 // Components
-export { StudioSettingsLayout, OpeningHoursTab } from "./components";
+export {
+  StudioSettingsLayout,
+  OpeningHoursTab,
+  PlanningTab,
+} from "./components";
 
 // Hooks
-export { useStudioSettings } from "./hooks";
+export { useStudioSettings, usePlanningSettings } from "./hooks";
 
 // Types
 export type {
@@ -10,6 +14,8 @@ export type {
   OpeningHoursWeek,
   StudioSettings,
   DayOfWeek,
+  PlanningSettings,
+  UpdatePlanningSettingsInput,
 } from "./lib/types";
 
 // API (for testing purposes)

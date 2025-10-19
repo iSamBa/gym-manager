@@ -497,14 +497,15 @@ export const memberUtils = {
       memberData.subscriptions?.find((sub) => sub.status === "active") || null;
 
     // Fetch the last payment date for this member
-    const { data: lastPayment } = await supabase
+    const { data: lastPaymentData } = await supabase
       .from("subscription_payments")
       .select("payment_date")
       .eq("member_id", id)
       .not("payment_date", "is", null)
       .order("payment_date", { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
+
+    const lastPayment = lastPaymentData?.[0] || null;
 
     return {
       ...(result as Member),
