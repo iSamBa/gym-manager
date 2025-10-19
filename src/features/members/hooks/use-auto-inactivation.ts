@@ -9,7 +9,9 @@ import {
   runAutoInactivation,
   getInactivationCandidates,
   reactivateMember,
+  getLastAutoInactivationRun,
 } from "../lib/auto-inactivation-utils";
+import { memberKeys } from "./use-members";
 
 /**
  * Hook to fetch members who would be inactivated (dry-run preview)
@@ -32,10 +34,25 @@ export function useRunAutoInactivation() {
 
   return useMutation({
     mutationFn: runAutoInactivation,
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["members"] });
-      queryClient.invalidateQueries({ queryKey: ["inactivation-candidates"] });
-      toast.success(`${result.inactivated_count} members marked as inactive`);
+    onSuccess: async (result) => {
+      // Invalidate all member-related queries
+      await queryClient.invalidateQueries({ queryKey: memberKeys.all });
+      await queryClient.invalidateQueries({
+        queryKey: ["inactivation-candidates"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["auto-inactivation-last-run"],
+      });
+
+      // Force refetch active member queries to ensure UI updates
+      await queryClient.refetchQueries({
+        queryKey: memberKeys.all,
+        type: "active",
+      });
+
+      toast.success(
+        `${result.inactivated_count} member${result.inactivated_count !== 1 ? "s" : ""} marked as inactive`
+      );
     },
     onError: (error: Error) => {
       toast.error("Failed to run auto-inactivation: " + error.message);
@@ -59,13 +76,32 @@ export function useReactivateMember() {
       memberId: string;
       adminName: string;
     }) => reactivateMember(memberId, adminName),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["members"] });
-      queryClient.invalidateQueries({ queryKey: ["member-comments"] });
+    onSuccess: async () => {
+      // Invalidate all member-related queries
+      await queryClient.invalidateQueries({ queryKey: memberKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ["member-comments"] });
+
+      // Force refetch active member queries to ensure UI updates
+      await queryClient.refetchQueries({
+        queryKey: memberKeys.all,
+        type: "active",
+      });
+
       toast.success("Member reactivated successfully");
     },
     onError: (error: Error) => {
       toast.error("Failed to reactivate member: " + error.message);
     },
+  });
+}
+
+/**
+ * Hook to fetch the last auto-inactivation run information
+ * @returns Query result with last run data or null if never run
+ */
+export function useLastAutoInactivationRun() {
+  return useQuery({
+    queryKey: ["auto-inactivation-last-run"],
+    queryFn: getLastAutoInactivationRun,
   });
 }

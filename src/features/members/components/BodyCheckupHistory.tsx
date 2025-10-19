@@ -14,15 +14,10 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +34,7 @@ import type { BodyCheckup } from "../lib/types";
 interface BodyCheckupHistoryProps {
   checkups: BodyCheckup[];
   isLoading: boolean;
+  onAdd: () => void;
   onEdit: (checkup: BodyCheckup) => void;
   onDelete: (id: string) => Promise<void>;
   isDeleting: boolean;
@@ -47,6 +43,7 @@ interface BodyCheckupHistoryProps {
 export function BodyCheckupHistory({
   checkups,
   isLoading,
+  onAdd,
   onEdit,
   onDelete,
   isDeleting,
@@ -81,9 +78,15 @@ export function BodyCheckupHistory({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Scale className="h-5 w-5" />
-            Body Checkup History
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-base">
+              <Scale className="h-4 w-4" />
+              Body Checkups
+            </span>
+            <Button size="sm" onClick={onAdd}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Checkup
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -99,15 +102,16 @@ export function BodyCheckupHistory({
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Scale className="h-5 w-5" />
-            Body Checkup History
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-base">
+              <Scale className="h-4 w-4" />
+              Body Checkups
+            </span>
+            <Button size="sm" onClick={onAdd}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Checkup
+            </Button>
           </CardTitle>
-          <CardDescription>
-            {checkups.length === 0
-              ? "No checkup records yet"
-              : `${checkups.length} checkup${checkups.length === 1 ? "" : "s"} recorded`}
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {checkups.length === 0 ? (

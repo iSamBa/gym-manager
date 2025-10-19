@@ -331,22 +331,15 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                 {/* Comments & Notes Card */}
                 <MemberCommentsCard member={member} />
 
-                {/* Body Checkup Section */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Body Checkups</h3>
-                    <Button onClick={handleAddCheckup} size="sm">
-                      Add Checkup
-                    </Button>
-                  </div>
-                  <BodyCheckupHistory
-                    checkups={checkups}
-                    isLoading={checkupsLoading}
-                    onEdit={handleEditCheckup}
-                    onDelete={handleDeleteCheckup}
-                    isDeleting={isDeletingCheckup}
-                  />
-                </div>
+                {/* Body Checkup Card */}
+                <BodyCheckupHistory
+                  checkups={checkups}
+                  isLoading={checkupsLoading}
+                  onAdd={handleAddCheckup}
+                  onEdit={handleEditCheckup}
+                  onDelete={handleDeleteCheckup}
+                  isDeleting={isDeletingCheckup}
+                />
               </TabsContent>
 
               {/* Training Sessions Tab */}

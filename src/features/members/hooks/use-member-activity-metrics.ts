@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { getLocalDateString } from "@/lib/date-utils";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ActivityMetrics {
   sessionsThisMonth: number;
@@ -9,8 +10,11 @@ interface ActivityMetrics {
 }
 
 export function useMemberActivityMetrics(memberId: string) {
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
   return useQuery({
     queryKey: ["member-activity-metrics", memberId],
+    enabled: !!memberId && isAuthenticated && !isAuthLoading, // Only run when authenticated
     queryFn: async (): Promise<ActivityMetrics> => {
       const now = new Date();
       const currentMonth = now.getMonth();

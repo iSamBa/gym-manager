@@ -157,6 +157,7 @@ describe("auto-inactivation-utils", () => {
       expect(supabase.from).toHaveBeenCalledWith("member_comments");
       expect(mockInsert.insert).toHaveBeenCalledWith({
         member_id: memberId,
+        author: adminName,
         body: expect.stringContaining("Member reactivated by Admin User"),
         created_by_system: false,
         created_at: "2025-10-18T12:00:00.000Z",

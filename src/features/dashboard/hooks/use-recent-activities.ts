@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/use-auth";
 
 export interface RecentActivity {
   id: string;
@@ -14,8 +15,11 @@ export interface RecentActivity {
  * Replaces hardcoded mock data with real database queries
  */
 export const useRecentActivities = (limit = 4) => {
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
   return useQuery({
     queryKey: ["recent-activities", limit],
+    enabled: isAuthenticated && !isAuthLoading, // Only run when authenticated
     queryFn: async (): Promise<RecentActivity[]> => {
       const activities: RecentActivity[] = [];
 

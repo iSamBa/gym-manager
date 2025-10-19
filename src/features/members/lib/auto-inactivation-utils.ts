@@ -4,7 +4,11 @@
  */
 
 import { supabase } from "@/lib/supabase";
-import type { AutoInactivationResult, InactivationCandidate } from "./types";
+import type {
+  AutoInactivationResult,
+  InactivationCandidate,
+  AutoInactivationRun,
+} from "./types";
 import { formatTimestampForDatabase } from "@/lib/date-utils";
 
 /**
@@ -71,4 +75,28 @@ export async function reactivateMember(
     });
 
   if (commentError) throw commentError;
+}
+
+/**
+ * Get the last auto-inactivation run information
+ * Returns null if no runs have been executed
+ *
+ * @returns Last run information or null
+ * @throws Error if database operation fails
+ */
+export async function getLastAutoInactivationRun(): Promise<AutoInactivationRun | null> {
+  const { data, error } = await supabase
+    .from("auto_inactivation_runs")
+    .select("*")
+    .order("run_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) {
+    // If no rows, return null (not an error)
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+
+  return data;
 }

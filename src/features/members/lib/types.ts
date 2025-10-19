@@ -49,3 +49,16 @@ export interface InactivationCandidate {
   last_session_date: string | null; // ISO date string or null if never attended
   days_inactive: number | null; // Null if never attended
 }
+
+/**
+ * Auto-inactivation run history record
+ */
+export interface AutoInactivationRun {
+  id: string;
+  run_at: string; // ISO timestamp
+  inactivated_count: number;
+  member_ids: string[];
+  member_names: string[];
+  run_by_user_id: string | null;
+  created_at: string; // ISO timestamp
+}

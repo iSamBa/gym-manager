@@ -6,6 +6,7 @@
 "use client";
 
 import { useState } from "react";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,7 +17,10 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PreviewInactivationDialog } from "./PreviewInactivationDialog";
-import { useRunAutoInactivation } from "../hooks/use-auto-inactivation";
+import {
+  useRunAutoInactivation,
+  useLastAutoInactivationRun,
+} from "../hooks/use-auto-inactivation";
 
 /**
  * Section for automatic member inactivation settings and actions
@@ -25,6 +29,20 @@ import { useRunAutoInactivation } from "../hooks/use-auto-inactivation";
 export function AutoInactivationSection() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const runInactivation = useRunAutoInactivation();
+  const { data: lastRun, isLoading } = useLastAutoInactivationRun();
+
+  const formatLastRun = () => {
+    if (isLoading) return "Loading...";
+    if (!lastRun) return "Never";
+    return format(new Date(lastRun.run_at), "PPp"); // e.g., "Oct 19, 2025, 1:10:31 PM"
+  };
+
+  const formatLastRunResult = () => {
+    if (isLoading) return "-";
+    if (!lastRun) return "-";
+    if (lastRun.inactivated_count === 0) return "No members inactivated";
+    return `${lastRun.inactivated_count} member${lastRun.inactivated_count !== 1 ? "s" : ""} inactivated`;
+  };
 
   return (
     <Card>
@@ -40,10 +58,10 @@ export function AutoInactivationSection() {
           <AlertDescription>
             <div className="space-y-1">
               <p>
-                <strong>Last Run:</strong> Never
+                <strong>Last Run:</strong> {formatLastRun()}
               </p>
               <p>
-                <strong>Last Run Result:</strong> -
+                <strong>Last Run Result:</strong> {formatLastRunResult()}
               </p>
             </div>
           </AlertDescription>
