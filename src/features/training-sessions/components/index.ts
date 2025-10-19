@@ -24,3 +24,6 @@ export { PlanningIndicatorIcons } from "./PlanningIndicatorIcons";
 
 // Session limit warning (US-004)
 export { SessionLimitWarning } from "./SessionLimitWarning";
+
+// Weekly calendar components
+export { WeeklyDayTabs } from "./WeeklyDayTabs";

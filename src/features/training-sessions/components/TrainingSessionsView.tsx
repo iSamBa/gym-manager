@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -14,13 +14,14 @@ import {
   ChevronRight,
   Calendar as CalendarIcon,
 } from "lucide-react";
-import { format, addDays, subDays } from "date-fns";
+import { format, addDays, subDays, startOfWeek } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 
 // Import machine slot grid
 import { MachineSlotGrid } from "./MachineSlotGrid";
 import { SessionDialog } from "./forms/SessionDialog";
 import { SessionBookingDialog } from "./forms/SessionBookingDialog";
+import { WeeklyDayTabs } from "./WeeklyDayTabs";
 import { useTrainingSessions } from "../hooks";
 import type { TrainingSession } from "../lib/types";
 
@@ -37,6 +38,11 @@ const TrainingSessionsView: React.FC = () => {
     scheduled_start: string;
     scheduled_end: string;
   } | null>(null);
+
+  // Calculate week start (Monday) for the selected date
+  const weekStart = useMemo(() => {
+    return startOfWeek(selectedDate, { weekStartsOn: 1 });
+  }, [selectedDate]);
 
   // Get current date range
   const dateRange = React.useMemo(() => {
@@ -172,6 +178,15 @@ const TrainingSessionsView: React.FC = () => {
                 <Button variant="outline" onClick={handleToday}>
                   Today
                 </Button>
+              </div>
+
+              {/* Weekly Day Tabs */}
+              <div className="mb-4">
+                <WeeklyDayTabs
+                  selectedDate={selectedDate}
+                  weekStart={weekStart}
+                  onDateSelect={setSelectedDate}
+                />
               </div>
 
               <MachineSlotGrid
