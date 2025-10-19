@@ -402,25 +402,30 @@ export const paymentUtils = {
 
     // Transform the data to match the expected interface
     const payments =
-      data?.map((payment) => ({
-        id: payment.id,
-        amount: payment.amount,
-        payment_method: payment.payment_method,
-        payment_status: payment.payment_status,
-        receipt_number: payment.receipt_number,
-        payment_date: payment.payment_date,
-        is_refund: payment.is_refund,
-        refunded_payment_id: payment.refunded_payment_id,
-        description: payment.description,
-        member: {
-          first_name: Array.isArray(payment.members)
-            ? payment.members[0]?.first_name || "Unknown"
-            : "Unknown",
-          last_name: Array.isArray(payment.members)
-            ? payment.members[0]?.last_name || "Member"
-            : "Member",
-        },
-      })) || [];
+      data?.map((payment) => {
+        // Supabase returns joined data as an object or array with one object
+        const memberData = Array.isArray(payment.members)
+          ? payment.members[0]
+          : payment.members;
+
+        return {
+          id: payment.id,
+          amount: payment.amount,
+          payment_method: payment.payment_method,
+          payment_status: payment.payment_status,
+          receipt_number: payment.receipt_number,
+          payment_date: payment.payment_date,
+          is_refund: payment.is_refund,
+          refunded_payment_id: payment.refunded_payment_id,
+          description: payment.description,
+          member: memberData
+            ? {
+                first_name: memberData.first_name || "Unknown",
+                last_name: memberData.last_name || "Member",
+              }
+            : undefined,
+        };
+      }) || [];
 
     // Calculate summary
     const { data: summaryData, error: summaryError } = await supabase
