@@ -95,8 +95,6 @@ export function ActiveSubscriptionCard({
         return <Badge variant="destructive">Cancelled</Badge>;
       case "pending":
         return <Badge variant="outline">Pending</Badge>;
-      case "completed":
-        return <Badge variant="outline">Completed</Badge>;
       default:
         return <Badge variant="outline">{subscription.status}</Badge>;
     }
