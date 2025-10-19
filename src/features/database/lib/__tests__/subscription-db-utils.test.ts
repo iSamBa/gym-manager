@@ -51,12 +51,10 @@ describe("subscription-db-utils", () => {
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
         sessions_count: 10,
-        duration_type: "constraint",
       };
 
       expect(mockPlan).toBeDefined();
       expect(mockPlan.sessions_count).toBe(10);
-      expect(mockPlan.duration_type).toBe("constraint");
     });
 
     it("should have compatible types for MemberSubscriptionWithSnapshot", () => {

@@ -101,13 +101,11 @@ export interface EmergencyContact {
 
 /**
  * Enhanced subscription plan with session tracking capabilities
- * Extends the base SubscriptionPlan with session count and duration type
+ * Extends the base SubscriptionPlan with session count
  */
 export interface SubscriptionPlanWithSessions extends SubscriptionPlan {
   /** Number of sessions included in this plan */
   sessions_count: number;
-  /** Whether session count is a hard constraint or informational */
-  duration_type: "constraint" | "informational";
 }
 
 /**
@@ -601,6 +599,7 @@ export interface MemberComment {
   body: string;
   due_date?: string;
   created_by?: string;
+  created_by_system?: boolean; // True if comment was created by automated system
   created_at: string;
   updated_at: string;
 }
