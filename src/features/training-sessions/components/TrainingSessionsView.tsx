@@ -14,7 +14,16 @@ import {
   ChevronRight,
   Calendar as CalendarIcon,
 } from "lucide-react";
-import { format, addDays, subDays, startOfWeek } from "date-fns";
+import {
+  format,
+  addDays,
+  subDays,
+  startOfWeek,
+  endOfWeek,
+  addWeeks,
+  getWeek,
+  isSameWeek,
+} from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 
 // Import machine slot grid
@@ -29,6 +38,9 @@ const TrainingSessionsView: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedWeekStart, setSelectedWeekStart] = useState(() =>
+    startOfWeek(new Date(), { weekStartsOn: 1 })
+  );
   const [selectedSession, setSelectedSession] =
     useState<TrainingSession | null>(null);
   const [showSessionDialog, setShowSessionDialog] = useState(false);
@@ -39,10 +51,19 @@ const TrainingSessionsView: React.FC = () => {
     scheduled_end: string;
   } | null>(null);
 
-  // Calculate week start (Monday) for the selected date
-  const weekStart = useMemo(() => {
-    return startOfWeek(selectedDate, { weekStartsOn: 1 });
-  }, [selectedDate]);
+  // Derived state: Calculate week end (Sunday)
+  const weekEnd = useMemo(
+    () => endOfWeek(selectedWeekStart, { weekStartsOn: 1 }),
+    [selectedWeekStart]
+  );
+
+  // Derived state: Week range display string
+  const weekRangeDisplay = useMemo(() => {
+    const weekNumber = getWeek(selectedWeekStart, { weekStartsOn: 1 });
+    const startStr = format(selectedWeekStart, "MMM d");
+    const endStr = format(weekEnd, "MMM d, yyyy");
+    return `Week ${weekNumber}: ${startStr} - ${endStr}`;
+  }, [selectedWeekStart, weekEnd]);
 
   // Get current date range
   const dateRange = React.useMemo(() => {
@@ -57,6 +78,14 @@ const TrainingSessionsView: React.FC = () => {
     date_range: dateRange,
   });
 
+  // Synchronization effect: When date picker changes, update week if needed
+  useEffect(() => {
+    const newWeekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+    if (!isSameWeek(selectedWeekStart, newWeekStart, { weekStartsOn: 1 })) {
+      setSelectedWeekStart(newWeekStart);
+    }
+  }, [selectedDate, selectedWeekStart]);
+
   // Check URL params for sessionId and auto-open dialog
   useEffect(() => {
     const sessionId = searchParams.get("sessionId");
@@ -67,6 +96,38 @@ const TrainingSessionsView: React.FC = () => {
       setShowSessionDialog(true);
     }
   }, [searchParams]);
+
+  // Day navigation handlers
+  const handlePreviousDay = React.useCallback(() => {
+    setSelectedDate(subDays(selectedDate, 1));
+  }, [selectedDate]);
+
+  const handleNextDay = React.useCallback(() => {
+    setSelectedDate(addDays(selectedDate, 1));
+  }, [selectedDate]);
+
+  const handleToday = React.useCallback(() => {
+    setSelectedDate(new Date());
+  }, []);
+
+  // Week navigation handlers
+  const handlePreviousWeek = React.useCallback(() => {
+    const prevWeek = addWeeks(selectedWeekStart, -1);
+    setSelectedWeekStart(prevWeek);
+    setSelectedDate(prevWeek); // Jump to Monday of previous week
+  }, [selectedWeekStart]);
+
+  const handleNextWeek = React.useCallback(() => {
+    const nextWeek = addWeeks(selectedWeekStart, 1);
+    setSelectedWeekStart(nextWeek);
+    setSelectedDate(nextWeek); // Jump to Monday of next week
+  }, [selectedWeekStart]);
+
+  const handleThisWeek = React.useCallback(() => {
+    const thisWeek = startOfWeek(new Date(), { weekStartsOn: 1 });
+    setSelectedWeekStart(thisWeek);
+    setSelectedDate(new Date()); // Jump to today
+  }, []);
 
   const handleSessionClick = (session: TrainingSession) => {
     setSelectedSession(session);
@@ -104,18 +165,6 @@ const TrainingSessionsView: React.FC = () => {
     );
   }
 
-  const handlePreviousDay = () => {
-    setSelectedDate(subDays(selectedDate, 1));
-  };
-
-  const handleNextDay = () => {
-    setSelectedDate(addDays(selectedDate, 1));
-  };
-
-  const handleToday = () => {
-    setSelectedDate(new Date());
-  };
-
   return (
     <>
       <Card className="flex flex-1 flex-col">
@@ -131,6 +180,35 @@ const TrainingSessionsView: React.FC = () => {
             </div>
           ) : (
             <div className="flex min-h-0 flex-1 flex-col">
+              {/* Week Navigation Bar */}
+              <div className="mb-4 flex items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePreviousWeek}
+                  aria-label="Previous week"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                <div className="min-w-[280px] text-center">
+                  <p className="text-sm font-medium">{weekRangeDisplay}</p>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleNextWeek}
+                  aria-label="Next week"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+
+                <Button variant="outline" onClick={handleThisWeek}>
+                  This Week
+                </Button>
+              </div>
+
               {/* Day Navigation Bar */}
               <div className="mb-4 flex items-center justify-center gap-2">
                 <Button
@@ -184,7 +262,7 @@ const TrainingSessionsView: React.FC = () => {
               <div className="mb-8">
                 <WeeklyDayTabs
                   selectedDate={selectedDate}
-                  weekStart={weekStart}
+                  weekStart={selectedWeekStart}
                   onDateSelect={setSelectedDate}
                 />
               </div>
