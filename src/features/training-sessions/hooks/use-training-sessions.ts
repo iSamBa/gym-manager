@@ -29,6 +29,50 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
   return useQuery({
     queryKey: TRAINING_SESSIONS_KEYS.list(filters || {}),
     queryFn: async () => {
+      // If date_range is provided, use the planning indicators function
+      // This includes planning data (subscription_end_date, latest_payment_date, etc.)
+      if (filters?.date_range) {
+        const { data, error } = await supabase.rpc(
+          "get_sessions_with_planning_indicators",
+          {
+            p_start_date: filters.date_range.start.toISOString().split("T")[0],
+            p_end_date: filters.date_range.end.toISOString().split("T")[0],
+          }
+        );
+
+        if (error) {
+          throw new Error(
+            `Failed to fetch training sessions: ${error.message}`
+          );
+        }
+
+        let sessions = (data || []) as TrainingSession[];
+
+        // Apply additional filters
+        if (filters.trainer_id) {
+          sessions = sessions.filter(
+            (s) => s.trainer_id === filters.trainer_id
+          );
+        }
+
+        if (filters.status && filters.status !== "all") {
+          sessions = sessions.filter((s) => s.status === filters.status);
+        }
+
+        if (filters.machine_id) {
+          sessions = sessions.filter(
+            (s) => s.machine_id === filters.machine_id
+          );
+        }
+
+        if (filters.member_id) {
+          sessions = sessions.filter((s) => s.member_id === filters.member_id);
+        }
+
+        return sessions;
+      }
+
+      // Fallback to view for non-date-range queries
       let query = supabase
         .from("training_sessions_calendar")
         .select("*")
@@ -48,12 +92,6 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
 
       if (filters?.machine_id) {
         query = query.eq("machine_id", filters.machine_id);
-      }
-
-      if (filters?.date_range) {
-        query = query
-          .gte("scheduled_start", filters.date_range.start.toISOString())
-          .lte("scheduled_end", filters.date_range.end.toISOString());
       }
 
       const { data, error } = await query;
