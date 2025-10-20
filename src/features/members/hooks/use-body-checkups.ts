@@ -55,6 +55,12 @@ export function useBodyCheckups(memberId: string) {
       queryClient.invalidateQueries({
         queryKey: ["body-checkups", memberId],
       });
+
+      // Invalidate training sessions to update planning indicators (body checkup icon)
+      queryClient.invalidateQueries({
+        queryKey: ["training-sessions"],
+      });
+
       toast.success("Body checkup added successfully");
     },
     onError: (error: Error) => {

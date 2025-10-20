@@ -50,6 +50,7 @@ export interface TrainingSession {
   latest_payment_date?: string | null;
   latest_checkup_date?: string | null;
   sessions_since_checkup?: number | null;
+  outstanding_balance?: number | null;
 }
 
 // No separate progress notes - using simple notes field instead

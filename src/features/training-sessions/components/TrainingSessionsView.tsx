@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -12,6 +12,8 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Calendar as CalendarIcon,
 } from "lucide-react";
 import {
@@ -19,9 +21,7 @@ import {
   addDays,
   subDays,
   startOfWeek,
-  endOfWeek,
   addWeeks,
-  getWeek,
   isSameWeek,
 } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -50,20 +50,6 @@ const TrainingSessionsView: React.FC = () => {
     scheduled_start: string;
     scheduled_end: string;
   } | null>(null);
-
-  // Derived state: Calculate week end (Sunday)
-  const weekEnd = useMemo(
-    () => endOfWeek(selectedWeekStart, { weekStartsOn: 1 }),
-    [selectedWeekStart]
-  );
-
-  // Derived state: Week range display string
-  const weekRangeDisplay = useMemo(() => {
-    const weekNumber = getWeek(selectedWeekStart, { weekStartsOn: 1 });
-    const startStr = format(selectedWeekStart, "MMM d");
-    const endStr = format(weekEnd, "MMM d, yyyy");
-    return `Week ${weekNumber}: ${startStr} - ${endStr}`;
-  }, [selectedWeekStart, weekEnd]);
 
   // Get current date range
   const dateRange = React.useMemo(() => {
@@ -123,12 +109,6 @@ const TrainingSessionsView: React.FC = () => {
     setSelectedDate(nextWeek); // Jump to Monday of next week
   }, [selectedWeekStart]);
 
-  const handleThisWeek = React.useCallback(() => {
-    const thisWeek = startOfWeek(new Date(), { weekStartsOn: 1 });
-    setSelectedWeekStart(thisWeek);
-    setSelectedDate(new Date()); // Jump to today
-  }, []);
-
   const handleSessionClick = (session: TrainingSession) => {
     setSelectedSession(session);
     setShowSessionDialog(true);
@@ -180,37 +160,19 @@ const TrainingSessionsView: React.FC = () => {
             </div>
           ) : (
             <div className="flex min-h-0 flex-1 flex-col">
-              {/* Week Navigation Bar */}
+              {/* Navigation Bar (Week + Day) */}
               <div className="mb-4 flex items-center justify-center gap-2">
+                {/* Week backward */}
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={handlePreviousWeek}
                   aria-label="Previous week"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronsLeft className="h-4 w-4" />
                 </Button>
 
-                <div className="min-w-[280px] text-center">
-                  <p className="text-sm font-medium">{weekRangeDisplay}</p>
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleNextWeek}
-                  aria-label="Next week"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-
-                <Button variant="outline" onClick={handleThisWeek}>
-                  This Week
-                </Button>
-              </div>
-
-              {/* Day Navigation Bar */}
-              <div className="mb-4 flex items-center justify-center gap-2">
+                {/* Day backward */}
                 <Button
                   variant="outline"
                   size="icon"
@@ -220,6 +182,7 @@ const TrainingSessionsView: React.FC = () => {
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
 
+                {/* Date picker */}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -244,6 +207,7 @@ const TrainingSessionsView: React.FC = () => {
                   </PopoverContent>
                 </Popover>
 
+                {/* Day forward */}
                 <Button
                   variant="outline"
                   size="icon"
@@ -253,6 +217,17 @@ const TrainingSessionsView: React.FC = () => {
                   <ChevronRight className="h-4 w-4" />
                 </Button>
 
+                {/* Week forward */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleNextWeek}
+                  aria-label="Next week"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+
+                {/* Today button */}
                 <Button variant="outline" onClick={handleToday}>
                   Today
                 </Button>
