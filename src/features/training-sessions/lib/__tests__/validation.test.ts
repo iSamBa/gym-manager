@@ -277,6 +277,20 @@ describe("Session Type Validation", () => {
       const result = createSessionSchema.safeParse(validMultiSiteSession);
       expect(result.success).toBe(true);
     });
+
+    it("validates multi_site session with empty string member_id", () => {
+      const validMultiSiteSession = {
+        ...baseSessionData,
+        session_type: "multi_site" as const,
+        guest_first_name: "Jane",
+        guest_last_name: "Smith",
+        guest_gym_name: "Partner Gym",
+        member_id: "", // Empty string should be valid for guest sessions
+      };
+
+      const result = createSessionSchema.safeParse(validMultiSiteSession);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe("AC-4: Collaboration Validation", () => {
@@ -328,6 +342,18 @@ describe("Session Type Validation", () => {
       const result = createSessionSchema.safeParse(validCollaborationSession);
       expect(result.success).toBe(true);
     });
+
+    it("validates collaboration session with empty string member_id", () => {
+      const validCollaborationSession = {
+        ...baseSessionData,
+        session_type: "collaboration" as const,
+        collaboration_details: "Commercial partnership",
+        member_id: "", // Empty string should be valid for guest sessions
+      };
+
+      const result = createSessionSchema.safeParse(validCollaborationSession);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe("AC-5: Non-Bookable Validation", () => {
@@ -357,6 +383,18 @@ describe("Session Type Validation", () => {
       const validNonBookableSession = {
         ...baseSessionData,
         session_type: "non_bookable" as const,
+      };
+
+      const result = createSessionSchema.safeParse(validNonBookableSession);
+      expect(result.success).toBe(true);
+    });
+
+    it("validates non_bookable session with empty string member_id", () => {
+      const validNonBookableSession = {
+        ...baseSessionData,
+        session_type: "non_bookable" as const,
+        member_id: "", // Empty string should be valid for non-bookable sessions
+        notes: "Equipment maintenance",
       };
 
       const result = createSessionSchema.safeParse(validNonBookableSession);

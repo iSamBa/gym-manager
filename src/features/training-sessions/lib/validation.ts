@@ -66,8 +66,11 @@ export const createSessionSchema = z
     ),
     member_id: z
       .string()
-      .uuid("Invalid member selection - please select a valid member")
-      .optional(), // Optional for guest sessions
+      .optional()
+      .refine(
+        (val) => !val || z.string().uuid().safeParse(val).success,
+        "Invalid member selection - please select a valid member"
+      ), // Optional for guest sessions, validate UUID only if provided
 
     // Trial session fields
     new_member_first_name: z.string().min(1).optional(),
@@ -259,8 +262,11 @@ export const updateSessionSchema = z
       .optional(),
     member_id: z
       .string()
-      .uuid("Invalid member selection - please select a valid member")
-      .optional(),
+      .optional()
+      .refine(
+        (val) => !val || z.string().uuid().safeParse(val).success,
+        "Invalid member selection - please select a valid member"
+      ),
 
     // Trial session fields
     new_member_first_name: z.string().min(1).optional(),
