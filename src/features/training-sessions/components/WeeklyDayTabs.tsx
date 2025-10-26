@@ -102,31 +102,34 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
               )}
               aria-label={`Select ${format(day, "EEEE, MMMM d, yyyy")}`}
             >
-              {/* Day name (abbreviated: Mon, Tue, etc.) */}
-              <span className="text-xs tracking-wide uppercase">
-                {format(day, "EEE")}
-              </span>
-              {/* Day number (1-31) */}
-              <span className="text-lg leading-none font-bold">
-                {format(day, "d")}
-              </span>
+              {/* Day name and date on the same line */}
+              <div className="flex items-center gap-1">
+                <span className="text-base font-semibold tracking-wide uppercase">
+                  {format(day, "EEE")}
+                </span>
+                <span className="text-base leading-none font-semibold">
+                  {format(day, "d")}
+                </span>
+              </div>
 
               {/* Statistics */}
               {isLoading ? (
                 <div className="bg-muted h-6 w-12 animate-pulse rounded" />
               ) : stats ? (
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-sm font-medium">{stats.total}</span>
-                  <div className="flex items-center gap-1 text-xs">
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-lg font-bold">
+                    {stats.total} session{stats.total !== 1 ? "s" : ""}
+                  </span>
+                  <div className="flex items-center gap-1 text-base font-semibold">
                     <span className="text-orange-600">{stats.standard}</span>
                     <span className="text-muted-foreground">|</span>
                     <span className="text-blue-600">{stats.trial}</span>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-sm font-medium">0</span>
-                  <div className="flex items-center gap-1 text-xs">
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-lg font-bold">0 sessions</span>
+                  <div className="flex items-center gap-1 text-base font-semibold">
                     <span className="text-orange-600">0</span>
                     <span className="text-muted-foreground">|</span>
                     <span className="text-blue-600">0</span>
