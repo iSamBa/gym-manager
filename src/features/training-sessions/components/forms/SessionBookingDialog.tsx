@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect } from "react";
+import React, { memo, useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -41,7 +41,6 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { TimePicker } from "@/components/ui/time-picker";
 import { cn } from "@/lib/utils";
@@ -57,8 +56,31 @@ import {
 import { MemberCombobox } from "./MemberCombobox";
 import { SessionLimitWarning } from "../SessionLimitWarning";
 import { useStudioSessionLimit } from "../../hooks/use-studio-session-limit";
+import { SessionTypeSelector } from "./SessionTypeSelector";
+import { TrialMemberRegistration } from "./TrialMemberRegistration";
+import { GuestSessionInfo } from "./GuestSessionInfo";
+import {
+  requiresMember,
+  requiresTrialMember,
+  isGuestSession,
+  createsNewMember,
+} from "../../lib/type-guards";
 
 type BookingFormData = CreateSessionData;
+
+// Session type labels for success messages
+const SESSION_TYPE_LABELS: Record<
+  NonNullable<BookingFormData["session_type"]>,
+  string
+> = {
+  trial: "Trial session",
+  member: "Member session",
+  contractual: "Contractual session",
+  multi_site: "Multi-site session",
+  collaboration: "Collaboration session",
+  makeup: "Make-up session",
+  non_bookable: "Non-bookable session",
+};
 
 export interface SessionBookingDialogProps {
   open: boolean;
@@ -109,6 +131,9 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
 
     const { handleSubmit, reset, watch, setValue } = form;
 
+    // Watch session type to drive dynamic form sections
+    const sessionType = watch("session_type");
+
     // Reset form when dialog opens with new defaultValues
     useEffect(() => {
       if (open && defaultValues) {
@@ -128,6 +153,14 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
     const scheduledStart = watch("scheduled_start");
     const selectedDate = scheduledStart ? new Date(scheduledStart) : new Date();
 
+    // Filter members for contractual sessions (trial members only)
+    const filteredMembers = useMemo(() => {
+      if (requiresTrialMember(sessionType)) {
+        return members.filter((m) => m.member_type === "trial");
+      }
+      return members;
+    }, [members, sessionType]);
+
     // Check studio session limit for the selected date
     const { data: sessionLimit } = useStudioSessionLimit(selectedDate);
 
@@ -143,28 +176,24 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
     const onSubmit = useCallback(
       async (data: BookingFormData) => {
         try {
-          await createSessionMutation.mutateAsync({
-            machine_id: data.machine_id,
-            trainer_id: data.trainer_id || null,
-            scheduled_start: data.scheduled_start,
-            scheduled_end: data.scheduled_end,
-            session_type: data.session_type,
-            member_id: data.member_id,
-            notes: data.notes || undefined,
-          });
+          await createSessionMutation.mutateAsync(data);
 
+          const sessionTypeLabel =
+            SESSION_TYPE_LABELS[data.session_type] || "Session";
           toast.success("Session booked successfully", {
-            description: "The training session has been added to the schedule.",
+            description: `${sessionTypeLabel} has been added to the schedule.`,
           });
 
           onOpenChange(false);
           reset();
         } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "An unexpected error occurred.";
+
           toast.error("Failed to book session", {
-            description:
-              error instanceof Error
-                ? error.message
-                : "An unexpected error occurred.",
+            description: message,
           });
         }
       },
@@ -203,8 +232,7 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
               Book Training Session
             </DialogTitle>
             <DialogDescription>
-              Book a training session with machine selection and single member
-              assignment.
+              Select session type and provide required information
             </DialogDescription>
           </DialogHeader>
 
@@ -213,7 +241,25 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
 
           <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Machine Selection (AC-1) */}
+              {/* Session Type Selector - REPLACES RadioGroup */}
+              <FormField
+                control={form.control}
+                name="session_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Session Type *</FormLabel>
+                    <FormControl>
+                      <SessionTypeSelector
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Machine Selection (all types) */}
               <FormField
                 control={form.control}
                 name="machine_id"
@@ -255,31 +301,62 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
                 )}
               />
 
-              {/* Member Selection (AC-2) - Single member, not multi-select */}
-              <FormField
-                control={form.control}
-                name="member_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Member *
-                    </FormLabel>
-                    <FormControl>
-                      <MemberCombobox
-                        members={members}
-                        value={field.value || ""}
-                        onValueChange={field.onChange}
-                        disabled={membersLoading}
-                        placeholder="Select a member"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* DYNAMIC SECTIONS - Based on session type */}
 
-              {/* Trainer Selection (AC-3) - Optional */}
+              {/* Trial: Quick Registration */}
+              {createsNewMember(sessionType) && (
+                <TrialMemberRegistration form={form} />
+              )}
+
+              {/* Member/Contractual/Makeup: Member Selection */}
+              {requiresMember(sessionType) && (
+                <FormField
+                  control={form.control}
+                  name="member_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        {requiresTrialMember(sessionType)
+                          ? "Trial Member *"
+                          : "Member *"}
+                      </FormLabel>
+                      <FormControl>
+                        <MemberCombobox
+                          members={filteredMembers}
+                          value={field.value || ""}
+                          onValueChange={field.onChange}
+                          disabled={membersLoading}
+                          placeholder={
+                            requiresTrialMember(sessionType)
+                              ? "Select a trial member"
+                              : "Select a member"
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Multi-Site/Collaboration: Guest Info */}
+              {isGuestSession(sessionType) &&
+                sessionType !== "non_bookable" && (
+                  <GuestSessionInfo form={form} sessionType={sessionType} />
+                )}
+
+              {/* Non-Bookable: Just a note */}
+              {sessionType === "non_bookable" && (
+                <div className="rounded-lg border bg-red-50 p-4 dark:bg-red-950/20">
+                  <p className="text-sm text-red-900 dark:text-red-100">
+                    This is a time blocker. No member information is needed. You
+                    can add optional notes below.
+                  </p>
+                </div>
+              )}
+
+              {/* Trainer Selection (all types - optional) */}
               <FormField
                 control={form.control}
                 name="trainer_id"
@@ -317,74 +394,6 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
                     <p className="text-muted-foreground text-xs">
                       You can assign a trainer when completing the session
                     </p>
-                  </FormItem>
-                )}
-              />
-
-              {/* Session Type Selection */}
-              <FormField
-                control={form.control}
-                name="session_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Session Type *</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="flex gap-3"
-                      >
-                        <label
-                          htmlFor="trial"
-                          className={`hover:border-primary/50 min-w-0 flex-1 cursor-pointer rounded-lg border-2 p-4 transition-all duration-200 ${
-                            field.value === "trial"
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-muted-foreground"
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <RadioGroupItem
-                              value="trial"
-                              id="trial"
-                              className="mt-1"
-                            />
-                            <div className="flex flex-col space-y-1">
-                              <span className="font-semibold">
-                                Trial Session
-                              </span>
-                              <p className="text-muted-foreground text-sm">
-                                Try-out session for new members
-                              </p>
-                            </div>
-                          </div>
-                        </label>
-                        <label
-                          htmlFor="member"
-                          className={`hover:border-primary/50 min-w-0 flex-1 cursor-pointer rounded-lg border-2 p-4 transition-all duration-200 ${
-                            field.value === "member"
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-muted-foreground"
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <RadioGroupItem
-                              value="member"
-                              id="member"
-                              className="mt-1"
-                            />
-                            <div className="flex flex-col space-y-1">
-                              <span className="font-semibold">
-                                Member Session
-                              </span>
-                              <p className="text-muted-foreground text-sm">
-                                Regular training session
-                              </p>
-                            </div>
-                          </div>
-                        </label>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
