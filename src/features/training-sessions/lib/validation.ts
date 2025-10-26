@@ -70,9 +70,9 @@ export const createSessionSchema = z
       .optional(), // Optional for guest sessions
 
     // Trial session fields
-    new_member_first_name: z.string().optional(),
-    new_member_last_name: z.string().optional(),
-    new_member_phone: z.string().optional(),
+    new_member_first_name: z.string().min(1).optional(),
+    new_member_last_name: z.string().min(1).optional(),
+    new_member_phone: z.string().min(1).optional(),
     new_member_email: z.string().email("Invalid email format").optional(),
     new_member_gender: z.enum(["male", "female"]).optional(),
     new_member_referral_source: z
@@ -88,15 +88,56 @@ export const createSessionSchema = z
       .optional(),
 
     // Guest session fields
-    guest_first_name: z.string().optional(),
-    guest_last_name: z.string().optional(),
-    guest_gym_name: z.string().optional(),
+    guest_first_name: z.string().min(1).optional(),
+    guest_last_name: z.string().min(1).optional(),
+    guest_gym_name: z.string().min(1).optional(),
 
     // Collaboration session fields
-    collaboration_details: z.string().optional(),
+    collaboration_details: z.string().min(1).optional(),
 
     notes: z.string().optional(),
   })
+  .refine(
+    (data) => {
+      // Trial: requires new member fields
+      if (data.session_type === "trial") {
+        return !!(
+          data.new_member_first_name &&
+          data.new_member_last_name &&
+          data.new_member_phone &&
+          data.new_member_email &&
+          data.new_member_gender &&
+          data.new_member_referral_source
+        );
+      }
+
+      // Member, contractual, makeup: require member_id
+      if (["member", "contractual", "makeup"].includes(data.session_type)) {
+        return !!data.member_id;
+      }
+
+      // Multi-site: requires guest data
+      if (data.session_type === "multi_site") {
+        return !!(
+          data.guest_first_name &&
+          data.guest_last_name &&
+          data.guest_gym_name
+        );
+      }
+
+      // Collaboration: requires details
+      if (data.session_type === "collaboration") {
+        return !!data.collaboration_details;
+      }
+
+      // Non-bookable: no requirements
+      return true;
+    },
+    {
+      message: "Required fields missing for this session type",
+      path: ["session_type"],
+    }
+  )
   .refine(
     (data) => {
       // Validate end time is after start time
@@ -170,67 +211,130 @@ export const createSessionSchema = z
   );
 
 // Simplified session update schema (machine-based single-member sessions)
-export const updateSessionSchema = z.object({
-  machine_id: z
-    .string()
-    .uuid("Please select a valid machine from the available options")
-    .optional(),
-  trainer_id: z
-    .string()
-    .uuid("Please select a valid trainer from the list")
-    .optional()
-    .nullable(), // Can clear trainer assignment
-  scheduled_start: z
-    .string()
-    .refine((val) => {
-      if (!val) return true; // Optional field
-      try {
-        const date = new Date(val);
-        return !isNaN(date.getTime()) && date instanceof Date;
-      } catch {
-        return false;
-      }
-    }, "Invalid start date/time format")
-    .optional(),
-  scheduled_end: z
-    .string()
-    .refine((val) => {
-      if (!val) return true; // Optional field
-      try {
-        const date = new Date(val);
-        return !isNaN(date.getTime()) && date instanceof Date;
-      } catch {
-        return false;
-      }
-    }, "Invalid end date/time format")
-    .optional(),
-  session_type: z
-    .enum([
-      "trial",
-      "member",
-      "contractual",
-      "multi_site",
-      "collaboration",
-      "makeup",
-      "non_bookable",
-    ])
-    .optional(),
-  member_id: z
-    .string()
-    .uuid("Invalid member selection - please select a valid member")
-    .optional(),
+export const updateSessionSchema = z
+  .object({
+    machine_id: z
+      .string()
+      .uuid("Please select a valid machine from the available options")
+      .optional(),
+    trainer_id: z
+      .string()
+      .uuid("Please select a valid trainer from the list")
+      .optional()
+      .nullable(), // Can clear trainer assignment
+    scheduled_start: z
+      .string()
+      .refine((val) => {
+        if (!val) return true; // Optional field
+        try {
+          const date = new Date(val);
+          return !isNaN(date.getTime()) && date instanceof Date;
+        } catch {
+          return false;
+        }
+      }, "Invalid start date/time format")
+      .optional(),
+    scheduled_end: z
+      .string()
+      .refine((val) => {
+        if (!val) return true; // Optional field
+        try {
+          const date = new Date(val);
+          return !isNaN(date.getTime()) && date instanceof Date;
+        } catch {
+          return false;
+        }
+      }, "Invalid end date/time format")
+      .optional(),
+    session_type: z
+      .enum([
+        "trial",
+        "member",
+        "contractual",
+        "multi_site",
+        "collaboration",
+        "makeup",
+        "non_bookable",
+      ])
+      .optional(),
+    member_id: z
+      .string()
+      .uuid("Invalid member selection - please select a valid member")
+      .optional(),
 
-  // Guest fields (for updates)
-  guest_first_name: z.string().optional(),
-  guest_last_name: z.string().optional(),
-  guest_gym_name: z.string().optional(),
-  collaboration_details: z.string().optional(),
+    // Trial session fields
+    new_member_first_name: z.string().min(1).optional(),
+    new_member_last_name: z.string().min(1).optional(),
+    new_member_phone: z.string().min(1).optional(),
+    new_member_email: z.string().email("Invalid email format").optional(),
+    new_member_gender: z.enum(["male", "female"]).optional(),
+    new_member_referral_source: z
+      .enum([
+        "instagram",
+        "member_referral",
+        "website_ib",
+        "prospection",
+        "studio",
+        "phone",
+        "chatbot",
+      ])
+      .optional(),
 
-  notes: z.string().optional(),
-  status: z
-    .enum(["scheduled", "in_progress", "completed", "cancelled"])
-    .optional(),
-});
+    // Guest fields (for updates)
+    guest_first_name: z.string().min(1).optional(),
+    guest_last_name: z.string().min(1).optional(),
+    guest_gym_name: z.string().min(1).optional(),
+    collaboration_details: z.string().min(1).optional(),
+
+    notes: z.string().optional(),
+    status: z
+      .enum(["scheduled", "in_progress", "completed", "cancelled"])
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      // Only validate if session_type is being changed
+      if (!data.session_type) return true;
+
+      // Trial: requires new member fields
+      if (data.session_type === "trial") {
+        return !!(
+          data.new_member_first_name &&
+          data.new_member_last_name &&
+          data.new_member_phone &&
+          data.new_member_email &&
+          data.new_member_gender &&
+          data.new_member_referral_source
+        );
+      }
+
+      // Member, contractual, makeup: require member_id
+      if (["member", "contractual", "makeup"].includes(data.session_type)) {
+        return !!data.member_id;
+      }
+
+      // Multi-site: requires guest data
+      if (data.session_type === "multi_site") {
+        return !!(
+          data.guest_first_name &&
+          data.guest_last_name &&
+          data.guest_gym_name
+        );
+      }
+
+      // Collaboration: requires details
+      if (data.session_type === "collaboration") {
+        return !!data.collaboration_details;
+      }
+
+      // Non-bookable: no requirements
+      return true;
+    },
+    {
+      message: "Required fields missing for this session type",
+      path: ["session_type"],
+    }
+  );
 
 // Simplified session filters schema (machine-based sessions)
 export const sessionFiltersSchema = z.object({
