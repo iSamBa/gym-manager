@@ -11,6 +11,7 @@ import {
 import {
   getLocalDateString,
   formatTimestampForDatabase,
+  formatForDatabase,
 } from "@/lib/date-utils";
 import type {
   TrainingSession,
@@ -153,6 +154,56 @@ export const useCreateTrainingSession = () => {
 
   return useMutation({
     mutationFn: async (data: CreateSessionData) => {
+      let memberId = data.member_id;
+
+      // TRIAL SESSION: Create member first
+      if (data.session_type === "trial") {
+        // 1. Check email uniqueness
+        const { data: existing } = await supabase
+          .from("members")
+          .select("id")
+          .eq("email", data.new_member_email!)
+          .single();
+
+        if (existing) {
+          throw new Error(
+            "This email is already registered. Please use a different email."
+          );
+        }
+
+        // 2. Create trial member
+        const { data: newMember, error: memberError } = await supabase
+          .from("members")
+          .insert({
+            first_name: data.new_member_first_name,
+            last_name: data.new_member_last_name,
+            phone: data.new_member_phone,
+            email: data.new_member_email,
+            gender: data.new_member_gender,
+            referral_source: data.new_member_referral_source,
+            member_type: "trial",
+            status: "pending",
+            join_date: formatForDatabase(new Date()),
+            preferred_contact_method: "email", // Default value
+            marketing_consent: false, // Default value
+            waiver_signed: false, // Default value
+            uniform_size: "M", // Default value
+            uniform_received: false, // Default value
+            vest_size: "M", // Default value
+            hip_belt_size: "M", // Default value
+          })
+          .select()
+          .single();
+
+        if (memberError) {
+          throw new Error(
+            `Failed to create trial member: ${memberError.message}`
+          );
+        }
+
+        memberId = newMember.id;
+      }
+
       // Call Supabase function to create session with members
       const { data: result, error } = await supabase.rpc(
         "create_training_session_with_members",
@@ -161,7 +212,7 @@ export const useCreateTrainingSession = () => {
           p_trainer_id: data.trainer_id || null,
           p_scheduled_start: data.scheduled_start,
           p_scheduled_end: data.scheduled_end,
-          p_member_ids: [data.member_id], // Database function expects an array
+          p_member_ids: [memberId], // Use newly created member ID or existing member ID
           p_session_type: data.session_type,
           p_notes: data.notes || null,
         }
