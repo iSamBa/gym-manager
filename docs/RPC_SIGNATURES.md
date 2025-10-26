@@ -30,7 +30,7 @@ const sessions = mapSessionRpcResponse<TrainingSession>(data || []);
 
 ### `get_sessions_with_planning_indicators(p_start_date DATE, p_end_date DATE)`
 
-**Purpose:** Fetch training sessions with planning indicator data (subscription end dates, payment dates, checkup dates).
+**Purpose:** Fetch training sessions with planning indicator data (subscription end dates, payment dates, checkup dates). **Includes ALL session types**, including non-bookable sessions (no member required).
 
 **Parameters:**
 
@@ -46,23 +46,37 @@ const sessions = mapSessionRpcResponse<TrainingSession>(data || []);
   scheduled_end: string; // ISO timestamp
   session_date: string; // Date only (YYYY-MM-DD)
   status: SessionStatus;
-  session_type: "trail" | "standard";
+  session_type: SessionType; // member | trial | contractual | multi_site | collaboration | makeup | non_bookable
   machine_id: string;
-  member_id: string;
-  member_name: string;
+  member_id: string | null; // NULL for non-bookable, multi_site, collaboration sessions
+  member_name: string | null; // NULL for sessions without members
   subscription_end_date: string | null;
   latest_payment_date: string | null;
   latest_checkup_date: string | null;
   sessions_since_checkup: number;
   outstanding_balance: number; // Outstanding amount owed (total_amount_snapshot - paid_amount)
   participants: Array<{
-    // JSON array
+    // JSON array (empty for non-bookable sessions)
     id: string;
     name: string;
     email: string;
   }>;
+  // Guest session fields (for multi_site and collaboration)
+  guest_first_name: string | null;
+  guest_last_name: string | null;
+  guest_gym_name: string | null;
+  collaboration_details: string | null;
+  trainer_id: string | null;
+  notes: string | null;
 }
 ```
+
+**Important Notes:**
+
+- **Uses LEFT JOINs** - Sessions without members (non_bookable, guest sessions) are included
+- `member_id`, `member_name`, and `participants` will be NULL/empty for non-bookable sessions
+- Guest session fields populated for multi_site and collaboration session types
+- Non-bookable sessions have empty participants array: `[]`
 
 **Field Mappings Required:**
 

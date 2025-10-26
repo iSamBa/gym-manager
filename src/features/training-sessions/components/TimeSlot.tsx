@@ -80,7 +80,30 @@ export const TimeSlot = memo<TimeSlotProps>(
     }
 
     // Booked slot
-    const memberName = session.participants?.[0]?.name || "Unknown Member";
+    // Determine display name based on session type
+    let displayName = "Unknown Member";
+
+    if (session.session_type === "non_bookable") {
+      displayName = "Time Blocker";
+    } else if (session.session_type === "multi_site") {
+      // Multi-site guest session
+      if (session.guest_first_name && session.guest_last_name) {
+        displayName = `${session.guest_first_name} ${session.guest_last_name}`;
+      } else {
+        displayName = "Guest Session";
+      }
+    } else if (session.session_type === "collaboration") {
+      // Collaboration session
+      if (session.guest_first_name && session.guest_last_name) {
+        displayName = `${session.guest_first_name} ${session.guest_last_name}`;
+      } else {
+        displayName = "Collaboration";
+      }
+    } else {
+      // Regular member session
+      displayName = session.participants?.[0]?.name || "Unknown Member";
+    }
+
     const alertCount = alerts.length;
     const showAlertBadge = session.status !== "completed" && alertCount > 0;
 
@@ -106,7 +129,7 @@ export const TimeSlot = memo<TimeSlotProps>(
       >
         {/* Top row: Member name + Planning icons + Session badge */}
         <div className="flex min-w-0 items-center gap-2">
-          <div className="truncate text-base font-medium">{memberName}</div>
+          <div className="truncate text-base font-medium">{displayName}</div>
 
           {/* Planning indicator icons */}
           {planningIndicators && (
