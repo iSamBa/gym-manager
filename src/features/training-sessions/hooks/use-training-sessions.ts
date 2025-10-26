@@ -204,6 +204,14 @@ export const useCreateTrainingSession = () => {
         memberId = newMember.id;
       }
 
+      // Determine if this is a guest session (no member association)
+      const isGuestSession =
+        data.session_type === "multi_site" ||
+        data.session_type === "collaboration";
+
+      // For guest sessions, pass empty member_ids array
+      const memberIds = isGuestSession ? [] : memberId ? [memberId] : [];
+
       // Call Supabase function to create session with members
       const { data: result, error } = await supabase.rpc(
         "create_training_session_with_members",
@@ -212,9 +220,14 @@ export const useCreateTrainingSession = () => {
           p_trainer_id: data.trainer_id || null,
           p_scheduled_start: data.scheduled_start,
           p_scheduled_end: data.scheduled_end,
-          p_member_ids: [memberId], // Use newly created member ID or existing member ID
+          p_member_ids: memberIds,
           p_session_type: data.session_type,
           p_notes: data.notes || null,
+          // Guest fields (only populated for guest sessions)
+          p_guest_first_name: data.guest_first_name || null,
+          p_guest_last_name: data.guest_last_name || null,
+          p_guest_gym_name: data.guest_gym_name || null,
+          p_collaboration_details: data.collaboration_details || null,
         }
       );
 

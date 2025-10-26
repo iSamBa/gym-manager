@@ -5,6 +5,9 @@ import type {
   ReferralSource,
 } from "@/features/database/lib/types";
 
+// Re-export types for convenience
+export type { SessionType, ReferralSource };
+
 // Machine interface (represents training machines in the gym)
 export interface Machine {
   id: string;
