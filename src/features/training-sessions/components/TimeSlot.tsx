@@ -1,5 +1,6 @@
 import React, { memo, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { format, parseISO } from "date-fns";
 import type {
   Machine,
   TimeSlot as TimeSlotType,
@@ -16,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { usePlanningSettings } from "@/features/settings/hooks/use-planning-settings";
 import { calculatePlanningIndicators } from "../lib/planning-indicators";
-import { PlanningIndicatorIcons } from "./PlanningIndicatorIcons";
+import { PlanningIndicatorBadges } from "./PlanningIndicatorBadges";
 
 interface TimeSlotProps {
   machine: Machine;
@@ -116,44 +117,98 @@ export const TimeSlot = memo<TimeSlotProps>(
       ? getSessionTypeBorderColor(session.session_type)
       : "border-gray-500";
 
+    // Check if this is a member session (has member data)
+    const isMemberSession =
+      session.session_type === "member" ||
+      session.session_type === "trial" ||
+      session.session_type === "contractual" ||
+      session.session_type === "makeup";
+
+    // Check if we have additional info to add bottom padding
+    const hasAdditionalInfo =
+      isMemberSession &&
+      (session.vest_size ||
+        session.hip_belt_size ||
+        session.remaining_sessions !== null ||
+        session.subscription_end_date);
+
     return (
       <div
         data-testid="time-slot"
         className={cn(
-          "relative flex h-16 cursor-pointer flex-col gap-1 rounded border-l-4 p-2 transition-shadow hover:shadow-md",
+          "relative flex h-16 cursor-pointer flex-col items-center justify-center gap-0.5 rounded border-l-4 transition-shadow hover:shadow-md",
+          hasAdditionalInfo ? "p-2 pb-3" : "p-2",
           isCancelled
             ? "border-gray-300 bg-gray-100 text-gray-800 line-through"
             : cn(sessionTypeColors, borderColor)
         )}
         onClick={onClick}
       >
-        {/* Top row: Member name + Planning icons + Session badge */}
-        <div className="flex min-w-0 items-center gap-2">
+        {/* Planning indicator icon badges - Top left */}
+        {planningIndicators && (
+          <div className="absolute top-2 left-2">
+            <PlanningIndicatorBadges indicators={planningIndicators} />
+          </div>
+        )}
+
+        {/* Session type badge - Top right */}
+        {session.session_type && (
+          <Badge
+            variant="secondary"
+            className={cn(
+              "absolute top-2 right-2 shrink-0 border text-xs",
+              getSessionTypeBadgeColor(session.session_type)
+            )}
+          >
+            {getSessionTypeLabel(session.session_type)}
+          </Badge>
+        )}
+
+        {/* Row 1: Member name (centered) */}
+        <div className="w-full text-center">
           <div className="truncate text-base font-medium">{displayName}</div>
-
-          {/* Planning indicator icons */}
-          {planningIndicators && (
-            <PlanningIndicatorIcons indicators={planningIndicators} />
-          )}
-
-          {/* Session type badge */}
-          {session.session_type && (
-            <Badge
-              variant="secondary"
-              className={cn(
-                "ml-auto shrink-0 border text-xs",
-                getSessionTypeBadgeColor(session.session_type)
-              )}
-            >
-              {getSessionTypeLabel(session.session_type)}
-            </Badge>
-          )}
         </div>
 
-        {/* Bottom row: Time label */}
-        <div className="text-xs text-gray-900 dark:text-white">
-          {timeSlot.label}
-        </div>
+        {/* Row 2 & 3: Equipment and subscription info (only for member sessions, centered) */}
+        {isMemberSession && (
+          <>
+            {/* Row 2: Vest and hip size (centered, bold) */}
+            {(session.vest_size || session.hip_belt_size) && (
+              <div className="w-full text-center text-xs font-semibold">
+                {session.vest_size && <span>V: {session.vest_size}</span>}
+                {session.vest_size && session.hip_belt_size && <span> • </span>}
+                {session.hip_belt_size && (
+                  <span>H: {session.hip_belt_size}</span>
+                )}
+              </div>
+            )}
+
+            {/* Row 3: Remaining sessions and expiration date (centered) */}
+            {(session.remaining_sessions !== null &&
+              session.remaining_sessions !== undefined) ||
+            session.subscription_end_date ? (
+              <div className="w-full text-center text-xs">
+                {session.remaining_sessions !== null &&
+                  session.remaining_sessions !== undefined && (
+                    <span className="font-bold">
+                      {session.remaining_sessions}
+                    </span>
+                  )}
+                {session.remaining_sessions !== null &&
+                  session.remaining_sessions !== undefined &&
+                  session.subscription_end_date && <span> - </span>}
+                {session.subscription_end_date && (
+                  <span>
+                    {format(
+                      parseISO(session.subscription_end_date),
+                      "dd/MM/yyyy"
+                    )}
+                  </span>
+                )}
+              </div>
+            ) : null}
+          </>
+        )}
 
         {/* Notification badge - only show for non-completed sessions with alerts */}
         {showAlertBadge && <SessionNotificationBadge count={alertCount} />}

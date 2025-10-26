@@ -54,6 +54,9 @@ export interface TrainingSession {
   updated_at?: string;
   // Planning indicator data (optional, from get_sessions_with_planning_indicators)
   member_id?: string;
+  vest_size?: string | null;
+  hip_belt_size?: string | null;
+  remaining_sessions?: number | null;
   subscription_end_date?: string | null;
   latest_payment_date?: string | null;
   latest_checkup_date?: string | null;

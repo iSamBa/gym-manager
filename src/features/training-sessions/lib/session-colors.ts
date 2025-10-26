@@ -13,18 +13,18 @@ import type { SessionType } from "@/features/database/lib/types";
  */
 export function getSessionTypeColor(sessionType: SessionType): string {
   const colors: Record<SessionType, string> = {
-    trial: "bg-blue-500/40 text-gray-900 dark:text-white hover:bg-blue-600/50",
+    trial: "bg-blue-500/15 text-gray-900 dark:text-white hover:bg-blue-600/25",
     member:
-      "bg-green-500/40 text-gray-900 dark:text-white hover:bg-green-600/50",
+      "bg-green-500/15 text-gray-900 dark:text-white hover:bg-green-600/25",
     contractual:
-      "bg-orange-500/40 text-gray-900 dark:text-white hover:bg-orange-600/50",
+      "bg-orange-500/15 text-gray-900 dark:text-white hover:bg-orange-600/25",
     multi_site:
-      "bg-purple-500/40 text-gray-900 dark:text-white hover:bg-purple-600/50",
+      "bg-purple-500/15 text-gray-900 dark:text-white hover:bg-purple-600/25",
     collaboration:
-      "bg-lime-600/40 text-gray-900 dark:text-white hover:bg-lime-700/50",
-    makeup: "bg-blue-900/40 text-gray-900 dark:text-white hover:bg-blue-950/50",
+      "bg-lime-600/15 text-gray-900 dark:text-white hover:bg-lime-700/25",
+    makeup: "bg-blue-900/15 text-gray-900 dark:text-white hover:bg-blue-950/25",
     non_bookable:
-      "bg-red-500/40 text-gray-900 dark:text-white hover:bg-red-600/50",
+      "bg-red-500/15 text-gray-900 dark:text-white hover:bg-red-600/25",
   };
   return colors[sessionType];
 }
