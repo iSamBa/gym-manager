@@ -160,7 +160,8 @@ describe("TimeSlot", () => {
       );
 
       expect(screen.getByText("John Doe")).toBeInTheDocument();
-      expect(screen.getByText("09:00 - 09:30")).toBeInTheDocument();
+      // Note: Time display was removed from TimeSlot component in redesign
+      // Time is now shown in the DayTab header, not individual slots
     });
 
     it("shows 'Unknown Member' when no participants", () => {

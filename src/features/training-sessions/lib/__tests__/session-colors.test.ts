@@ -10,40 +10,54 @@ describe("Session Type Color System", () => {
   describe("getSessionTypeColor", () => {
     it("returns correct background color for trial sessions", () => {
       const color = getSessionTypeColor("trial");
-      expect(color).toBe("bg-blue-500 text-white hover:bg-blue-600");
+      expect(color).toBe(
+        "bg-blue-500/15 text-gray-900 dark:text-white hover:bg-blue-600/25"
+      );
     });
 
     it("returns correct background color for member sessions", () => {
       const color = getSessionTypeColor("member");
-      expect(color).toBe("bg-green-500 text-white hover:bg-green-600");
+      expect(color).toBe(
+        "bg-green-500/15 text-gray-900 dark:text-white hover:bg-green-600/25"
+      );
     });
 
     it("returns correct background color for contractual sessions", () => {
       const color = getSessionTypeColor("contractual");
-      expect(color).toBe("bg-orange-500 text-white hover:bg-orange-600");
+      expect(color).toBe(
+        "bg-orange-500/15 text-gray-900 dark:text-white hover:bg-orange-600/25"
+      );
     });
 
     it("returns correct background color for multi_site sessions", () => {
       const color = getSessionTypeColor("multi_site");
-      expect(color).toBe("bg-purple-500 text-white hover:bg-purple-600");
+      expect(color).toBe(
+        "bg-purple-500/15 text-gray-900 dark:text-white hover:bg-purple-600/25"
+      );
     });
 
     it("returns correct background color for collaboration sessions", () => {
       const color = getSessionTypeColor("collaboration");
-      expect(color).toBe("bg-lime-600 text-white hover:bg-lime-700");
+      expect(color).toBe(
+        "bg-lime-600/15 text-gray-900 dark:text-white hover:bg-lime-700/25"
+      );
     });
 
     it("returns correct background color for makeup sessions", () => {
       const color = getSessionTypeColor("makeup");
-      expect(color).toBe("bg-blue-900 text-white hover:bg-blue-950");
+      expect(color).toBe(
+        "bg-blue-900/15 text-gray-900 dark:text-white hover:bg-blue-950/25"
+      );
     });
 
     it("returns correct background color for non_bookable sessions", () => {
       const color = getSessionTypeColor("non_bookable");
-      expect(color).toBe("bg-red-500 text-white hover:bg-red-600");
+      expect(color).toBe(
+        "bg-red-500/15 text-gray-900 dark:text-white hover:bg-red-600/25"
+      );
     });
 
-    it("includes text-white in all color variants", () => {
+    it("includes text color in all color variants", () => {
       const sessionTypes: SessionType[] = [
         "trial",
         "member",
@@ -56,7 +70,8 @@ describe("Session Type Color System", () => {
 
       sessionTypes.forEach((type) => {
         const color = getSessionTypeColor(type);
-        expect(color).toContain("text-white");
+        // Now uses conditional text color: text-gray-900 dark:text-white
+        expect(color).toMatch(/text-(white|gray-900)/);
       });
     });
 

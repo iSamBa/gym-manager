@@ -423,9 +423,6 @@ export function ProgressiveMemberForm({
   const announceRef = useRef<HTMLDivElement>(null);
   const formId = useId();
 
-  // Form state persistence key
-  const formStorageKey = `progressive-member-form-${member?.id || "new"}`;
-
   const form = useForm<MemberFormData>({
     resolver: zodResolver(memberFormSchema),
     mode: "onChange",
@@ -537,51 +534,9 @@ export function ProgressiveMemberForm({
     }
   }, [member, form]);
 
-  // Form state persistence with localStorage
-  useEffect(() => {
-    if (!member) {
-      // Only for new members, not editing existing ones
-      try {
-        const savedData = localStorage.getItem(formStorageKey);
-        const savedStep = localStorage.getItem(`${formStorageKey}-step`);
-        if (savedData) {
-          const parsedData = JSON.parse(savedData);
-          // Restore form values
-          Object.keys(parsedData).forEach((key) => {
-            if (parsedData[key] !== undefined) {
-              form.setValue(key as keyof MemberFormData, parsedData[key], {
-                shouldValidate: false,
-              });
-            }
-          });
-        }
-        if (savedStep) {
-          setCurrentStep(parseInt(savedStep, 10));
-        }
-      } catch (error) {
-        console.warn("Failed to restore form state:", error);
-      }
-    }
-  }, [member, form, formStorageKey]);
-
-  // Save form state when values change
-  useEffect(() => {
-    if (!member) {
-      // Only for new members
-      const subscription = form.watch((values) => {
-        try {
-          localStorage.setItem(formStorageKey, JSON.stringify(values));
-          localStorage.setItem(
-            `${formStorageKey}-step`,
-            currentStep.toString()
-          );
-        } catch (error) {
-          console.warn("Failed to save form state:", error);
-        }
-      });
-      return () => subscription.unsubscribe();
-    }
-  }, [form, member, formStorageKey, currentStep]);
+  // Note: localStorage persistence removed for security (prevents XSS access to sensitive data)
+  // Form state is now purely in-memory - data will be lost on page refresh
+  // This is an acceptable tradeoff for better security, especially for medical conditions
 
   // Note: Change tracking removed - we now always allow updates in edit mode
   // React Hook Form's built-in dirty tracking can be used if needed via form.formState.isDirty
@@ -715,34 +670,17 @@ export function ProgressiveMemberForm({
 
     try {
       await onSubmit(data);
-
-      // Clear localStorage on successful submission
-      if (!member) {
-        try {
-          localStorage.removeItem(formStorageKey);
-          localStorage.removeItem(`${formStorageKey}-step`);
-        } catch (error) {
-          console.warn("Failed to clear form storage:", error);
-        }
-      }
+      // No localStorage cleanup needed - we don't persist form data anymore
     } catch (error) {
       console.error("Failed to submit form:", error);
       throw error; // Re-throw to let parent handle the error
     }
   };
 
-  // Handle cancel with localStorage cleanup
+  // Handle cancel - no cleanup needed
   const handleCancel = useCallback(() => {
-    if (!member) {
-      try {
-        localStorage.removeItem(formStorageKey);
-        localStorage.removeItem(`${formStorageKey}-step`);
-      } catch (error) {
-        console.warn("Failed to clear form storage:", error);
-      }
-    }
     onCancel();
-  }, [member, formStorageKey, onCancel]);
+  }, [onCancel]);
 
   const renderStepContent = () => {
     switch (currentStep) {

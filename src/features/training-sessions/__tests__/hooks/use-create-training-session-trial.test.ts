@@ -68,7 +68,7 @@ describe("Trial Member Creation Integration Tests", () => {
     // Mock email uniqueness check (no existing member)
     const mockSelect = vi.fn(() => ({
       eq: vi.fn(() => ({
-        single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+        maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
       })),
     }));
 
@@ -159,7 +159,9 @@ describe("Trial Member Creation Integration Tests", () => {
     (supabase.from as any).mockImplementation(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+          maybeSingle: vi.fn(() =>
+            Promise.resolve({ data: null, error: null })
+          ),
         })),
       })),
       insert: mockInsert,
@@ -203,17 +205,36 @@ describe("Trial Member Creation Integration Tests", () => {
   // Test 3: Rejects duplicate email with clear error message
   it("rejects duplicate email with user-friendly error message", async () => {
     // Mock existing member with same email
-    (supabase.from as any).mockReturnValue({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn(() =>
-            Promise.resolve({
-              data: { id: "existing-member-123" },
-              error: null,
-            })
-          ),
-        })),
-      })),
+    (supabase.from as any).mockImplementation((table: string) => {
+      if (table === "members") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn(() =>
+                Promise.resolve({
+                  data: { id: "existing-member-123", member_type: "regular" },
+                  error: null,
+                })
+              ),
+            })),
+          })),
+        };
+      } else if (table === "training_session_members") {
+        // Mock that existing member HAS sessions (not orphaned)
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              limit: vi.fn(() =>
+                Promise.resolve({
+                  data: [{ id: "session-member-1" }], // Has sessions
+                  error: null,
+                })
+              ),
+            })),
+          })),
+        };
+      }
+      return {};
     });
 
     const { result } = renderHook(() => useCreateTrainingSession(), {
@@ -290,7 +311,9 @@ describe("Trial Member Creation Integration Tests", () => {
     (supabase.from as any).mockReturnValue({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+          maybeSingle: vi.fn(() =>
+            Promise.resolve({ data: null, error: null })
+          ),
         })),
       })),
       insert: vi.fn(() => ({
@@ -345,7 +368,9 @@ describe("Trial Member Creation Integration Tests", () => {
     (supabase.from as any).mockReturnValue({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+          maybeSingle: vi.fn(() =>
+            Promise.resolve({ data: null, error: null })
+          ),
         })),
       })),
       insert: vi.fn(() => ({
@@ -392,7 +417,9 @@ describe("Trial Member Creation Integration Tests", () => {
     (supabase.from as any).mockReturnValue({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+          maybeSingle: vi.fn(() =>
+            Promise.resolve({ data: null, error: null })
+          ),
         })),
       })),
       insert: vi.fn(() => ({

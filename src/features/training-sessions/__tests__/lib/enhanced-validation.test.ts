@@ -10,7 +10,7 @@ describe("US-004 & US-005: Enhanced Validation Rules", () => {
     trainer_id: "550e8400-e29b-41d4-a716-446655440001",
     scheduled_start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
     scheduled_end: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(), // Tomorrow + 1 hour
-    session_type: "standard",
+    session_type: "member",
     member_id: "550e8400-e29b-41d4-a716-446655440002",
     notes: "Test session",
   };
@@ -326,7 +326,7 @@ describe("US-004 & US-005: Enhanced Validation Rules", () => {
           Date.now() + 24 * 60 * 60 * 1000
         ).toISOString(), // Tomorrow
         scheduled_end: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(), // Tomorrow + 1 hour
-        session_type: "standard",
+        session_type: "member",
         notes: "Perfect session with all requirements met",
       };
 
@@ -343,10 +343,11 @@ describe("US-004 & US-005: Enhanced Validation Rules", () => {
     it("should handle daylight saving time transitions", () => {
       // Test sessions that cross daylight saving time boundaries
       // This ensures timezone handling is robust
+      // Using future DST transition date (March 2026)
       const dstData = {
         ...validSessionData,
-        scheduled_start: "2024-03-10T07:00:00.000Z", // DST transition period
-        scheduled_end: "2024-03-10T08:00:00.000Z",
+        scheduled_start: "2026-03-08T07:00:00.000Z", // DST transition period
+        scheduled_end: "2026-03-08T08:00:00.000Z",
       };
 
       const result = createSessionSchema.safeParse(dstData);
@@ -355,10 +356,11 @@ describe("US-004 & US-005: Enhanced Validation Rules", () => {
     });
 
     it("should handle leap year dates", () => {
+      // Using future leap year date (Feb 29, 2028)
       const leapYearData = {
         ...validSessionData,
-        scheduled_start: "2024-02-29T09:00:00.000Z", // Feb 29 in leap year
-        scheduled_end: "2024-02-29T10:00:00.000Z",
+        scheduled_start: "2028-02-29T09:00:00.000Z", // Feb 29 in leap year
+        scheduled_end: "2028-02-29T10:00:00.000Z",
       };
 
       const result = createSessionSchema.safeParse(leapYearData);
@@ -381,11 +383,16 @@ describe("US-004 & US-005: Enhanced Validation Rules", () => {
     });
 
     it("should handle timezone edge cases", () => {
-      // Test various timezone formats
+      // Test various timezone formats using future dates
+      const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
+      const year = futureDate.getFullYear();
+      const month = String(futureDate.getMonth() + 1).padStart(2, "0");
+      const day = String(futureDate.getDate()).padStart(2, "0");
+
       const timezoneTests = [
-        "2024-12-01T09:00:00.000Z", // UTC
-        "2024-12-01T09:00:00-05:00", // EST
-        "2024-12-01T09:00:00+01:00", // CET
+        `${year}-${month}-${day}T09:00:00.000Z`, // UTC
+        `${year}-${month}-${day}T09:00:00-05:00`, // EST
+        `${year}-${month}-${day}T09:00:00+01:00`, // CET
       ];
 
       timezoneTests.forEach((timestamp) => {

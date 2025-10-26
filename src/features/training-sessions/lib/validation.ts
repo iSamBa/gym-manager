@@ -76,7 +76,11 @@ export const createSessionSchema = z
     new_member_first_name: z.string().optional(),
     new_member_last_name: z.string().optional(),
     new_member_phone: z.string().optional(),
-    new_member_email: z.string().optional(),
+    new_member_email: z
+      .string()
+      .email("Please enter a valid email address")
+      .optional()
+      .or(z.literal("")),
     new_member_gender: z.enum(["male", "female"]).optional(),
     new_member_referral_source: z
       .enum([
@@ -156,25 +160,12 @@ export const createSessionSchema = z
   .refine(
     (data) => {
       // Validate session cannot be scheduled in the past
-      // Allow flexibility for timezone handling while preventing actual past scheduling
       const start = new Date(data.scheduled_start);
       const now = new Date();
 
-      // For test environments or very old dates, allow more flexibility
-      const isHistoricalDate =
-        start.getFullYear() < now.getFullYear() ||
-        (start.getFullYear() === now.getFullYear() &&
-          start.getMonth() < now.getMonth() - 1);
-
-      if (isHistoricalDate) {
-        // Historical dates are allowed for testing purposes (e.g., leap years, DST testing)
-        return true;
-      }
-
-      // For recent dates, require future scheduling with minimal buffer for clock differences
-      // Use 1 second buffer to handle minor timing differences in tests/systems
-      const buffer = 1000; // 1 second
-      return start.getTime() > now.getTime() + buffer;
+      // For production, only allow future dates
+      // Use minimal buffer to handle timing differences in tests/systems
+      return start.getTime() > now.getTime();
     },
     {
       message:
@@ -272,7 +263,11 @@ export const updateSessionSchema = z
     new_member_first_name: z.string().optional(),
     new_member_last_name: z.string().optional(),
     new_member_phone: z.string().optional(),
-    new_member_email: z.string().optional(),
+    new_member_email: z
+      .string()
+      .email("Please enter a valid email address")
+      .optional()
+      .or(z.literal("")),
     new_member_gender: z.enum(["male", "female"]).optional(),
     new_member_referral_source: z
       .enum([

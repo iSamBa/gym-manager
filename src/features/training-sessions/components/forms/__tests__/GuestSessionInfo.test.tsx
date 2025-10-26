@@ -80,23 +80,31 @@ describe("GuestSessionInfo", () => {
     it("renders collaboration form when sessionType is collaboration", () => {
       render(<TestWrapper sessionType="collaboration" />);
 
-      expect(screen.getByText("Collaboration Details")).toBeInTheDocument();
-      expect(screen.getByLabelText(/details/i)).toBeInTheDocument();
+      expect(screen.getByText("Collaboration Session")).toBeInTheDocument();
+      expect(screen.getByLabelText(/Influencer Name/i)).toBeInTheDocument();
     });
 
-    it("collaboration form has textarea field", () => {
+    it("collaboration form has input field (not textarea)", () => {
       render(<TestWrapper sessionType="collaboration" />);
 
-      const textarea = screen.getByLabelText(/details/i);
-      expect(textarea).toBeInTheDocument();
-      expect(textarea.tagName).toBe("TEXTAREA");
+      const input = screen.getByLabelText(/Influencer Name/i);
+      expect(input).toBeInTheDocument();
+      expect(input.tagName).toBe("INPUT");
     });
 
-    it("collaboration textarea has correct placeholder", () => {
+    it("collaboration input has correct placeholder", () => {
       render(<TestWrapper sessionType="collaboration" />);
 
       expect(
-        screen.getByPlaceholderText(/influencer name, partnership details/i)
+        screen.getByPlaceholderText("Influencer or partner name")
+      ).toBeInTheDocument();
+    });
+
+    it("collaboration form shows helper text", () => {
+      render(<TestWrapper sessionType="collaboration" />);
+
+      expect(
+        screen.getByText("This will be displayed as the session title")
       ).toBeInTheDocument();
     });
 
