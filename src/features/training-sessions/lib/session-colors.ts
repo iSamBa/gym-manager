@@ -13,6 +13,37 @@ import type { SessionType } from "@/features/database/lib/types";
  */
 export function getSessionTypeColor(sessionType: SessionType): string {
   const colors: Record<SessionType, string> = {
+    trial: "bg-blue-500/40 text-gray-900 dark:text-white hover:bg-blue-600/50",
+    member:
+      "bg-green-500/40 text-gray-900 dark:text-white hover:bg-green-600/50",
+    contractual:
+      "bg-orange-500/40 text-gray-900 dark:text-white hover:bg-orange-600/50",
+    multi_site:
+      "bg-purple-500/40 text-gray-900 dark:text-white hover:bg-purple-600/50",
+    collaboration:
+      "bg-lime-600/40 text-gray-900 dark:text-white hover:bg-lime-700/50",
+    makeup: "bg-blue-900/40 text-gray-900 dark:text-white hover:bg-blue-950/50",
+    non_bookable:
+      "bg-red-500/40 text-gray-900 dark:text-white hover:bg-red-600/50",
+  };
+  return colors[sessionType];
+}
+
+/**
+ * Get solid background color for session type (Day tab badges)
+ *
+ * Returns Tailwind classes for:
+ * - Solid background color (bg-* with no opacity)
+ * - Text color (text-white)
+ * - Hover state (hover:bg-*)
+ *
+ * Used for day tab count badges that need solid backgrounds
+ *
+ * @param sessionType - The type of training session
+ * @returns Tailwind CSS classes string
+ */
+export function getSessionTypeSolidColor(sessionType: SessionType): string {
+  const colors: Record<SessionType, string> = {
     trial: "bg-blue-500 text-white hover:bg-blue-600",
     member: "bg-green-500 text-white hover:bg-green-600",
     contractual: "bg-orange-500 text-white hover:bg-orange-600",

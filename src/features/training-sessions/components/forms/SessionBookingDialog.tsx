@@ -120,6 +120,8 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
     // Form setup
     const form = useForm<BookingFormData>({
       resolver: zodResolver(createSessionSchema),
+      mode: "onSubmit", // Only validate when submitting (prevents validation errors on Step 1)
+      reValidateMode: "onChange", // Re-validate after first submit
       defaultValues: {
         machine_id: "",
         member_id: "",
@@ -178,9 +180,15 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
     // Handle form submission
     const onSubmit = useCallback(
       async (data: BookingFormData) => {
+        console.log("📝 Form submitted with data:", data);
+        console.log("📝 Form validation state:", form.formState);
+        console.log("📝 Form errors:", form.formState.errors);
+
         try {
+          console.log("🚀 Calling createSessionMutation...");
           await createSessionMutation.mutateAsync(data);
 
+          console.log("✅ Session created successfully");
           const sessionTypeLabel =
             SESSION_TYPE_LABELS[data.session_type] || "Session";
           toast.success("Session booked successfully", {
@@ -190,6 +198,7 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
           onOpenChange(false);
           reset();
         } catch (error) {
+          console.error("❌ Session creation failed:", error);
           const message =
             error instanceof Error
               ? error.message
@@ -200,7 +209,7 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
           });
         }
       },
-      [createSessionMutation, onOpenChange, reset]
+      [createSessionMutation, onOpenChange, reset, form.formState]
     );
 
     // Step navigation
@@ -253,7 +262,37 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form
+              onSubmit={(e) => {
+                console.log("🎯 Form onSubmit event triggered");
+                console.log(
+                  "🎯 Form errors before submit:",
+                  form.formState.errors
+                );
+                console.log("🎯 Form isValid:", form.formState.isValid);
+                handleSubmit(onSubmit)(e);
+              }}
+              className="space-y-6"
+            >
+              {/* Display form-level errors */}
+              {Object.keys(form.formState.errors).length > 0 && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/20">
+                  <p className="text-sm font-semibold text-red-900 dark:text-red-100">
+                    Please fix the following errors:
+                  </p>
+                  <ul className="mt-2 list-inside list-disc text-sm text-red-800 dark:text-red-200">
+                    {Object.entries(form.formState.errors).map(
+                      ([key, error]) => (
+                        <li key={key}>
+                          <span className="font-medium">{key}:</span>{" "}
+                          {error?.message as string}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              )}
+
               {currentStep === 1 && (
                 <>
                   {/* Studio capacity warning */}

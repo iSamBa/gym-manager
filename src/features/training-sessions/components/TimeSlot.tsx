@@ -93,9 +93,9 @@ export const TimeSlot = memo<TimeSlotProps>(
         displayName = "Guest Session";
       }
     } else if (session.session_type === "collaboration") {
-      // Collaboration session
-      if (session.guest_first_name && session.guest_last_name) {
-        displayName = `${session.guest_first_name} ${session.guest_last_name}`;
+      // Collaboration session - show influencer name
+      if (session.guest_first_name) {
+        displayName = session.guest_first_name; // Influencer name
       } else {
         displayName = "Collaboration";
       }
@@ -151,7 +151,9 @@ export const TimeSlot = memo<TimeSlotProps>(
         </div>
 
         {/* Bottom row: Time label */}
-        <div className="text-xs text-gray-600">{timeSlot.label}</div>
+        <div className="text-xs text-gray-900 dark:text-white">
+          {timeSlot.label}
+        </div>
 
         {/* Notification badge - only show for non-completed sessions with alerts */}
         {showAlertBadge && <SessionNotificationBadge count={alertCount} />}
@@ -168,18 +170,18 @@ TimeSlot.displayName = "TimeSlot";
 function getSessionTypeLabel(sessionType: SessionType): string {
   switch (sessionType) {
     case "trial":
-      return "Trial";
+      return "trial";
     case "member":
-      return "Member";
+      return "member";
     case "contractual":
-      return "Contract";
+      return "contractual";
     case "multi_site":
-      return "Guest";
+      return "multi-site";
     case "collaboration":
-      return "Collab";
+      return "collab";
     case "makeup":
-      return "Makeup";
+      return "make-up";
     case "non_bookable":
-      return "Blocked";
+      return "non-bookable";
   }
 }

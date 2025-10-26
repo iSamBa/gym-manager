@@ -438,21 +438,72 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
 
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Member Information - Always Visible */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <User className="text-muted-foreground h-5 w-5" />
-                <p className="font-semibold">{memberName}</p>
+            {/* Member Information - Only for member-based sessions */}
+            {session.session_type &&
+              ["trial", "member", "contractual", "makeup"].includes(
+                session.session_type
+              ) && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <User className="text-muted-foreground h-5 w-5" />
+                    <p className="font-semibold">{memberName}</p>
+                  </div>
+                  <Link href={`/members/${memberId}`}>
+                    <Badge
+                      variant="outline"
+                      className="hover:bg-accent cursor-pointer"
+                    >
+                      View Profile
+                    </Badge>
+                  </Link>
+                </div>
+              )}
+
+            {/* Guest Information - Multi-site sessions */}
+            {session.session_type === "multi_site" && (
+              <div className="space-y-2 rounded-lg border bg-purple-50 p-4 dark:bg-purple-950/20">
+                <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-100">
+                  Multi-Site Guest
+                </h3>
+                <div className="space-y-1">
+                  <p className="text-sm">
+                    <span className="font-medium">Guest:</span>{" "}
+                    {session.guest_first_name && session.guest_last_name
+                      ? `${session.guest_first_name} ${session.guest_last_name}`
+                      : "Not specified"}
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-medium">Origin Gym:</span>{" "}
+                    {session.guest_gym_name || "Not specified"}
+                  </p>
+                </div>
               </div>
-              <Link href={`/members/${memberId}`}>
-                <Badge
-                  variant="outline"
-                  className="hover:bg-accent cursor-pointer"
-                >
-                  View Profile
-                </Badge>
-              </Link>
-            </div>
+            )}
+
+            {/* Influencer Information - Collaboration sessions */}
+            {session.session_type === "collaboration" && (
+              <div className="space-y-2 rounded-lg border bg-lime-50 p-4 dark:bg-lime-950/20">
+                <h3 className="text-sm font-semibold text-lime-900 dark:text-lime-100">
+                  Collaboration Session
+                </h3>
+                <p className="text-sm">
+                  <span className="font-medium">Influencer:</span>{" "}
+                  {session.guest_first_name || "Not specified"}
+                </p>
+              </div>
+            )}
+
+            {/* Non-bookable Information */}
+            {session.session_type === "non_bookable" && (
+              <div className="space-y-2 rounded-lg border bg-red-50 p-4 dark:bg-red-950/20">
+                <h3 className="text-sm font-semibold text-red-900 dark:text-red-100">
+                  Time Blocker
+                </h3>
+                <p className="text-sm text-red-800 dark:text-red-200">
+                  This slot is blocked and not available for booking
+                </p>
+              </div>
+            )}
 
             {/* Active Alerts Section - Always Visible */}
             {hasAlerts && (

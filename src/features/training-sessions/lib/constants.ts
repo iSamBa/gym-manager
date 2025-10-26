@@ -1,3 +1,16 @@
+import type { SessionType } from "@/features/database/lib/types";
+
+// Session type labels for display
+export const SESSION_TYPE_LABELS: Record<SessionType, string> = {
+  trial: "Trial",
+  member: "Member",
+  contractual: "Contractual",
+  makeup: "Make-up",
+  multi_site: "Multi-Site",
+  collaboration: "Collaboration",
+  non_bookable: "Non-Bookable",
+};
+
 // Session status options (simplified - no categories)
 export const SESSION_STATUS_OPTIONS = [
   { value: "scheduled", label: "Scheduled" },

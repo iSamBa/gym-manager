@@ -7,7 +7,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import type { UseFormReturn } from "react-hook-form";
 import type { CreateSessionData, SessionType } from "../../lib/types";
 
@@ -87,23 +86,22 @@ export const GuestSessionInfo = memo<GuestSessionInfoProps>(
       return (
         <div className="space-y-4 rounded-lg border bg-lime-50 p-4 dark:bg-lime-950/20">
           <h3 className="text-sm font-semibold text-lime-900 dark:text-lime-100">
-            Collaboration Details
+            Collaboration Session
           </h3>
 
           <FormField
             control={form.control}
-            name="collaboration_details"
+            name="guest_first_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Details *</FormLabel>
+                <FormLabel>Influencer Name *</FormLabel>
                 <FormControl>
-                  <Textarea
-                    {...field}
-                    placeholder="Influencer name, partnership details, etc."
-                    rows={3}
-                  />
+                  <Input {...field} placeholder="Influencer or partner name" />
                 </FormControl>
                 <FormMessage />
+                <p className="text-xs text-lime-800 dark:text-lime-200">
+                  This will be displayed as the session title
+                </p>
               </FormItem>
             )}
           />

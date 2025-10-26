@@ -177,6 +177,11 @@ export interface WeekRange {
 export interface DailyStatistics {
   date: string; // YYYY-MM-DD format
   total: number; // Total non-cancelled sessions
-  standard: number; // Count of standard sessions
   trial: number; // Count of trial sessions
+  member: number; // Count of member sessions
+  contractual: number; // Count of contractual sessions
+  makeup: number; // Count of makeup sessions
+  multi_site: number; // Count of multi-site sessions
+  collaboration: number; // Count of collaboration sessions
+  non_bookable: number; // Count of non-bookable sessions
 }

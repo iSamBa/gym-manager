@@ -72,11 +72,11 @@ export const createSessionSchema = z
         "Invalid member selection - please select a valid member"
       ), // Optional for guest sessions, validate UUID only if provided
 
-    // Trial session fields
-    new_member_first_name: z.string().min(1).optional(),
-    new_member_last_name: z.string().min(1).optional(),
-    new_member_phone: z.string().min(1).optional(),
-    new_member_email: z.string().email("Invalid email format").optional(),
+    // Trial session fields (validation happens in .refine() below)
+    new_member_first_name: z.string().optional(),
+    new_member_last_name: z.string().optional(),
+    new_member_phone: z.string().optional(),
+    new_member_email: z.string().optional(),
     new_member_gender: z.enum(["male", "female"]).optional(),
     new_member_referral_source: z
       .enum([
@@ -90,13 +90,13 @@ export const createSessionSchema = z
       ])
       .optional(),
 
-    // Guest session fields
-    guest_first_name: z.string().min(1).optional(),
-    guest_last_name: z.string().min(1).optional(),
-    guest_gym_name: z.string().min(1).optional(),
+    // Guest session fields (validation happens in .refine() below)
+    guest_first_name: z.string().optional(),
+    guest_last_name: z.string().optional(),
+    guest_gym_name: z.string().optional(),
 
-    // Collaboration session fields
-    collaboration_details: z.string().min(1).optional(),
+    // Collaboration session fields (validation happens in .refine() below)
+    collaboration_details: z.string().optional(),
 
     notes: z.string().optional(),
   })
@@ -128,9 +128,9 @@ export const createSessionSchema = z
         );
       }
 
-      // Collaboration: requires details
+      // Collaboration: requires influencer name
       if (data.session_type === "collaboration") {
-        return !!data.collaboration_details;
+        return !!data.guest_first_name;
       }
 
       // Non-bookable: no requirements
@@ -268,11 +268,11 @@ export const updateSessionSchema = z
         "Invalid member selection - please select a valid member"
       ),
 
-    // Trial session fields
-    new_member_first_name: z.string().min(1).optional(),
-    new_member_last_name: z.string().min(1).optional(),
-    new_member_phone: z.string().min(1).optional(),
-    new_member_email: z.string().email("Invalid email format").optional(),
+    // Trial session fields (validation happens in .refine() below)
+    new_member_first_name: z.string().optional(),
+    new_member_last_name: z.string().optional(),
+    new_member_phone: z.string().optional(),
+    new_member_email: z.string().optional(),
     new_member_gender: z.enum(["male", "female"]).optional(),
     new_member_referral_source: z
       .enum([
@@ -328,9 +328,9 @@ export const updateSessionSchema = z
         );
       }
 
-      // Collaboration: requires details
+      // Collaboration: requires influencer name
       if (data.session_type === "collaboration") {
-        return !!data.collaboration_details;
+        return !!data.guest_first_name;
       }
 
       // Non-bookable: no requirements

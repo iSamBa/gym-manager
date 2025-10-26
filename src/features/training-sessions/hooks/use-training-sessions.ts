@@ -158,50 +158,71 @@ export const useCreateTrainingSession = () => {
 
       // TRIAL SESSION: Create member first
       if (data.session_type === "trial") {
-        // 1. Check email uniqueness
+        // 1. Check if member already exists
         const { data: existing } = await supabase
           .from("members")
-          .select("id")
+          .select("id, member_type")
           .eq("email", data.new_member_email!)
-          .single();
+          .maybeSingle();
 
         if (existing) {
-          throw new Error(
-            "This email is already registered. Please use a different email."
-          );
+          // Check if this is a trial member with no sessions (orphaned)
+          const { data: sessions } = await supabase
+            .from("training_session_members")
+            .select("id")
+            .eq("member_id", existing.id)
+            .limit(1);
+
+          if (sessions && sessions.length > 0) {
+            // Member has sessions - cannot reuse
+            throw new Error(
+              "This email is already registered. Please use a different email."
+            );
+          }
+
+          // Orphaned trial member - reuse it
+          memberId = existing.id;
         }
 
-        // 2. Create trial member
-        const { data: newMember, error: memberError } = await supabase
-          .from("members")
-          .insert({
+        // 2. Create trial member only if not reusing orphaned member
+        if (!memberId) {
+          const memberData = {
             first_name: data.new_member_first_name,
             last_name: data.new_member_last_name,
             phone: data.new_member_phone,
             email: data.new_member_email,
             gender: data.new_member_gender,
             referral_source: data.new_member_referral_source,
-            member_type: "trial",
-            status: "pending",
+            member_type: "trial" as const,
+            status: "pending" as const,
             join_date: formatForDatabase(new Date()),
-            preferred_contact_method: "email", // Default value
-            marketing_consent: false, // Default value
-            waiver_signed: false, // Default value
-            uniform_size: "M", // Default value
-            uniform_received: false, // Default value
-            vest_size: "M", // Default value
-            hip_belt_size: "M", // Default value
-          })
-          .select()
-          .single();
+            preferred_contact_method: "email" as const,
+            marketing_consent: false,
+            waiver_signed: false,
+            uniform_size: "M" as const,
+            vest_size: "V2" as const,
+            hip_belt_size: "V1" as const,
+            uniform_received: false,
+          };
 
-        if (memberError) {
-          throw new Error(
-            `Failed to create trial member: ${memberError.message}`
-          );
+          const { data: newMember, error: memberError } = await supabase
+            .from("members")
+            .insert(memberData)
+            .select()
+            .single();
+
+          if (memberError) {
+            throw new Error(
+              `Failed to create trial member: ${memberError.message}`
+            );
+          }
+
+          if (!newMember) {
+            throw new Error("Member created but no data returned");
+          }
+
+          memberId = newMember.id;
         }
-
-        memberId = newMember.id;
       }
 
       // Determine if this is a guest session (no member association)
@@ -249,42 +270,52 @@ export const useCreateTrainingSession = () => {
       return result;
     },
     onSuccess: async (_result, variables) => {
-      // Consume session from member's active subscription (only for sessions with members)
-      if (!variables.member_id) {
-        // Skip for guest sessions (multi_site, collaboration, non_bookable)
-        return;
-      }
+      // Consume session from member's active subscription (only for existing members with subscriptions)
+      // Skip for trial sessions (no subscription yet) and guest sessions (no member)
+      if (variables.member_id) {
+        try {
+          const subscription =
+            await subscriptionUtils.getMemberActiveSubscription(
+              variables.member_id
+            );
 
-      try {
-        const subscription =
-          await subscriptionUtils.getMemberActiveSubscription(
-            variables.member_id
-          );
+          if (subscription) {
+            await subscriptionUtils.consumeSession(subscription.id);
 
-        if (subscription) {
-          await subscriptionUtils.consumeSession(subscription.id);
-
-          // Invalidate subscription queries for cache updates
-          queryClient.invalidateQueries({
-            queryKey: ["subscriptions", "member", variables.member_id],
-          });
-          queryClient.invalidateQueries({
-            queryKey: subscriptionKeys.memberActive(variables.member_id),
-          });
+            // Refetch subscription queries for immediate cache updates
+            await queryClient.refetchQueries({
+              queryKey: ["subscriptions", "member", variables.member_id],
+              type: "active",
+            });
+            await queryClient.refetchQueries({
+              queryKey: subscriptionKeys.memberActive(variables.member_id),
+              type: "active",
+            });
+          }
+        } catch (error) {
+          // Log error but don't fail the whole operation
+          console.error("Failed to consume session:", error);
         }
-      } catch (error) {
-        // Log error but don't fail the whole operation
-        console.error("Failed to consume session:", error);
       }
 
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: TRAINING_SESSIONS_KEYS.all });
+      // ALWAYS refetch queries to ensure calendar updates immediately for ALL session types
+      // This is critical for trial sessions, member sessions, and guest sessions
+      await queryClient.refetchQueries({
+        queryKey: TRAINING_SESSIONS_KEYS.all,
+        type: "active", // Only refetch currently mounted/active queries
+      });
 
-      // Invalidate daily statistics for real-time updates
-      queryClient.invalidateQueries({ queryKey: ["daily-statistics"] });
+      // Refetch daily statistics for real-time tab updates
+      await queryClient.refetchQueries({
+        queryKey: ["daily-statistics"],
+        type: "active",
+      });
 
-      // Invalidate members table to update scheduled_sessions_count
-      queryClient.invalidateQueries({ queryKey: memberKeys.all });
+      // Refetch members table to update scheduled_sessions_count
+      await queryClient.refetchQueries({
+        queryKey: memberKeys.all,
+        type: "active",
+      });
     },
   });
 };
@@ -420,18 +451,22 @@ export const useUpdateTrainingSession = () => {
 
       return result;
     },
-    onSuccess: (data) => {
-      // Invalidate detail query to refetch from training_sessions_calendar view
-      // This ensures we get the updated data with participants and machine info
-      queryClient.invalidateQueries({
+    onSuccess: async (data) => {
+      // Refetch detail query to get updated data with participants and machine info
+      await queryClient.refetchQueries({
         queryKey: TRAINING_SESSIONS_KEYS.detail(data.id),
+        type: "active",
       });
-      // Invalidate lists to refresh data
-      queryClient.invalidateQueries({
+      // Refetch lists to refresh calendar data
+      await queryClient.refetchQueries({
         queryKey: TRAINING_SESSIONS_KEYS.lists(),
+        type: "active",
       });
-      // Invalidate daily statistics for real-time updates
-      queryClient.invalidateQueries({ queryKey: ["daily-statistics"] });
+      // Refetch daily statistics for real-time updates
+      await queryClient.refetchQueries({
+        queryKey: ["daily-statistics"],
+        type: "active",
+      });
     },
   });
 };
@@ -519,16 +554,21 @@ export const useUpdateTrainingSessionStatus = () => {
     },
 
     onSettled: async (data, error, { id, status }) => {
-      // Refetch to ensure consistency
-      queryClient.invalidateQueries({
+      // Refetch to ensure consistency and immediate UI updates
+      await queryClient.refetchQueries({
         queryKey: TRAINING_SESSIONS_KEYS.detail(id),
+        type: "active",
       });
-      queryClient.invalidateQueries({
+      await queryClient.refetchQueries({
         queryKey: TRAINING_SESSIONS_KEYS.lists(),
+        type: "active",
       });
 
-      // Invalidate daily statistics for real-time updates
-      queryClient.invalidateQueries({ queryKey: ["daily-statistics"] });
+      // Refetch daily statistics for real-time updates
+      await queryClient.refetchQueries({
+        queryKey: ["daily-statistics"],
+        type: "active",
+      });
 
       // When a session is completed, invalidate subscription queries as remaining_sessions may have changed
       if (status === "completed") {
@@ -541,21 +581,24 @@ export const useUpdateTrainingSessionStatus = () => {
             .eq("booking_status", "confirmed");
 
           if (sessionData) {
-            // Invalidate subscription queries for all members in this session
-            sessionData.forEach(({ member_id }) => {
-              queryClient.invalidateQueries({
+            // Refetch subscription queries for all members in this session
+            for (const { member_id } of sessionData) {
+              await queryClient.refetchQueries({
                 queryKey: subscriptionKeys.memberActive(member_id),
+                type: "active",
               });
-              queryClient.invalidateQueries({
+              await queryClient.refetchQueries({
                 queryKey: subscriptionKeys.memberHistory(member_id),
+                type: "active",
               });
-            });
+            }
           }
 
-          // Also invalidate the all-subscriptions query used by the subscriptions management page
+          // Also refetch the all-subscriptions query used by the subscriptions management page
           // This ensures real-time updates of session counts across all views
-          queryClient.invalidateQueries({
+          await queryClient.refetchQueries({
             queryKey: ["all-subscriptions"],
+            type: "active",
           });
         } catch (error) {
           console.warn(
@@ -615,12 +658,14 @@ export const useDeleteTrainingSession = () => {
           if (subscription) {
             await subscriptionUtils.restoreSession(subscription.id);
 
-            // Invalidate subscription queries for cache updates
-            queryClient.invalidateQueries({
+            // Refetch subscription queries for immediate cache updates
+            await queryClient.refetchQueries({
               queryKey: ["subscriptions", "member", memberId],
+              type: "active",
             });
-            queryClient.invalidateQueries({
+            await queryClient.refetchQueries({
               queryKey: subscriptionKeys.memberActive(memberId),
+              type: "active",
             });
           }
         } catch (error) {
@@ -629,17 +674,27 @@ export const useDeleteTrainingSession = () => {
         }
       }
 
-      // Invalidate all training session queries
-      queryClient.invalidateQueries({ queryKey: TRAINING_SESSIONS_KEYS.all });
-      queryClient.invalidateQueries({
+      // Refetch all training session queries to update calendar immediately
+      await queryClient.refetchQueries({
+        queryKey: TRAINING_SESSIONS_KEYS.all,
+        type: "active",
+      });
+      await queryClient.refetchQueries({
         queryKey: TRAINING_SESSIONS_KEYS.detail(sessionId),
+        type: "active",
       });
 
-      // Invalidate daily statistics for real-time updates
-      queryClient.invalidateQueries({ queryKey: ["daily-statistics"] });
+      // Refetch daily statistics for real-time updates
+      await queryClient.refetchQueries({
+        queryKey: ["daily-statistics"],
+        type: "active",
+      });
 
-      // Invalidate members table to update scheduled_sessions_count
-      queryClient.invalidateQueries({ queryKey: memberKeys.all });
+      // Refetch members table to update scheduled_sessions_count
+      await queryClient.refetchQueries({
+        queryKey: memberKeys.all,
+        type: "active",
+      });
     },
   });
 };
