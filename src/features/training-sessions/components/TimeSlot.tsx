@@ -8,7 +8,11 @@ import type {
 import type { SessionType } from "@/features/database/lib/types";
 import { useSessionAlerts } from "../hooks/use-session-alerts";
 import { SessionNotificationBadge } from "./SessionNotificationBadge";
-import { getSessionColorVariant } from "../lib/session-colors";
+import {
+  getSessionTypeColor,
+  getSessionTypeBorderColor,
+  getSessionTypeBadgeColor,
+} from "../lib/session-colors";
 import { Badge } from "@/components/ui/badge";
 import { usePlanningSettings } from "@/features/settings/hooks/use-planning-settings";
 import { calculatePlanningIndicators } from "../lib/planning-indicators";
@@ -80,12 +84,23 @@ export const TimeSlot = memo<TimeSlotProps>(
     const alertCount = alerts.length;
     const showAlertBadge = session.status !== "completed" && alertCount > 0;
 
+    // Special styling for cancelled sessions
+    const isCancelled = session.status === "cancelled";
+    const sessionTypeColors = session.session_type
+      ? getSessionTypeColor(session.session_type)
+      : "bg-gray-500 text-white";
+    const borderColor = session.session_type
+      ? getSessionTypeBorderColor(session.session_type)
+      : "border-gray-500";
+
     return (
       <div
         data-testid="time-slot"
         className={cn(
-          "relative flex h-16 cursor-pointer flex-col gap-1 rounded border p-2 transition-shadow hover:shadow-md",
-          getSessionColor(session)
+          "relative flex h-16 cursor-pointer flex-col gap-1 rounded border-l-4 p-2 transition-shadow hover:shadow-md",
+          isCancelled
+            ? "border-gray-300 bg-gray-100 text-gray-800 line-through"
+            : cn(sessionTypeColors, borderColor)
         )}
         onClick={onClick}
       >
@@ -103,7 +118,7 @@ export const TimeSlot = memo<TimeSlotProps>(
             <Badge
               variant="secondary"
               className={cn(
-                "ml-auto shrink-0 text-xs",
+                "ml-auto shrink-0 border text-xs",
                 getSessionTypeBadgeColor(session.session_type)
               )}
             >
@@ -123,54 +138,6 @@ export const TimeSlot = memo<TimeSlotProps>(
 );
 
 TimeSlot.displayName = "TimeSlot";
-
-/**
- * Gets Tailwind color classes based on session date
- * - Past sessions (before today) → Gray
- * - Today's sessions → Green
- * - Future sessions → Yellow
- * - Cancelled sessions → Gray + strikethrough
- */
-function getSessionColor(session: TrainingSession): string {
-  // Handle cancelled sessions specially
-  if (session.status === "cancelled") {
-    return "bg-gray-100 border-gray-300 text-gray-800 line-through";
-  }
-
-  // Determine color based on date
-  const variant = getSessionColorVariant(session.scheduled_start);
-
-  switch (variant) {
-    case "past":
-      return "bg-gray-100 border-gray-300 text-gray-800";
-    case "today":
-      return "bg-green-100 border-green-300 text-green-800";
-    case "future":
-      return "bg-yellow-100 border-yellow-300 text-yellow-800";
-  }
-}
-
-/**
- * Gets badge color for session type
- */
-function getSessionTypeBadgeColor(sessionType: SessionType): string {
-  switch (sessionType) {
-    case "trial":
-      return "bg-blue-100 text-blue-800 hover:bg-blue-200";
-    case "member":
-      return "bg-slate-100 text-slate-800 hover:bg-slate-200";
-    case "contractual":
-      return "bg-purple-100 text-purple-800 hover:bg-purple-200";
-    case "multi_site":
-      return "bg-green-100 text-green-800 hover:bg-green-200";
-    case "collaboration":
-      return "bg-amber-100 text-amber-800 hover:bg-amber-200";
-    case "makeup":
-      return "bg-teal-100 text-teal-800 hover:bg-teal-200";
-    case "non_bookable":
-      return "bg-gray-100 text-gray-800 hover:bg-gray-200";
-  }
-}
 
 /**
  * Gets display label for session type
