@@ -211,6 +211,9 @@ export const useCreateTrainingSession = () => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: TRAINING_SESSIONS_KEYS.all });
 
+      // Invalidate daily statistics for real-time updates
+      queryClient.invalidateQueries({ queryKey: ["daily-statistics"] });
+
       // Invalidate members table to update scheduled_sessions_count
       queryClient.invalidateQueries({ queryKey: memberKeys.all });
     },
@@ -358,6 +361,8 @@ export const useUpdateTrainingSession = () => {
       queryClient.invalidateQueries({
         queryKey: TRAINING_SESSIONS_KEYS.lists(),
       });
+      // Invalidate daily statistics for real-time updates
+      queryClient.invalidateQueries({ queryKey: ["daily-statistics"] });
     },
   });
 };
@@ -452,6 +457,9 @@ export const useUpdateTrainingSessionStatus = () => {
       queryClient.invalidateQueries({
         queryKey: TRAINING_SESSIONS_KEYS.lists(),
       });
+
+      // Invalidate daily statistics for real-time updates
+      queryClient.invalidateQueries({ queryKey: ["daily-statistics"] });
 
       // When a session is completed, invalidate subscription queries as remaining_sessions may have changed
       if (status === "completed") {
@@ -557,6 +565,9 @@ export const useDeleteTrainingSession = () => {
       queryClient.invalidateQueries({
         queryKey: TRAINING_SESSIONS_KEYS.detail(sessionId),
       });
+
+      // Invalidate daily statistics for real-time updates
+      queryClient.invalidateQueries({ queryKey: ["daily-statistics"] });
 
       // Invalidate members table to update scheduled_sessions_count
       queryClient.invalidateQueries({ queryKey: memberKeys.all });

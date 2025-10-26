@@ -21,3 +21,6 @@ export { useSessionAlerts } from "./use-session-alerts";
 
 // Studio session limit hook (US-004)
 export { useStudioSessionLimit } from "./use-studio-session-limit";
+
+// Daily statistics hook (US-003)
+export { useDailyStatistics } from "./use-daily-statistics";

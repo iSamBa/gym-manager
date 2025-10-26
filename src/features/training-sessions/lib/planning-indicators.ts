@@ -11,6 +11,7 @@ export interface PlanningIndicatorData {
   latestPaymentDate?: string | null;
   latestCheckupDate?: string | null;
   sessionsSinceCheckup?: number | null;
+  outstandingBalance?: number | null;
 }
 
 export interface IndicatorFlags {
@@ -63,7 +64,12 @@ export function calculatePlanningIndicators(
   }
 
   // 3. Payment Reminder
-  if (planningData.latestPaymentDate) {
+  // Only show if payment is overdue AND member has outstanding balance
+  if (
+    planningData.latestPaymentDate &&
+    planningData.outstandingBalance != null &&
+    planningData.outstandingBalance > 0
+  ) {
     const daysSince = daysBetween(planningData.latestPaymentDate, sessionDate);
 
     if (daysSince >= settings.payment_reminder_days) {

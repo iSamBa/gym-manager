@@ -46,6 +46,7 @@ export const TimeSlot = memo<TimeSlotProps>(
         latestPaymentDate: session.latest_payment_date,
         latestCheckupDate: session.latest_checkup_date,
         sessionsSinceCheckup: session.sessions_since_checkup,
+        outstandingBalance: session.outstanding_balance,
       };
 
       return calculatePlanningIndicators(
