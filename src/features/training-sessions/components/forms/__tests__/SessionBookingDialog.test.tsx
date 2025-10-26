@@ -345,177 +345,291 @@ describe("SessionBookingDialog - Dynamic Forms (US-008)", () => {
   });
 
   describe("AC-2: Dynamic Form Sections - Trial Session", () => {
-    it("should show trial registration for trial sessions", () => {
+    it("should show trial registration for trial sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "trial";
       renderDialog({ defaultValues: { session_type: "trial" } });
 
-      expect(screen.getByTestId("trial-registration")).toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("trial-registration")).toBeInTheDocument();
+      });
     });
 
-    it("should display trial member fields", () => {
+    it("should display trial member fields on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "trial";
       renderDialog({ defaultValues: { session_type: "trial" } });
 
-      expect(screen.getByLabelText(/first name/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/first name/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      });
     });
 
-    it("should hide member combobox for trial sessions", () => {
+    it("should hide member combobox for trial sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "trial";
       renderDialog({ defaultValues: { session_type: "trial" } });
 
-      expect(screen.queryByTestId("member-combobox")).not.toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("member-combobox")).not.toBeInTheDocument();
+      });
     });
   });
 
   describe("AC-2: Dynamic Form Sections - Member Session", () => {
-    it("should show member combobox for member sessions", () => {
+    it("should show member combobox for member sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "member";
       renderDialog({ defaultValues: { session_type: "member" } });
 
-      expect(screen.getByTestId("member-combobox")).toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("member-combobox")).toBeInTheDocument();
+      });
     });
 
-    it("should show all members (no filtering) for member sessions", () => {
+    it("should show all members (no filtering) for member sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "member";
       renderDialog({ defaultValues: { session_type: "member" } });
 
-      const memberCount = screen.getByTestId("member-count");
-      expect(memberCount.textContent).toBe("2"); // Both full and trial members
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        const memberCount = screen.getByTestId("member-count");
+        expect(memberCount.textContent).toBe("2"); // Both full and trial members
+      });
     });
 
-    it("should display correct placeholder for member sessions", () => {
+    it("should display correct placeholder for member sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "member";
       renderDialog({ defaultValues: { session_type: "member" } });
 
-      const placeholder = screen.getByTestId("member-placeholder");
-      expect(placeholder.textContent).toBe("Select a member");
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        const placeholder = screen.getByTestId("member-placeholder");
+        expect(placeholder.textContent).toBe("Select a member");
+      });
     });
 
-    it("should hide trial registration for member sessions", () => {
+    it("should hide trial registration for member sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "member";
       renderDialog({ defaultValues: { session_type: "member" } });
 
-      expect(
-        screen.queryByTestId("trial-registration")
-      ).not.toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("trial-registration")
+        ).not.toBeInTheDocument();
+      });
     });
   });
 
   describe("AC-2: Dynamic Form Sections - Contractual Session", () => {
-    it("should show member combobox for contractual sessions", () => {
+    it("should show member combobox for contractual sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "contractual";
       renderDialog({ defaultValues: { session_type: "contractual" } });
 
-      expect(screen.getByTestId("member-combobox")).toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("member-combobox")).toBeInTheDocument();
+      });
     });
 
-    it("should filter to trial members only for contractual sessions", () => {
+    it("should filter to trial members only for contractual sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "contractual";
       renderDialog({ defaultValues: { session_type: "contractual" } });
 
-      const memberCount = screen.getByTestId("member-count");
-      expect(memberCount.textContent).toBe("1"); // Only trial member
-      expect(screen.getByTestId("member-member-2")).toBeInTheDocument();
-      expect(screen.queryByTestId("member-member-1")).not.toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        const memberCount = screen.getByTestId("member-count");
+        expect(memberCount.textContent).toBe("1"); // Only trial member
+        expect(screen.getByTestId("member-member-2")).toBeInTheDocument();
+        expect(screen.queryByTestId("member-member-1")).not.toBeInTheDocument();
+      });
     });
 
-    it("should display trial member placeholder for contractual sessions", () => {
+    it("should display trial member placeholder for contractual sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "contractual";
       renderDialog({ defaultValues: { session_type: "contractual" } });
 
-      const placeholder = screen.getByTestId("member-placeholder");
-      expect(placeholder.textContent).toBe("Select a trial member");
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        const placeholder = screen.getByTestId("member-placeholder");
+        expect(placeholder.textContent).toBe("Select a trial member");
+      });
     });
   });
 
   describe("AC-2: Dynamic Form Sections - Make-up Session", () => {
-    it("should show member combobox for makeup sessions", () => {
+    it("should show member combobox for makeup sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "makeup";
       renderDialog({ defaultValues: { session_type: "makeup" } });
 
-      expect(screen.getByTestId("member-combobox")).toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("member-combobox")).toBeInTheDocument();
+      });
     });
 
-    it("should show all members (no filtering) for makeup sessions", () => {
+    it("should show all members (no filtering) for makeup sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "makeup";
       renderDialog({ defaultValues: { session_type: "makeup" } });
 
-      const memberCount = screen.getByTestId("member-count");
-      expect(memberCount.textContent).toBe("2");
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        const memberCount = screen.getByTestId("member-count");
+        expect(memberCount.textContent).toBe("2");
+      });
     });
   });
 
   describe("AC-2: Dynamic Form Sections - Multi-Site Session", () => {
-    it("should show guest fields for multi-site sessions", () => {
+    it("should show guest fields for multi-site sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "multi_site";
       renderDialog({ defaultValues: { session_type: "multi_site" } });
 
-      expect(screen.getByTestId("guest-info-multi_site")).toBeInTheDocument();
-      expect(screen.getByLabelText(/guest first name/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/origin gym/i)).toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("guest-info-multi_site")).toBeInTheDocument();
+        expect(screen.getByLabelText(/guest first name/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/origin gym/i)).toBeInTheDocument();
+      });
     });
 
-    it("should hide member combobox for multi-site sessions", () => {
+    it("should hide member combobox for multi-site sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "multi_site";
       renderDialog({ defaultValues: { session_type: "multi_site" } });
 
-      expect(screen.queryByTestId("member-combobox")).not.toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("member-combobox")).not.toBeInTheDocument();
+      });
     });
   });
 
   describe("AC-2: Dynamic Form Sections - Collaboration Session", () => {
-    it("should show collaboration textarea for collaboration sessions", () => {
+    it("should show collaboration textarea for collaboration sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "collaboration";
       renderDialog({ defaultValues: { session_type: "collaboration" } });
 
-      expect(
-        screen.getByTestId("guest-info-collaboration")
-      ).toBeInTheDocument();
-      expect(
-        screen.getByLabelText(/collaboration details/i)
-      ).toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("guest-info-collaboration")
+        ).toBeInTheDocument();
+        expect(
+          screen.getByLabelText(/collaboration details/i)
+        ).toBeInTheDocument();
+      });
     });
 
-    it("should hide member combobox for collaboration sessions", () => {
+    it("should hide member combobox for collaboration sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "collaboration";
       renderDialog({ defaultValues: { session_type: "collaboration" } });
 
-      expect(screen.queryByTestId("member-combobox")).not.toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("member-combobox")).not.toBeInTheDocument();
+      });
     });
   });
 
   describe("AC-2: Dynamic Form Sections - Non-Bookable Session", () => {
-    it("should show time blocker message for non-bookable sessions", () => {
+    it("should show time blocker message for non-bookable sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "non_bookable";
       renderDialog({ defaultValues: { session_type: "non_bookable" } });
 
-      expect(screen.getByText(/time blocker/i)).toBeInTheDocument();
-      expect(
-        screen.getByText(/no member information is needed/i)
-      ).toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/time blocker/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/no member information is needed/i)
+        ).toBeInTheDocument();
+      });
     });
 
-    it("should hide member section for non-bookable sessions", () => {
+    it("should hide member section for non-bookable sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "non_bookable";
       renderDialog({ defaultValues: { session_type: "non_bookable" } });
 
-      expect(screen.queryByTestId("member-combobox")).not.toBeInTheDocument();
-      expect(
-        screen.queryByTestId("trial-registration")
-      ).not.toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("member-combobox")).not.toBeInTheDocument();
+        expect(
+          screen.queryByTestId("trial-registration")
+        ).not.toBeInTheDocument();
+      });
     });
 
-    it("should hide guest info for non-bookable sessions", () => {
+    it("should hide guest info for non-bookable sessions on step 2", async () => {
+      const user = userEvent.setup();
       formState.session_type = "non_bookable";
       renderDialog({ defaultValues: { session_type: "non_bookable" } });
 
-      expect(
-        screen.queryByTestId("guest-info-multi_site")
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByTestId("guest-info-collaboration")
-      ).not.toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("guest-info-multi_site")
+        ).not.toBeInTheDocument();
+        expect(
+          screen.queryByTestId("guest-info-collaboration")
+        ).not.toBeInTheDocument();
+      });
     });
   });
 
@@ -560,27 +674,41 @@ describe("SessionBookingDialog - Dynamic Forms (US-008)", () => {
       expect(errorElements).toBeDefined();
     });
 
-    it("should disable submit button when mutation is pending", () => {
+    it("should disable submit button when mutation is pending on step 2", async () => {
+      const user = userEvent.setup();
       vi.mocked(useCreateTrainingSession).mockReturnValue({
         mutateAsync: mockMutateAsync,
         isPending: true,
       } as any);
 
-      renderDialog();
+      formState.session_type = "member";
+      renderDialog({ defaultValues: { session_type: "member" } });
 
-      const submitButton = screen.getByText(/booking/i);
-      expect(submitButton).toBeDisabled();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        const submitButton = screen.getByText(/booking/i);
+        expect(submitButton).toBeDisabled();
+      });
     });
 
-    it("should show loading state in submit button when pending", () => {
+    it("should show loading state in submit button when pending on step 2", async () => {
+      const user = userEvent.setup();
       vi.mocked(useCreateTrainingSession).mockReturnValue({
         mutateAsync: mockMutateAsync,
         isPending: true,
       } as any);
 
-      renderDialog();
+      formState.session_type = "member";
+      renderDialog({ defaultValues: { session_type: "member" } });
 
-      expect(screen.getByText(/booking/i)).toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/booking/i)).toBeInTheDocument();
+      });
     });
   });
 
@@ -595,14 +723,29 @@ describe("SessionBookingDialog - Dynamic Forms (US-008)", () => {
       expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     });
 
-    it("should display correct dialog title and description", () => {
+    it("should display correct dialog title and description on step 1", () => {
       renderDialog();
       expect(screen.getByText(/book training session/i)).toBeInTheDocument();
       expect(
-        screen.getByText(
-          /select session type and provide required information/i
-        )
+        screen.getByText(/select the type of training session/i)
       ).toBeInTheDocument();
+    });
+
+    it("should display correct dialog title and description on step 2", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "member";
+      renderDialog({ defaultValues: { session_type: "member" } });
+
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/book training session/i)).toBeInTheDocument();
+        expect(screen.getByText(/step 2 of 2/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/provide session details/i)
+        ).toBeInTheDocument();
+      });
     });
   });
 
@@ -622,34 +765,63 @@ describe("SessionBookingDialog - Dynamic Forms (US-008)", () => {
       expect(useTrainers).toHaveBeenCalledWith({ status: "active" });
     });
 
-    it("should show unavailable label for disabled machines", () => {
-      renderDialog();
-      expect(screen.getByText(/unavailable/i)).toBeInTheDocument();
+    it("should show unavailable label for disabled machines on step 2", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "member";
+      renderDialog({ defaultValues: { session_type: "member" } });
+
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/unavailable/i)).toBeInTheDocument();
+      });
     });
   });
 
   describe("Common Form Fields", () => {
-    it("should show machine selection for all session types", () => {
-      renderDialog();
+    it("should show machine selection on step 2 for all session types", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "member";
+      renderDialog({ defaultValues: { session_type: "member" } });
 
-      // Machine selection is always present
-      expect(screen.getByText("Machine 1")).toBeInTheDocument();
-      expect(screen.getByText("Machine 2")).toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      // Machine selection is present on step 2
+      await waitFor(() => {
+        expect(screen.getByText("Machine 1")).toBeInTheDocument();
+        expect(screen.getByText("Machine 2")).toBeInTheDocument();
+      });
     });
 
-    it("should show trainer selection for all session types", () => {
-      renderDialog();
+    it("should show trainer selection on step 2 for all session types", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "member";
+      renderDialog({ defaultValues: { session_type: "member" } });
 
-      // Trainer selection is always present
-      expect(screen.getByText("Mike Trainer")).toBeInTheDocument();
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      // Trainer selection is present on step 2
+      await waitFor(() => {
+        expect(screen.getByText("Mike Trainer")).toBeInTheDocument();
+      });
     });
 
-    it("should show notes field for all session types", () => {
-      renderDialog();
+    it("should show notes field on step 2 for all session types", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "member";
+      renderDialog({ defaultValues: { session_type: "member" } });
 
-      // Notes textarea should always be present
-      const notesFields = screen.getAllByPlaceholderText(/additional notes/i);
-      expect(notesFields.length).toBeGreaterThan(0);
+      // Navigate to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      // Notes textarea is present on step 2
+      await waitFor(() => {
+        const notesFields = screen.getAllByPlaceholderText(/additional notes/i);
+        expect(notesFields.length).toBeGreaterThan(0);
+      });
     });
   });
 
@@ -665,6 +837,246 @@ describe("SessionBookingDialog - Dynamic Forms (US-008)", () => {
       renderDialog({ defaultValues });
 
       expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    });
+  });
+
+  describe("2-Step Wizard Navigation", () => {
+    it("should start on step 1 with session type selection", () => {
+      renderDialog();
+
+      expect(
+        screen.getByText(/select the type of training session/i)
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("session-type-selector")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /next/i })).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /book session/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it("should have Next button in dialog", () => {
+      formState.session_type = "member";
+      renderDialog({ defaultValues: { session_type: "member" } });
+
+      const nextButton = screen.getByRole("button", { name: /next/i });
+      // The Next button exists and can be clicked when session type is selected
+      expect(nextButton).toBeInTheDocument();
+      expect(nextButton).toBeEnabled();
+    });
+
+    it("should enable Next button after selecting session type", () => {
+      formState.session_type = "member";
+      renderDialog({ defaultValues: { session_type: "member" } });
+
+      const nextButton = screen.getByRole("button", { name: /next/i });
+      expect(nextButton).toBeEnabled();
+    });
+
+    it("should move to step 2 when clicking Next", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "trial";
+      renderDialog({ defaultValues: { session_type: "trial" } });
+
+      // Verify we're on step 1
+      expect(
+        screen.getByText(/select the type of training session/i)
+      ).toBeInTheDocument();
+
+      // Click Next
+      const nextButton = screen.getByRole("button", { name: /next/i });
+      await user.click(nextButton);
+
+      // Verify we moved to step 2
+      await waitFor(() => {
+        expect(screen.getByText(/step 2 of 2/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/provide session details/i)
+        ).toBeInTheDocument();
+        expect(
+          screen.getByText(/selected: trial session/i)
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("button", { name: /back/i })
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("button", { name: /book session/i })
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("should show selected session type badge on step 2", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "contractual";
+      renderDialog({ defaultValues: { session_type: "contractual" } });
+
+      // Go to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/selected: contractual session/i)
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("should show dynamic fields on step 2 based on selected type - trial", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "trial";
+      renderDialog({ defaultValues: { session_type: "trial" } });
+
+      // Go to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      // Verify trial registration fields appear
+      await waitFor(() => {
+        expect(screen.getByTestId("trial-registration")).toBeInTheDocument();
+        expect(screen.getByLabelText(/first name/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      });
+    });
+
+    it("should show dynamic fields on step 2 based on selected type - member", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "member";
+      renderDialog({ defaultValues: { session_type: "member" } });
+
+      // Go to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      // Verify member combobox appears
+      await waitFor(() => {
+        expect(screen.getByTestId("member-combobox")).toBeInTheDocument();
+      });
+    });
+
+    it("should show dynamic fields on step 2 based on selected type - multi-site", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "multi_site";
+      renderDialog({ defaultValues: { session_type: "multi_site" } });
+
+      // Go to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      // Verify guest fields appear
+      await waitFor(() => {
+        expect(screen.getByTestId("guest-info-multi_site")).toBeInTheDocument();
+        expect(screen.getByLabelText(/guest first name/i)).toBeInTheDocument();
+      });
+    });
+
+    it("should return to step 1 when clicking Back", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "member";
+      renderDialog({ defaultValues: { session_type: "member" } });
+
+      // Go to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/step 2 of 2/i)).toBeInTheDocument();
+      });
+
+      // Click Back
+      await user.click(screen.getByRole("button", { name: /back/i }));
+
+      // Verify back on step 1
+      await waitFor(() => {
+        expect(
+          screen.getByText(/select the type of training session/i)
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("button", { name: /next/i })
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByRole("button", { name: /book session/i })
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    it("should have Cancel button on both steps", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "member";
+      renderDialog({ defaultValues: { session_type: "member" } });
+
+      // Step 1 - Cancel button exists
+      expect(
+        screen.getByRole("button", { name: /cancel/i })
+      ).toBeInTheDocument();
+
+      // Go to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      // Step 2 - Cancel button still exists
+      await waitFor(() => {
+        const cancelButtons = screen.getAllByRole("button", {
+          name: /cancel/i,
+        });
+        expect(cancelButtons.length).toBeGreaterThan(0);
+      });
+    });
+
+    it("should reset to step 1 when closing dialog", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "member";
+      const onOpenChange = vi.fn();
+      renderDialog({ defaultValues: { session_type: "member" }, onOpenChange });
+
+      // Go to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/step 2 of 2/i)).toBeInTheDocument();
+      });
+
+      // Close dialog
+      await user.click(screen.getByRole("button", { name: /cancel/i }));
+
+      // Verify onOpenChange was called
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+
+    it("should only allow form submission on step 2", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "member";
+      renderDialog({ defaultValues: { session_type: "member" } });
+
+      // Step 1 - No Book Session button
+      expect(
+        screen.queryByRole("button", { name: /book session/i })
+      ).not.toBeInTheDocument();
+
+      // Go to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      // Step 2 - Book Session button appears
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", { name: /book session/i })
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("should preserve session type selection when navigating between steps", async () => {
+      const user = userEvent.setup();
+      formState.session_type = "makeup";
+      renderDialog({ defaultValues: { session_type: "makeup" } });
+
+      // Go to step 2
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/selected: make-up session/i)
+        ).toBeInTheDocument();
+      });
+
+      // Go back to step 1
+      await user.click(screen.getByRole("button", { name: /back/i }));
+
+      await waitFor(() => {
+        const currentType = screen.getByTestId("current-type");
+        expect(currentType.textContent).toBe("makeup");
+      });
     });
   });
 });
