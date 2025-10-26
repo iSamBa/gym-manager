@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Enhanced session creation schema with comprehensive validations
-// Updated for machine-based single-member sessions
+// Updated for machine-based single-member sessions with all session types
 export const createSessionSchema = z
   .object({
     machine_id: z
@@ -50,12 +50,51 @@ export const createSessionSchema = z
           return false;
         }
       }, "The end date format is invalid. Please use the date picker."),
-    session_type: z.enum(["trail", "standard"], {
-      message: "Session type must be either trail or standard",
-    }),
+    session_type: z.enum(
+      [
+        "trial",
+        "member",
+        "contractual",
+        "multi_site",
+        "collaboration",
+        "makeup",
+        "non_bookable",
+      ],
+      {
+        message: "Please select a valid session type",
+      }
+    ),
     member_id: z
       .string()
-      .uuid("Invalid member selection - please select a valid member"),
+      .uuid("Invalid member selection - please select a valid member")
+      .optional(), // Optional for guest sessions
+
+    // Trial session fields
+    new_member_first_name: z.string().optional(),
+    new_member_last_name: z.string().optional(),
+    new_member_phone: z.string().optional(),
+    new_member_email: z.string().email("Invalid email format").optional(),
+    new_member_gender: z.enum(["male", "female"]).optional(),
+    new_member_referral_source: z
+      .enum([
+        "instagram",
+        "member_referral",
+        "website_ib",
+        "prospection",
+        "studio",
+        "phone",
+        "chatbot",
+      ])
+      .optional(),
+
+    // Guest session fields
+    guest_first_name: z.string().optional(),
+    guest_last_name: z.string().optional(),
+    guest_gym_name: z.string().optional(),
+
+    // Collaboration session fields
+    collaboration_details: z.string().optional(),
+
     notes: z.string().optional(),
   })
   .refine(
@@ -165,11 +204,28 @@ export const updateSessionSchema = z.object({
       }
     }, "Invalid end date/time format")
     .optional(),
-  session_type: z.enum(["trail", "standard"]).optional(),
+  session_type: z
+    .enum([
+      "trial",
+      "member",
+      "contractual",
+      "multi_site",
+      "collaboration",
+      "makeup",
+      "non_bookable",
+    ])
+    .optional(),
   member_id: z
     .string()
     .uuid("Invalid member selection - please select a valid member")
     .optional(),
+
+  // Guest fields (for updates)
+  guest_first_name: z.string().optional(),
+  guest_last_name: z.string().optional(),
+  guest_gym_name: z.string().optional(),
+  collaboration_details: z.string().optional(),
+
   notes: z.string().optional(),
   status: z
     .enum(["scheduled", "in_progress", "completed", "cancelled"])

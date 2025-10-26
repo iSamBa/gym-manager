@@ -116,7 +116,7 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
       trainer_id: null,
       scheduled_start: "",
       scheduled_end: "",
-      session_type: "standard",
+      session_type: "member",
       member_id: "",
       notes: "",
       status: "scheduled",
@@ -148,7 +148,7 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
         trainer_id: session.trainer_id || null,
         scheduled_start: session.scheduled_start,
         scheduled_end: session.scheduled_end,
-        session_type: session.session_type || "standard",
+        session_type: session.session_type || "member",
         notes: session.notes || "",
         status: session.status,
         member_id: sessionMemberId,
@@ -620,22 +620,22 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
                           className="flex max-w-2xl gap-3"
                         >
                           <label
-                            htmlFor="trail-session"
+                            htmlFor="trial-session"
                             className={`hover:border-primary/50 min-w-0 cursor-pointer rounded-lg border-2 p-4 transition-all duration-200 ${
-                              field.value === "trail"
+                              field.value === "trial"
                                 ? "border-primary bg-primary/5"
                                 : "border-border hover:border-muted-foreground"
                             }`}
                           >
                             <div className="flex items-start gap-3">
                               <RadioGroupItem
-                                value="trail"
-                                id="trail-session"
+                                value="trial"
+                                id="trial-session"
                                 className="mt-1"
                               />
                               <div className="flex flex-col space-y-1">
                                 <span className="font-semibold">
-                                  Trail Session
+                                  Trial Session
                                 </span>
                                 <p className="text-muted-foreground text-sm">
                                   Try-out session for new members
@@ -644,22 +644,22 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
                             </div>
                           </label>
                           <label
-                            htmlFor="standard-session"
+                            htmlFor="member-session"
                             className={`hover:border-primary/50 min-w-0 cursor-pointer rounded-lg border-2 p-4 transition-all duration-200 ${
-                              field.value === "standard"
+                              field.value === "member"
                                 ? "border-primary bg-primary/5"
                                 : "border-border hover:border-muted-foreground"
                             }`}
                           >
                             <div className="flex items-start gap-3">
                               <RadioGroupItem
-                                value="standard"
-                                id="standard-session"
+                                value="member"
+                                id="member-session"
                                 className="mt-1"
                               />
                               <div className="flex flex-col space-y-1">
                                 <span className="font-semibold">
-                                  Standard Session
+                                  Member Session
                                 </span>
                                 <p className="text-muted-foreground text-sm">
                                   Regular training session
@@ -677,9 +677,9 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Session Type</span>
                   <Badge variant="secondary" className="capitalize">
-                    {session.session_type === "trail"
-                      ? "Trail Session"
-                      : "Standard Session"}
+                    {session.session_type === "trial"
+                      ? "Trial Session"
+                      : "Member Session"}
                   </Badge>
                 </div>
               )}

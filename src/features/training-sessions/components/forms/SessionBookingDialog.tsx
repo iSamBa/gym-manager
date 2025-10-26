@@ -101,7 +101,7 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
         trainer_id: null,
         scheduled_start: "",
         scheduled_end: "",
-        session_type: "standard",
+        session_type: "member",
         notes: "",
         ...defaultValues,
       },
@@ -118,7 +118,7 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
           trainer_id: defaultValues.trainer_id || null,
           scheduled_start: defaultValues.scheduled_start || "",
           scheduled_end: defaultValues.scheduled_end || "",
-          session_type: defaultValues.session_type || "standard",
+          session_type: defaultValues.session_type || "member",
           notes: defaultValues.notes || "",
         });
       }
@@ -268,7 +268,7 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
                     <FormControl>
                       <MemberCombobox
                         members={members}
-                        value={field.value}
+                        value={field.value || ""}
                         onValueChange={field.onChange}
                         disabled={membersLoading}
                         placeholder="Select a member"
@@ -335,22 +335,22 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
                         className="flex gap-3"
                       >
                         <label
-                          htmlFor="trail"
+                          htmlFor="trial"
                           className={`hover:border-primary/50 min-w-0 flex-1 cursor-pointer rounded-lg border-2 p-4 transition-all duration-200 ${
-                            field.value === "trail"
+                            field.value === "trial"
                               ? "border-primary bg-primary/5"
                               : "border-border hover:border-muted-foreground"
                           }`}
                         >
                           <div className="flex items-start gap-3">
                             <RadioGroupItem
-                              value="trail"
-                              id="trail"
+                              value="trial"
+                              id="trial"
                               className="mt-1"
                             />
                             <div className="flex flex-col space-y-1">
                               <span className="font-semibold">
-                                Trail Session
+                                Trial Session
                               </span>
                               <p className="text-muted-foreground text-sm">
                                 Try-out session for new members
@@ -359,22 +359,22 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
                           </div>
                         </label>
                         <label
-                          htmlFor="standard"
+                          htmlFor="member"
                           className={`hover:border-primary/50 min-w-0 flex-1 cursor-pointer rounded-lg border-2 p-4 transition-all duration-200 ${
-                            field.value === "standard"
+                            field.value === "member"
                               ? "border-primary bg-primary/5"
                               : "border-border hover:border-muted-foreground"
                           }`}
                         >
                           <div className="flex items-start gap-3">
                             <RadioGroupItem
-                              value="standard"
-                              id="standard"
+                              value="member"
+                              id="member"
                               className="mt-1"
                             />
                             <div className="flex flex-col space-y-1">
                               <span className="font-semibold">
-                                Standard Session
+                                Member Session
                               </span>
                               <p className="text-muted-foreground text-sm">
                                 Regular training session

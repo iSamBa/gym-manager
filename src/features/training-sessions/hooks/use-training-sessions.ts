@@ -185,7 +185,12 @@ export const useCreateTrainingSession = () => {
       return result;
     },
     onSuccess: async (_result, variables) => {
-      // Consume session from member's active subscription
+      // Consume session from member's active subscription (only for sessions with members)
+      if (!variables.member_id) {
+        // Skip for guest sessions (multi_site, collaboration, non_bookable)
+        return;
+      }
+
       try {
         const subscription =
           await subscriptionUtils.getMemberActiveSubscription(

@@ -5,6 +5,7 @@ import type {
   TimeSlot as TimeSlotType,
   TrainingSession,
 } from "../lib/types";
+import type { SessionType } from "@/features/database/lib/types";
 import { useSessionAlerts } from "../hooks/use-session-alerts";
 import { SessionNotificationBadge } from "./SessionNotificationBadge";
 import { getSessionColorVariant } from "../lib/session-colors";
@@ -152,23 +153,43 @@ function getSessionColor(session: TrainingSession): string {
 /**
  * Gets badge color for session type
  */
-function getSessionTypeBadgeColor(sessionType: "trail" | "standard"): string {
+function getSessionTypeBadgeColor(sessionType: SessionType): string {
   switch (sessionType) {
-    case "trail":
+    case "trial":
       return "bg-blue-100 text-blue-800 hover:bg-blue-200";
-    case "standard":
+    case "member":
       return "bg-slate-100 text-slate-800 hover:bg-slate-200";
+    case "contractual":
+      return "bg-purple-100 text-purple-800 hover:bg-purple-200";
+    case "multi_site":
+      return "bg-green-100 text-green-800 hover:bg-green-200";
+    case "collaboration":
+      return "bg-amber-100 text-amber-800 hover:bg-amber-200";
+    case "makeup":
+      return "bg-teal-100 text-teal-800 hover:bg-teal-200";
+    case "non_bookable":
+      return "bg-gray-100 text-gray-800 hover:bg-gray-200";
   }
 }
 
 /**
  * Gets display label for session type
  */
-function getSessionTypeLabel(sessionType: "trail" | "standard"): string {
+function getSessionTypeLabel(sessionType: SessionType): string {
   switch (sessionType) {
-    case "trail":
-      return "Trail";
-    case "standard":
-      return "Standard";
+    case "trial":
+      return "Trial";
+    case "member":
+      return "Member";
+    case "contractual":
+      return "Contract";
+    case "multi_site":
+      return "Guest";
+    case "collaboration":
+      return "Collab";
+    case "makeup":
+      return "Makeup";
+    case "non_bookable":
+      return "Blocked";
   }
 }

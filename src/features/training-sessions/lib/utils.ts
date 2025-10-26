@@ -42,7 +42,7 @@ export const getSessionCategoryColor = (category: string): string => {
   switch (category?.toLowerCase()) {
     case "trial":
       return "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300";
-    case "standard":
+    case "member":
       return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300";
     case "premium":
       return "bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300";
