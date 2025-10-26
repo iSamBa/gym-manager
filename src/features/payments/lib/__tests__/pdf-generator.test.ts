@@ -10,6 +10,7 @@ const mockSetFont = vi.fn();
 const mockSetLineWidth = vi.fn();
 const mockSplitTextToSize = vi.fn();
 
+// Mock jsPDF module for dynamic import
 vi.mock("jspdf", () => ({
   default: vi.fn().mockImplementation(() => ({
     save: mockSave,
@@ -57,8 +58,8 @@ describe("PDF Generator", () => {
   });
 
   describe("generatePaymentReceiptPDF", () => {
-    it("should generate PDF for regular payment", () => {
-      generatePaymentReceiptPDF({ payment: mockPayment });
+    it("should generate PDF for regular payment", async () => {
+      await generatePaymentReceiptPDF({ payment: mockPayment });
 
       expect(mockSave).toHaveBeenCalledWith("payment_receipt_PAY-001.pdf");
       expect(mockText).toHaveBeenCalledWith(
@@ -79,8 +80,8 @@ describe("PDF Generator", () => {
       );
     });
 
-    it("should generate PDF for refund with original payment", () => {
-      generatePaymentReceiptPDF({
+    it("should generate PDF for refund with original payment", async () => {
+      await generatePaymentReceiptPDF({
         payment: mockRefundPayment,
         originalPayment: mockOriginalPayment,
       });
@@ -104,13 +105,13 @@ describe("PDF Generator", () => {
       ); // Original receipt
     });
 
-    it("should handle payment with notes", () => {
+    it("should handle payment with notes", async () => {
       const paymentWithNotes = {
         ...mockPayment,
         notes: "This is a test payment with notes",
       };
 
-      generatePaymentReceiptPDF({ payment: paymentWithNotes });
+      await generatePaymentReceiptPDF({ payment: paymentWithNotes });
 
       expect(mockSplitTextToSize).toHaveBeenCalledWith(
         "This is a test payment with notes",
@@ -123,13 +124,13 @@ describe("PDF Generator", () => {
       );
     });
 
-    it("should format amounts correctly", () => {
+    it("should format amounts correctly", async () => {
       const paymentWithLargeAmount = {
         ...mockPayment,
         amount: 1234.56,
       };
 
-      generatePaymentReceiptPDF({ payment: paymentWithLargeAmount });
+      await generatePaymentReceiptPDF({ payment: paymentWithLargeAmount });
 
       expect(mockText).toHaveBeenCalledWith(
         "$1,234.56",
@@ -138,14 +139,14 @@ describe("PDF Generator", () => {
       );
     });
 
-    it("should handle missing receipt number gracefully", () => {
+    it("should handle missing receipt number gracefully", async () => {
       const paymentWithoutReceipt = {
         ...mockPayment,
         receipt_number: null,
       };
 
       // @ts-expect-error - Testing null receipt number
-      generatePaymentReceiptPDF({ payment: paymentWithoutReceipt });
+      await generatePaymentReceiptPDF({ payment: paymentWithoutReceipt });
 
       expect(mockText).toHaveBeenCalledWith(
         "N/A",
@@ -155,10 +156,10 @@ describe("PDF Generator", () => {
       expect(mockSave).toHaveBeenCalledWith("payment_receipt_N/A.pdf");
     });
 
-    it("should create PDF successfully without errors", () => {
-      expect(() => {
-        generatePaymentReceiptPDF({ payment: mockPayment });
-      }).not.toThrow();
+    it("should create PDF successfully without errors", async () => {
+      await expect(
+        generatePaymentReceiptPDF({ payment: mockPayment })
+      ).resolves.not.toThrow();
 
       expect(mockSave).toHaveBeenCalled();
       expect(mockText).toHaveBeenCalled();

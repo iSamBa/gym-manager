@@ -7,6 +7,7 @@ import { useSessionValidator } from "@/hooks/use-session-validator";
 import { useAuthStore } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import { AuthErrorBanner } from "@/components/feedback/auth-error-banner";
+import { logger } from "@/lib/logger";
 
 interface AuthContextType {
   user: Record<string, unknown> | null;
@@ -43,7 +44,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
         if (error) {
-          console.error("Error loading user profile:", error);
+          logger.error("Failed to load user profile from database", {
+            error: error.message,
+            userId: authUser.id,
+          });
           return;
         }
 
@@ -59,7 +63,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         }
       } catch (error) {
-        console.error("Error loading user profile:", error);
+        logger.error("Unexpected error loading user profile", {
+          error: error instanceof Error ? error.message : String(error),
+          userId: authUser.id,
+        });
       }
     },
     [setUser]
@@ -80,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Set timeout BEFORE starting initialization
     const timeoutId = setTimeout(() => {
-      console.warn(
+      logger.warn(
         "Auth initialization timeout - setting loading to false anyway"
       );
       clearLoading();
@@ -97,7 +104,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!mounted) return;
 
         if (error) {
-          console.error("Error getting initial session:", error);
+          logger.error("Failed to get initial session", {
+            error: error.message,
+          });
           clearTimeout(timeoutId);
           clearLoading();
           return;
@@ -117,7 +126,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             ]);
             setAuthError(null);
           } catch (profileError) {
-            console.error("Error loading user profile:", profileError);
+            logger.error("Profile load timeout during initialization", {
+              error:
+                profileError instanceof Error
+                  ? profileError.message
+                  : String(profileError),
+              userId: session.user.id,
+            });
             // Set fallback user data from session to allow authentication to proceed
             setUser({
               id: session.user.id,
@@ -136,7 +151,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clearTimeout(timeoutId);
         clearLoading();
       } catch (error) {
-        console.error("Error initializing auth:", error);
+        logger.error("Failed to initialize authentication", {
+          error: error instanceof Error ? error.message : String(error),
+        });
         clearTimeout(timeoutId);
         clearLoading();
       }
@@ -170,10 +187,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               ]);
               setAuthError(null);
             } catch (profileError) {
-              console.error(
-                "Error loading user profile on sign in:",
-                profileError
-              );
+              logger.error("Profile load error on sign in", {
+                error:
+                  profileError instanceof Error
+                    ? profileError.message
+                    : String(profileError),
+                userId: session.user.id,
+              });
               // Set fallback user data from session to allow authentication to proceed
               setUser({
                 id: session.user.id,
@@ -210,10 +230,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               ]);
               setAuthError(null);
             } catch (profileError) {
-              console.warn(
-                "Error loading user profile on token refresh:",
-                profileError
-              );
+              logger.warn("Profile load failed on token refresh", {
+                error:
+                  profileError instanceof Error
+                    ? profileError.message
+                    : String(profileError),
+              });
               // Keep existing user data on token refresh failure - don't disrupt the session
             }
           }
@@ -233,14 +255,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 ),
               ]);
             } catch (profileError) {
-              console.warn("Error loading updated user profile:", profileError);
+              logger.warn("Profile load failed on user update", {
+                error:
+                  profileError instanceof Error
+                    ? profileError.message
+                    : String(profileError),
+              });
               // Keep existing user data on profile update failure
             }
           }
           break;
 
         case "PASSWORD_RECOVERY":
-          console.log("Password recovery initiated");
+          logger.info("Password recovery initiated");
           break;
 
         case "MFA_CHALLENGE_VERIFIED":
@@ -257,10 +284,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               ]);
               setAuthError(null);
             } catch (profileError) {
-              console.error(
-                "Error loading user profile after MFA:",
-                profileError
-              );
+              logger.error("Profile load error after MFA verification", {
+                error:
+                  profileError instanceof Error
+                    ? profileError.message
+                    : String(profileError),
+                userId: session.user.id,
+              });
               // Set fallback user data from session
               setUser({
                 id: session.user.id,
@@ -278,7 +308,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           break;
 
         default:
-          console.warn("Unhandled auth event:", event);
+          logger.warn("Unhandled auth event received", { event });
       }
     });
 

@@ -48,6 +48,8 @@ import { toast } from "sonner";
 import { Package, UserPlus, Users } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useMembers } from "@/features/members/hooks";
+import { MemberHealthFitnessStep } from "./form-steps/MemberHealthFitnessStep";
+import { MemberAddressStep } from "./form-steps/MemberAddressStep";
 
 // Schema for each step
 const personalInfoSchema = z.object({
@@ -889,74 +891,8 @@ export function ProgressiveMemberForm({
         );
 
       case 3:
-        return (
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="address.street"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Street Address</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Rue Mohammed V"
-                      {...field}
-                      className="h-12"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="address.city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>City</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Casablanca"
-                        {...field}
-                        className="h-12"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address.postal_code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Postal Code</FormLabel>
-                    <FormControl>
-                      <Input placeholder="20000" {...field} className="h-12" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="address.country"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Morocco" {...field} className="h-12" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
+        // Address
+        return <MemberAddressStep form={form} />;
 
       case 4:
         // US-004: Equipment Section
@@ -1074,59 +1010,8 @@ export function ProgressiveMemberForm({
         return <TrainingPreferenceSectionContent form={form} />;
 
       case 7:
-        // Health & Fitness (moved from case 4)
-        return (
-          <div className="space-y-4">
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>Optional:</strong> This information helps trainers
-                provide better guidance.
-              </p>
-            </div>
-
-            <FormField
-              control={form.control}
-              name="fitness_goals"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fitness Goals</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe fitness goals (e.g., weight loss, muscle gain, endurance training)..."
-                      className="min-h-[100px] resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    What does the member want to achieve?
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="medical_conditions"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Medical Conditions</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="List any relevant medical conditions or injuries..."
-                      className="min-h-[100px] resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Information that trainers should be aware of for safety.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
+        // Health & Fitness
+        return <MemberHealthFitnessStep form={form} />;
 
       case 8:
         // Settings (moved from case 5)

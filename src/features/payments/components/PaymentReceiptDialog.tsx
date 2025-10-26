@@ -77,7 +77,7 @@ export function PaymentReceiptDialog({
     // Dynamically import PDF generator to reduce initial bundle size
     const { generatePaymentReceiptPDF } = await import("../lib/pdf-generator");
 
-    generatePaymentReceiptPDF({
+    await generatePaymentReceiptPDF({
       payment,
       originalPayment: originalPayment || undefined,
     });
