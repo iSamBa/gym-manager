@@ -93,6 +93,11 @@ export function useRecordPayment() {
         });
       }
 
+      // Invalidate training sessions to update planning indicators (payment reminder icon)
+      queryClient.invalidateQueries({
+        queryKey: ["training-sessions"],
+      });
+
       toast.success("Payment Recorded", {
         description: `Payment of $${variables.amount.toFixed(2)} recorded successfully. Receipt: ${data.receipt_number}`,
       });

@@ -54,6 +54,7 @@ const sessions = mapSessionRpcResponse<TrainingSession>(data || []);
   latest_payment_date: string | null;
   latest_checkup_date: string | null;
   sessions_since_checkup: number;
+  outstanding_balance: number; // Outstanding amount owed (total_amount_snapshot - paid_amount)
   participants: Array<{
     // JSON array
     id: string;

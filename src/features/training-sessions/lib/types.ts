@@ -50,6 +50,7 @@ export interface TrainingSession {
   latest_payment_date?: string | null;
   latest_checkup_date?: string | null;
   sessions_since_checkup?: number | null;
+  outstanding_balance?: number | null;
 }
 
 // No separate progress notes - using simple notes field instead
@@ -131,4 +132,12 @@ export interface StudioSessionLimit {
 export interface WeekRange {
   start: string; // YYYY-MM-DD
   end: string; // YYYY-MM-DD
+}
+
+// Daily session statistics for calendar views
+export interface DailyStatistics {
+  date: string; // YYYY-MM-DD format
+  total: number; // Total non-cancelled sessions
+  standard: number; // Count of standard sessions
+  trial: number; // Count of trial sessions
 }
