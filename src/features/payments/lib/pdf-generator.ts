@@ -1,4 +1,3 @@
-import jsPDF from "jspdf";
 import { format } from "date-fns";
 import type { SubscriptionPaymentWithReceipt } from "@/features/database/lib/types";
 import type { AllPaymentsResponse } from "../hooks/use-all-payments";
@@ -21,10 +20,13 @@ interface PDFGeneratorOptions {
   originalPayment?: OriginalPaymentForPDF; // For refund receipts
 }
 
-export function generatePaymentReceiptPDF({
+export async function generatePaymentReceiptPDF({
   payment,
   originalPayment,
 }: PDFGeneratorOptions) {
+  // Dynamically import jsPDF to reduce initial bundle size (~400KB)
+  const { default: jsPDF } = await import("jspdf");
+
   // Create new PDF with A4 dimensions
   const doc = new jsPDF({
     orientation: "portrait",

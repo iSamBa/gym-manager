@@ -119,7 +119,7 @@ export function PaymentHistoryTable({
     // Dynamically import PDF generator to reduce initial bundle size
     const { generatePaymentReceiptPDF } = await import("../lib/pdf-generator");
 
-    generatePaymentReceiptPDF({ payment });
+    await generatePaymentReceiptPDF({ payment });
   };
 
   const handleRefund = (payment: SubscriptionPaymentWithReceiptAndPlan) => {
