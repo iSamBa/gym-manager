@@ -298,20 +298,19 @@ describe("Session Type Validation", () => {
       const validCollaborationSession = {
         ...baseSessionData,
         session_type: "collaboration" as const,
-        guest_first_name: "@fitnessguru", // Required: Influencer/partner name
-        collaboration_details: "Influencer partnership - content shoot", // Optional additional details
+        collaboration_details:
+          "@fitnessguru - Influencer partnership content shoot", // Required: Influencer/partner name
       };
 
       const result = createSessionSchema.safeParse(validCollaborationSession);
       expect(result.success).toBe(true);
     });
 
-    it("rejects collaboration session missing guest_first_name (influencer name)", () => {
+    it("rejects collaboration session missing collaboration_details (influencer name)", () => {
       const invalidCollaborationSession = {
         ...baseSessionData,
         session_type: "collaboration" as const,
-        // missing guest_first_name - this is required for collaboration
-        collaboration_details: "Some details",
+        // missing collaboration_details - this is required for collaboration
       };
 
       const result = createSessionSchema.safeParse(invalidCollaborationSession);
@@ -321,11 +320,11 @@ describe("Session Type Validation", () => {
       }
     });
 
-    it("rejects collaboration session with empty guest_first_name", () => {
+    it("rejects collaboration session with empty collaboration_details", () => {
       const invalidCollaborationSession = {
         ...baseSessionData,
         session_type: "collaboration" as const,
-        guest_first_name: "", // Empty string fails truthy check
+        collaboration_details: "", // Empty string fails truthy check
       };
 
       const result = createSessionSchema.safeParse(invalidCollaborationSession);
@@ -336,8 +335,7 @@ describe("Session Type Validation", () => {
       const validCollaborationSession = {
         ...baseSessionData,
         session_type: "collaboration" as const,
-        guest_first_name: "@partner_name", // Required
-        collaboration_details: "Commercial partnership",
+        collaboration_details: "@partner_name - Commercial partnership", // Required
         // NO member_id - this should be valid (guest session)
       };
 
@@ -349,8 +347,7 @@ describe("Session Type Validation", () => {
       const validCollaborationSession = {
         ...baseSessionData,
         session_type: "collaboration" as const,
-        guest_first_name: "@partner_name", // Required
-        collaboration_details: "Commercial partnership",
+        collaboration_details: "@partner_name - Commercial partnership", // Required
         member_id: "", // Empty string should be valid for guest sessions
       };
 

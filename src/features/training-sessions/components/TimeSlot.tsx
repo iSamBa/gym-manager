@@ -94,9 +94,9 @@ export const TimeSlot = memo<TimeSlotProps>(
         displayName = "Guest Session";
       }
     } else if (session.session_type === "collaboration") {
-      // Collaboration session - show influencer name
-      if (session.guest_first_name) {
-        displayName = session.guest_first_name; // Influencer name
+      // Collaboration session - show influencer name from collaboration_details
+      if (session.collaboration_details) {
+        displayName = session.collaboration_details; // Influencer name
       } else {
         displayName = "Collaboration";
       }

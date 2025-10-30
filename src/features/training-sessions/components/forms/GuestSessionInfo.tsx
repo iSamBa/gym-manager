@@ -91,7 +91,7 @@ export const GuestSessionInfo = memo<GuestSessionInfoProps>(
 
           <FormField
             control={form.control}
-            name="guest_first_name"
+            name="collaboration_details"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Influencer Name *</FormLabel>

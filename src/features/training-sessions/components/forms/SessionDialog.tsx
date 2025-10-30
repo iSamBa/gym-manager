@@ -51,6 +51,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 
 import {
   useTrainingSession,
@@ -217,7 +218,7 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
         onSessionUpdated(sessionId);
       }
     } catch (error) {
-      console.error("Failed to update training session:", error);
+      logger.error("Failed to update training session", { error });
     }
   };
 
@@ -232,7 +233,7 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
         onSessionDeleted(sessionId);
       }
     } catch (error) {
-      console.error("Failed to delete training session:", error);
+      logger.error("Failed to delete training session", { error });
     }
   };
 
@@ -488,7 +489,7 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
                 </h3>
                 <p className="text-sm">
                   <span className="font-medium">Influencer:</span>{" "}
-                  {session.guest_first_name || "Not specified"}
+                  {session.collaboration_details || "Not specified"}
                 </p>
               </div>
             )}

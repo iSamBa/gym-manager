@@ -44,6 +44,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { TimePicker } from "@/components/ui/time-picker";
 import { cn } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 
 import { useMachines } from "../../hooks/use-machines";
 import { useMembers } from "@/features/members/hooks/use-members";
@@ -130,6 +131,10 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
         scheduled_end: "",
         session_type: "member",
         notes: "",
+        collaboration_details: "",
+        guest_first_name: "",
+        guest_last_name: "",
+        guest_gym_name: "",
         ...defaultValues,
       },
     });
@@ -150,13 +155,20 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
           scheduled_end: defaultValues.scheduled_end || "",
           session_type: defaultValues.session_type || "member",
           notes: defaultValues.notes || "",
+          collaboration_details: defaultValues.collaboration_details || "",
+          guest_first_name: defaultValues.guest_first_name || "",
+          guest_last_name: defaultValues.guest_last_name || "",
+          guest_gym_name: defaultValues.guest_gym_name || "",
         });
       }
     }, [open, defaultValues, reset]);
 
     // Watch scheduled_start to auto-calculate scheduled_end (30-min duration)
     const scheduledStart = watch("scheduled_start");
-    const selectedDate = scheduledStart ? new Date(scheduledStart) : new Date();
+    const selectedDate = useMemo(
+      () => (scheduledStart ? new Date(scheduledStart) : new Date()),
+      [scheduledStart]
+    );
 
     // Filter members for contractual sessions (trial members only)
     const filteredMembers = useMemo(() => {
@@ -180,15 +192,20 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
     // Handle form submission
     const onSubmit = useCallback(
       async (data: BookingFormData) => {
-        console.log("📝 Form submitted with data:", data);
-        console.log("📝 Form validation state:", form.formState);
-        console.log("📝 Form errors:", form.formState.errors);
+        logger.debug("Form submission initiated", {
+          sessionType: data.session_type,
+          machineId: data.machine_id,
+          memberId: data.member_id,
+        });
 
         try {
-          console.log("🚀 Calling createSessionMutation...");
           await createSessionMutation.mutateAsync(data);
 
-          console.log("✅ Session created successfully");
+          logger.info("Session created successfully", {
+            sessionType: data.session_type,
+            sessionId: data.machine_id, // Machine ID as identifier
+          });
+
           const sessionTypeLabel =
             SESSION_TYPE_LABELS[data.session_type] || "Session";
           toast.success("Session booked successfully", {
@@ -198,7 +215,12 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
           onOpenChange(false);
           reset();
         } catch (error) {
-          console.error("❌ Session creation failed:", error);
+          logger.error("Session creation failed", {
+            error: error instanceof Error ? error.message : String(error),
+            sessionType: data.session_type,
+            machineId: data.machine_id,
+          });
+
           const message =
             error instanceof Error
               ? error.message
@@ -209,7 +231,7 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
           });
         }
       },
-      [createSessionMutation, onOpenChange, reset, form.formState]
+      [createSessionMutation, onOpenChange, reset]
     );
 
     // Step navigation
@@ -262,18 +284,7 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
           </DialogHeader>
 
           <Form {...form}>
-            <form
-              onSubmit={(e) => {
-                console.log("🎯 Form onSubmit event triggered");
-                console.log(
-                  "🎯 Form errors before submit:",
-                  form.formState.errors
-                );
-                console.log("🎯 Form isValid:", form.formState.isValid);
-                handleSubmit(onSubmit)(e);
-              }}
-              className="space-y-6"
-            >
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Display form-level errors */}
               {Object.keys(form.formState.errors).length > 0 && (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/20">

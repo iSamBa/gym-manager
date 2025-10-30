@@ -132,9 +132,9 @@ export const createSessionSchema = z
         );
       }
 
-      // Collaboration: requires influencer name
+      // Collaboration: requires collaboration details (influencer name)
       if (data.session_type === "collaboration") {
-        return !!data.guest_first_name;
+        return !!data.collaboration_details;
       }
 
       // Non-bookable: no requirements
@@ -323,9 +323,9 @@ export const updateSessionSchema = z
         );
       }
 
-      // Collaboration: requires influencer name
+      // Collaboration: requires collaboration details (influencer name)
       if (data.session_type === "collaboration") {
-        return !!data.guest_first_name;
+        return !!data.collaboration_details;
       }
 
       // Non-bookable: no requirements

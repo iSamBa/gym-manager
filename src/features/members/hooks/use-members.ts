@@ -7,6 +7,7 @@ import {
 import { keepPreviousData } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import {
   memberUtils,
   type MemberFilters,
@@ -141,7 +142,7 @@ export function useCreateMember() {
       queryClient.setQueryData(memberKeys.detail(newMember.id), newMember);
     },
     onError: (error) => {
-      console.error("Failed to create member:", error);
+      logger.error("Failed to create member", { error });
     },
   });
 }
@@ -233,7 +234,7 @@ export function useUpdateMember() {
           context.previousMemberWithSub
         );
       }
-      console.error("Failed to update member:", error);
+      logger.error("Failed to update member", { error });
     },
 
     onSettled: (data, error, { id }) => {
@@ -332,7 +333,7 @@ export function useUpdateMemberStatus() {
           context.previousMemberWithSub
         );
       }
-      console.error("Failed to update member status:", error);
+      logger.error("Failed to update member status", { error });
     },
 
     onSuccess: () => {
@@ -408,7 +409,7 @@ export function useBulkUpdateMemberStatus() {
     },
 
     onError: (error) => {
-      console.error("Failed to bulk update member status:", error);
+      logger.error("Failed to bulk update member status", { error });
     },
 
     onSuccess: () => {
@@ -470,7 +471,7 @@ export function useDeleteMember() {
       if (context?.previousMember) {
         queryClient.setQueryData(memberKeys.detail(id), context.previousMember);
       }
-      console.error("Failed to delete member:", error);
+      logger.error("Failed to delete member", { error });
     },
 
     onSuccess: () => {
@@ -579,7 +580,7 @@ export function useExportMembers(): UseExportMembersReturn {
           } exported to CSV file.`,
         });
       } catch (error) {
-        console.error("Export failed:", error);
+        logger.error("Export failed", { error });
 
         toast.error("Export failed", {
           description:

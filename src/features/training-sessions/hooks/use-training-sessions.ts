@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
 import { trainingSessionUtils } from "../lib/database-utils";
 import { subscriptionKeys } from "@/features/memberships/hooks/use-subscriptions";
 import { subscriptionUtils } from "@/features/memberships/lib/subscription-utils";
@@ -225,6 +226,34 @@ export const useCreateTrainingSession = () => {
         }
       }
 
+      // MEMBER & MAKEUP SESSIONS: Validate active subscription exists
+      // Both consume credits, but makeup bypasses weekly limits
+      // Contractual sessions do NOT require a subscription (contract signed during session)
+      if (
+        (data.session_type === "member" || data.session_type === "makeup") &&
+        memberId
+      ) {
+        const activeSubscription =
+          await subscriptionUtils.getMemberActiveSubscription(memberId);
+
+        if (!activeSubscription) {
+          throw new Error(
+            "This member does not have an active subscription. Please create a subscription before booking a member session, or use a contractual session type to sign a contract during the session."
+          );
+        }
+
+        // Validate subscription has remaining sessions
+        const remainingSessions =
+          activeSubscription.total_sessions_snapshot -
+          activeSubscription.used_sessions;
+
+        if (remainingSessions <= 0) {
+          throw new Error(
+            "This member has no remaining sessions in their subscription. Please upgrade or renew their subscription before booking."
+          );
+        }
+      }
+
       // Determine if this is a guest session (no member association)
       const isGuestSession =
         data.session_type === "multi_site" ||
@@ -253,7 +282,7 @@ export const useCreateTrainingSession = () => {
       );
 
       if (error) {
-        console.error("Database function error:", error);
+        logger.error("Database function error", { error });
         throw new Error(`Failed to create training session: ${error.message}`);
       }
 
@@ -270,9 +299,17 @@ export const useCreateTrainingSession = () => {
       return result;
     },
     onSuccess: async (_result, variables) => {
-      // Consume session from member's active subscription (only for existing members with subscriptions)
-      // Skip for trial sessions (no subscription yet) and guest sessions (no member)
-      if (variables.member_id) {
+      // Consume session from member's active subscription (for MEMBER and MAKEUP sessions)
+      // Both member and makeup sessions consume credits, but makeup bypasses weekly limits
+      // Skip for:
+      // - Trial sessions: no subscription yet
+      // - Contractual sessions: counted retroactively when subscription created
+      // - Guest sessions: no member association
+      if (
+        variables.member_id &&
+        (variables.session_type === "member" ||
+          variables.session_type === "makeup") // Consume for member and makeup sessions
+      ) {
         try {
           const subscription =
             await subscriptionUtils.getMemberActiveSubscription(
@@ -294,7 +331,7 @@ export const useCreateTrainingSession = () => {
           }
         } catch (error) {
           // Log error but don't fail the whole operation
-          console.error("Failed to consume session:", error);
+          logger.error("Failed to consume session", { error });
         }
       }
 
@@ -550,7 +587,7 @@ export const useUpdateTrainingSessionStatus = () => {
           context.previousSession
         );
       }
-      console.error("Failed to update training session status:", error);
+      logger.error("Failed to update training session status", { error });
     },
 
     onSettled: async (data, error, { id, status }) => {
@@ -601,9 +638,9 @@ export const useUpdateTrainingSessionStatus = () => {
             type: "active",
           });
         } catch (error) {
-          console.warn(
-            "Failed to invalidate subscription cache after session completion:",
-            error
+          logger.warn(
+            "Failed to invalidate subscription cache after session completion",
+            { error }
           );
         }
       }
@@ -618,10 +655,10 @@ export const useDeleteTrainingSession = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // Get session details first to find member_id for credit restoration
+      // Get session details from base table (more reliable than view)
       const { data: session, error: fetchError } = await supabase
-        .from("training_sessions_calendar")
-        .select("*")
+        .from("training_sessions")
+        .select("id, session_type, counted_in_subscription_id")
         .eq("id", id)
         .single();
 
@@ -631,8 +668,15 @@ export const useDeleteTrainingSession = () => {
         );
       }
 
-      // Extract member ID from participants array
-      const memberId = session?.participants?.[0]?.id;
+      // Get member ID from training_session_members if exists
+      const { data: memberData } = await supabase
+        .from("training_session_members")
+        .select("member_id")
+        .eq("session_id", id)
+        .eq("booking_status", "confirmed")
+        .maybeSingle();
+
+      const memberId = memberData?.member_id;
 
       // Delete session (cascade will delete training_session_members)
       const { error: deleteError } = await supabase
@@ -646,19 +690,28 @@ export const useDeleteTrainingSession = () => {
         );
       }
 
-      return { sessionId: id, memberId };
+      return {
+        sessionId: id,
+        memberId,
+        sessionType: session.session_type,
+        countedInSubscriptionId: session.counted_in_subscription_id,
+      };
     },
-    onSuccess: async ({ sessionId, memberId }) => {
-      // Restore session credit to member's subscription
+    onSuccess: async ({
+      sessionId,
+      memberId,
+      sessionType,
+      countedInSubscriptionId,
+    }) => {
+      // Restore session credit based on session type
       if (memberId) {
         try {
-          const subscription =
-            await subscriptionUtils.getMemberActiveSubscription(memberId);
+          // For contractual sessions that were counted in a subscription
+          if (sessionType === "contractual" && countedInSubscriptionId) {
+            // Decrement from the specific subscription it was counted in
+            await subscriptionUtils.restoreSession(countedInSubscriptionId);
 
-          if (subscription) {
-            await subscriptionUtils.restoreSession(subscription.id);
-
-            // Refetch subscription queries for immediate cache updates
+            // Refetch subscription queries
             await queryClient.refetchQueries({
               queryKey: ["subscriptions", "member", memberId],
               type: "active",
@@ -668,9 +721,29 @@ export const useDeleteTrainingSession = () => {
               type: "active",
             });
           }
+          // For member and makeup sessions, restore to active subscription
+          else if (sessionType === "member" || sessionType === "makeup") {
+            const subscription =
+              await subscriptionUtils.getMemberActiveSubscription(memberId);
+
+            if (subscription) {
+              await subscriptionUtils.restoreSession(subscription.id);
+
+              // Refetch subscription queries for immediate cache updates
+              await queryClient.refetchQueries({
+                queryKey: ["subscriptions", "member", memberId],
+                type: "active",
+              });
+              await queryClient.refetchQueries({
+                queryKey: subscriptionKeys.memberActive(memberId),
+                type: "active",
+              });
+            }
+          }
+          // For other session types (trial, multi_site, etc.), no credit restoration needed
         } catch (error) {
           // Log error but don't fail the whole operation
-          console.error("Failed to restore session credit:", error);
+          logger.error("Failed to restore session credit", { error });
         }
       }
 

@@ -7,6 +7,7 @@ import {
 import { keepPreviousData } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import {
   trainerUtils,
   type TrainerFilters,
@@ -86,7 +87,7 @@ export function useTrainerWithProfile(
       try {
         return await trainerUtils.getTrainerWithProfile(id.trim());
       } catch (error) {
-        console.error(`Failed to fetch trainer with ID ${id}:`, error);
+        logger.error(`Failed to fetch trainer with ID ${id}`, { error, id });
         throw error;
       }
     },
@@ -190,7 +191,7 @@ export function useCreateTrainer() {
       queryClient.setQueryData(trainerKeys.detail(newTrainer.id), newTrainer);
     },
     onError: (error) => {
-      console.error("Failed to create trainer:", error);
+      logger.error("Failed to create trainer", { error });
     },
   });
 }
@@ -264,7 +265,7 @@ export function useUpdateTrainer() {
           context.previousTrainer
         );
       }
-      console.error("Failed to update trainer:", error);
+      logger.error("Failed to update trainer", { error });
     },
 
     onSettled: (data, error, { id }) => {
@@ -346,7 +347,7 @@ export function useUpdateTrainerAvailability() {
           context.previousTrainer
         );
       }
-      console.error("Failed to update trainer availability:", error);
+      logger.error("Failed to update trainer availability", { error });
     },
 
     onSuccess: () => {
@@ -426,7 +427,7 @@ export function useBulkUpdateTrainerAvailability() {
     },
 
     onError: (error) => {
-      console.error("Failed to bulk update trainer availability:", error);
+      logger.error("Failed to bulk update trainer availability", { error });
     },
 
     onSuccess: () => {
@@ -491,7 +492,7 @@ export function useDeleteTrainer() {
           context.previousTrainer
         );
       }
-      console.error("Failed to delete trainer:", error);
+      logger.error("Failed to delete trainer", { error });
     },
 
     onSuccess: () => {
@@ -600,7 +601,7 @@ export function useExportTrainers(): UseExportTrainersReturn {
           } exported to CSV file.`,
         });
       } catch (error) {
-        console.error("Export failed:", error);
+        logger.error("Export failed", { error });
 
         toast.error("Export failed", {
           description:

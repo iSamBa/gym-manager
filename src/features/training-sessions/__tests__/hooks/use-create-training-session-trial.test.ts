@@ -268,6 +268,27 @@ describe("Trial Member Creation Integration Tests", () => {
   it("does not create member for non-trial session types", async () => {
     const mockInsert = vi.fn();
 
+    // Mock active subscription for member session validation
+    const { subscriptionUtils } = await import(
+      "@/features/memberships/lib/subscription-utils"
+    );
+    vi.mocked(subscriptionUtils.getMemberActiveSubscription).mockResolvedValue({
+      id: "sub-123",
+      member_id: "existing-member-123",
+      plan_id: "plan-123",
+      plan_name_snapshot: "Premium Plan",
+      total_sessions_snapshot: 12,
+      total_amount_snapshot: 1200,
+      duration_days_snapshot: 365,
+      start_date: "2025-01-01",
+      end_date: "2026-01-01",
+      status: "active",
+      used_sessions: 5,
+      paid_amount: 1200,
+      created_at: "2025-01-01T00:00:00.000Z",
+      updated_at: "2025-01-01T00:00:00.000Z",
+    });
+
     (supabase.from as any).mockReturnValue({
       insert: mockInsert,
     });

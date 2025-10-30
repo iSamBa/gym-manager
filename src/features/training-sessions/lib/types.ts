@@ -52,6 +52,8 @@ export interface TrainingSession {
   participants?: SessionParticipant[]; // From calendar view (array of participants)
   created_at?: string;
   updated_at?: string;
+  // Subscription tracking for contractual sessions
+  counted_in_subscription_id?: string | null; // Tracks which subscription counted this contractual session
   // Planning indicator data (optional, from get_sessions_with_planning_indicators)
   member_id?: string;
   vest_size?: string | null;
