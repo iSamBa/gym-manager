@@ -1,4 +1,12 @@
-import type { Member, TrainerWithProfile } from "@/features/database/lib/types";
+import type {
+  Member,
+  TrainerWithProfile,
+  SessionType,
+  ReferralSource,
+} from "@/features/database/lib/types";
+
+// Re-export types for convenience
+export type { SessionType, ReferralSource };
 
 // Machine interface (represents training machines in the gym)
 export interface Machine {
@@ -37,20 +45,31 @@ export interface TrainingSession {
   scheduled_end: string; // ISO string
   session_date?: string; // Date string (YYYY-MM-DD)
   status: "scheduled" | "in_progress" | "completed" | "cancelled";
-  session_type?: "trail" | "standard"; // Optional, may not be in all views
+  session_type: SessionType; // Session type from database
   notes: string | null;
   trainer_user_id?: string; // From calendar view
   trainer_name?: string; // From calendar view join
   participants?: SessionParticipant[]; // From calendar view (array of participants)
   created_at?: string;
   updated_at?: string;
+  // Subscription tracking for contractual sessions
+  counted_in_subscription_id?: string | null; // Tracks which subscription counted this contractual session
   // Planning indicator data (optional, from get_sessions_with_planning_indicators)
   member_id?: string;
+  vest_size?: string | null;
+  hip_belt_size?: string | null;
+  remaining_sessions?: number | null;
   subscription_end_date?: string | null;
   latest_payment_date?: string | null;
   latest_checkup_date?: string | null;
   sessions_since_checkup?: number | null;
   outstanding_balance?: number | null;
+
+  // Guest information (for multi_site and collaboration sessions)
+  guest_first_name?: string | null;
+  guest_last_name?: string | null;
+  guest_gym_name?: string | null;
+  collaboration_details?: string | null;
 }
 
 // No separate progress notes - using simple notes field instead
@@ -78,8 +97,27 @@ export interface CreateSessionData {
   trainer_id?: string | null; // Optional: Trainer assigned at completion
   scheduled_start: string;
   scheduled_end: string;
-  session_type: "trail" | "standard";
-  member_id: string; // Single member (not array)
+  session_type: SessionType;
+
+  // Member selection (optional - not needed for guest sessions)
+  member_id?: string;
+
+  // Trial session - quick registration
+  new_member_first_name?: string;
+  new_member_last_name?: string;
+  new_member_phone?: string;
+  new_member_email?: string;
+  new_member_gender?: "male" | "female";
+  new_member_referral_source?: ReferralSource;
+
+  // Guest session data (multi_site)
+  guest_first_name?: string;
+  guest_last_name?: string;
+  guest_gym_name?: string;
+
+  // Collaboration session data
+  collaboration_details?: string;
+
   notes?: string;
 }
 
@@ -88,10 +126,16 @@ export interface UpdateSessionData {
   trainer_id?: string | null; // Optional: Can clear trainer
   scheduled_start?: string;
   scheduled_end?: string;
-  session_type?: "trail" | "standard";
+  session_type?: SessionType;
   notes?: string;
   status?: "scheduled" | "in_progress" | "completed" | "cancelled";
   member_id?: string; // Single member (not array)
+
+  // Guest fields (for updates)
+  guest_first_name?: string;
+  guest_last_name?: string;
+  guest_gym_name?: string;
+  collaboration_details?: string;
 }
 
 // API response types
@@ -138,6 +182,11 @@ export interface WeekRange {
 export interface DailyStatistics {
   date: string; // YYYY-MM-DD format
   total: number; // Total non-cancelled sessions
-  standard: number; // Count of standard sessions
   trial: number; // Count of trial sessions
+  member: number; // Count of member sessions
+  contractual: number; // Count of contractual sessions
+  makeup: number; // Count of makeup sessions
+  multi_site: number; // Count of multi-site sessions
+  collaboration: number; // Count of collaboration sessions
+  non_bookable: number; // Count of non-bookable sessions
 }

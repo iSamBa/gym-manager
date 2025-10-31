@@ -23,6 +23,7 @@ vi.mock("@/lib/supabase", () => ({
         })),
       })),
     })),
+    rpc: vi.fn(() => Promise.resolve({ data: [], error: null })),
   },
 }));
 
@@ -134,7 +135,16 @@ describe("Training Sessions Hooks", () => {
   describe("useTrainingSession", () => {
     it("should fetch single training session successfully", async () => {
       const mockSingleSession = mockTrainingSessions[0];
+      const mockSessionWithIndicators = {
+        ...mockSingleSession,
+        session_id: "session-1", // RPC returns session_id
+        outstanding_balance: 100.5,
+        latest_payment_date: "2024-01-15",
+        subscription_end_date: "2024-12-31",
+        remaining_sessions: 5,
+      };
 
+      // Mock the calendar view query (first call to get basic session)
       const mockQuery = {
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
@@ -145,6 +155,12 @@ describe("Training Sessions Hooks", () => {
       const mockSelect = vi.fn(() => mockQuery);
       (supabase.from as any).mockReturnValue({ select: mockSelect });
 
+      // Mock the RPC call to get planning indicators
+      (supabase.rpc as any).mockResolvedValue({
+        data: [mockSessionWithIndicators],
+        error: null,
+      });
+
       const { result } = renderHook(() => useTrainingSession("session-1"), {
         wrapper,
       });
@@ -153,7 +169,10 @@ describe("Training Sessions Hooks", () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.data).toEqual(mockSingleSession);
+      // Should return session with planning indicators
+      expect(result.current.data).toBeDefined();
+      expect(result.current.data?.id).toBe("session-1");
+      expect(result.current.data?.outstanding_balance).toBe(100.5);
       expect(result.current.error).toBeNull();
     });
 

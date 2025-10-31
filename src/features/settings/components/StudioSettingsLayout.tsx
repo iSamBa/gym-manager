@@ -5,7 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { OpeningHoursTab } from "./OpeningHoursTab";
 import { PlanningTab } from "./PlanningTab";
-import { Clock, CreditCard, Building, Settings } from "lucide-react";
+import { MultiSiteSessionsTab } from "./MultiSiteSessionsTab";
+import { Clock, CreditCard, Building, Settings, Users } from "lucide-react";
 
 function StudioSettingsLayoutComponent() {
   const [activeTab, setActiveTab] = useState("opening-hours");
@@ -40,6 +41,10 @@ function StudioSettingsLayoutComponent() {
             <Settings className="h-4 w-4" />
             Planning
           </TabsTrigger>
+          <TabsTrigger value="multi-site" className="gap-2">
+            <Users className="h-4 w-4" />
+            Multi-Site Sessions
+          </TabsTrigger>
           <TabsTrigger value="general" disabled className="gap-2">
             <Building className="h-4 w-4" />
             General
@@ -62,6 +67,10 @@ function StudioSettingsLayoutComponent() {
 
         <TabsContent value="planning">
           <PlanningTab />
+        </TabsContent>
+
+        <TabsContent value="multi-site">
+          <MultiSiteSessionsTab />
         </TabsContent>
 
         <TabsContent value="general">

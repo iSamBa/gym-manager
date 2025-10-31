@@ -5,7 +5,7 @@
 export { default as TrainingSessionsView } from "./TrainingSessionsView";
 
 // Form components
-export { default as SessionDialog } from "./forms/SessionDialog";
+export { SessionDialog } from "./forms/SessionDialog";
 export { default as MemberMultiSelect } from "./forms/MemberMultiSelect";
 export { SessionBookingForm } from "./forms/SessionBookingForm";
 export { SessionBookingDialog } from "./forms/SessionBookingDialog";

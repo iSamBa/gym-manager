@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Enhanced session creation schema with comprehensive validations
-// Updated for machine-based single-member sessions
+// Updated for machine-based single-member sessions with all session types
 export const createSessionSchema = z
   .object({
     machine_id: z
@@ -50,14 +50,101 @@ export const createSessionSchema = z
           return false;
         }
       }, "The end date format is invalid. Please use the date picker."),
-    session_type: z.enum(["trail", "standard"], {
-      message: "Session type must be either trail or standard",
-    }),
+    session_type: z.enum(
+      [
+        "trial",
+        "member",
+        "contractual",
+        "multi_site",
+        "collaboration",
+        "makeup",
+        "non_bookable",
+      ],
+      {
+        message: "Please select a valid session type",
+      }
+    ),
     member_id: z
       .string()
-      .uuid("Invalid member selection - please select a valid member"),
+      .optional()
+      .refine(
+        (val) => !val || z.string().uuid().safeParse(val).success,
+        "Invalid member selection - please select a valid member"
+      ), // Optional for guest sessions, validate UUID only if provided
+
+    // Trial session fields (validation happens in .refine() below)
+    new_member_first_name: z.string().optional(),
+    new_member_last_name: z.string().optional(),
+    new_member_phone: z.string().optional(),
+    new_member_email: z
+      .string()
+      .email("Please enter a valid email address")
+      .optional()
+      .or(z.literal("")),
+    new_member_gender: z.enum(["male", "female"]).optional(),
+    new_member_referral_source: z
+      .enum([
+        "instagram",
+        "member_referral",
+        "website_ib",
+        "prospection",
+        "studio",
+        "phone",
+        "chatbot",
+      ])
+      .optional(),
+
+    // Guest session fields (validation happens in .refine() below)
+    guest_first_name: z.string().optional(),
+    guest_last_name: z.string().optional(),
+    guest_gym_name: z.string().optional(),
+
+    // Collaboration session fields (validation happens in .refine() below)
+    collaboration_details: z.string().optional(),
+
     notes: z.string().optional(),
   })
+  .refine(
+    (data) => {
+      // Trial: requires new member fields
+      if (data.session_type === "trial") {
+        return !!(
+          data.new_member_first_name &&
+          data.new_member_last_name &&
+          data.new_member_phone &&
+          data.new_member_email &&
+          data.new_member_gender &&
+          data.new_member_referral_source
+        );
+      }
+
+      // Member, contractual, makeup: require member_id
+      if (["member", "contractual", "makeup"].includes(data.session_type)) {
+        return !!data.member_id;
+      }
+
+      // Multi-site: requires guest data
+      if (data.session_type === "multi_site") {
+        return !!(
+          data.guest_first_name &&
+          data.guest_last_name &&
+          data.guest_gym_name
+        );
+      }
+
+      // Collaboration: requires collaboration details (influencer name)
+      if (data.session_type === "collaboration") {
+        return !!data.collaboration_details;
+      }
+
+      // Non-bookable: no requirements
+      return true;
+    },
+    {
+      message: "Required fields missing for this session type",
+      path: ["session_type"],
+    }
+  )
   .refine(
     (data) => {
       // Validate end time is after start time
@@ -73,25 +160,12 @@ export const createSessionSchema = z
   .refine(
     (data) => {
       // Validate session cannot be scheduled in the past
-      // Allow flexibility for timezone handling while preventing actual past scheduling
       const start = new Date(data.scheduled_start);
       const now = new Date();
 
-      // For test environments or very old dates, allow more flexibility
-      const isHistoricalDate =
-        start.getFullYear() < now.getFullYear() ||
-        (start.getFullYear() === now.getFullYear() &&
-          start.getMonth() < now.getMonth() - 1);
-
-      if (isHistoricalDate) {
-        // Historical dates are allowed for testing purposes (e.g., leap years, DST testing)
-        return true;
-      }
-
-      // For recent dates, require future scheduling with minimal buffer for clock differences
-      // Use 1 second buffer to handle minor timing differences in tests/systems
-      const buffer = 1000; // 1 second
-      return start.getTime() > now.getTime() + buffer;
+      // For production, only allow future dates
+      // Use minimal buffer to handle timing differences in tests/systems
+      return start.getTime() > now.getTime();
     },
     {
       message:
@@ -131,50 +205,137 @@ export const createSessionSchema = z
   );
 
 // Simplified session update schema (machine-based single-member sessions)
-export const updateSessionSchema = z.object({
-  machine_id: z
-    .string()
-    .uuid("Please select a valid machine from the available options")
-    .optional(),
-  trainer_id: z
-    .string()
-    .uuid("Please select a valid trainer from the list")
-    .optional()
-    .nullable(), // Can clear trainer assignment
-  scheduled_start: z
-    .string()
-    .refine((val) => {
-      if (!val) return true; // Optional field
-      try {
-        const date = new Date(val);
-        return !isNaN(date.getTime()) && date instanceof Date;
-      } catch {
-        return false;
+export const updateSessionSchema = z
+  .object({
+    machine_id: z
+      .string()
+      .uuid("Please select a valid machine from the available options")
+      .optional(),
+    trainer_id: z
+      .string()
+      .uuid("Please select a valid trainer from the list")
+      .optional()
+      .nullable(), // Can clear trainer assignment
+    scheduled_start: z
+      .string()
+      .refine((val) => {
+        if (!val) return true; // Optional field
+        try {
+          const date = new Date(val);
+          return !isNaN(date.getTime()) && date instanceof Date;
+        } catch {
+          return false;
+        }
+      }, "Invalid start date/time format")
+      .optional(),
+    scheduled_end: z
+      .string()
+      .refine((val) => {
+        if (!val) return true; // Optional field
+        try {
+          const date = new Date(val);
+          return !isNaN(date.getTime()) && date instanceof Date;
+        } catch {
+          return false;
+        }
+      }, "Invalid end date/time format")
+      .optional(),
+    session_type: z
+      .enum([
+        "trial",
+        "member",
+        "contractual",
+        "multi_site",
+        "collaboration",
+        "makeup",
+        "non_bookable",
+      ])
+      .optional(),
+    member_id: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || z.string().uuid().safeParse(val).success,
+        "Invalid member selection - please select a valid member"
+      ),
+
+    // Trial session fields (validation happens in .refine() below)
+    new_member_first_name: z.string().optional(),
+    new_member_last_name: z.string().optional(),
+    new_member_phone: z.string().optional(),
+    new_member_email: z
+      .string()
+      .email("Please enter a valid email address")
+      .optional()
+      .or(z.literal("")),
+    new_member_gender: z.enum(["male", "female"]).optional(),
+    new_member_referral_source: z
+      .enum([
+        "instagram",
+        "member_referral",
+        "website_ib",
+        "prospection",
+        "studio",
+        "phone",
+        "chatbot",
+      ])
+      .optional(),
+
+    // Guest fields (for updates)
+    guest_first_name: z.string().min(1).optional(),
+    guest_last_name: z.string().min(1).optional(),
+    guest_gym_name: z.string().min(1).optional(),
+    collaboration_details: z.string().min(1).optional(),
+
+    notes: z.string().optional(),
+    status: z
+      .enum(["scheduled", "in_progress", "completed", "cancelled"])
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      // Only validate if session_type is being changed
+      if (!data.session_type) return true;
+
+      // Trial: requires new member fields
+      if (data.session_type === "trial") {
+        return !!(
+          data.new_member_first_name &&
+          data.new_member_last_name &&
+          data.new_member_phone &&
+          data.new_member_email &&
+          data.new_member_gender &&
+          data.new_member_referral_source
+        );
       }
-    }, "Invalid start date/time format")
-    .optional(),
-  scheduled_end: z
-    .string()
-    .refine((val) => {
-      if (!val) return true; // Optional field
-      try {
-        const date = new Date(val);
-        return !isNaN(date.getTime()) && date instanceof Date;
-      } catch {
-        return false;
+
+      // Member, contractual, makeup: require member_id
+      if (["member", "contractual", "makeup"].includes(data.session_type)) {
+        return !!data.member_id;
       }
-    }, "Invalid end date/time format")
-    .optional(),
-  session_type: z.enum(["trail", "standard"]).optional(),
-  member_id: z
-    .string()
-    .uuid("Invalid member selection - please select a valid member")
-    .optional(),
-  notes: z.string().optional(),
-  status: z
-    .enum(["scheduled", "in_progress", "completed", "cancelled"])
-    .optional(),
-});
+
+      // Multi-site: requires guest data
+      if (data.session_type === "multi_site") {
+        return !!(
+          data.guest_first_name &&
+          data.guest_last_name &&
+          data.guest_gym_name
+        );
+      }
+
+      // Collaboration: requires collaboration details (influencer name)
+      if (data.session_type === "collaboration") {
+        return !!data.collaboration_details;
+      }
+
+      // Non-bookable: no requirements
+      return true;
+    },
+    {
+      message: "Required fields missing for this session type",
+      path: ["session_type"],
+    }
+  );
 
 // Simplified session filters schema (machine-based sessions)
 export const sessionFiltersSchema = z.object({

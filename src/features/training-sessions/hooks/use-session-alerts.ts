@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
 import type { MemberComment } from "@/features/database/lib/types";
 import { getLocalDateString } from "@/lib/date-utils";
 
@@ -37,7 +38,7 @@ export function useSessionAlerts(
         .order("due_date", { ascending: true });
 
       if (error) {
-        console.error("Error fetching session alerts:", error);
+        logger.error("Error fetching session alerts", { error });
         return [];
       }
 

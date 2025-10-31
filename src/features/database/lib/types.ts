@@ -47,7 +47,14 @@ export type BookingStatus =
   | "cancelled"
   | "no_show"
   | "attended";
-// SessionType - REMOVED: unused, training_sessions use inline types 'trail' | 'standard'
+export type SessionType =
+  | "trial" // Try-out session for new members (creates trial member)
+  | "member" // Regular member session (renamed from 'standard')
+  | "contractual" // Contract signing session (trial members only)
+  | "multi_site" // Member from another gym in group (guest)
+  | "collaboration" // Commercial partnership/influencer (guest)
+  | "makeup" // Additional session (bypasses weekly limit)
+  | "non_bookable"; // Time blocker (no member needed)
 
 // Member Profile Enhancement - Equipment & Referral Tracking
 export type UniformSize = "XS" | "S" | "M" | "L" | "XL";

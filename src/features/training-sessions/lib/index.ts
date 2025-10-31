@@ -1,6 +1,9 @@
 // Export all types
 export * from "./types";
 
+// Export type guards
+export * from "./type-guards";
+
 // Export validation schemas and types with different names
 export {
   createSessionSchema,

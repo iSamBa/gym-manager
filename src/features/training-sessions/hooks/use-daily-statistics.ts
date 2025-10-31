@@ -9,8 +9,13 @@ import type { DailyStatistics } from "../lib/types";
 interface DailyStatisticsRpcResponse {
   day_date: string;
   total_count: number;
-  standard_count: number;
-  trail_count: number;
+  trial_count: number;
+  member_count: number;
+  contractual_count: number;
+  makeup_count: number;
+  multi_site_count: number;
+  collaboration_count: number;
+  non_bookable_count: number;
 }
 
 /**
@@ -28,8 +33,8 @@ interface DailyStatisticsRpcResponse {
  * const { data: statistics, isLoading } = useDailyStatistics(weekStart, weekEnd);
  *
  * // statistics = [
- * //   { date: '2025-10-14', total: 10, standard: 8, trial: 2 },
- * //   { date: '2025-10-15', total: 12, standard: 10, trial: 2 },
+ * //   { date: '2025-10-14', total: 10, trial: 2, member: 5, contractual: 2, makeup: 1, multi_site: 0, collaboration: 0, non_bookable: 0 },
+ * //   { date: '2025-10-15', total: 12, trial: 3, member: 6, contractual: 2, makeup: 1, multi_site: 0, collaboration: 0, non_bookable: 0 },
  * //   ...
  * // ]
  * ```
@@ -60,8 +65,13 @@ export const useDailyStatistics = (weekStart: Date, weekEnd: Date) => {
       ).map((row) => ({
         date: row.day_date,
         total: row.total_count,
-        standard: row.standard_count,
-        trial: row.trail_count,
+        trial: row.trial_count,
+        member: row.member_count,
+        contractual: row.contractual_count,
+        makeup: row.makeup_count,
+        multi_site: row.multi_site_count,
+        collaboration: row.collaboration_count,
+        non_bookable: row.non_bookable_count,
       }));
 
       return statistics;

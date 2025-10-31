@@ -55,7 +55,7 @@ const sessionBookingSchema = z.object({
   sessionTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
   location: z.string().min(1, "Location is required"),
-  sessionType: z.enum(["trail", "standard"], {
+  sessionType: z.enum(["trial", "member"], {
     message: "Session type is required",
   }),
   notes: z.string().optional(),
@@ -253,8 +253,8 @@ export function SessionBookingForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="trail">Trail Session</SelectItem>
-                      <SelectItem value="standard">Standard Session</SelectItem>
+                      <SelectItem value="trial">Trial Session</SelectItem>
+                      <SelectItem value="member">Member Session</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
