@@ -133,17 +133,55 @@ export const useTrainingSession = (id: string) => {
   return useQuery({
     queryKey: TRAINING_SESSIONS_KEYS.detail(id),
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, get the session to find its scheduled_start date
+      const { data: session, error: sessionError } = await supabase
         .from("training_sessions_calendar")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error) {
-        throw new Error(`Failed to fetch training session: ${error.message}`);
+      if (sessionError) {
+        throw new Error(
+          `Failed to fetch training session: ${sessionError.message}`
+        );
       }
 
-      return data as TrainingSession;
+      if (!session) {
+        throw new Error("Session not found");
+      }
+
+      // Get planning indicators using RPC function
+      // Use a date range around the session's scheduled_start (±7 days to be safe)
+      const sessionDate = new Date(session.scheduled_start);
+      const startDate = new Date(sessionDate);
+      startDate.setDate(startDate.getDate() - 7);
+      const endDate = new Date(sessionDate);
+      endDate.setDate(endDate.getDate() + 7);
+
+      const { data: sessionsWithIndicators, error: rpcError } =
+        await supabase.rpc("get_sessions_with_planning_indicators", {
+          p_start_date: getLocalDateString(startDate),
+          p_end_date: getLocalDateString(endDate),
+        });
+
+      if (rpcError) {
+        logger.error(
+          "Failed to fetch planning indicators, returning basic session",
+          { error: rpcError }
+        );
+        // Return basic session data if RPC fails
+        return session as TrainingSession;
+      }
+
+      // Map RPC response and find our session
+      const mappedSessions = mapSessionRpcResponse<TrainingSession>(
+        (sessionsWithIndicators || []) as RpcSessionResponse<TrainingSession>[]
+      );
+
+      const sessionWithIndicators = mappedSessions.find((s) => s.id === id);
+
+      // Return session with indicators if found, otherwise return basic session
+      return (sessionWithIndicators || session) as TrainingSession;
     },
     enabled: !!id,
   });
