@@ -68,6 +68,13 @@ export interface CreateMemberData {
   referral_source?: string;
   referred_by_member_id?: string;
   training_preference?: string;
+  // Collaboration member type and partnership fields
+  member_type?: MemberType;
+  partnership_company?: string;
+  partnership_type?: string;
+  partnership_contract_start?: string;
+  partnership_contract_end?: string;
+  partnership_notes?: string;
 }
 
 export interface UpdateMemberData {
@@ -95,6 +102,13 @@ export interface UpdateMemberData {
   referral_source?: string;
   referred_by_member_id?: string;
   training_preference?: string;
+  // Collaboration member type and partnership fields
+  member_type?: MemberType;
+  partnership_company?: string;
+  partnership_type?: string;
+  partnership_contract_start?: string;
+  partnership_contract_end?: string;
+  partnership_notes?: string;
 }
 
 /**
@@ -257,7 +271,10 @@ export const memberUtils = {
           key === "notes" ||
           key === "medical_conditions" ||
           key === "fitness_goals" ||
-          key === "profile_picture_url")
+          key === "profile_picture_url" ||
+          key === "partnership_company" ||
+          key === "partnership_type" ||
+          key === "partnership_notes")
       ) {
         cleanedData[key] = null;
       } else {
@@ -276,6 +293,7 @@ export const memberUtils = {
             memberData.preferred_contact_method || "email",
           marketing_consent: memberData.marketing_consent ?? false,
           waiver_signed: memberData.waiver_signed ?? false,
+          member_type: memberData.member_type || "full",
         })
         .select("*")
         .single();
@@ -313,7 +331,10 @@ export const memberUtils = {
           key === "notes" ||
           key === "medical_conditions" ||
           key === "fitness_goals" ||
-          key === "profile_picture_url")
+          key === "profile_picture_url" ||
+          key === "partnership_company" ||
+          key === "partnership_type" ||
+          key === "partnership_notes")
       ) {
         cleanedData[key] = null;
       } else {
