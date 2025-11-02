@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { AuthErrorBoundary } from "@/components/error-boundary";
 
 const AuthProvider = dynamic(
   () =>
@@ -26,9 +27,11 @@ interface ClientProvidersProps {
 export function ClientProviders({ children }: ClientProvidersProps) {
   return (
     <ThemeProvider defaultTheme="system" storageKey="gym-manager-theme">
-      <AuthProvider>
-        <QueryProvider>{children}</QueryProvider>
-      </AuthProvider>
+      <AuthErrorBoundary>
+        <AuthProvider>
+          <QueryProvider>{children}</QueryProvider>
+        </AuthProvider>
+      </AuthErrorBoundary>
     </ThemeProvider>
   );
 }
