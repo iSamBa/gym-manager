@@ -139,6 +139,47 @@ export const subscriptionUtils = {
       });
     }
 
+    // AUTOMATIC TRIAL MEMBER CONVERSION (US-001)
+    // Convert trial members to permanent members when they create their first subscription
+    // NOTE: Collaboration members are NOT converted - they remain as 'collaboration' type
+    try {
+      const { data: member } = await supabase
+        .from("members")
+        .select("member_type")
+        .eq("id", input.member_id)
+        .single();
+
+      // Only convert trial members to full
+      // Collaboration members stay as 'collaboration'
+      if (member?.member_type === "trial") {
+        const { error: updateError } = await supabase
+          .from("members")
+          .update({
+            member_type: "full",
+            status: "active",
+          })
+          .eq("id", input.member_id);
+
+        if (updateError) {
+          logger.error("Failed to convert trial member to permanent", {
+            error: updateError,
+            member_id: input.member_id,
+            subscription_id: data.id,
+          });
+          // Don't throw - subscription is already created successfully
+          // This is a status update issue, not a critical failure
+        }
+      }
+      // Collaboration members keep their 'collaboration' type - no conversion needed
+    } catch (conversionError) {
+      logger.error("Exception during trial member conversion", {
+        error: conversionError,
+        member_id: input.member_id,
+        subscription_id: data.id,
+      });
+      // Don't throw - subscription is already created successfully
+    }
+
     return data as MemberSubscriptionWithSnapshot;
   },
 

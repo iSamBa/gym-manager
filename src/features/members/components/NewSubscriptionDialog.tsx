@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon } from "lucide-react";
@@ -48,7 +48,7 @@ import {
   type CreateSubscriptionData,
 } from "@/features/memberships/lib/validation";
 import {
-  useSubscriptionPlans,
+  useActiveSubscriptionPlans,
   useCreateSubscription,
 } from "@/features/memberships/hooks/use-subscriptions";
 import { cn } from "@/lib/utils";
@@ -65,8 +65,24 @@ export function NewSubscriptionDialog({
   open,
   onOpenChange,
 }: NewSubscriptionDialogProps) {
-  const { data: plans, isLoading: isLoadingPlans } = useSubscriptionPlans();
+  const { data: plans, isLoading: isLoadingPlans } =
+    useActiveSubscriptionPlans();
   const createSubscriptionMutation = useCreateSubscription();
+
+  // Filter plans based on member type
+  // Collaboration members can only use collaboration plans
+  // Regular members (trial/full) can only use regular plans
+  const filteredPlans = useMemo(() => {
+    if (!plans) return [];
+
+    // For collaboration members, show only collaboration plans
+    if (member.member_type === "collaboration") {
+      return plans.filter((plan) => plan.is_collaboration_plan === true);
+    }
+
+    // For regular members (trial/full), show only non-collaboration plans
+    return plans.filter((plan) => plan.is_collaboration_plan === false);
+  }, [plans, member.member_type]);
 
   const form = useForm({
     resolver: zodResolver(createSubscriptionSchema),
@@ -87,7 +103,7 @@ export function NewSubscriptionDialog({
   const watchedIncludeSignupFee = form.watch("include_signup_fee");
   const watchedSignupFeePaid = form.watch("signup_fee_paid");
 
-  const selectedPlan = plans?.find((p) => p.id === watchedPlanId);
+  const selectedPlan = filteredPlans?.find((p) => p.id === watchedPlanId);
 
   const sessionInfo = selectedPlan
     ? {
@@ -182,8 +198,14 @@ export function NewSubscriptionDialog({
                         <div className="p-2">
                           <Skeleton className="h-8 w-full" />
                         </div>
+                      ) : filteredPlans.length === 0 ? (
+                        <div className="text-muted-foreground p-2 text-sm">
+                          {member.member_type === "collaboration"
+                            ? "No collaboration plans available. Create a collaboration plan first."
+                            : "No subscription plans available."}
+                        </div>
                       ) : (
-                        plans?.map((plan) => (
+                        filteredPlans.map((plan) => (
                           <SelectItem key={plan.id} value={plan.id}>
                             <div className="flex w-full items-center justify-between">
                               <span>{plan.name}</span>

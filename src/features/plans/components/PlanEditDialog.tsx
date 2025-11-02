@@ -99,7 +99,12 @@ export function PlanEditDialog({
       newErrors.duration_months = "Duration must be at least 1 month";
     }
 
-    if (formData.price < 0) {
+    // Price validation depends on collaboration plan status
+    if (!formData.is_collaboration_plan && formData.price <= 0) {
+      newErrors.price = "Price must be greater than 0 for regular plans";
+    }
+
+    if (formData.is_collaboration_plan && formData.price < 0) {
       newErrors.price = "Price cannot be negative";
     }
 
@@ -288,6 +293,25 @@ export function PlanEditDialog({
               }
             />
             <Label htmlFor="is_active">Active Plan</Label>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="is_collaboration_plan"
+                checked={formData.is_collaboration_plan}
+                onCheckedChange={(checked) =>
+                  handleInputChange("is_collaboration_plan", checked)
+                }
+              />
+              <Label htmlFor="is_collaboration_plan">Collaboration Plan</Label>
+            </div>
+            {formData.is_collaboration_plan && (
+              <p className="text-muted-foreground pl-1 text-sm">
+                Collaboration plans can have $0 price for partnership
+                arrangements and can only be assigned to collaboration members.
+              </p>
+            )}
           </div>
 
           {(createMutation.error || updateMutation.error) && (
