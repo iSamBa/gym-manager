@@ -12,7 +12,6 @@ describe("Session Type Guards", () => {
   describe("isGuestSession", () => {
     it("returns true for guest session types", () => {
       expect(isGuestSession("multi_site")).toBe(true);
-      expect(isGuestSession("collaboration")).toBe(true);
       expect(isGuestSession("non_bookable")).toBe(true);
     });
 
@@ -21,6 +20,7 @@ describe("Session Type Guards", () => {
       expect(isGuestSession("member")).toBe(false);
       expect(isGuestSession("contractual")).toBe(false);
       expect(isGuestSession("makeup")).toBe(false);
+      expect(isGuestSession("collaboration")).toBe(false); // Collaboration now requires members
     });
   });
 
@@ -29,12 +29,12 @@ describe("Session Type Guards", () => {
       expect(requiresMember("member")).toBe(true);
       expect(requiresMember("contractual")).toBe(true);
       expect(requiresMember("makeup")).toBe(true);
+      expect(requiresMember("collaboration")).toBe(true); // Collaboration now requires members
     });
 
     it("returns false for types not requiring member", () => {
       expect(requiresMember("trial")).toBe(false);
       expect(requiresMember("multi_site")).toBe(false);
-      expect(requiresMember("collaboration")).toBe(false);
       expect(requiresMember("non_bookable")).toBe(false);
     });
   });

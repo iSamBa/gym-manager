@@ -238,6 +238,14 @@ const mockMembers = [
     status: "active",
     member_type: "trial",
   },
+  {
+    id: "member-3",
+    user_id: "user-3",
+    first_name: "Collab",
+    last_name: "Partner",
+    status: "active",
+    member_type: "collaboration",
+  },
 ];
 
 const mockTrainers = [
@@ -549,7 +557,7 @@ describe("SessionBookingDialog - Dynamic Forms (US-008)", () => {
   });
 
   describe("AC-2: Dynamic Form Sections - Collaboration Session", () => {
-    it("should show collaboration textarea for collaboration sessions on step 2", async () => {
+    it("should show member combobox for collaboration sessions on step 2", async () => {
       const user = userEvent.setup();
       formState.session_type = "collaboration";
       renderDialog({ defaultValues: { session_type: "collaboration" } });
@@ -558,16 +566,16 @@ describe("SessionBookingDialog - Dynamic Forms (US-008)", () => {
       await user.click(screen.getByRole("button", { name: /next/i }));
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("guest-info-collaboration")
-        ).toBeInTheDocument();
-        expect(
-          screen.getByLabelText(/collaboration details/i)
-        ).toBeInTheDocument();
+        // Collaboration sessions now show member combobox (for collaboration members)
+        expect(screen.getByTestId("member-combobox")).toBeInTheDocument();
       });
+
+      // Verify the label text (using getAllByText since it may appear in both label and helper text)
+      const labelElements = screen.getAllByText(/Collaboration Member/i);
+      expect(labelElements.length).toBeGreaterThan(0);
     });
 
-    it("should hide member combobox for collaboration sessions on step 2", async () => {
+    it("should not show guest info for collaboration sessions on step 2", async () => {
       const user = userEvent.setup();
       formState.session_type = "collaboration";
       renderDialog({ defaultValues: { session_type: "collaboration" } });
@@ -576,7 +584,10 @@ describe("SessionBookingDialog - Dynamic Forms (US-008)", () => {
       await user.click(screen.getByRole("button", { name: /next/i }));
 
       await waitFor(() => {
-        expect(screen.queryByTestId("member-combobox")).not.toBeInTheDocument();
+        // Guest info should NOT be shown (collaboration uses member selection now)
+        expect(
+          screen.queryByTestId("guest-info-collaboration")
+        ).not.toBeInTheDocument();
       });
     });
   });

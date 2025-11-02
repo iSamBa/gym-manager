@@ -2,18 +2,20 @@ import type { SessionType } from "@/features/database/lib/types";
 
 /**
  * Check if session type is a guest session (no member_id)
- * Guest sessions include multi_site, collaboration, and non_bookable
+ * Guest sessions include multi_site and non_bookable
+ * NOTE: Collaboration sessions now require collaboration members (not guest info)
  */
 export function isGuestSession(type: SessionType): boolean {
-  return ["multi_site", "collaboration", "non_bookable"].includes(type);
+  return ["multi_site", "non_bookable"].includes(type);
 }
 
 /**
  * Check if session type requires member selection
- * Member-required sessions include member, contractual, and makeup
+ * Member-required sessions include member, contractual, makeup, and collaboration
+ * NOTE: Collaboration sessions require collaboration-type members
  */
 export function requiresMember(type: SessionType): boolean {
-  return ["member", "contractual", "makeup"].includes(type);
+  return ["member", "contractual", "makeup", "collaboration"].includes(type);
 }
 
 /**

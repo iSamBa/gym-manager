@@ -294,23 +294,25 @@ describe("Session Type Validation", () => {
   });
 
   describe("AC-4: Collaboration Validation", () => {
-    it("validates collaboration session with influencer name", () => {
+    it("validates collaboration session with member_id", () => {
       const validCollaborationSession = {
         ...baseSessionData,
         session_type: "collaboration" as const,
+        member_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479", // Required: Collaboration member
         collaboration_details:
-          "@fitnessguru - Influencer partnership content shoot", // Required: Influencer/partner name
+          "@fitnessguru - Influencer partnership content shoot", // Optional details
       };
 
       const result = createSessionSchema.safeParse(validCollaborationSession);
       expect(result.success).toBe(true);
     });
 
-    it("rejects collaboration session missing collaboration_details (influencer name)", () => {
+    it("rejects collaboration session missing member_id", () => {
       const invalidCollaborationSession = {
         ...baseSessionData,
         session_type: "collaboration" as const,
-        // missing collaboration_details - this is required for collaboration
+        collaboration_details: "@partner_name - Commercial partnership",
+        // missing member_id - this is required for collaboration sessions
       };
 
       const result = createSessionSchema.safeParse(invalidCollaborationSession);
@@ -320,39 +322,43 @@ describe("Session Type Validation", () => {
       }
     });
 
-    it("rejects collaboration session with empty collaboration_details", () => {
+    it("rejects collaboration session with empty string member_id", () => {
       const invalidCollaborationSession = {
         ...baseSessionData,
         session_type: "collaboration" as const,
-        collaboration_details: "", // Empty string fails truthy check
+        member_id: "", // Empty string is invalid
+        collaboration_details: "@partner_name - Commercial partnership",
       };
 
       const result = createSessionSchema.safeParse(invalidCollaborationSession);
       expect(result.success).toBe(false);
     });
 
-    it("validates collaboration session without member_id", () => {
+    it("validates collaboration session without collaboration_details", () => {
       const validCollaborationSession = {
         ...baseSessionData,
         session_type: "collaboration" as const,
-        collaboration_details: "@partner_name - Commercial partnership", // Required
-        // NO member_id - this should be valid (guest session)
+        member_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479", // Required
+        // NO collaboration_details - optional field
       };
 
       const result = createSessionSchema.safeParse(validCollaborationSession);
       expect(result.success).toBe(true);
     });
 
-    it("validates collaboration session with empty string member_id", () => {
-      const validCollaborationSession = {
+    it("validates collaboration session with invalid UUID format for member_id", () => {
+      const invalidCollaborationSession = {
         ...baseSessionData,
         session_type: "collaboration" as const,
-        collaboration_details: "@partner_name - Commercial partnership", // Required
-        member_id: "", // Empty string should be valid for guest sessions
+        member_id: "not-a-uuid", // Invalid format
+        collaboration_details: "@partner_name - Commercial partnership",
       };
 
-      const result = createSessionSchema.safeParse(validCollaborationSession);
-      expect(result.success).toBe(true);
+      const result = createSessionSchema.safeParse(invalidCollaborationSession);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].path).toContain("member_id");
+      }
     });
   });
 

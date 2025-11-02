@@ -118,8 +118,12 @@ export const createSessionSchema = z
         );
       }
 
-      // Member, contractual, makeup: require member_id
-      if (["member", "contractual", "makeup"].includes(data.session_type)) {
+      // Member, contractual, makeup, collaboration: require member_id
+      if (
+        ["member", "contractual", "makeup", "collaboration"].includes(
+          data.session_type
+        )
+      ) {
         return !!data.member_id;
       }
 
@@ -130,11 +134,6 @@ export const createSessionSchema = z
           data.guest_last_name &&
           data.guest_gym_name
         );
-      }
-
-      // Collaboration: requires collaboration details (influencer name)
-      if (data.session_type === "collaboration") {
-        return !!data.collaboration_details;
       }
 
       // Non-bookable: no requirements
@@ -309,8 +308,12 @@ export const updateSessionSchema = z
         );
       }
 
-      // Member, contractual, makeup: require member_id
-      if (["member", "contractual", "makeup"].includes(data.session_type)) {
+      // Member, contractual, makeup, collaboration: require member_id
+      if (
+        ["member", "contractual", "makeup", "collaboration"].includes(
+          data.session_type
+        )
+      ) {
         return !!data.member_id;
       }
 
@@ -321,11 +324,6 @@ export const updateSessionSchema = z
           data.guest_last_name &&
           data.guest_gym_name
         );
-      }
-
-      // Collaboration: requires collaboration details (influencer name)
-      if (data.session_type === "collaboration") {
-        return !!data.collaboration_details;
       }
 
       // Non-bookable: no requirements

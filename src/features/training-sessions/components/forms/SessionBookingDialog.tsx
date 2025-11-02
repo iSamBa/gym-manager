@@ -66,6 +66,7 @@ import {
   isGuestSession,
   createsNewMember,
 } from "../../lib/type-guards";
+import type { MemberType } from "@/features/database/lib/types";
 
 type BookingFormData = CreateSessionData;
 
@@ -82,6 +83,61 @@ const SESSION_TYPE_LABELS: Record<
   makeup: "Make-up session",
   non_bookable: "Non-bookable session",
 };
+
+/**
+ * Validation: Check if a member type is allowed to book a session type
+ * Business Rules:
+ * - Collaboration members can ONLY book collaboration sessions
+ * - Trial members can book trial and contractual sessions
+ * - Full members can book member and makeup sessions (not collaboration)
+ */
+function canMemberTypeBookSessionType(
+  memberType: MemberType,
+  sessionType: NonNullable<BookingFormData["session_type"]>
+): boolean {
+  // Collaboration members can ONLY book collaboration sessions
+  if (memberType === "collaboration") {
+    return sessionType === "collaboration";
+  }
+
+  // Trial members can book trial and contractual sessions
+  if (memberType === "trial") {
+    return sessionType === "trial" || sessionType === "contractual";
+  }
+
+  // Full members can book member, makeup sessions (not collaboration)
+  if (memberType === "full") {
+    return (
+      sessionType === "member" ||
+      sessionType === "makeup" ||
+      sessionType === "trial"
+    );
+  }
+
+  return false;
+}
+
+/**
+ * Get user-friendly error message for invalid booking attempt
+ */
+function getBookingErrorMessage(
+  memberType: MemberType,
+  sessionType: NonNullable<BookingFormData["session_type"]>
+): string {
+  if (memberType === "collaboration" && sessionType !== "collaboration") {
+    return "Collaboration members can only book collaboration sessions.";
+  }
+
+  if (memberType !== "collaboration" && sessionType === "collaboration") {
+    return "Collaboration sessions are reserved for collaboration members only.";
+  }
+
+  if (memberType === "trial" && sessionType === "member") {
+    return "Trial members cannot book regular member sessions. Complete a contractual session first.";
+  }
+
+  return "This member cannot book this session type.";
+}
 
 export interface SessionBookingDialogProps {
   open: boolean;
@@ -129,7 +185,6 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
         trainer_id: null,
         scheduled_start: "",
         scheduled_end: "",
-        session_type: "member",
         notes: "",
         collaboration_details: "",
         guest_first_name: "",
@@ -147,13 +202,14 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
     // Reset form when dialog opens with new defaultValues
     useEffect(() => {
       if (open && defaultValues) {
+        setCurrentStep(1); // Always start at step 1 when opening with new data
         reset({
           machine_id: defaultValues.machine_id || "",
           member_id: defaultValues.member_id || "",
           trainer_id: defaultValues.trainer_id || null,
           scheduled_start: defaultValues.scheduled_start || "",
           scheduled_end: defaultValues.scheduled_end || "",
-          session_type: defaultValues.session_type || "member",
+          session_type: defaultValues.session_type,
           notes: defaultValues.notes || "",
           collaboration_details: defaultValues.collaboration_details || "",
           guest_first_name: defaultValues.guest_first_name || "",
@@ -170,11 +226,24 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
       [scheduledStart]
     );
 
-    // Filter members for contractual sessions (trial members only)
+    // Filter members based on session type requirements
     const filteredMembers = useMemo(() => {
+      // Collaboration sessions require collaboration members ONLY
+      if (sessionType === "collaboration") {
+        return members.filter((m) => m.member_type === "collaboration");
+      }
+
+      // Contractual sessions require trial members ONLY
       if (requiresTrialMember(sessionType)) {
         return members.filter((m) => m.member_type === "trial");
       }
+
+      // Member/makeup sessions: exclude collaboration members
+      // (collaboration members can ONLY book collaboration sessions)
+      if (sessionType === "member" || sessionType === "makeup") {
+        return members.filter((m) => m.member_type !== "collaboration");
+      }
+
       return members;
     }, [members, sessionType]);
 
@@ -197,6 +266,36 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
           machineId: data.machine_id,
           memberId: data.member_id,
         });
+
+        // Validate booking restrictions for member-based sessions
+        if (requiresMember(data.session_type) && data.member_id) {
+          const selectedMember = members.find((m) => m.id === data.member_id);
+          if (selectedMember) {
+            const canBook = canMemberTypeBookSessionType(
+              selectedMember.member_type,
+              data.session_type
+            );
+
+            if (!canBook) {
+              const errorMessage = getBookingErrorMessage(
+                selectedMember.member_type,
+                data.session_type
+              );
+
+              logger.warn("Booking validation failed", {
+                memberType: selectedMember.member_type,
+                sessionType: data.session_type,
+                reason: errorMessage,
+              });
+
+              toast.error("Cannot book session", {
+                description: errorMessage,
+              });
+
+              return; // Prevent submission
+            }
+          }
+        }
 
         try {
           await createSessionMutation.mutateAsync(data);
@@ -231,7 +330,7 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
           });
         }
       },
-      [createSessionMutation, onOpenChange, reset]
+      [createSessionMutation, onOpenChange, reset, members]
     );
 
     // Step navigation
@@ -418,7 +517,9 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
                             <User className="h-4 w-4" />
                             {requiresTrialMember(sessionType)
                               ? "Trial Member *"
-                              : "Member *"}
+                              : sessionType === "collaboration"
+                                ? "Collaboration Member *"
+                                : "Member *"}
                           </FormLabel>
                           <FormControl>
                             <MemberCombobox
@@ -429,10 +530,22 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
                               placeholder={
                                 requiresTrialMember(sessionType)
                                   ? "Select a trial member"
-                                  : "Select a member"
+                                  : sessionType === "collaboration"
+                                    ? "Select a collaboration member"
+                                    : "Select a member"
                               }
                             />
                           </FormControl>
+                          {/* Show helpful message when no members match the filter */}
+                          {filteredMembers.length === 0 && (
+                            <p className="text-sm text-amber-600 dark:text-amber-500">
+                              {sessionType === "collaboration"
+                                ? "No collaboration members available. Create a collaboration member first from the Members page."
+                                : requiresTrialMember(sessionType)
+                                  ? "No trial members available. Create a trial member first or book a trial session."
+                                  : "No members available for this session type."}
+                            </p>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
