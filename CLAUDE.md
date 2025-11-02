@@ -291,6 +291,337 @@ For comprehensive auth documentation, see [`docs/AUTH.md`](./docs/AUTH.md).
 
 ---
 
+## Collaboration Member System
+
+### Overview
+
+The collaboration member system enables tracking of commercial partnerships, influencer relationships, and promotional arrangements where members receive complimentary subscriptions. Collaboration members are tracked separately from regular members for analytics and reporting.
+
+### Member Types
+
+The system supports three member types:
+
+| Type              | Description                         | Subscriptions        | Sessions           | Conversion                        |
+| ----------------- | ----------------------------------- | -------------------- | ------------------ | --------------------------------- |
+| **Trial**         | New members trying out the gym      | None initially       | Trial, Contractual | Auto → Full on first subscription |
+| **Full**          | Regular paying members              | Paid subscriptions   | Member, Makeup     | Manual conversion only            |
+| **Collaboration** | Partnership/influencer arrangements | $0 promotional plans | Collaboration only | Manual → Full                     |
+
+### Database Schema
+
+**Members Table - Partnership Fields**:
+
+```sql
+partnership_company VARCHAR(255)          -- Company/brand name (required for collaboration)
+partnership_type VARCHAR(50)              -- influencer | corporate | brand | media | other
+partnership_contract_start DATE           -- Partnership start date (optional)
+partnership_contract_end DATE             -- Partnership end date (required for collaboration)
+partnership_notes TEXT                    -- Contract terms, deliverables, etc.
+```
+
+**Subscription Plans Table**:
+
+```sql
+is_collaboration_plan BOOLEAN DEFAULT FALSE  -- Allows $0 price
+```
+
+**Constraints**:
+
+- Collaboration plans: `price >= 0` (can be $0)
+- Regular plans: `price > 0` (must be paid)
+- Database enforces this via CHECK constraint
+
+### Business Rules
+
+#### Member Type Restrictions
+
+**Collaboration Members**:
+
+- ✅ Can ONLY book collaboration sessions
+- ✅ Can ONLY have collaboration subscription plans
+- ✅ Stay as "collaboration" type when getting subscriptions
+- ✅ Can be manually converted to "full" members
+- ❌ Cannot book member/makeup/trial/contractual sessions
+- ❌ Cannot receive regular subscription plans
+
+**Regular Members (Full/Trial)**:
+
+- ✅ Can book member/makeup/trial/contractual sessions
+- ✅ Can receive regular subscription plans
+- ❌ Cannot book collaboration sessions
+- ❌ Cannot receive collaboration plans
+
+#### Partnership Requirements
+
+**For Collaboration Members**:
+
+- **Required**: Company name, Contract end date
+- **Optional**: Partnership type, Contract start date, Partnership notes
+- **Validation**: Contract end date must be future date
+
+#### Member Type Lifecycle
+
+```
+Trial Member
+  ↓ (first subscription)
+Full Member
+  ↓ (manual conversion if needed)
+[No further changes]
+
+Collaboration Member
+  ↓ (subscription - NO auto-conversion)
+Collaboration Member (stays as collaboration)
+  ↓ (manual conversion)
+Full Member
+```
+
+**Key Difference**: Collaboration members do NOT auto-convert to "full" when receiving a subscription.
+
+### Creating Collaboration Members
+
+**Progressive Member Form** (10 steps):
+
+1. **Personal Information** - Name, DOB, gender, profile picture
+2. **Contact Information** - Email, phone, preferred contact method
+3. **Address** - Street, city, state, postal code, country
+4. **Member Type** ⭐ - Select "Collaboration Partner"
+5. **Partnership Details** ⭐ (conditional):
+   - Company Name\* (required)
+   - Partnership Type (dropdown: Influencer, Corporate, Brand, Media, Other)
+   - Contract Start Date (optional)
+   - Contract End Date\* (required, must be future)
+   - Partnership Notes (textarea)
+6. **Equipment & Sizes** - Uniform, vest, hip belt
+7. **Referral Information** - Source, referred by
+8. **Training Preference** - Mixed or women-only
+9. **Health & Fitness** - Medical conditions, fitness goals
+10. **Settings** - Marketing consent, waiver
+
+**Step 5 only appears when "Collaboration Partner" is selected in Step 4.**
+
+### Creating Collaboration Plans
+
+**Plan Creation Dialog**:
+
+1. Enter plan name (e.g., "Nike Partnership - 12 Sessions")
+2. Set description (contract terms, deliverables)
+3. **Check "Collaboration Plan"** ✓
+4. Set price to $0 (or any amount >= 0)
+5. Set signup fee (usually $0)
+6. Set duration (months)
+7. Set session count
+8. Save
+
+**Helpful info appears**: "Collaboration plans can have $0 price for partnership arrangements and can only be assigned to collaboration members."
+
+### Assigning Subscriptions
+
+**Subscription Dialog** (automatic filtering):
+
+- For **collaboration members**: Only collaboration plans shown
+- For **full/trial members**: Only regular plans shown
+- If no plans available: Helpful message displayed
+
+**No manual filtering needed** - system automatically filters based on member type.
+
+### Booking Sessions
+
+**Session Booking Dialog** (automatic filtering):
+
+- For **collaboration sessions**: Only collaboration members shown in dropdown
+- For **member/makeup sessions**: Collaboration members excluded from dropdown
+- For **contractual sessions**: Only trial members shown (existing behavior)
+
+**Validation**: System prevents mismatched bookings (e.g., collaboration member trying to book regular session).
+
+### Converting Collaboration Members
+
+**When to Convert**: Partnership ended, member wants to continue as paying member
+
+**How to Convert**:
+
+1. Navigate to collaboration member's detail page
+2. Click **"Convert to Full"** button (UserCog icon)
+3. Review partnership information in dialog
+4. Options:
+   - ✓ Mark partnership as ended today (sets contract_end to today)
+   - ✓ Create regular subscription after conversion (optional)
+   - Add conversion notes (audit trail)
+5. Click **"Convert to Full Member"**
+6. Member type changes to "full"
+7. Partnership data preserved for historical reference
+8. Conversion notes appended to member notes with timestamp
+
+**Important**: This is a one-way conversion (no automatic undo).
+
+**After Conversion**:
+
+- Member type = "full"
+- Partnership data still exists (historical reference)
+- Can now receive regular subscription plans
+- Can now book regular sessions
+- "Convert to Full" button disappears
+
+### UI Components
+
+**MemberTypeBadge**:
+
+```tsx
+<MemberTypeBadge type="collaboration" size="sm" showIcon={true} />
+```
+
+- **Full**: Blue badge with UserCheck icon
+- **Trial**: Purple badge with UserPlus icon
+- **Collaboration**: Orange badge with Handshake icon
+
+**SimpleMemberFilters**:
+
+```tsx
+<SimpleMemberFilters filters={filters} onFiltersChange={setFilters} />
+```
+
+Includes "Collaboration" option in Member Type dropdown.
+
+### Code Patterns
+
+**Filtering Members by Type**:
+
+```typescript
+// In subscription dialogs
+const filteredPlans = useMemo(() => {
+  if (!plans) return [];
+
+  if (member?.member_type === "collaboration") {
+    return plans.filter((plan) => plan.is_collaboration_plan === true);
+  }
+
+  return plans.filter((plan) => plan.is_collaboration_plan === false);
+}, [plans, member?.member_type]);
+```
+
+**Checking Member Type**:
+
+```typescript
+if (member.member_type === "collaboration") {
+  // Show collaboration-specific UI
+}
+```
+
+**Converting Members**:
+
+```typescript
+import { convertCollaborationMember } from "@/features/members/lib/collaboration-utils";
+
+const result = await convertCollaborationMember({
+  member_id: member.id,
+  end_partnership: true,
+  conversion_notes: "Partnership ended, member continuing as full member",
+});
+```
+
+### Database Queries
+
+**Filter Out Collaboration Members** (for analytics):
+
+```typescript
+const { data } = await supabase
+  .from("members")
+  .select("*")
+  .neq("member_type", "collaboration"); // Exclude collaboration
+```
+
+**Get Only Collaboration Members**:
+
+```typescript
+const { data } = await supabase
+  .from("members")
+  .select("*")
+  .eq("member_type", "collaboration")
+  .not("partnership_contract_end", "is", null); // Has contract
+```
+
+**Get Expiring Partnerships** (< 30 days):
+
+```typescript
+import { getLocalDateString } from "@/lib/date-utils";
+
+const today = new Date();
+const thirtyDaysFromNow = new Date(today);
+thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+const { data } = await supabase
+  .from("members")
+  .select("*")
+  .eq("member_type", "collaboration")
+  .lte("partnership_contract_end", getLocalDateString(thirtyDaysFromNow))
+  .gte("partnership_contract_end", getLocalDateString(today));
+```
+
+### Testing
+
+**Test Coverage**:
+
+- 1380 total tests passing
+- 7 specific collaboration utility tests
+- Session booking restriction tests
+- Subscription creation tests
+- Member conversion tests
+
+**Manual Testing Checklist**:
+
+- [ ] Create collaboration member with partnership details
+- [ ] Create collaboration plan with $0 price
+- [ ] Assign collaboration plan to collaboration member
+- [ ] Book collaboration session for collaboration member
+- [ ] Verify regular member cannot book collaboration session
+- [ ] Verify collaboration member cannot book regular session
+- [ ] Edit partnership information
+- [ ] Convert collaboration member to full member
+- [ ] Verify converted member can now receive regular plans
+
+### Common Issues & Solutions
+
+**Issue**: "Cannot assign this plan to this member"
+**Solution**: Check member type matches plan type (collaboration ↔ collaboration, regular ↔ full/trial)
+
+**Issue**: "This member cannot book this session type"
+**Solution**: Collaboration members can only book collaboration sessions
+
+**Issue**: "Contract end date must be in the future"
+**Solution**: When creating collaboration member, set end date after today
+
+**Issue**: Collaboration member auto-converted to "full" on subscription
+**Solution**: This was fixed in Phase 2 - should no longer happen
+
+### File Locations
+
+**Utilities**:
+
+- `src/features/members/lib/collaboration-utils.ts` - Conversion function
+- `src/features/database/lib/types.ts` - Type definitions
+
+**Components**:
+
+- `src/features/members/components/ConvertCollaborationMemberDialog.tsx` - Conversion UI
+- `src/features/members/components/cells/MemberTypeBadge.tsx` - Member type badge
+- `src/features/members/components/ProgressiveMemberForm.tsx` - Member creation form
+
+**Hooks**:
+
+- `src/features/members/hooks/use-convert-collaboration-member.ts` - Conversion hook
+
+**Tests**:
+
+- `src/features/members/lib/__tests__/collaboration-utils.test.ts` - Conversion tests
+- `src/features/training-sessions/lib/__tests__/validation.test.ts` - Session booking tests
+- `src/features/memberships/lib/__tests__/subscription-utils.test.ts` - Subscription tests
+
+**User Documentation**:
+
+- `docs/COLLABORATION-MEMBERS.md` - Complete user guide for administrators
+
+---
+
 ## Hook Organization
 
 ### `src/hooks/` - Shared/Global Hooks
