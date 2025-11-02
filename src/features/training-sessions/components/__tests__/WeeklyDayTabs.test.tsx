@@ -125,15 +125,15 @@ describe("WeeklyDayTabs", () => {
         />
       );
 
-      // Find the tab for today
-      const todayTab = container.querySelector(
-        `[aria-label*="${today.getDate()}"]`
-      );
+      // Test behavior: today's tab should be identifiable via data attribute
+      const todayTab = container.querySelector('[data-today="true"]');
+      expect(todayTab).toBeInTheDocument();
 
-      // Check for today highlighting classes
-      expect(todayTab).toHaveClass("border-primary");
-      expect(todayTab).toHaveClass("bg-primary/10");
-      expect(todayTab).toHaveClass("text-primary");
+      // Verify it's the correct day by checking the aria-label
+      expect(todayTab).toHaveAttribute(
+        "aria-label",
+        expect.stringContaining(String(today.getDate()))
+      );
     });
 
     it("only highlights one tab as today", () => {
@@ -148,10 +148,8 @@ describe("WeeklyDayTabs", () => {
         />
       );
 
-      // Count tabs with today styling
-      const todayTabs = container.querySelectorAll(
-        ".border-primary.bg-primary\\/10"
-      );
+      // Test behavior: only one tab should be marked as today
+      const todayTabs = container.querySelectorAll('[data-today="true"]');
       expect(todayTabs.length).toBe(1);
     });
 
