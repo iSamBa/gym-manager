@@ -191,7 +191,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 error:
                   profileError instanceof Error
                     ? profileError.message
-                    : String(profileError),
+                    : JSON.stringify(
+                        profileError,
+                        Object.getOwnPropertyNames(profileError)
+                      ),
                 userId: session.user.id,
               });
               // Set fallback user data from session to allow authentication to proceed

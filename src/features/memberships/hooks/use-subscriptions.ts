@@ -123,6 +123,14 @@ export function useCreateSubscription() {
         queryKey: ["all-subscriptions"],
       });
 
+      // Invalidate member queries to reflect trial→full conversion
+      queryClient.invalidateQueries({
+        queryKey: ["members", "detail", variables.member_id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["members", "list"],
+      });
+
       toast.success("Subscription Created", {
         description: `New subscription for ${data.plan_name_snapshot} has been created.`,
       });

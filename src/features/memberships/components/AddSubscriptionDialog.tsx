@@ -93,10 +93,10 @@ export function AddSubscriptionDialog({
       member_id: "",
       plan_id: "",
       start_date: formatForDatabase(new Date()),
-      initial_payment_amount: 0,
+      initial_payment_amount: undefined,
       payment_method: "cash" as PaymentMethod,
       include_signup_fee: true,
-      signup_fee_paid: 0,
+      signup_fee_paid: undefined,
       notes: "",
     },
   });
@@ -114,7 +114,7 @@ export function AddSubscriptionDialog({
         pricePerSession: selectedPlan.sessions_count
           ? selectedPlan.price / selectedPlan.sessions_count
           : 0,
-        duration: 30, // Default duration since billing cycle is removed
+        duration: selectedPlan.duration_months * 30, // Calculate days from months
       }
     : null;
 
