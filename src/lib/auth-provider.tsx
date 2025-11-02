@@ -1,13 +1,67 @@
 "use client";
 
-import { createContext, useContext, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useCallback,
+  useState,
+} from "react";
 import { User } from "@supabase/supabase-js";
 import { useAuth } from "@/hooks/use-auth";
 import { useSessionValidator } from "@/hooks/use-session-validator";
 import { useAuthStore } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import { AuthErrorBanner } from "@/components/feedback/auth-error-banner";
+import { ProfileIntegrityAlert } from "@/components/feedback/ProfileIntegrityAlert";
 import { logger } from "@/lib/logger";
+import {
+  checkCurrentUserProfileIntegrity,
+  type ProfileIntegrityIssue,
+} from "./profile-integrity-check";
+
+/**
+ * Extract detailed error information from various error types
+ * Handles Supabase errors, standard Error objects, and unknown error types
+ */
+function extractErrorDetails(error: unknown) {
+  const details: {
+    message: string;
+    name?: string;
+    code?: string;
+    hint?: string;
+    supabaseCode?: string;
+    supabaseDetails?: string;
+    stack?: string;
+  } = {
+    message: "Unknown error",
+  };
+
+  if (error instanceof Error) {
+    details.message = error.message;
+    details.name = error.name;
+    details.stack = error.stack;
+  } else if (typeof error === "string") {
+    details.message = error;
+  } else if (error && typeof error === "object") {
+    // Supabase error object structure
+    const err = error as {
+      message?: string;
+      code?: string;
+      hint?: string;
+      details?: string;
+    };
+    details.message = err.message || String(error);
+    details.code = err.code;
+    details.hint = err.hint;
+    details.supabaseCode = err.code;
+    details.supabaseDetails = err.details;
+  } else {
+    details.message = String(error);
+  }
+
+  return details;
+}
 
 interface AuthContextType {
   user: Record<string, unknown> | null;
@@ -29,6 +83,9 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const { authError, setAuthError, setUser, setIsLoading } = useAuthStore();
+  const [profileIntegrityIssues, setProfileIntegrityIssues] = useState<
+    ProfileIntegrityIssue[]
+  >([]);
 
   // Enable session validation on tab focus
   useSessionValidator();
@@ -44,10 +101,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
         if (error) {
-          logger.error("Failed to load user profile from database", {
-            error: error.message,
-            userId: authUser.id,
-          });
+          const errorDetails = extractErrorDetails(error);
+
+          // Distinguish between "profile doesn't exist" vs "query failed"
+          const isProfileMissing =
+            error.code === "PGRST116" || // PostgREST: no rows returned
+            error.message?.includes("No rows") ||
+            error.message?.includes("not found");
+
+          if (isProfileMissing) {
+            // CRITICAL: Profile doesn't exist for authenticated user
+            logger.error(
+              "CRITICAL: User profile missing for authenticated user",
+              {
+                ...errorDetails,
+                userId: authUser.id,
+                userEmail: authUser.email,
+                severity: "CRITICAL",
+                action: "Profile record must be created in user_profiles table",
+              }
+            );
+          } else {
+            // Query failed for other reasons (network, RLS, etc.)
+            logger.error("Failed to load user profile from database", {
+              ...errorDetails,
+              userId: authUser.id,
+              userEmail: authUser.email,
+            });
+          }
           return;
         }
 
@@ -61,11 +142,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             avatar_url: profile.avatar_url,
             is_active: profile.is_active,
           });
+
+          // Run profile integrity check (only for admins)
+          if (profile.role === "admin") {
+            const integrityCheck = await checkCurrentUserProfileIntegrity(
+              authUser.id,
+              authUser.email
+            );
+
+            if (integrityCheck.hasIssues) {
+              setProfileIntegrityIssues(integrityCheck.issues);
+            } else {
+              setProfileIntegrityIssues([]);
+            }
+          }
+        } else {
+          // Profile is null (shouldn't happen with .single(), but defensive check)
+          logger.error("Profile query returned null", {
+            userId: authUser.id,
+            userEmail: authUser.email,
+            severity: "CRITICAL",
+          });
         }
       } catch (error) {
+        const errorDetails = extractErrorDetails(error);
         logger.error("Unexpected error loading user profile", {
-          error: error instanceof Error ? error.message : String(error),
+          ...errorDetails,
           userId: authUser.id,
+          userEmail: authUser.email,
         });
       }
     },
@@ -187,12 +291,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               ]);
               setAuthError(null);
             } catch (profileError) {
+              const errorDetails = extractErrorDetails(profileError);
               logger.error("Profile load error on sign in", {
-                error:
-                  profileError instanceof Error
-                    ? profileError.message
-                    : String(profileError),
+                ...errorDetails,
                 userId: session.user.id,
+                userEmail: session.user.email,
+                authEvent: "SIGNED_IN",
+                hasMetadata: !!session.user.user_metadata,
+                metadataRole: session.user.user_metadata?.role,
               });
               // Set fallback user data from session to allow authentication to proceed
               setUser({
@@ -230,11 +336,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               ]);
               setAuthError(null);
             } catch (profileError) {
+              const errorDetails = extractErrorDetails(profileError);
               logger.warn("Profile load failed on token refresh", {
-                error:
-                  profileError instanceof Error
-                    ? profileError.message
-                    : String(profileError),
+                ...errorDetails,
+                userId: session?.user.id,
+                userEmail: session?.user.email,
+                authEvent: "TOKEN_REFRESHED",
               });
               // Keep existing user data on token refresh failure - don't disrupt the session
             }
@@ -255,11 +362,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 ),
               ]);
             } catch (profileError) {
+              const errorDetails = extractErrorDetails(profileError);
               logger.warn("Profile load failed on user update", {
-                error:
-                  profileError instanceof Error
-                    ? profileError.message
-                    : String(profileError),
+                ...errorDetails,
+                userId: session?.user.id,
+                userEmail: session?.user.email,
+                authEvent: "USER_UPDATED",
               });
               // Keep existing user data on profile update failure
             }
@@ -284,12 +392,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               ]);
               setAuthError(null);
             } catch (profileError) {
+              const errorDetails = extractErrorDetails(profileError);
               logger.error("Profile load error after MFA verification", {
-                error:
-                  profileError instanceof Error
-                    ? profileError.message
-                    : String(profileError),
+                ...errorDetails,
                 userId: session.user.id,
+                userEmail: session.user.email,
+                authEvent: "MFA_CHALLENGE_VERIFIED",
+                hasMetadata: !!session.user.user_metadata,
+                metadataRole: session.user.user_metadata?.role,
               });
               // Set fallback user data from session
               setUser({
@@ -356,6 +466,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         onRetry={handleRetry}
         onDismiss={handleDismiss}
       />
+      {auth.isAdmin && profileIntegrityIssues.length > 0 && (
+        <div className="fixed top-20 left-1/2 z-50 w-full max-w-2xl -translate-x-1/2 px-4">
+          <ProfileIntegrityAlert
+            issues={profileIntegrityIssues}
+            onDismiss={() => setProfileIntegrityIssues([])}
+          />
+        </div>
+      )}
     </AuthContext.Provider>
   );
 }
