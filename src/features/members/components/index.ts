@@ -74,3 +74,6 @@ export { BodyCheckupHistory } from "./BodyCheckupHistory";
 export { AutoInactivationSection } from "./AutoInactivationSection";
 export { PreviewInactivationDialog } from "./PreviewInactivationDialog";
 export { ReactivateMemberButton } from "./ReactivateMemberButton";
+
+// Collaboration member components (Phase 6)
+export { ConvertCollaborationMemberDialog } from "./ConvertCollaborationMemberDialog";
