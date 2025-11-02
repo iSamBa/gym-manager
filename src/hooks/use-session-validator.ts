@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "./use-auth";
+import { logger } from "@/lib/logger";
 
 const VALIDATION_THROTTLE_MS = 30000; // Max once per 30 seconds
 
@@ -36,7 +37,7 @@ export function useSessionValidator() {
     // Throttle: don't validate more than once per 30 seconds
     const now = Date.now();
     if (now - lastValidationRef.current < VALIDATION_THROTTLE_MS) {
-      console.log("Session validation throttled");
+      logger.info("Session validation throttled");
       return;
     }
 
@@ -49,22 +50,57 @@ export function useSessionValidator() {
       } = await supabase.auth.getSession();
 
       if (error) {
-        console.error("Session validation error:", error);
-        await signOut();
+        // Distinguish between error types - only logout for auth errors
+        const errorMessage = error.message?.toLowerCase() || "";
+
+        const isNetworkError =
+          errorMessage.includes("network") ||
+          errorMessage.includes("timeout") ||
+          errorMessage.includes("fetch") ||
+          errorMessage.includes("connect") ||
+          errorMessage.includes("offline");
+
+        const isAuthError =
+          errorMessage.includes("jwt") ||
+          errorMessage.includes("expired") ||
+          errorMessage.includes("invalid") ||
+          errorMessage.includes("token") ||
+          error.status === 401;
+
+        if (isNetworkError) {
+          logger.warn(
+            "Network error validating session, will retry on next focus",
+            {
+              message: error.message,
+            }
+          );
+          return; // DON'T LOGOUT - just a network hiccup
+        }
+
+        if (isAuthError) {
+          logger.error("Auth error - session invalid", { error });
+          await signOut();
+          return;
+        }
+
+        // Unknown error - log but don't logout immediately
+        logger.warn("Unknown session validation error (not logging out)", {
+          error,
+        });
         return;
       }
 
       if (!session) {
-        console.log("Session expired, logging out");
+        logger.info("Session expired, logging out");
         await signOut();
         return;
       }
 
-      console.log("Session validated successfully");
+      logger.info("Session validated successfully");
       // Session is valid, no action needed
       // Supabase will auto-refresh if needed
     } catch (error) {
-      console.error("Unexpected error validating session:", error);
+      logger.error("Unexpected error validating session", { error });
       // Don't logout on network errors, user might just be offline
     }
   }, [isAuthenticated, signOut]);
@@ -74,7 +110,7 @@ export function useSessionValidator() {
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        console.log("Tab became visible, validating session");
+        logger.info("Tab became visible, validating session");
         validateSession();
       }
     };
