@@ -293,6 +293,33 @@ if (typeof window !== "undefined") {
   });
 }
 
+// Mock localStorage for tests
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = value.toString();
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: (index: number) => {
+      const keys = Object.keys(store);
+      return keys[index] || null;
+    },
+  };
+})();
+
+global.localStorage = localStorageMock as Storage;
+
 // Mock environment variables for tests with default values
 beforeEach(() => {
   // Reset environment variables before each test
@@ -301,6 +328,9 @@ beforeEach(() => {
   // Set default environment variables for Supabase
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://test.supabase.co");
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "test-anon-key");
+
+  // Clear localStorage before each test
+  localStorage.clear();
 
   // Reset any modal/dialog state before each test
   cleanupDialogState();

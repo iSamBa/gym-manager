@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "@/lib/dev-error-handler"; // Filter HMR errors in development
 import { ClientProviders } from "@/components/providers/client-providers";
 
 const geistSans = Geist({

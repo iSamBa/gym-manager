@@ -105,6 +105,7 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
                   "border-primary bg-primary/10 text-primary font-semibold"
               )}
               aria-label={`Select ${format(day, "EEEE, MMMM d, yyyy")}`}
+              data-today={todayIndicator ? "true" : undefined}
             >
               {/* Day name and date on the same line */}
               <div className="flex items-center gap-1">

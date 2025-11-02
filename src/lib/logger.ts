@@ -34,10 +34,20 @@ class Logger {
       return;
     }
 
-    // Format log data with timestamp
-    const timestamp = new Date().toISOString();
+    // Format log data with timestamp in local format
+    const now = new Date();
+    const localTimestamp = now.toLocaleString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      fractionalSecondDigits: 3,
+    });
+
     const logData = {
-      timestamp,
+      timestamp: localTimestamp,
       level,
       message,
       ...context,
@@ -52,8 +62,12 @@ class Logger {
             ? console.warn
             : console.log;
 
-      // Format: [LEVEL] message {context}
-      consoleFn(`[${level.toUpperCase()}]`, message, context ? context : "");
+      // Format: [TIMESTAMP] [LEVEL] message {context}
+      consoleFn(
+        `[${localTimestamp}] [${level.toUpperCase()}]`,
+        message,
+        context ? context : ""
+      );
     } else {
       // In production, only log errors and warnings to console
       // This can be extended to send to external services
