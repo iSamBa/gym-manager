@@ -35,6 +35,7 @@ interface PlanFormData {
   duration_months: number;
   sessions_count: number;
   is_active: boolean;
+  is_collaboration_plan: boolean;
 }
 
 export function PlanEditDialog({
@@ -50,6 +51,7 @@ export function PlanEditDialog({
     duration_months: 1,
     sessions_count: 0,
     is_active: true,
+    is_collaboration_plan: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -69,6 +71,7 @@ export function PlanEditDialog({
         duration_months: plan.duration_months || 1,
         sessions_count: plan.sessions_count || 0,
         is_active: plan.is_active,
+        is_collaboration_plan: plan.is_collaboration_plan || false,
       });
     } else {
       setFormData({
@@ -79,6 +82,7 @@ export function PlanEditDialog({
         duration_months: 1,
         sessions_count: 0,
         is_active: true,
+        is_collaboration_plan: false,
       });
     }
     setErrors({});

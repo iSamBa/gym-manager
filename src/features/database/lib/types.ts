@@ -3,6 +3,7 @@
 
 // Enums
 export type UserRole = "admin" | "trainer" | "member";
+export type MemberType = "trial" | "full" | "collaboration";
 export type MemberStatus =
   | "active"
   | "inactive"
@@ -10,6 +11,12 @@ export type MemberStatus =
   | "expired"
   | "pending";
 export type Gender = "male" | "female";
+export type PartnershipType =
+  | "influencer"
+  | "corporate"
+  | "brand"
+  | "media"
+  | "other";
 export type EquipmentStatus =
   | "active"
   | "maintenance"
@@ -89,6 +96,15 @@ export interface EmergencyContact {
   name: string;
   relationship: string;
   phone: string;
+}
+
+// Collaboration partnership details (for collaboration members)
+export interface CollaborationPartnership {
+  company_name: string | null;
+  partnership_type: PartnershipType | null;
+  contract_start_date: string | null; // YYYY-MM-DD
+  contract_end_date: string | null; // YYYY-MM-DD
+  notes: string | null;
 }
 
 // Enhanced Subscription Types from Epic 1
@@ -263,7 +279,7 @@ export interface Member {
   profile_picture_url?: string;
   status: MemberStatus;
   join_date: string;
-  member_type: string; // "full" | "trial" or other custom types
+  member_type: MemberType;
   notes?: string;
   medical_conditions?: string;
   fitness_goals?: string;
@@ -279,6 +295,12 @@ export interface Member {
   referral_source: ReferralSource;
   referred_by_member_id?: string;
   training_preference?: TrainingPreference;
+  // Partnership fields (for collaboration members)
+  partnership_company?: string | null;
+  partnership_type?: string | null;
+  partnership_contract_start?: string | null;
+  partnership_contract_end?: string | null;
+  partnership_notes?: string | null;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -338,6 +360,7 @@ export interface SubscriptionPlan {
   signup_fee: number;
   duration_months: number;
   is_active: boolean;
+  is_collaboration_plan: boolean;
   created_by?: string;
   created_at: string;
   updated_at: string;

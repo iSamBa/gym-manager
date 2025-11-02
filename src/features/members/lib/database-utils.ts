@@ -7,6 +7,7 @@ import {
 import type {
   Member,
   MemberStatus,
+  MemberType,
   Gender,
   Address,
   MemberWithSubscription,
@@ -38,7 +39,7 @@ export interface MemberFilters {
   /** Filter members with outstanding balance */
   hasOutstandingBalance?: boolean;
   /** Filter by member type */
-  memberType?: "full" | "trial";
+  memberType?: MemberType;
 }
 
 export interface CreateMemberData {
