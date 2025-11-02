@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -26,6 +27,10 @@ interface MemberComboboxProps {
   disabled?: boolean;
   placeholder?: string;
   className?: string;
+  /** Show "Create New Member" option at the top */
+  showAddNew?: boolean;
+  /** Callback when "Create New Member" is clicked */
+  onAddNew?: () => void;
 }
 
 export function MemberCombobox({
@@ -35,6 +40,8 @@ export function MemberCombobox({
   disabled = false,
   placeholder = "Select a member",
   className,
+  showAddNew = false,
+  onAddNew,
 }: MemberComboboxProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -109,6 +116,23 @@ export function MemberCombobox({
             onValueChange={setSearchQuery}
           />
           <CommandList>
+            {showAddNew && onAddNew && (
+              <>
+                <CommandGroup>
+                  <CommandItem
+                    onSelect={() => {
+                      setOpen(false);
+                      onAddNew();
+                    }}
+                    className="text-primary cursor-pointer"
+                  >
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Create New Member
+                  </CommandItem>
+                </CommandGroup>
+                <CommandSeparator />
+              </>
+            )}
             <CommandEmpty>No member found.</CommandEmpty>
             <CommandGroup>
               {filteredMembers.map((member) => (
