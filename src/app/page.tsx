@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Plus,
   Activity,
+  Handshake,
 } from "lucide-react";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
@@ -40,6 +41,7 @@ import {
 } from "@/features/dashboard/hooks/use-member-analytics";
 import { useDashboardStats } from "@/features/database/hooks/use-analytics";
 import { useRecentActivities } from "@/features/dashboard/hooks/use-recent-activities";
+import { useCollaborationMemberCount } from "@/features/members/hooks/use-members";
 
 export default function Home() {
   const { user, isLoading } = useRequireAdmin();
@@ -52,6 +54,9 @@ export default function Home() {
 
   // Get dashboard stats using SQL aggregation (replaces mock data)
   const { data: dashboardStats } = useDashboardStats();
+
+  // Get collaboration member count
+  const { data: collaborationCount = 0 } = useCollaborationMemberCount();
 
   // Get real recent activities data (replaces mock data)
   const { data: recentActivities, isLoading: isActivitiesLoading } =
@@ -108,6 +113,16 @@ export default function Home() {
             label: "retention rate",
           },
         },
+        {
+          title: "Partnerships",
+          value: collaborationCount.toLocaleString(),
+          description: "Collaboration members",
+          icon: Handshake,
+          trend: {
+            value: collaborationCount,
+            label: "active partnerships",
+          },
+        },
       ]
     : [
         // Loading fallback stats
@@ -139,6 +154,13 @@ export default function Home() {
           icon: Activity,
           trend: { value: 0, label: "loading" },
         },
+        {
+          title: "Partnerships",
+          value: "...",
+          description: "Loading...",
+          icon: Handshake,
+          trend: { value: 0, label: "loading" },
+        },
       ];
 
   // Use real recent activities data or show loading placeholder
@@ -162,7 +184,7 @@ export default function Home() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {stats.map((stat, index) => (
             <StatsCard
               key={index}

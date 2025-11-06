@@ -9,12 +9,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { MemberStatus } from "@/features/database/lib/types";
+import type { MemberStatus, MemberType } from "@/features/database/lib/types";
 
 // Simple filter state - only the essentials
 export interface SimpleMemberFilters {
   status?: MemberStatus | "all";
-  memberType?: "full" | "trial";
+  memberType?: MemberType;
   hasActiveSubscription?: boolean;
   hasUpcomingSessions?: boolean;
   hasOutstandingBalance?: boolean;
@@ -69,18 +69,18 @@ export const SimpleMemberFilters = memo(function SimpleMemberFilters({
         onValueChange={(value) =>
           onFiltersChange({
             ...filters,
-            memberType:
-              value === "all" ? undefined : (value as "full" | "trial"),
+            memberType: value === "all" ? undefined : (value as MemberType),
           })
         }
       >
-        <SelectTrigger className="w-[140px]">
+        <SelectTrigger className="w-[160px]">
           <SelectValue placeholder="Member Type" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Types</SelectItem>
           <SelectItem value="full">Full Members</SelectItem>
           <SelectItem value="trial">Trial Members</SelectItem>
+          <SelectItem value="collaboration">Collaboration</SelectItem>
         </SelectContent>
       </Select>
 

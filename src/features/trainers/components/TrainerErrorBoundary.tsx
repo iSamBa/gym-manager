@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
+import { logger } from "@/lib/logger";
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
@@ -26,7 +27,7 @@ export class TrainerErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Trainer component error:", error, errorInfo);
+    logger.error("Trainer component error:", { error, errorInfo });
 
     this.props.onError?.(error, errorInfo);
 

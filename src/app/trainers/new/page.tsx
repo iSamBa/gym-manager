@@ -10,6 +10,7 @@ import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import type { CreateTrainerData } from "@/features/trainers/lib/database-utils";
 
+import { logger } from "@/lib/logger";
 export default function AddTrainerPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function AddTrainerPage() {
       }, 1500);
     } catch (error) {
       setIsSubmitted(false);
-      console.error("Failed to create trainer:", error);
+      logger.error("Failed to create trainer:", { error });
     }
   };
 

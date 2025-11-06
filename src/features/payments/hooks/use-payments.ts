@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from "@/lib/logger";
 import { paymentUtils } from "../lib/payment-utils";
 import type { RecordPaymentInput } from "@/features/database/lib/types";
 import { subscriptionKeys } from "@/features/memberships/hooks/use-subscriptions";
@@ -155,7 +156,7 @@ export function useProcessRefund() {
     },
 
     onError: (error) => {
-      console.error("Refund mutation error:", error);
+      logger.error("Refund mutation error", { error });
       const errorMessage =
         error instanceof Error ? error.message : "Failed to process refund";
 

@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { logger } from "@/lib/logger";
 export default function TrainersPage() {
   const [editingTrainer, setEditingTrainer] =
     useState<TrainerWithProfile | null>(null);
@@ -102,14 +103,16 @@ export default function TrainersPage() {
       typeof trainer.id !== "string" ||
       trainer.id.trim() === ""
     ) {
-      console.error("Invalid trainer ID for navigation:", trainer);
+      logger.error("Invalid trainer ID for navigation:", {
+        trainerId: trainer?.id,
+      });
       return;
     }
 
     try {
       router.push(`/trainers/${trainer.id.trim()}`);
     } catch (error) {
-      console.error("Navigation error:", error);
+      logger.error("Navigation error:", { error });
     }
   };
 

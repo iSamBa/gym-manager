@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon } from "lucide-react";
@@ -48,7 +48,7 @@ import {
   type CreateSubscriptionData,
 } from "@/features/memberships/lib/validation";
 import {
-  useSubscriptionPlans,
+  useActiveSubscriptionPlans,
   useCreateSubscription,
 } from "@/features/memberships/hooks/use-subscriptions";
 import { AdvancedMemberSearch } from "@/features/members/components/AdvancedMemberSearch";
@@ -65,11 +65,27 @@ export function AddSubscriptionDialog({
   open,
   onOpenChange,
 }: AddSubscriptionDialogProps) {
-  const { data: plans, isLoading: isLoadingPlans } = useSubscriptionPlans();
+  const { data: plans, isLoading: isLoadingPlans } =
+    useActiveSubscriptionPlans();
   const createSubscriptionMutation = useCreateSubscription();
   const [selectedMember, setSelectedMember] = React.useState<Member | null>(
     null
   );
+
+  // Filter plans based on selected member type
+  // Collaboration members can only use collaboration plans
+  // Regular members (trial/full) can only use regular plans
+  const filteredPlans = useMemo(() => {
+    if (!plans || !selectedMember) return plans || [];
+
+    // For collaboration members, show only collaboration plans
+    if (selectedMember.member_type === "collaboration") {
+      return plans.filter((plan) => plan.is_collaboration_plan === true);
+    }
+
+    // For regular members (trial/full), show only non-collaboration plans
+    return plans.filter((plan) => plan.is_collaboration_plan === false);
+  }, [plans, selectedMember]);
 
   const form = useForm({
     resolver: zodResolver(createSubscriptionSchema),
@@ -77,10 +93,10 @@ export function AddSubscriptionDialog({
       member_id: "",
       plan_id: "",
       start_date: formatForDatabase(new Date()),
-      initial_payment_amount: 0,
+      initial_payment_amount: undefined,
       payment_method: "cash" as PaymentMethod,
       include_signup_fee: true,
-      signup_fee_paid: 0,
+      signup_fee_paid: undefined,
       notes: "",
     },
   });
@@ -90,7 +106,7 @@ export function AddSubscriptionDialog({
   const watchedIncludeSignupFee = form.watch("include_signup_fee");
   const watchedSignupFeePaid = form.watch("signup_fee_paid");
 
-  const selectedPlan = plans?.find((p) => p.id === watchedPlanId);
+  const selectedPlan = filteredPlans?.find((p) => p.id === watchedPlanId);
 
   const sessionInfo = selectedPlan
     ? {
@@ -98,7 +114,7 @@ export function AddSubscriptionDialog({
         pricePerSession: selectedPlan.sessions_count
           ? selectedPlan.price / selectedPlan.sessions_count
           : 0,
-        duration: 30, // Default duration since billing cycle is removed
+        duration: selectedPlan.duration_months * 30, // Calculate days from months
       }
     : null;
 
@@ -276,8 +292,18 @@ export function AddSubscriptionDialog({
                         <div className="p-2">
                           <Skeleton className="h-8 w-full" />
                         </div>
+                      ) : !selectedMember ? (
+                        <div className="text-muted-foreground p-2 text-sm">
+                          Please select a member first
+                        </div>
+                      ) : filteredPlans.length === 0 ? (
+                        <div className="text-muted-foreground p-2 text-sm">
+                          {selectedMember.member_type === "collaboration"
+                            ? "No collaboration plans available. Create a collaboration plan first."
+                            : "No subscription plans available."}
+                        </div>
                       ) : (
-                        plans?.map((plan) => (
+                        filteredPlans.map((plan) => (
                           <SelectItem key={plan.id} value={plan.id}>
                             <div className="flex w-full items-center justify-between">
                               <span>{plan.name}</span>

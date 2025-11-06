@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
 import type {
   MemberSubscriptionWithSnapshot,
   CreateSubscriptionInput,
@@ -53,7 +54,7 @@ export const subscriptionUtils = {
           ),
 
       status: "active" as const,
-      used_sessions: 0,
+      used_sessions: 0, // Will be updated below with contractual session count
       paid_amount: input.initial_payment_amount || 0,
       signup_fee_paid: input.include_signup_fee
         ? input.signup_fee_paid || 0
@@ -62,6 +63,45 @@ export const subscriptionUtils = {
       created_by: (await supabase.auth.getUser()).data.user?.id,
     };
 
+    // RETROACTIVE CONTRACTUAL SESSION COUNTING
+    // Count completed contractual sessions since member's last trial session
+    // that haven't been counted in a previous subscription
+    let contractualSessionIds: string[] = [];
+
+    // 1. Find member's last trial session
+    const { data: trialSession } = await supabase
+      .from("training_sessions")
+      .select("scheduled_start")
+      .eq("member_id", input.member_id)
+      .eq("session_type", "trial")
+      .order("scheduled_start", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // 2. If trial session exists, find uncounted contractual sessions since then
+    if (trialSession) {
+      const { data: contractualSessions } = await supabase
+        .from("training_sessions")
+        .select("id")
+        .eq("member_id", input.member_id)
+        .eq("session_type", "contractual")
+        .eq("status", "completed") // Only count completed sessions
+        .gte("scheduled_start", trialSession.scheduled_start)
+        .is("counted_in_subscription_id", null) // Not yet counted
+        .order("scheduled_start", { ascending: true });
+
+      if (contractualSessions && contractualSessions.length > 0) {
+        contractualSessionIds = contractualSessions.map((s) => s.id);
+        subscriptionData.used_sessions = contractualSessions.length;
+
+        // Add note about retroactive counting
+        const countNote = `${contractualSessions.length} contractual session(s) counted retroactively`;
+        subscriptionData.notes = subscriptionData.notes
+          ? `${subscriptionData.notes}\n${countNote}`
+          : countNote;
+      }
+    }
+
     const { data, error } = await supabase
       .from("member_subscriptions")
       .insert(subscriptionData)
@@ -69,6 +109,24 @@ export const subscriptionUtils = {
       .single();
 
     if (error) throw error;
+
+    // Mark contractual sessions as counted in this subscription
+    if (contractualSessionIds.length > 0) {
+      const { error: updateError } = await supabase
+        .from("training_sessions")
+        .update({
+          counted_in_subscription_id: data.id,
+        })
+        .in("id", contractualSessionIds);
+
+      if (updateError) {
+        logger.error("Failed to mark contractual sessions as counted", {
+          error: updateError,
+        });
+        // Don't throw - subscription was created successfully
+        // This is a tracking issue, not a critical failure
+      }
+    }
 
     // Record initial payment if provided
     if (input.initial_payment_amount && input.initial_payment_amount > 0) {
@@ -79,6 +137,47 @@ export const subscriptionUtils = {
         payment_date: input.start_date || formatForDatabase(new Date()),
         notes: "Initial payment for subscription",
       });
+    }
+
+    // AUTOMATIC TRIAL MEMBER CONVERSION (US-001)
+    // Convert trial members to permanent members when they create their first subscription
+    // NOTE: Collaboration members are NOT converted - they remain as 'collaboration' type
+    try {
+      const { data: member } = await supabase
+        .from("members")
+        .select("member_type")
+        .eq("id", input.member_id)
+        .single();
+
+      // Only convert trial members to full
+      // Collaboration members stay as 'collaboration'
+      if (member?.member_type === "trial") {
+        const { error: updateError } = await supabase
+          .from("members")
+          .update({
+            member_type: "full",
+            status: "active",
+          })
+          .eq("id", input.member_id);
+
+        if (updateError) {
+          logger.error("Failed to convert trial member to permanent", {
+            error: updateError,
+            member_id: input.member_id,
+            subscription_id: data.id,
+          });
+          // Don't throw - subscription is already created successfully
+          // This is a status update issue, not a critical failure
+        }
+      }
+      // Collaboration members keep their 'collaboration' type - no conversion needed
+    } catch (conversionError) {
+      logger.error("Exception during trial member conversion", {
+        error: conversionError,
+        member_id: input.member_id,
+        subscription_id: data.id,
+      });
+      // Don't throw - subscription is already created successfully
     }
 
     return data as MemberSubscriptionWithSnapshot;

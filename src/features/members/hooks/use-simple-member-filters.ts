@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import type { SimpleMemberFilters } from "../components/SimpleMemberFilters";
-import type { MemberStatus } from "@/features/database/lib/types";
+import type { MemberStatus, MemberType } from "@/features/database/lib/types";
 
 // Convert simple filters to database query filters
 export function useSimpleMemberFilters() {
@@ -36,7 +36,7 @@ export function useSimpleMemberFilters() {
   const databaseFilters = useMemo(() => {
     const dbFilters: {
       status?: MemberStatus;
-      memberType?: "full" | "trial";
+      memberType?: MemberType;
       hasActiveSubscription?: boolean;
       hasUpcomingSessions?: boolean;
       hasOutstandingBalance?: boolean;
@@ -222,6 +222,7 @@ export function useSimpleMemberFilters() {
         { value: "all", label: "All Types" },
         { value: "full", label: "Full Members" },
         { value: "trial", label: "Trial Members" },
+        { value: "collaboration", label: "Collaboration" },
       ] as const,
       subscription: [
         { value: "all", label: "All Subscriptions" },

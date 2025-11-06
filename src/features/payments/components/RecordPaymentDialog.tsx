@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { AdvancedMemberSearch } from "@/features/members/components/AdvancedMemberSearch";
 import { useMemberSubscriptionHistory } from "@/features/memberships/hooks/use-subscriptions";
 import { paymentUtils } from "@/features/payments/lib/payment-utils";
+import { logger } from "@/lib/logger";
 import type {
   Member,
   PartialMember,
@@ -121,8 +122,10 @@ export function RecordPaymentDialog({
       setSelectedMember(null);
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to record payment:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
+      logger.error("Failed to record payment:", { error });
+      logger.error("Error details:", {
+        errorDetails: JSON.stringify(error, null, 2),
+      });
 
       let errorMessage = "Failed to record payment";
       if (error instanceof Error) {

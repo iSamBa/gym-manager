@@ -47,6 +47,7 @@ import type {
 } from "@/features/database/lib/types";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 
+import { logger } from "@/lib/logger";
 export default function SubscriptionsManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<SubscriptionStatus | "all">(
@@ -152,7 +153,7 @@ export default function SubscriptionsManagementPage() {
       }
       // The mutations already handle the toast notifications and cache invalidation
     } catch (error) {
-      console.error("Error updating subscription status:", error);
+      logger.error("Error updating subscription status:", { error });
     }
   };
 

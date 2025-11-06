@@ -4,6 +4,7 @@ import {
   formatForDatabase,
   formatTimestampForDatabase,
 } from "@/lib/date-utils";
+import { logger } from "@/lib/logger";
 
 export interface PaymentAlertInput {
   memberId: string;
@@ -50,7 +51,7 @@ export const notificationUtils = {
     const { error } = await supabase.from("notifications").insert(notification);
 
     if (error) {
-      console.error("Failed to create payment alert:", error);
+      logger.error("Failed to create payment alert:", { error });
     }
 
     // Send real-time notification to trainer
@@ -98,7 +99,7 @@ export const notificationUtils = {
     });
 
     if (error) {
-      console.error("Failed to create renewal reminder:", error);
+      logger.error("Failed to create renewal reminder:", { error });
     }
   },
 
@@ -122,7 +123,7 @@ export const notificationUtils = {
       .gt("end_date", formatForDatabase(new Date()));
 
     if (error) {
-      console.error("Failed to fetch expiring subscriptions:", error);
+      logger.error("Failed to fetch expiring subscriptions:", { error });
       return;
     }
 
@@ -159,7 +160,7 @@ export const notificationUtils = {
     });
 
     if (error) {
-      console.error("Failed to create expiry alert:", error);
+      logger.error("Failed to create expiry alert:", { error });
     }
   },
 
@@ -186,7 +187,7 @@ export const notificationUtils = {
     });
 
     if (error) {
-      console.error("Failed to send realtime notification:", error);
+      logger.error("Failed to send realtime notification:", { error });
     }
   },
 
@@ -209,7 +210,7 @@ export const notificationUtils = {
       .gt("total_amount_snapshot", "paid_amount");
 
     if (error) {
-      console.error("Failed to fetch payment statistics:", error);
+      logger.error("Failed to fetch payment statistics:", { error });
       return null;
     }
 
@@ -239,7 +240,7 @@ export const notificationUtils = {
       .eq("status", "active");
 
     if (error) {
-      console.error("Failed to fetch session statistics:", error);
+      logger.error("Failed to fetch session statistics:", { error });
       return null;
     }
 

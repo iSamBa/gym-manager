@@ -55,3 +55,31 @@ export interface UpdatePlanningSettingsInput {
   max_sessions_per_week?: number;
   inactivity_months?: number;
 }
+
+// Multi-Site Session Types
+export interface MultiSiteSession {
+  id: string;
+  scheduled_start: string; // ISO timestamp
+  guest_first_name: string | null;
+  guest_last_name: string | null;
+  guest_gym_name: string | null;
+  trainer_id: string | null;
+  trainer_name?: string | null;
+  status: "scheduled" | "in_progress" | "completed" | "cancelled";
+  notes: string | null;
+  session_date: string; // YYYY-MM-DD
+  session_time: string; // HH:MM
+}
+
+export interface MultiSiteSessionFilters {
+  search?: string; // Search by member name
+  date_from?: string; // YYYY-MM-DD
+  date_to?: string; // YYYY-MM-DD
+  origin_studio?: string; // Filter by gym name
+}
+
+export interface MultiSiteSessionExportData {
+  date: string;
+  full_name: string;
+  origin_studio: string;
+}

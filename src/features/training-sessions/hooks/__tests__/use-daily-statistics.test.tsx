@@ -39,20 +39,35 @@ describe("useDailyStatistics", () => {
         {
           day_date: "2025-01-13",
           total_count: 10,
-          standard_count: 8,
-          trail_count: 2,
+          trial_count: 2,
+          member_count: 5,
+          contractual_count: 2,
+          makeup_count: 1,
+          multi_site_count: 0,
+          collaboration_count: 0,
+          non_bookable_count: 0,
         },
         {
           day_date: "2025-01-14",
           total_count: 12,
-          standard_count: 10,
-          trail_count: 2,
+          trial_count: 3,
+          member_count: 6,
+          contractual_count: 2,
+          makeup_count: 1,
+          multi_site_count: 0,
+          collaboration_count: 0,
+          non_bookable_count: 0,
         },
         {
           day_date: "2025-01-15",
           total_count: 8,
-          standard_count: 6,
-          trail_count: 2,
+          trial_count: 1,
+          member_count: 4,
+          contractual_count: 2,
+          makeup_count: 1,
+          multi_site_count: 0,
+          collaboration_count: 0,
+          non_bookable_count: 0,
         },
       ];
 
@@ -80,20 +95,35 @@ describe("useDailyStatistics", () => {
         {
           date: "2025-01-13",
           total: 10,
-          standard: 8,
           trial: 2,
+          member: 5,
+          contractual: 2,
+          makeup: 1,
+          multi_site: 0,
+          collaboration: 0,
+          non_bookable: 0,
         },
         {
           date: "2025-01-14",
           total: 12,
-          standard: 10,
-          trial: 2,
+          trial: 3,
+          member: 6,
+          contractual: 2,
+          makeup: 1,
+          multi_site: 0,
+          collaboration: 0,
+          non_bookable: 0,
         },
         {
           date: "2025-01-15",
           total: 8,
-          standard: 6,
-          trial: 2,
+          trial: 1,
+          member: 4,
+          contractual: 2,
+          makeup: 1,
+          multi_site: 0,
+          collaboration: 0,
+          non_bookable: 0,
         },
       ]);
     });
@@ -166,8 +196,13 @@ describe("useDailyStatistics", () => {
         {
           day_date: "2025-01-16",
           total_count: 15,
-          standard_count: 12,
-          trail_count: 3,
+          trial_count: 3,
+          member_count: 7,
+          contractual_count: 3,
+          makeup_count: 2,
+          multi_site_count: 0,
+          collaboration_count: 0,
+          non_bookable_count: 0,
         },
       ];
 
@@ -187,24 +222,39 @@ describe("useDailyStatistics", () => {
       expect(result.current.data?.[0]).toEqual({
         date: "2025-01-16", // day_date → date
         total: 15, // total_count → total
-        standard: 12, // standard_count → standard
-        trial: 3, // trail_count → trial
+        trial: 3, // trial_count → trial
+        member: 7, // member_count → member
+        contractual: 3, // contractual_count → contractual
+        makeup: 2, // makeup_count → makeup
+        multi_site: 0, // multi_site_count → multi_site
+        collaboration: 0, // collaboration_count → collaboration
+        non_bookable: 0, // non_bookable_count → non_bookable
       });
     });
 
-    it("validates data integrity (standard + trial = total)", async () => {
+    it("validates data integrity (sum of all types = total)", async () => {
       const mockData = [
         {
           day_date: "2025-01-13",
           total_count: 10,
-          standard_count: 7,
-          trail_count: 3,
+          trial_count: 2,
+          member_count: 5,
+          contractual_count: 2,
+          makeup_count: 1,
+          multi_site_count: 0,
+          collaboration_count: 0,
+          non_bookable_count: 0,
         },
         {
           day_date: "2025-01-14",
           total_count: 15,
-          standard_count: 10,
-          trail_count: 5,
+          trial_count: 3,
+          member_count: 7,
+          contractual_count: 3,
+          makeup_count: 1,
+          multi_site_count: 1,
+          collaboration_count: 0,
+          non_bookable_count: 0,
         },
       ];
 
@@ -222,7 +272,15 @@ describe("useDailyStatistics", () => {
 
       // Validate each day's data
       result.current.data?.forEach((stat) => {
-        expect(stat.standard + stat.trial).toBe(stat.total);
+        const sum =
+          stat.trial +
+          stat.member +
+          stat.contractual +
+          stat.makeup +
+          stat.multi_site +
+          stat.collaboration +
+          stat.non_bookable;
+        expect(sum).toBe(stat.total);
       });
     });
   });

@@ -25,6 +25,11 @@ const eslintConfig = [
     ],
   },
   {
+    rules: {
+      "no-console": "error",
+    },
+  },
+  {
     files: ["**/__tests__/**/*", "**/*.test.*", "**/*.spec.*"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
@@ -32,6 +37,13 @@ const eslintConfig = [
       "@typescript-eslint/no-require-imports": "off",
       "@typescript-eslint/no-empty-object-type": "off",
       "react/no-unescaped-entities": "off",
+      "no-console": "off",
+    },
+  },
+  {
+    files: ["src/lib/logger.ts"],
+    rules: {
+      "no-console": "off",
     },
   },
   ...storybook.configs["flat/recommended"],

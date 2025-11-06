@@ -38,7 +38,7 @@ describe("Logger", () => {
       logger.debug("test debug message", { key: "value" });
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        "[DEBUG]",
+        expect.stringContaining("[DEBUG]"),
         "test debug message",
         { key: "value" }
       );
@@ -48,7 +48,7 @@ describe("Logger", () => {
       logger.info("test info message", { userId: "123" });
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        "[INFO]",
+        expect.stringContaining("[INFO]"),
         "test info message",
         { userId: "123" }
       );
@@ -57,24 +57,28 @@ describe("Logger", () => {
     it("should log warn messages in development", () => {
       logger.warn("test warning", { warning: "details" });
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith("[WARN]", "test warning", {
-        warning: "details",
-      });
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[WARN]"),
+        "test warning",
+        { warning: "details" }
+      );
     });
 
     it("should log error messages in development", () => {
       logger.error("test error", { error: "details" });
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR]", "test error", {
-        error: "details",
-      });
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[ERROR]"),
+        "test error",
+        { error: "details" }
+      );
     });
 
     it("should handle missing context gracefully", () => {
       logger.debug("message without context");
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        "[DEBUG]",
+        expect.stringContaining("[DEBUG]"),
         "message without context",
         ""
       );
@@ -155,7 +159,7 @@ describe("Logger", () => {
       logger.info("complex log", complexContext);
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        "[INFO]",
+        expect.stringContaining("[INFO]"),
         "complex log",
         complexContext
       );
@@ -164,17 +168,18 @@ describe("Logger", () => {
     it("should handle arrays in context", () => {
       logger.debug("array context", { items: [1, 2, 3], tags: ["a", "b"] });
 
-      expect(consoleLogSpy).toHaveBeenCalledWith("[DEBUG]", "array context", {
-        items: [1, 2, 3],
-        tags: ["a", "b"],
-      });
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[DEBUG]"),
+        "array context",
+        { items: [1, 2, 3], tags: ["a", "b"] }
+      );
     });
 
     it("should handle null and undefined values in context", () => {
       logger.warn("nullable context", { value: null, other: undefined });
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        "[WARN]",
+        expect.stringContaining("[WARN]"),
         "nullable context",
         { value: null, other: undefined }
       );

@@ -41,6 +41,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
+  UserCog,
+  Handshake,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Member } from "@/features/database/lib/types";
@@ -50,7 +52,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useMembers } from "@/features/members/hooks";
 import { MemberHealthFitnessStep } from "./form-steps/MemberHealthFitnessStep";
 import { MemberAddressStep } from "./form-steps/MemberAddressStep";
+import { isFutureDate } from "@/lib/date-utils";
 
+import { logger } from "@/lib/logger";
 // Schema for each step
 const personalInfoSchema = z.object({
   first_name: z
@@ -129,10 +133,30 @@ const trainingPreferenceSchema = z.object({
   training_preference: z.enum(["mixed", "women_only"]).optional(),
 });
 
+// Member Type schema
+const memberTypeSchema = z.object({
+  member_type: z.enum(["trial", "full", "collaboration"], {
+    message: "Please select a member type",
+  }),
+});
+
+// Partnership Details schema (for collaboration members)
+const partnershipSchema = z.object({
+  partnership_company: z.string().optional(),
+  partnership_type: z
+    .enum(["influencer", "corporate", "brand", "media", "other"])
+    .optional(),
+  partnership_contract_start: z.string().optional(),
+  partnership_contract_end: z.string().optional(),
+  partnership_notes: z.string().optional(),
+});
+
 // Complete form schema
 const memberFormSchema = personalInfoSchema
   .merge(contactInfoSchema)
   .merge(addressSchema)
+  .merge(memberTypeSchema)
+  .merge(partnershipSchema)
   .merge(equipmentSchema)
   .merge(referralSchema)
   .merge(trainingPreferenceSchema)
@@ -165,6 +189,52 @@ const memberFormSchema = personalInfoSchema
     {
       message: "Training preference only applies to female members",
       path: ["training_preference"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Conditional validation: partnership_company required if collaboration
+      if (data.member_type === "collaboration" && !data.partnership_company) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Company name is required for collaboration members",
+      path: ["partnership_company"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Conditional validation: partnership_contract_end required if collaboration
+      if (
+        data.member_type === "collaboration" &&
+        !data.partnership_contract_end
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Contract end date is required for collaboration members",
+      path: ["partnership_contract_end"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Conditional validation: partnership_contract_end must be future date
+      if (
+        data.member_type === "collaboration" &&
+        data.partnership_contract_end &&
+        !isFutureDate(data.partnership_contract_end)
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Contract end date must be in the future",
+      path: ["partnership_contract_end"],
     }
   );
 
@@ -204,20 +274,35 @@ const steps: StepInfo[] = [
   },
   {
     id: 4,
+    title: "Member Type",
+    description: "Membership classification",
+    icon: UserCog,
+    schema: memberTypeSchema,
+  },
+  {
+    id: 5,
+    title: "Partnership Details",
+    description: "For collaboration members",
+    icon: Handshake,
+    schema: partnershipSchema,
+    isOptional: true,
+  },
+  {
+    id: 6,
     title: "Equipment",
     description: "Uniform and equipment sizing",
     icon: Package,
     schema: equipmentSchema,
   },
   {
-    id: 5,
+    id: 7,
     title: "Referral",
     description: "How you heard about us",
     icon: UserPlus,
     schema: referralSchema,
   },
   {
-    id: 6,
+    id: 8,
     title: "Training Preference",
     description: "Session preferences (optional)",
     icon: Users,
@@ -225,7 +310,7 @@ const steps: StepInfo[] = [
     isOptional: true,
   },
   {
-    id: 7,
+    id: 9,
     title: "Health & Fitness",
     description: "Goals and medical info",
     icon: Target,
@@ -233,7 +318,7 @@ const steps: StepInfo[] = [
     isOptional: true,
   },
   {
-    id: 8,
+    id: 10,
     title: "Settings",
     description: "Status and preferences",
     icon: Settings,
@@ -425,9 +510,6 @@ export function ProgressiveMemberForm({
   const announceRef = useRef<HTMLDivElement>(null);
   const formId = useId();
 
-  // Form state persistence key
-  const formStorageKey = `progressive-member-form-${member?.id || "new"}`;
-
   const form = useForm<MemberFormData>({
     resolver: zodResolver(memberFormSchema),
     mode: "onChange",
@@ -455,6 +537,19 @@ export function ProgressiveMemberForm({
           referred_by_member_id: member.referred_by_member_id || undefined,
           // US-004: Training preference
           training_preference: member.training_preference || undefined,
+          // Member type and partnership fields
+          member_type: member.member_type,
+          partnership_company: member.partnership_company || "",
+          partnership_type: member.partnership_type as
+            | "influencer"
+            | "corporate"
+            | "brand"
+            | "media"
+            | "other"
+            | undefined,
+          partnership_contract_start: member.partnership_contract_start || "",
+          partnership_contract_end: member.partnership_contract_end || "",
+          partnership_notes: member.partnership_notes || "",
           status: member.status,
           fitness_goals: member.fitness_goals || "",
           medical_conditions: member.medical_conditions || "",
@@ -489,6 +584,13 @@ export function ProgressiveMemberForm({
           referred_by_member_id: undefined,
           // US-004: Training preference default
           training_preference: undefined,
+          // Member type and partnership fields defaults
+          member_type: "full",
+          partnership_company: "",
+          partnership_type: undefined,
+          partnership_contract_start: "",
+          partnership_contract_end: "",
+          partnership_notes: "",
           status: "active",
           fitness_goals: "",
           medical_conditions: "",
@@ -525,6 +627,18 @@ export function ProgressiveMemberForm({
         referral_source: member.referral_source,
         referred_by_member_id: member.referred_by_member_id || undefined,
         training_preference: member.training_preference || undefined,
+        member_type: member.member_type,
+        partnership_company: member.partnership_company || "",
+        partnership_type: member.partnership_type as
+          | "influencer"
+          | "corporate"
+          | "brand"
+          | "media"
+          | "other"
+          | undefined,
+        partnership_contract_start: member.partnership_contract_start || "",
+        partnership_contract_end: member.partnership_contract_end || "",
+        partnership_notes: member.partnership_notes || "",
         status: member.status,
         fitness_goals: member.fitness_goals || "",
         medical_conditions: member.medical_conditions || "",
@@ -539,51 +653,9 @@ export function ProgressiveMemberForm({
     }
   }, [member, form]);
 
-  // Form state persistence with localStorage
-  useEffect(() => {
-    if (!member) {
-      // Only for new members, not editing existing ones
-      try {
-        const savedData = localStorage.getItem(formStorageKey);
-        const savedStep = localStorage.getItem(`${formStorageKey}-step`);
-        if (savedData) {
-          const parsedData = JSON.parse(savedData);
-          // Restore form values
-          Object.keys(parsedData).forEach((key) => {
-            if (parsedData[key] !== undefined) {
-              form.setValue(key as keyof MemberFormData, parsedData[key], {
-                shouldValidate: false,
-              });
-            }
-          });
-        }
-        if (savedStep) {
-          setCurrentStep(parseInt(savedStep, 10));
-        }
-      } catch (error) {
-        console.warn("Failed to restore form state:", error);
-      }
-    }
-  }, [member, form, formStorageKey]);
-
-  // Save form state when values change
-  useEffect(() => {
-    if (!member) {
-      // Only for new members
-      const subscription = form.watch((values) => {
-        try {
-          localStorage.setItem(formStorageKey, JSON.stringify(values));
-          localStorage.setItem(
-            `${formStorageKey}-step`,
-            currentStep.toString()
-          );
-        } catch (error) {
-          console.warn("Failed to save form state:", error);
-        }
-      });
-      return () => subscription.unsubscribe();
-    }
-  }, [form, member, formStorageKey, currentStep]);
+  // Note: localStorage persistence removed for security (prevents XSS access to sensitive data)
+  // Form state is now purely in-memory - data will be lost on page refresh
+  // This is an acceptable tradeoff for better security, especially for medical conditions
 
   // Note: Change tracking removed - we now always allow updates in edit mode
   // React Hook Form's built-in dirty tracking can be used if needed via form.formState.isDirty
@@ -619,7 +691,7 @@ export function ProgressiveMemberForm({
     if (process.env.NODE_ENV === "development") {
       const subscription = form.watch((values, { name, type }) => {
         if (type === "change" && name) {
-          console.log("Field changed:", name, "New values:", values);
+          logger.debug("Field changed:", { fieldName: name, values });
         }
       });
       return () => subscription.unsubscribe();
@@ -676,13 +748,34 @@ export function ProgressiveMemberForm({
   };
 
   const handleSubmit = async (data: MemberFormData) => {
+    // Clean up partnership data for non-collaboration members
+    const cleanedData = { ...data };
+    if (cleanedData.member_type !== "collaboration") {
+      // Clear partnership fields if not collaboration member
+      cleanedData.partnership_company = undefined;
+      cleanedData.partnership_type = undefined;
+      cleanedData.partnership_contract_start = undefined;
+      cleanedData.partnership_contract_end = undefined;
+      cleanedData.partnership_notes = undefined;
+    } else {
+      // For collaboration members, ensure dates are properly formatted
+      // Convert empty strings to undefined for optional date fields
+      if (
+        !cleanedData.partnership_contract_start ||
+        cleanedData.partnership_contract_start.trim() === ""
+      ) {
+        cleanedData.partnership_contract_start = undefined;
+      }
+      // partnership_contract_end is required for collaboration, so don't clear it
+    }
+
     // In edit mode: validate and submit
     if (member) {
       try {
-        await memberFormSchema.parseAsync(data);
+        await memberFormSchema.parseAsync(cleanedData);
 
         // Submit all form data (database will handle the update)
-        await onSubmit(data);
+        await onSubmit(cleanedData);
       } catch (error) {
         if (error instanceof z.ZodError) {
           // Show validation errors without jumping to steps
@@ -705,7 +798,7 @@ export function ProgressiveMemberForm({
     // Create mode: step-by-step validation
     for (const step of steps) {
       try {
-        await step.schema.parseAsync(data);
+        await step.schema.parseAsync(cleanedData);
       } catch (error) {
         if (error instanceof z.ZodError && !step.isOptional) {
           toast.error(`Please complete step ${step.id}: ${step.title}`);
@@ -716,35 +809,18 @@ export function ProgressiveMemberForm({
     }
 
     try {
-      await onSubmit(data);
-
-      // Clear localStorage on successful submission
-      if (!member) {
-        try {
-          localStorage.removeItem(formStorageKey);
-          localStorage.removeItem(`${formStorageKey}-step`);
-        } catch (error) {
-          console.warn("Failed to clear form storage:", error);
-        }
-      }
+      await onSubmit(cleanedData);
+      // No localStorage cleanup needed - we don't persist form data anymore
     } catch (error) {
-      console.error("Failed to submit form:", error);
+      logger.error("Failed to submit form:", { error });
       throw error; // Re-throw to let parent handle the error
     }
   };
 
-  // Handle cancel with localStorage cleanup
+  // Handle cancel - no cleanup needed
   const handleCancel = useCallback(() => {
-    if (!member) {
-      try {
-        localStorage.removeItem(formStorageKey);
-        localStorage.removeItem(`${formStorageKey}-step`);
-      } catch (error) {
-        console.warn("Failed to clear form storage:", error);
-      }
-    }
     onCancel();
-  }, [member, formStorageKey, onCancel]);
+  }, [onCancel]);
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -957,6 +1033,187 @@ export function ProgressiveMemberForm({
         return <MemberAddressStep form={form} />;
 
       case 4:
+        // Member Type Selection
+        return (
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="member_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Member Type *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Select member type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="trial">Trial</SelectItem>
+                      <SelectItem value="full">Full Member</SelectItem>
+                      <SelectItem value="collaboration">
+                        Collaboration Partner
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Trial members can try out sessions before committing. Full
+                    members have regular memberships. Collaboration partners are
+                    for commercial partnerships and influencers.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        );
+
+      case 5:
+        // Partnership Details (conditional for collaboration members)
+        const memberType = form.watch("member_type");
+
+        if (memberType !== "collaboration") {
+          return (
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 dark:border-gray-800 dark:bg-gray-950">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Partnership details are only required for collaboration members.
+                Please select &quot;Collaboration Partner&quot; as the member
+                type if this applies.
+              </p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="partnership_company"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Partnership Company *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="e.g., Nike, Gymshark, etc."
+                        className="h-12"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Name of the partner company or organization
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="partnership_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Partnership Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Select type (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="influencer">Influencer</SelectItem>
+                        <SelectItem value="corporate">Corporate</SelectItem>
+                        <SelectItem value="brand">Brand</SelectItem>
+                        <SelectItem value="media">Media</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="partnership_contract_start"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contract Start Date</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        value={field.value ? new Date(field.value) : undefined}
+                        onChange={(date) => {
+                          field.onChange(
+                            date ? format(date, "yyyy-MM-dd") : ""
+                          );
+                        }}
+                        placeholder="Select start date"
+                        format="PPP"
+                        className="h-12"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Optional - when the partnership contract begins
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="partnership_contract_end"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contract End Date *</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        value={field.value ? new Date(field.value) : undefined}
+                        onChange={(date) => {
+                          field.onChange(
+                            date ? format(date, "yyyy-MM-dd") : ""
+                          );
+                        }}
+                        placeholder="Select end date"
+                        format="PPP"
+                        className="h-12"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Required - must be a future date
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="partnership_notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Partnership Notes</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Contract terms, deliverables, special conditions..."
+                      className="min-h-[100px] resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Additional details about the partnership agreement
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        );
+
+      case 6:
         // US-004: Equipment Section
         return (
           <div className="space-y-4">
@@ -1063,19 +1320,19 @@ export function ProgressiveMemberForm({
           </div>
         );
 
-      case 5:
+      case 7:
         // US-004: Referral Section
         return <ReferralSectionContent form={form} member={member} />;
 
-      case 6:
+      case 8:
         // US-004: Training Preference Section (conditional for females)
         return <TrainingPreferenceSectionContent form={form} />;
 
-      case 7:
+      case 9:
         // Health & Fitness
         return <MemberHealthFitnessStep form={form} />;
 
-      case 8:
+      case 10:
         // Settings (moved from case 5)
         return (
           <div className="space-y-4">

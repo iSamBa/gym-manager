@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import type { OpeningHoursWeek } from "../lib/types";
 import { getLocalDateString, getStartOfDay } from "@/lib/date-utils";
 
+import { logger } from "@/lib/logger";
 function OpeningHoursTabComponent() {
   const {
     data: activeSettings,
@@ -90,7 +91,7 @@ function OpeningHoursTabComponent() {
     try {
       await checkConflicts();
     } catch (err) {
-      console.error("Failed to check conflicts:", err);
+      logger.error("Failed to check conflicts:", { error: err });
       toast.error("Failed to check for conflicts. Please try again.");
       setIsCheckingConflicts(false);
     }
@@ -129,7 +130,7 @@ function OpeningHoursTabComponent() {
       setIsEditing(false); // Exit edit mode
       setShowConfirmDialog(false);
     } catch (err) {
-      console.error("Failed to save opening hours:", err);
+      logger.error("Failed to save opening hours:", { error: err });
       toast.error("Failed to save opening hours. Please try again.");
     }
   }, [editedHours, effectiveDate, updateSettings]);

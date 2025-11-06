@@ -48,6 +48,7 @@ import type { TrainerWithProfile } from "@/features/database/lib/types";
 import type { CreateTrainerData } from "@/features/trainers/lib/database-utils";
 import { toast } from "sonner";
 
+import { logger } from "@/lib/logger";
 // Schema for each step
 const personalInfoSchema = z.object({
   first_name: z
@@ -216,9 +217,6 @@ export function ProgressiveTrainerForm({
   const announceRef = useRef<HTMLDivElement>(null);
   const formId = useId();
 
-  // Form state persistence key
-  const formStorageKey = `progressive-trainer-form-${trainer?.id || "new"}`;
-
   // Fetch available specializations on component mount
   useEffect(() => {
     const fetchSpecializations = async () => {
@@ -296,51 +294,9 @@ export function ProgressiveTrainerForm({
   const progress = (currentStep / steps.length) * 100;
   const currentStepInfo = steps.find((step) => step.id === currentStep)!;
 
-  // Form state persistence with localStorage
-  useEffect(() => {
-    if (!trainer) {
-      // Only for new trainers, not editing existing ones
-      try {
-        const savedData = localStorage.getItem(formStorageKey);
-        const savedStep = localStorage.getItem(`${formStorageKey}-step`);
-        if (savedData) {
-          const parsedData = JSON.parse(savedData);
-          // Restore form values
-          Object.keys(parsedData).forEach((key) => {
-            if (parsedData[key] !== undefined) {
-              form.setValue(key as keyof TrainerFormData, parsedData[key], {
-                shouldValidate: false,
-              });
-            }
-          });
-        }
-        if (savedStep) {
-          setCurrentStep(parseInt(savedStep, 10));
-        }
-      } catch (error) {
-        console.warn("Failed to restore form state:", error);
-      }
-    }
-  }, [trainer, form, formStorageKey]);
-
-  // Save form state when values change
-  useEffect(() => {
-    if (!trainer) {
-      // Only for new trainers
-      const subscription = form.watch((values) => {
-        try {
-          localStorage.setItem(formStorageKey, JSON.stringify(values));
-          localStorage.setItem(
-            `${formStorageKey}-step`,
-            currentStep.toString()
-          );
-        } catch (error) {
-          console.warn("Failed to save form state:", error);
-        }
-      });
-      return () => subscription.unsubscribe();
-    }
-  }, [form, trainer, formStorageKey, currentStep]);
+  // Note: localStorage persistence removed for security (prevents XSS access to sensitive data)
+  // Form state is now purely in-memory - data will be lost on page refresh
+  // This is an acceptable tradeoff for better security of trainer PII and professional data
 
   // Accessibility: Announce step changes to screen readers
   useEffect(() => {
@@ -373,7 +329,7 @@ export function ProgressiveTrainerForm({
     if (process.env.NODE_ENV === "development") {
       const subscription = form.watch((values, { name, type }) => {
         if (type === "change" && name) {
-          console.log("Field changed:", name, "New values:", values);
+          logger.debug("Field changed:", { fieldName: name, values });
         }
       });
       return () => subscription.unsubscribe();
@@ -468,34 +424,17 @@ export function ProgressiveTrainerForm({
       } as const;
 
       await onSubmit(submissionData as CreateTrainerData);
-
-      // Clear localStorage on successful submission
-      if (!trainer) {
-        try {
-          localStorage.removeItem(formStorageKey);
-          localStorage.removeItem(`${formStorageKey}-step`);
-        } catch (error) {
-          console.warn("Failed to clear form storage:", error);
-        }
-      }
+      // No localStorage cleanup needed - we don't persist form data anymore
     } catch (error) {
-      console.error("Failed to submit form:", error);
+      logger.error("Failed to submit form:", { error });
       throw error; // Re-throw to let parent handle the error
     }
   };
 
-  // Handle cancel with localStorage cleanup
+  // Handle cancel - no cleanup needed
   const handleCancel = useCallback(() => {
-    if (!trainer) {
-      try {
-        localStorage.removeItem(formStorageKey);
-        localStorage.removeItem(`${formStorageKey}-step`);
-      } catch (error) {
-        console.warn("Failed to clear form storage:", error);
-      }
-    }
     onCancel();
-  }, [trainer, formStorageKey, onCancel]);
+  }, [onCancel]);
 
   // Helper functions for array field management
   const addSpecialization = (spec: string) => {

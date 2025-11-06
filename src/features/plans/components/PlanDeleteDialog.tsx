@@ -16,6 +16,7 @@ import { AlertTriangle } from "lucide-react";
 import type { SubscriptionPlanWithSessions } from "@/features/database/lib/types";
 import { useDeleteSubscriptionPlan } from "@/features/memberships/hooks/use-subscriptions";
 
+import { logger } from "@/lib/logger";
 interface PlanDeleteDialogProps {
   plan: SubscriptionPlanWithSessions;
   open: boolean;
@@ -34,7 +35,7 @@ export function PlanDeleteDialog({
       await deleteMutation.mutateAsync(plan.id);
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to delete plan:", error);
+      logger.error("Failed to delete plan:", { error });
     }
   };
 

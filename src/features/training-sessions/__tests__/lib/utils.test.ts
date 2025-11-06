@@ -145,8 +145,8 @@ describe("Training Session Utility Functions", () => {
         );
       });
 
-      it("should return correct color for standard category", () => {
-        const result = getSessionCategoryColor("standard");
+      it("should return correct color for member category (renamed from standard)", () => {
+        const result = getSessionCategoryColor("member");
         expect(result).toBe(
           "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300"
         );

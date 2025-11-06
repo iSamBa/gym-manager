@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSearchTrainers, trainerKeys } from "./use-trainers";
 import { useQueryClient } from "@tanstack/react-query";
+import { logger } from "@/lib/logger";
 import type {
   Trainer,
   TrainerWithProfile,
@@ -75,7 +76,7 @@ export function useTrainerValidation() {
         // This could be enhanced with a dedicated utility function
         return false;
       } catch (error) {
-        console.error("Error checking email:", error);
+        logger.error("Error checking email:", { error });
         return false;
       }
     },

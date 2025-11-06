@@ -2,6 +2,7 @@
  * Centralized CSV utilities - replaces duplicate implementations
  * in features/members/lib/csv-utils.ts and features/trainers/lib/csv-utils.ts
  */
+import { logger } from "@/lib/logger";
 
 /**
  * Escapes a CSV field value by wrapping in quotes if it contains special characters
@@ -168,7 +169,7 @@ export function exportToCSV<T>(
     const filename = generateCSVFilename(filenamePrefix);
     downloadCSV(csvContent, filename);
   } catch (error) {
-    console.error(`Failed to export ${filenamePrefix} to CSV:`, error);
+    logger.error(`Failed to export ${filenamePrefix} to CSV:`, { error });
     throw new Error("Failed to generate CSV file");
   }
 }

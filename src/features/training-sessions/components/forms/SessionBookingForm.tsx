@@ -55,7 +55,7 @@ const sessionBookingSchema = z.object({
   sessionTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
   location: z.string().min(1, "Location is required"),
-  sessionType: z.enum(["trail", "standard"], {
+  sessionType: z.enum(["trial", "member"], {
     message: "Session type is required",
   }),
   notes: z.string().optional(),
@@ -135,7 +135,7 @@ export function SessionBookingForm({
         scheduled_start: startDateTime.toISOString(),
         scheduled_end: endDateTime.toISOString(),
         session_type: data.sessionType,
-        machine_id: "00000000-0000-0000-0000-000000000000", // TODO: Add machine selection to form
+        machine_id: "00000000-0000-0000-0000-000000000000", // TODO(#issue): Add machine selection to form - Track in GitHub issues
         notes: data.notes,
       };
 
@@ -253,8 +253,8 @@ export function SessionBookingForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="trail">Trail Session</SelectItem>
-                      <SelectItem value="standard">Standard Session</SelectItem>
+                      <SelectItem value="trial">Trial Session</SelectItem>
+                      <SelectItem value="member">Member Session</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

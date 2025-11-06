@@ -4,9 +4,11 @@ import {
   executeQuery,
   validateAdminAccess,
 } from "@/features/database/lib/query-helpers";
+import { logger } from "@/lib/logger";
 import type {
   Member,
   MemberStatus,
+  MemberType,
   Gender,
   Address,
   MemberWithSubscription,
@@ -38,7 +40,7 @@ export interface MemberFilters {
   /** Filter members with outstanding balance */
   hasOutstandingBalance?: boolean;
   /** Filter by member type */
-  memberType?: "full" | "trial";
+  memberType?: MemberType;
 }
 
 export interface CreateMemberData {
@@ -67,6 +69,13 @@ export interface CreateMemberData {
   referral_source?: string;
   referred_by_member_id?: string;
   training_preference?: string;
+  // Collaboration member type and partnership fields
+  member_type?: MemberType;
+  partnership_company?: string;
+  partnership_type?: string;
+  partnership_contract_start?: string;
+  partnership_contract_end?: string;
+  partnership_notes?: string;
 }
 
 export interface UpdateMemberData {
@@ -94,6 +103,13 @@ export interface UpdateMemberData {
   referral_source?: string;
   referred_by_member_id?: string;
   training_preference?: string;
+  // Collaboration member type and partnership fields
+  member_type?: MemberType;
+  partnership_company?: string;
+  partnership_type?: string;
+  partnership_contract_start?: string;
+  partnership_contract_end?: string;
+  partnership_notes?: string;
 }
 
 /**
@@ -230,7 +246,7 @@ export const memberUtils = {
         last_payment_date: row.last_payment_date,
       }));
     } catch (error) {
-      console.error("Failed to fetch enhanced members:", error);
+      logger.error("Failed to fetch enhanced members:", { error });
       throw error;
     }
   },
@@ -256,7 +272,10 @@ export const memberUtils = {
           key === "notes" ||
           key === "medical_conditions" ||
           key === "fitness_goals" ||
-          key === "profile_picture_url")
+          key === "profile_picture_url" ||
+          key === "partnership_company" ||
+          key === "partnership_type" ||
+          key === "partnership_notes")
       ) {
         cleanedData[key] = null;
       } else {
@@ -275,6 +294,7 @@ export const memberUtils = {
             memberData.preferred_contact_method || "email",
           marketing_consent: memberData.marketing_consent ?? false,
           waiver_signed: memberData.waiver_signed ?? false,
+          member_type: memberData.member_type || "full",
         })
         .select("*")
         .single();
@@ -312,7 +332,10 @@ export const memberUtils = {
           key === "notes" ||
           key === "medical_conditions" ||
           key === "fitness_goals" ||
-          key === "profile_picture_url")
+          key === "profile_picture_url" ||
+          key === "partnership_company" ||
+          key === "partnership_type" ||
+          key === "partnership_notes")
       ) {
         cleanedData[key] = null;
       } else {
@@ -410,7 +433,8 @@ export const memberUtils = {
     return executeQuery(async () => {
       const { count, error } = await supabase
         .from("members")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .neq("member_type", "collaboration"); // Exclude collaboration members from financial counts
       return { data: count, error };
     });
   },
@@ -420,7 +444,8 @@ export const memberUtils = {
       const { data, error } = await supabase
         .from("members")
         .select("status")
-        .not("status", "is", null);
+        .not("status", "is", null)
+        .neq("member_type", "collaboration"); // Exclude collaboration members from financial counts
 
       const counts: Record<MemberStatus, number> = {
         active: 0,
@@ -447,7 +472,18 @@ export const memberUtils = {
         .from("members")
         .select("*")
         .gte("join_date", getLocalDateString(firstDayOfMonth))
+        .neq("member_type", "collaboration") // Exclude collaboration members from financial counts
         .order("join_date", { ascending: false });
+    });
+  },
+
+  async getCollaborationMemberCount(): Promise<number> {
+    return executeQuery(async () => {
+      const { count, error } = await supabase
+        .from("members")
+        .select("*", { count: "exact", head: true })
+        .eq("member_type", "collaboration"); // Only count collaboration members
+      return { data: count, error };
     });
   },
 

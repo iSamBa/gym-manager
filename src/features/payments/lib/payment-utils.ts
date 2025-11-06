@@ -10,6 +10,7 @@ import {
   formatForDatabase,
   formatTimestampForDatabase,
 } from "@/lib/date-utils";
+import { logger } from "@/lib/logger";
 
 export const paymentUtils = {
   /**
@@ -50,7 +51,7 @@ export const paymentUtils = {
       // Note: created_by column doesn't exist in subscription_payments table
     };
 
-    console.log("Payment data being inserted:", paymentData);
+    logger.debug("Payment data being inserted:", paymentData);
 
     const { data, error } = await supabase
       .from("subscription_payments")
@@ -59,7 +60,7 @@ export const paymentUtils = {
       .single();
 
     if (error) {
-      console.error("Supabase insert error:", error);
+      logger.error("Supabase insert error:", { error });
       throw new Error(
         `Database error: ${error.message || error.code || "Unknown error"}`
       );
@@ -183,7 +184,7 @@ export const paymentUtils = {
    * Process a refund for a payment by creating a new negative amount entry
    */
   async processRefund(paymentId: string, refundAmount: number, reason: string) {
-    console.log("Processing refund:", { paymentId, refundAmount, reason });
+    logger.debug("Processing refund:", { paymentId, refundAmount, reason });
 
     // Get the original payment
     const { data: originalPayment, error: fetchError } = await supabase
@@ -193,11 +194,11 @@ export const paymentUtils = {
       .single();
 
     if (fetchError) {
-      console.error("Error fetching original payment:", fetchError);
+      logger.error("Error fetching original payment:", { error: fetchError });
       throw fetchError;
     }
 
-    console.log("Original payment found:", originalPayment);
+    logger.debug("Original payment found:", originalPayment);
 
     if (originalPayment.is_refund) {
       throw new Error("Cannot refund a refund entry");
@@ -207,7 +208,7 @@ export const paymentUtils = {
     const totalRefunded = await this.getPaymentRefundTotal(paymentId);
     const maxRefundAmount = originalPayment.amount - totalRefunded;
 
-    console.log("Refund calculations:", {
+    logger.debug("Refund calculations:", {
       originalAmount: originalPayment.amount,
       totalRefunded,
       maxRefundAmount,
@@ -216,13 +217,13 @@ export const paymentUtils = {
 
     if (refundAmount > maxRefundAmount) {
       const error = `Refund amount cannot exceed remaining refundable amount: $${maxRefundAmount.toFixed(2)}`;
-      console.error("Validation error:", error);
+      logger.error("Validation error:", { error });
       throw new Error(error);
     }
 
     if (refundAmount <= 0) {
       const error = "Refund amount must be greater than 0";
-      console.error("Validation error:", error);
+      logger.error("Validation error:", { error });
       throw new Error(error);
     }
 
@@ -246,7 +247,7 @@ export const paymentUtils = {
       },
     };
 
-    console.log("Creating refund entry with data:", refundData);
+    logger.debug("Creating refund entry with data:", refundData);
 
     const { data: refundEntry, error: refundError } = await supabase
       .from("subscription_payments")
@@ -255,11 +256,11 @@ export const paymentUtils = {
       .single();
 
     if (refundError) {
-      console.error("Error creating refund entry:", refundError);
+      logger.error("Error creating refund entry:", { error: refundError });
       throw refundError;
     }
 
-    console.log("Refund entry created:", refundEntry);
+    logger.debug("Refund entry created:", refundEntry);
 
     // Update subscription paid amount if this refund affects a subscription
     if (originalPayment.subscription_id) {

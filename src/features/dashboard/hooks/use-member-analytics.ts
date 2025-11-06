@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
+import { logger } from "@/lib/logger";
 interface MemberEvolutionData {
   month: string;
   totalMembers: number;
@@ -32,10 +33,11 @@ export function useMemberEvolution(months: number = 12) {
       setError(null);
 
       try {
-        // Get member creation data for the last N months
+        // Get member creation data for the last N months (exclude collaboration members)
         const { data: members, error: membersError } = await supabase
           .from("members")
           .select("created_at")
+          .neq("member_type", "collaboration") // Exclude collaboration members from financial analytics
           .order("created_at", { ascending: true });
 
         if (membersError) throw membersError;
@@ -89,7 +91,7 @@ export function useMemberEvolution(months: number = 12) {
             ? err.message
             : "Failed to fetch member evolution"
         );
-        console.error("Error fetching member evolution:", err);
+        logger.error("Error fetching member evolution:", { error: err });
       } finally {
         setIsLoading(false);
       }
@@ -162,7 +164,9 @@ export function useMemberTypeDistribution() {
             ? err.message
             : "Failed to fetch member type distribution"
         );
-        console.error("Error fetching member type distribution:", err);
+        logger.error("Error fetching member type distribution:", {
+          error: err,
+        });
       } finally {
         setIsLoading(false);
       }
@@ -185,10 +189,11 @@ export function useMemberStatusDistribution() {
       setError(null);
 
       try {
-        // Get all members and count by status
+        // Get all members and count by status (exclude collaboration members)
         const { data: members, error: membersError } = await supabase
           .from("members")
-          .select("status");
+          .select("status")
+          .neq("member_type", "collaboration"); // Exclude collaboration members from financial analytics
 
         if (membersError) throw membersError;
 
@@ -224,7 +229,9 @@ export function useMemberStatusDistribution() {
             ? err.message
             : "Failed to fetch member status distribution"
         );
-        console.error("Error fetching member status distribution:", err);
+        logger.error("Error fetching member status distribution:", {
+          error: err,
+        });
       } finally {
         setIsLoading(false);
       }

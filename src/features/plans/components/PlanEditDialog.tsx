@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import type { SubscriptionPlanWithSessions } from "@/features/database/lib/types";
+import { logger } from "@/lib/logger";
 import {
   useCreateSubscriptionPlan,
   useUpdateSubscriptionPlan,
@@ -35,6 +36,7 @@ interface PlanFormData {
   duration_months: number;
   sessions_count: number;
   is_active: boolean;
+  is_collaboration_plan: boolean;
 }
 
 export function PlanEditDialog({
@@ -50,6 +52,7 @@ export function PlanEditDialog({
     duration_months: 1,
     sessions_count: 0,
     is_active: true,
+    is_collaboration_plan: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -69,6 +72,7 @@ export function PlanEditDialog({
         duration_months: plan.duration_months || 1,
         sessions_count: plan.sessions_count || 0,
         is_active: plan.is_active,
+        is_collaboration_plan: plan.is_collaboration_plan || false,
       });
     } else {
       setFormData({
@@ -79,6 +83,7 @@ export function PlanEditDialog({
         duration_months: 1,
         sessions_count: 0,
         is_active: true,
+        is_collaboration_plan: false,
       });
     }
     setErrors({});
@@ -95,7 +100,12 @@ export function PlanEditDialog({
       newErrors.duration_months = "Duration must be at least 1 month";
     }
 
-    if (formData.price < 0) {
+    // Price validation depends on collaboration plan status
+    if (!formData.is_collaboration_plan && formData.price <= 0) {
+      newErrors.price = "Price must be greater than 0 for regular plans";
+    }
+
+    if (formData.is_collaboration_plan && formData.price < 0) {
       newErrors.price = "Price cannot be negative";
     }
 
@@ -130,7 +140,7 @@ export function PlanEditDialog({
 
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to save plan:", error);
+      logger.error("Failed to save plan:", { error });
     }
   };
 
@@ -284,6 +294,25 @@ export function PlanEditDialog({
               }
             />
             <Label htmlFor="is_active">Active Plan</Label>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="is_collaboration_plan"
+                checked={formData.is_collaboration_plan}
+                onCheckedChange={(checked) =>
+                  handleInputChange("is_collaboration_plan", checked)
+                }
+              />
+              <Label htmlFor="is_collaboration_plan">Collaboration Plan</Label>
+            </div>
+            {formData.is_collaboration_plan && (
+              <p className="text-muted-foreground pl-1 text-sm">
+                Collaboration plans can have $0 price for partnership
+                arrangements and can only be assigned to collaboration members.
+              </p>
+            )}
           </div>
 
           {(createMutation.error || updateMutation.error) && (

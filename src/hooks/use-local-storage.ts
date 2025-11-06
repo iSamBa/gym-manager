@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 
+import { logger } from "@/lib/logger";
 export function useLocalStorage<T>(
   key: string,
   initialValue: T
@@ -25,7 +26,7 @@ export function useLocalStorage<T>(
       }
     } catch (error) {
       // A more advanced implementation would handle the error case
-      console.error(`Error setting localStorage key "${key}":`, error);
+      logger.error(`Error setting localStorage key "${key}":`, { error });
     }
   };
 
@@ -41,7 +42,7 @@ export function useLocalStorage<T>(
       }
     } catch (error) {
       // If error also return initialValue
-      console.error(`Error reading localStorage key "${key}":`, error);
+      logger.error(`Error reading localStorage key "${key}":`, { error });
     }
   }, [key]);
 

@@ -6,6 +6,9 @@ import { format, parseISO, eachDayOfInterval, endOfWeek } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getLocalDateString, isToday } from "@/lib/date-utils";
 import { useDailyStatistics } from "../hooks/use-daily-statistics";
+import { getSessionTypeSolidColor } from "../lib/session-colors";
+import { SESSION_TYPE_LABELS } from "../lib/constants";
+import type { SessionType } from "@/features/database/lib/types";
 
 /**
  * Props for WeeklyDayTabs component
@@ -24,6 +27,7 @@ export interface WeeklyDayTabsProps {
  *
  * Displays 7 day tabs (Monday through Sunday) for weekly navigation.
  * Highlights today with distinct styling and allows tab selection to change the selected date.
+ * Shows session distribution with color-coded badges for all 7 session types.
  *
  * Performance optimized with React.memo, useMemo, and useCallback.
  *
@@ -101,6 +105,7 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
                   "border-primary bg-primary/10 text-primary font-semibold"
               )}
               aria-label={`Select ${format(day, "EEEE, MMMM d, yyyy")}`}
+              data-today={todayIndicator ? "true" : undefined}
             >
               {/* Day name and date on the same line */}
               <div className="flex items-center gap-1">
@@ -116,24 +121,43 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
               {isLoading ? (
                 <div className="bg-muted h-6 w-12 animate-pulse rounded" />
               ) : stats ? (
-                <div className="flex flex-col items-center gap-1">
+                <div className="flex flex-col items-center gap-2">
                   <span className="text-lg font-bold">
                     {stats.total} session{stats.total !== 1 ? "s" : ""}
                   </span>
-                  <div className="flex items-center gap-1 text-base font-semibold">
-                    <span className="text-orange-600">{stats.standard}</span>
-                    <span className="text-muted-foreground">|</span>
-                    <span className="text-blue-600">{stats.trial}</span>
+                  {/* Color-coded badges for session types */}
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {(
+                      [
+                        "trial",
+                        "member",
+                        "contractual",
+                        "makeup",
+                        "multi_site",
+                        "collaboration",
+                        "non_bookable",
+                      ] as SessionType[]
+                    ).map((type) => {
+                      const count = stats[type];
+                      if (count === 0) return null;
+
+                      const colorClass = getSessionTypeSolidColor(type);
+
+                      return (
+                        <div
+                          key={type}
+                          className={`${colorClass} rounded-md px-3 py-1 text-base font-bold`}
+                          title={SESSION_TYPE_LABELS[type]}
+                        >
+                          {count}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-1">
                   <span className="text-lg font-bold">0 sessions</span>
-                  <div className="flex items-center gap-1 text-base font-semibold">
-                    <span className="text-orange-600">0</span>
-                    <span className="text-muted-foreground">|</span>
-                    <span className="text-blue-600">0</span>
-                  </div>
                 </div>
               )}
             </TabsTrigger>

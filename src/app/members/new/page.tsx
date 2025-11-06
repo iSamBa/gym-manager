@@ -10,6 +10,7 @@ import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import type { CreateMemberData } from "@/features/members/lib/database-utils";
 
+import { logger } from "@/lib/logger";
 export default function AddMemberPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function AddMemberPage() {
       }, 1500);
     } catch (error) {
       setIsSubmitted(false);
-      console.error("Failed to create member:", error);
+      logger.error("Failed to create member:", { error });
     }
   };
 

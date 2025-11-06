@@ -1,6 +1,7 @@
 import { format, startOfDay, getDay } from "date-fns";
 import type { TimeSlot } from "./types";
 import { supabase } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
 
 // Default configuration (fallback when no settings exist)
 const DEFAULT_SLOT_CONFIG = {
@@ -42,7 +43,7 @@ export async function getTimeSlotConfig(
     });
 
     if (error) {
-      console.error("Failed to fetch opening hours:", error);
+      logger.error("Failed to fetch opening hours:", { error: error });
       return DEFAULT_SLOT_CONFIG;
     }
 
@@ -71,7 +72,7 @@ export async function getTimeSlotConfig(
       SLOT_DURATION_MINUTES: 30,
     };
   } catch (err) {
-    console.error("Error getting time slot config:", err);
+    logger.error("Error getting time slot config:", { error: err });
     return DEFAULT_SLOT_CONFIG;
   }
 }

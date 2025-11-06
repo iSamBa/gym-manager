@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/store";
+import { logger } from "@/lib/logger";
 
 /**
  * Retry token refresh with exponential backoff.
@@ -12,9 +13,9 @@ import { useAuthStore } from "@/lib/store";
  * ```typescript
  * const success = await retryTokenRefresh(1, 3);
  * if (success) {
- *   console.log('Token refreshed successfully');
+ *   logger.debug('Token refreshed successfully');
  * } else {
- *   console.log('All retry attempts failed');
+ *   logger.debug('All retry attempts failed');
  * }
  * ```
  *
@@ -35,7 +36,7 @@ export const retryTokenRefresh = async (
     if (error) throw error;
     return true;
   } catch (error) {
-    console.error(`Token refresh attempt ${attempt} failed:`, error);
+    logger.error(`Token refresh attempt ${attempt} failed`, { error, attempt });
 
     // Exponential backoff: 1s, 2s, 4s
     const delay = Math.pow(2, attempt - 1) * 1000;
@@ -122,7 +123,7 @@ export function useAuth() {
 
       return { user: data.user, error: null };
     } catch (error) {
-      console.error("Sign in error:", error);
+      logger.error("Sign in error", { error });
       return { user: null, error };
     } finally {
       setIsLoading(false);
@@ -138,7 +139,7 @@ export function useAuth() {
       }
       clearUser();
     } catch (error) {
-      console.error("Sign out error:", error);
+      logger.error("Sign out error", { error });
     } finally {
       setIsLoading(false);
     }

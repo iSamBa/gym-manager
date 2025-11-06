@@ -7,6 +7,7 @@ import {
 import { keepPreviousData } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import {
   memberUtils,
   type MemberFilters,
@@ -27,6 +28,7 @@ export const memberKeys = {
   count: () => [...memberKeys.all, "count"] as const,
   countByStatus: () => [...memberKeys.all, "count", "by-status"] as const,
   newThisMonth: () => [...memberKeys.all, "new-this-month"] as const,
+  collaborationCount: () => [...memberKeys.all, "collaboration-count"] as const,
   withSubscription: (id: string) =>
     [...memberKeys.details(), id, "with-subscription"] as const,
 };
@@ -116,6 +118,15 @@ export function useNewMembersThisMonth() {
   });
 }
 
+// Collaboration member count
+export function useCollaborationMemberCount() {
+  return useQuery({
+    queryKey: memberKeys.collaborationCount(),
+    queryFn: () => memberUtils.getCollaborationMemberCount(),
+    staleTime: 15 * 60 * 1000, // 15 minutes for counts
+  });
+}
+
 // Create member mutation with optimistic updates
 export function useCreateMember() {
   const { isAdmin } = useAuth();
@@ -141,7 +152,7 @@ export function useCreateMember() {
       queryClient.setQueryData(memberKeys.detail(newMember.id), newMember);
     },
     onError: (error) => {
-      console.error("Failed to create member:", error);
+      logger.error("Failed to create member", { error });
     },
   });
 }
@@ -233,7 +244,7 @@ export function useUpdateMember() {
           context.previousMemberWithSub
         );
       }
-      console.error("Failed to update member:", error);
+      logger.error("Failed to update member", { error });
     },
 
     onSettled: (data, error, { id }) => {
@@ -332,7 +343,7 @@ export function useUpdateMemberStatus() {
           context.previousMemberWithSub
         );
       }
-      console.error("Failed to update member status:", error);
+      logger.error("Failed to update member status", { error });
     },
 
     onSuccess: () => {
@@ -408,7 +419,7 @@ export function useBulkUpdateMemberStatus() {
     },
 
     onError: (error) => {
-      console.error("Failed to bulk update member status:", error);
+      logger.error("Failed to bulk update member status", { error });
     },
 
     onSuccess: () => {
@@ -470,7 +481,7 @@ export function useDeleteMember() {
       if (context?.previousMember) {
         queryClient.setQueryData(memberKeys.detail(id), context.previousMember);
       }
-      console.error("Failed to delete member:", error);
+      logger.error("Failed to delete member", { error });
     },
 
     onSuccess: () => {
@@ -579,7 +590,7 @@ export function useExportMembers(): UseExportMembersReturn {
           } exported to CSV file.`,
         });
       } catch (error) {
-        console.error("Export failed:", error);
+        logger.error("Export failed", { error });
 
         toast.error("Export failed", {
           description:

@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import type { Member } from "@/features/database/lib/types";
 import type { UpdateMemberData } from "@/features/members/lib/database-utils";
 
+import { logger } from "@/lib/logger";
 interface EditMemberDialogProps {
   member: Member | null;
   isOpen: boolean;
@@ -68,7 +69,7 @@ export function EditMemberDialog({
       }, 1000);
     } catch (error) {
       setIsSubmitted(false);
-      console.error("Failed to update member:", error);
+      logger.error("Failed to update member:", { error });
 
       toast.error("Update Failed", {
         description: "Failed to update member information. Please try again.",

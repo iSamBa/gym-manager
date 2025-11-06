@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import type { TrainerWithProfile } from "@/features/database/lib/types";
 import type { UpdateTrainerData } from "@/features/trainers/lib/database-utils";
 
+import { logger } from "@/lib/logger";
 interface EditTrainerDialogProps {
   trainer: TrainerWithProfile | null;
   isOpen: boolean;
@@ -68,7 +69,7 @@ export function EditTrainerDialog({
       }, 1000);
     } catch (error) {
       setIsSubmitted(false);
-      console.error("Failed to update trainer:", error);
+      logger.error("Failed to update trainer:", { error });
 
       toast.error("Update Failed", {
         description: "Failed to update trainer information. Please try again.",

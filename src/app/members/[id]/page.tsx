@@ -25,6 +25,7 @@ import {
   MemberCommentsCard,
   BodyCheckupDialog,
   BodyCheckupHistory,
+  ConvertCollaborationMemberDialog,
 } from "@/features/members/components";
 import {
   useMemberWithSubscription,
@@ -40,6 +41,7 @@ import { toast } from "sonner";
 import type { Member } from "@/features/database/lib/types";
 import type { BodyCheckup } from "@/features/members/lib/types";
 
+import { logger } from "@/lib/logger";
 interface MemberDetailPageProps {
   params: Promise<{ id: string }>;
 }
@@ -57,6 +59,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
   const [editingCheckup, setEditingCheckup] = useState<BodyCheckup | null>(
     null
   );
+  const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
 
   const {
     data: member,
@@ -101,7 +104,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
       setShowDeleteConfirm(false);
       router.push("/members");
     } catch (err) {
-      console.error("Failed to delete member:", err);
+      logger.error("Failed to delete member:", { error: err });
     }
   };
 
@@ -179,6 +182,16 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
     [deleteCheckup]
   );
 
+  const handleConversionComplete = useCallback(
+    (updatedMember: Member) => {
+      refetch();
+      toast.success(
+        `${updatedMember.first_name} ${updatedMember.last_name} has been converted to a full member`
+      );
+    },
+    [refetch]
+  );
+
   if (isLoading) {
     return (
       <MainLayout>
@@ -247,6 +260,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
           onDelete={handleDeleteMember}
           onSessionSuccess={refetch}
           onPaymentSuccess={refetch}
+          onConvert={() => setIsConvertDialogOpen(true)}
         />
 
         {/* Main Content: 2-Column Layout with Tabs */}
@@ -398,6 +412,14 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
         checkup={editingCheckup}
         onSave={handleSaveCheckup}
         isLoading={isCreatingCheckup || isUpdatingCheckup}
+      />
+
+      {/* Convert Collaboration Member Dialog */}
+      <ConvertCollaborationMemberDialog
+        member={member}
+        open={isConvertDialogOpen}
+        onOpenChange={setIsConvertDialogOpen}
+        onConversionComplete={handleConversionComplete}
       />
     </MainLayout>
   );

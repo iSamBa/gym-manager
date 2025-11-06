@@ -15,7 +15,7 @@ describe("Training Session Validation Schemas", () => {
       trainer_id: "550e8400-e29b-41d4-a716-446655440001",
       scheduled_start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
       scheduled_end: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(), // Tomorrow + 1 hour
-      session_type: "standard",
+      session_type: "member",
       member_id: "550e8400-e29b-41d4-a716-446655440002",
       notes: "Morning strength session",
     };
@@ -148,19 +148,26 @@ describe("Training Session Validation Schemas", () => {
     });
 
     describe("session_type validation", () => {
-      it("should accept 'trail' session type", () => {
+      it("should accept 'trial' session type (with required fields)", () => {
         const validData = {
           ...validSessionData,
-          session_type: "trail" as const,
+          session_type: "trial" as const,
+          new_member_first_name: "John",
+          new_member_last_name: "Doe",
+          new_member_phone: "+1234567890",
+          new_member_email: "john.doe@example.com",
+          new_member_gender: "male" as const,
+          new_member_referral_source: "instagram" as const,
         };
         const result = createSessionSchema.safeParse(validData);
         expect(result.success).toBe(true);
       });
 
-      it("should accept 'standard' session type", () => {
+      it("should accept 'member' session type (with required fields)", () => {
         const validData = {
           ...validSessionData,
-          session_type: "standard" as const,
+          session_type: "member" as const,
+          member_id: "550e8400-e29b-41d4-a716-446655440002",
         };
         const result = createSessionSchema.safeParse(validData);
         expect(result.success).toBe(true);
