@@ -167,18 +167,21 @@ describe("Guest Session Creation (AC-4: Data Persistence)", () => {
     });
   });
 
-  describe("Collaboration Guest Sessions", () => {
-    it("creates collaboration session with details persisted", async () => {
-      const mockSessionId = "mock-collab-123";
+  // Collaboration sessions are no longer guest sessions
+  // They now use collaboration members and create training_session_members records
+
+  describe("Guest Session Data Separation", () => {
+    it("multi_site guest sessions are stored correctly without member references", async () => {
+      const mockMultiSiteId = "mock-multi-site-789";
       const now = new Date();
 
       // Mock RPC call to return success
       (supabase.rpc as any).mockResolvedValue({
-        data: { success: true, id: mockSessionId },
+        data: { success: true, id: mockMultiSiteId },
         error: null,
       });
 
-      // Mock database query to return session with collaboration details
+      // Mock database queries for sessions and members
       (supabase.from as any).mockImplementation((table: string) => {
         if (table === "training_sessions") {
           return {
@@ -187,156 +190,12 @@ describe("Guest Session Creation (AC-4: Data Persistence)", () => {
                 single: vi.fn(() =>
                   Promise.resolve({
                     data: {
-                      id: mockSessionId,
-                      collaboration_details:
-                        "@influencer123 - 6 month partnership deal",
-                      session_type: "collaboration",
+                      id: mockMultiSiteId,
+                      session_type: "multi_site",
+                      guest_first_name: "Guest",
+                      guest_last_name: "One",
+                      guest_gym_name: "Gym A",
                     },
-                    error: null,
-                  })
-                ),
-              })),
-            })),
-          };
-        }
-        return {};
-      });
-
-      // Create collaboration session
-      const { data: result, error } = await supabase.rpc(
-        "create_training_session_with_members",
-        {
-          p_machine_id: testMachineId,
-          p_trainer_id: null,
-          p_scheduled_start: formatTimestampForDatabase(now),
-          p_scheduled_end: formatTimestampForDatabase(
-            new Date(now.getTime() + 30 * 60000)
-          ),
-          p_member_ids: [], // Empty for guest sessions
-          p_session_type: "collaboration",
-          p_notes: "Collaboration session test",
-          p_collaboration_details: "@influencer123 - 6 month partnership deal",
-        }
-      );
-
-      expect(error).toBeNull();
-      expect(result.success).toBe(true);
-      createdSessionIds.push(result.id);
-
-      // Verify session was created with collaboration details
-      const { data: session } = await supabase
-        .from("training_sessions")
-        .select("*")
-        .eq("id", result.id)
-        .single();
-
-      expect(session).toBeDefined();
-      expect(session?.collaboration_details).toContain("influencer123");
-      expect(session?.collaboration_details).toContain("6 month partnership");
-      expect(session?.session_type).toBe("collaboration");
-    });
-
-    it("does NOT create training_session_members for collaboration sessions", async () => {
-      const mockSessionId = "mock-collab-456";
-      const now = new Date();
-
-      // Mock RPC call to return success
-      (supabase.rpc as any).mockResolvedValue({
-        data: { success: true, id: mockSessionId },
-        error: null,
-      });
-
-      // Mock training_session_members query to return empty array
-      (supabase.from as any).mockImplementation((table: string) => {
-        if (table === "training_session_members") {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() =>
-                Promise.resolve({
-                  data: [], // No members for guest sessions
-                  error: null,
-                })
-              ),
-            })),
-          };
-        }
-        return {};
-      });
-
-      // Create collaboration session
-      const { data: result } = await supabase.rpc(
-        "create_training_session_with_members",
-        {
-          p_machine_id: testMachineId,
-          p_trainer_id: null,
-          p_scheduled_start: formatTimestampForDatabase(now),
-          p_scheduled_end: formatTimestampForDatabase(
-            new Date(now.getTime() + 30 * 60000)
-          ),
-          p_member_ids: [],
-          p_session_type: "collaboration",
-          p_notes: null,
-          p_collaboration_details: "Test collaboration",
-        }
-      );
-
-      createdSessionIds.push(result.id);
-
-      // Verify NO training_session_members record created
-      const { data: tsm } = await supabase
-        .from("training_session_members")
-        .select("*")
-        .eq("session_id", result.id);
-
-      expect(tsm).toHaveLength(0);
-    });
-  });
-
-  describe("Guest Session Data Separation", () => {
-    it("guest sessions are stored correctly without member references", async () => {
-      const mockMultiSiteId = "mock-multi-site-789";
-      const mockCollabId = "mock-collab-789";
-      const now = new Date();
-
-      // Mock RPC calls - need to return different IDs for each call
-      let rpcCallCount = 0;
-      (supabase.rpc as any).mockImplementation(() => {
-        rpcCallCount++;
-        if (rpcCallCount === 1) {
-          return Promise.resolve({
-            data: { success: true, id: mockMultiSiteId },
-            error: null,
-          });
-        } else {
-          return Promise.resolve({
-            data: { success: true, id: mockCollabId },
-            error: null,
-          });
-        }
-      });
-
-      // Mock database queries for both sessions and members
-      (supabase.from as any).mockImplementation((table: string) => {
-        if (table === "training_sessions") {
-          return {
-            select: vi.fn(() => ({
-              in: vi.fn(() => ({
-                order: vi.fn(() =>
-                  Promise.resolve({
-                    data: [
-                      {
-                        id: mockMultiSiteId,
-                        session_type: "multi_site",
-                        guest_first_name: "Guest",
-                        guest_last_name: "One",
-                        guest_gym_name: "Gym A",
-                      },
-                      {
-                        id: mockCollabId,
-                        session_type: "collaboration",
-                        collaboration_details: "Collab test",
-                      },
-                    ],
                     error: null,
                   })
                 ),
@@ -346,9 +205,9 @@ describe("Guest Session Creation (AC-4: Data Persistence)", () => {
         } else if (table === "training_session_members") {
           return {
             select: vi.fn(() => ({
-              in: vi.fn(() =>
+              eq: vi.fn(() =>
                 Promise.resolve({
-                  data: [], // No members for either session
+                  data: [], // No members for guest session
                   error: null,
                 })
               ),
@@ -377,45 +236,26 @@ describe("Guest Session Creation (AC-4: Data Persistence)", () => {
         }
       );
 
-      // Create collaboration guest session
-      const { data: collabResult } = await supabase.rpc(
-        "create_training_session_with_members",
-        {
-          p_machine_id: testMachineId,
-          p_trainer_id: null,
-          p_scheduled_start: formatTimestampForDatabase(
-            new Date(now.getTime() + 60 * 60000)
-          ),
-          p_scheduled_end: formatTimestampForDatabase(
-            new Date(now.getTime() + 90 * 60000)
-          ),
-          p_member_ids: [],
-          p_session_type: "collaboration",
-          p_notes: null,
-          p_collaboration_details: "Collab test",
-        }
-      );
+      createdSessionIds.push(multiSiteResult.id);
 
-      createdSessionIds.push(multiSiteResult.id, collabResult.id);
-
-      // Verify both sessions exist with correct data
-      const { data: sessions } = await supabase
+      // Verify session exists with correct data
+      const { data: session } = await supabase
         .from("training_sessions")
         .select("*")
-        .in("id", createdSessionIds)
-        .order("scheduled_start");
+        .eq("id", multiSiteResult.id)
+        .single();
 
-      expect(sessions).toHaveLength(2);
-      expect(sessions?.[0].session_type).toBe("multi_site");
-      expect(sessions?.[0].guest_first_name).toBe("Guest");
-      expect(sessions?.[1].session_type).toBe("collaboration");
-      expect(sessions?.[1].collaboration_details).toBe("Collab test");
+      expect(session).toBeDefined();
+      expect(session?.session_type).toBe("multi_site");
+      expect(session?.guest_first_name).toBe("Guest");
+      expect(session?.guest_last_name).toBe("One");
+      expect(session?.guest_gym_name).toBe("Gym A");
 
-      // Verify NO TSM records for either
+      // Verify NO TSM records for guest session
       const { data: tsmRecords } = await supabase
         .from("training_session_members")
         .select("*")
-        .in("session_id", createdSessionIds);
+        .eq("session_id", multiSiteResult.id);
 
       expect(tsmRecords).toHaveLength(0);
     });

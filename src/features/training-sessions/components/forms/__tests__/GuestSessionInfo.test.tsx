@@ -77,44 +77,10 @@ describe("GuestSessionInfo", () => {
   });
 
   describe("Collaboration Mode (AC-2)", () => {
-    it("renders collaboration form when sessionType is collaboration", () => {
-      render(<TestWrapper sessionType="collaboration" />);
-
-      expect(screen.getByText("Collaboration Session")).toBeInTheDocument();
-      expect(screen.getByLabelText(/Influencer Name/i)).toBeInTheDocument();
-    });
-
-    it("collaboration form has input field (not textarea)", () => {
-      render(<TestWrapper sessionType="collaboration" />);
-
-      const input = screen.getByLabelText(/Influencer Name/i);
-      expect(input).toBeInTheDocument();
-      expect(input.tagName).toBe("INPUT");
-    });
-
-    it("collaboration input has correct placeholder", () => {
-      render(<TestWrapper sessionType="collaboration" />);
-
-      expect(
-        screen.getByPlaceholderText("Influencer or partner name")
-      ).toBeInTheDocument();
-    });
-
-    it("collaboration form shows helper text", () => {
-      render(<TestWrapper sessionType="collaboration" />);
-
-      expect(
-        screen.getByText("This will be displayed as the session title")
-      ).toBeInTheDocument();
-    });
-
-    it("collaboration form has lime background styling", () => {
+    it("returns null for collaboration session type", () => {
       const { container } = render(<TestWrapper sessionType="collaboration" />);
-
-      const formContainer = container.querySelector(
-        ".bg-lime-50.dark\\:bg-lime-950\\/20"
-      );
-      expect(formContainer).toBeInTheDocument();
+      // Collaboration sessions now use member selection instead of guest info
+      expect(container.firstChild).toBeNull();
     });
   });
 
@@ -144,26 +110,22 @@ describe("GuestSessionInfo", () => {
       expect(container.firstChild).toBeNull();
     });
 
-    it("only renders for guest session types (multi_site and collaboration)", () => {
+    it("only renders for multi_site guest session type", () => {
       // Test multi_site renders
       const { container: multiSiteContainer } = render(
         <TestWrapper sessionType="multi_site" />
       );
       expect(multiSiteContainer.firstChild).not.toBeNull();
 
-      // Test collaboration renders
-      const { container: collabContainer } = render(
-        <TestWrapper sessionType="collaboration" />
-      );
-      expect(collabContainer.firstChild).not.toBeNull();
-
-      // Test non-guest types return null
+      // Test all other session types return null
+      // (collaboration now uses member selection instead of guest info)
       const nonGuestTypes: SessionType[] = [
         "member",
         "trial",
         "contractual",
         "makeup",
         "non_bookable",
+        "collaboration",
       ];
 
       nonGuestTypes.forEach((type) => {

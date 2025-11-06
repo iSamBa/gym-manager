@@ -299,8 +299,6 @@ describe("Session Type Validation", () => {
         ...baseSessionData,
         session_type: "collaboration" as const,
         member_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479", // Required: Collaboration member
-        collaboration_details:
-          "@fitnessguru - Influencer partnership content shoot", // Optional details
       };
 
       const result = createSessionSchema.safeParse(validCollaborationSession);
@@ -311,7 +309,6 @@ describe("Session Type Validation", () => {
       const invalidCollaborationSession = {
         ...baseSessionData,
         session_type: "collaboration" as const,
-        collaboration_details: "@partner_name - Commercial partnership",
         // missing member_id - this is required for collaboration sessions
       };
 
@@ -327,23 +324,10 @@ describe("Session Type Validation", () => {
         ...baseSessionData,
         session_type: "collaboration" as const,
         member_id: "", // Empty string is invalid
-        collaboration_details: "@partner_name - Commercial partnership",
       };
 
       const result = createSessionSchema.safeParse(invalidCollaborationSession);
       expect(result.success).toBe(false);
-    });
-
-    it("validates collaboration session without collaboration_details", () => {
-      const validCollaborationSession = {
-        ...baseSessionData,
-        session_type: "collaboration" as const,
-        member_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479", // Required
-        // NO collaboration_details - optional field
-      };
-
-      const result = createSessionSchema.safeParse(validCollaborationSession);
-      expect(result.success).toBe(true);
     });
 
     it("validates collaboration session with invalid UUID format for member_id", () => {
@@ -351,7 +335,6 @@ describe("Session Type Validation", () => {
         ...baseSessionData,
         session_type: "collaboration" as const,
         member_id: "not-a-uuid", // Invalid format
-        collaboration_details: "@partner_name - Commercial partnership",
       };
 
       const result = createSessionSchema.safeParse(invalidCollaborationSession);

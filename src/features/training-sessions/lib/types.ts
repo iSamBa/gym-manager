@@ -70,6 +70,10 @@ export interface TrainingSession {
   guest_first_name?: string | null;
   guest_last_name?: string | null;
   guest_gym_name?: string | null;
+
+  // Legacy field for backward compatibility with old collaboration sessions
+  // New collaboration sessions use collaboration members instead
+  collaboration_details?: string | null;
 }
 
 // No separate progress notes - using simple notes field instead

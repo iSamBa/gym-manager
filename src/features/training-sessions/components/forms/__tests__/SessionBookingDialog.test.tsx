@@ -153,12 +153,7 @@ vi.mock("../GuestSessionInfo", () => ({
           <input id="guest_gym_name" />
         </>
       )}
-      {sessionType === "collaboration" && (
-        <>
-          <label htmlFor="collaboration_details">Collaboration Details *</label>
-          <textarea id="collaboration_details" />
-        </>
-      )}
+      {/* Collaboration sessions now use member selection instead of guest info */}
     </div>
   ),
 }));
