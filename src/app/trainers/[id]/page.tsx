@@ -40,6 +40,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { logger } from "@/lib/logger";
 interface TrainerDetailPageProps {
   params: Promise<{ id: string }>;
 }
@@ -141,7 +142,7 @@ function TrainerDetailPage({ params }: TrainerDetailPageProps) {
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";
 
-    console.error("Trainer detail page error:", error);
+    logger.error("Trainer detail page error:", { error });
 
     return (
       <MainLayout>

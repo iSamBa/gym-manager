@@ -48,6 +48,7 @@ import type { TrainerWithProfile } from "@/features/database/lib/types";
 import type { CreateTrainerData } from "@/features/trainers/lib/database-utils";
 import { toast } from "sonner";
 
+import { logger } from "@/lib/logger";
 // Schema for each step
 const personalInfoSchema = z.object({
   first_name: z
@@ -328,7 +329,7 @@ export function ProgressiveTrainerForm({
     if (process.env.NODE_ENV === "development") {
       const subscription = form.watch((values, { name, type }) => {
         if (type === "change" && name) {
-          console.log("Field changed:", name, "New values:", values);
+          logger.debug("Field changed:", { fieldName: name, values });
         }
       });
       return () => subscription.unsubscribe();
@@ -425,7 +426,7 @@ export function ProgressiveTrainerForm({
       await onSubmit(submissionData as CreateTrainerData);
       // No localStorage cleanup needed - we don't persist form data anymore
     } catch (error) {
-      console.error("Failed to submit form:", error);
+      logger.error("Failed to submit form:", { error });
       throw error; // Re-throw to let parent handle the error
     }
   };

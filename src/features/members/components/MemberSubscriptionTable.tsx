@@ -29,6 +29,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { EmptyState } from "@/components/ui/empty-state";
 
 import type { MemberSubscriptionWithSnapshot } from "@/features/database/lib/types";
+import { logger } from "@/lib/logger";
 import {
   usePauseSubscription,
   useResumeSubscription,
@@ -91,18 +92,22 @@ export function MemberSubscriptionTable({
   };
 
   const handleViewDetails = (subscription: MemberSubscriptionWithSnapshot) => {
-    // TODO: Implement view details functionality
-    console.log("View details for subscription:", subscription.id);
+    // TODO(#issue): Implement view details functionality - Track in GitHub issues
+    logger.debug("View details for subscription:", {
+      subscriptionId: subscription.id,
+    });
   };
 
   const handleAddPayment = (subscription: MemberSubscriptionWithSnapshot) => {
-    // TODO: Implement add payment functionality
-    console.log("Add payment for subscription:", subscription.id);
+    // TODO(#issue): Implement add payment functionality - Track in GitHub issues
+    logger.debug("Add payment for subscription:", {
+      subscriptionId: subscription.id,
+    });
   };
 
   const handleUpgrade = (subscription: MemberSubscriptionWithSnapshot) => {
-    // TODO: Implement upgrade functionality
-    console.log("Upgrade subscription:", subscription.id);
+    // TODO(#issue): Implement upgrade functionality - Track in GitHub issues
+    logger.debug("Upgrade subscription:", { subscriptionId: subscription.id });
   };
 
   if (isLoading) {

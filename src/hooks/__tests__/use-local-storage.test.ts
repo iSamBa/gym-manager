@@ -1,6 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { useLocalStorage } from "../use-local-storage";
+import { logger } from "@/lib/logger";
 
 // Mock localStorage methods
 const createMockLocalStorage = () => ({
@@ -10,10 +11,8 @@ const createMockLocalStorage = () => ({
   clear: vi.fn(),
 });
 
-// Mock console.error to avoid noise in tests
-const consoleErrorMock = vi
-  .spyOn(console, "error")
-  .mockImplementation(() => {});
+// Mock logger.error to avoid noise in tests
+const loggerErrorMock = vi.spyOn(logger, "error").mockImplementation(() => {});
 
 describe("useLocalStorage", () => {
   let mockLocalStorage: ReturnType<typeof createMockLocalStorage>;
@@ -25,8 +24,8 @@ describe("useLocalStorage", () => {
     // Mock localStorage using vi.stubGlobal
     vi.stubGlobal("localStorage", mockLocalStorage);
 
-    // Clear console.error mock
-    consoleErrorMock.mockClear();
+    // Clear logger.error mock
+    loggerErrorMock.mockClear();
   });
 
   afterEach(() => {
@@ -84,9 +83,9 @@ describe("useLocalStorage", () => {
       );
 
       expect(result.current[0]).toBe("initial-value");
-      expect(consoleErrorMock).toHaveBeenCalledWith(
+      expect(loggerErrorMock).toHaveBeenCalledWith(
         'Error reading localStorage key "test-key":',
-        expect.any(Error)
+        expect.objectContaining({ error: expect.any(Error) })
       );
     });
   });
@@ -175,9 +174,9 @@ describe("useLocalStorage", () => {
 
       // State should still be updated even if localStorage fails
       expect(result.current[0]).toBe("new-value");
-      expect(consoleErrorMock).toHaveBeenCalledWith(
+      expect(loggerErrorMock).toHaveBeenCalledWith(
         'Error setting localStorage key "test-key":',
-        expect.any(Error)
+        expect.objectContaining({ error: expect.any(Error) })
       );
     });
   });
@@ -195,7 +194,7 @@ describe("useLocalStorage", () => {
 
       // Should return initial value when localStorage throws
       expect(result.current[0]).toBe("initial");
-      expect(consoleErrorMock).toHaveBeenCalled();
+      expect(loggerErrorMock).toHaveBeenCalled();
     });
 
     it("should handle localStorage setItem errors gracefully", () => {
@@ -214,7 +213,7 @@ describe("useLocalStorage", () => {
 
       // State should still update even when localStorage fails
       expect(result.current[0]).toBe("new-value");
-      expect(consoleErrorMock).toHaveBeenCalled();
+      expect(loggerErrorMock).toHaveBeenCalled();
     });
   });
 

@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import type { SubscriptionPlanWithSessions } from "@/features/database/lib/types";
+import { logger } from "@/lib/logger";
 import {
   useCreateSubscriptionPlan,
   useUpdateSubscriptionPlan,
@@ -139,7 +140,7 @@ export function PlanEditDialog({
 
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to save plan:", error);
+      logger.error("Failed to save plan:", { error });
     }
   };
 

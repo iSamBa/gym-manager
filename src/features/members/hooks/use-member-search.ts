@@ -3,6 +3,7 @@ import { useSearchMembers, memberKeys } from "./use-members";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Member } from "@/features/database/lib/types";
 
+import { logger } from "@/lib/logger";
 // Custom hook for debounced member search
 export function useDebouncedMemberSearch(initialQuery = "", debounceMs = 300) {
   const [query, setQuery] = useState(initialQuery);
@@ -71,7 +72,7 @@ export function useMemberValidation() {
         );
         return await memberUtils.checkEmailExists(email, excludeId);
       } catch (error) {
-        console.error("Error checking email:", error);
+        logger.error("Error checking email:", { error });
         return false;
       }
     },

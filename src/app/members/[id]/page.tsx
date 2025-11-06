@@ -41,6 +41,7 @@ import { toast } from "sonner";
 import type { Member } from "@/features/database/lib/types";
 import type { BodyCheckup } from "@/features/members/lib/types";
 
+import { logger } from "@/lib/logger";
 interface MemberDetailPageProps {
   params: Promise<{ id: string }>;
 }
@@ -103,7 +104,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
       setShowDeleteConfirm(false);
       router.push("/members");
     } catch (err) {
-      console.error("Failed to delete member:", err);
+      logger.error("Failed to delete member:", { error: err });
     }
   };
 

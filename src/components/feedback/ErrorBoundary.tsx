@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
+import { logger } from "@/lib/logger";
 interface ErrorState {
   hasError: boolean;
   error?: Error;
@@ -102,7 +103,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorState> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const errorId = this.state.errorId;
 
-    console.error("Error Boundary Caught:", {
+    logger.error("Error Boundary Caught:", {
       error,
       errorInfo,
       errorId,
@@ -234,7 +235,7 @@ function ErrorDisplay({
             { label: "Try Again", onClick: onRetry, icon: RefreshCw },
             {
               label: "Work Offline",
-              onClick: () => console.log("Offline mode"),
+              onClick: () => logger.debug("Offline mode"),
             },
           ],
         };

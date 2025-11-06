@@ -34,6 +34,7 @@ import type { SubscriptionPaymentWithReceipt } from "@/features/database/lib/typ
 import type { AllPaymentsResponse } from "../hooks/use-all-payments";
 import { useQuery } from "@tanstack/react-query";
 
+import { logger } from "@/lib/logger";
 type PaymentDialogPayment =
   | SubscriptionPaymentWithReceipt
   | AllPaymentsResponse["payments"][0];
@@ -101,7 +102,7 @@ export function RefundDialog({
   }, [open, maxRefundAmount, isLoadingRefundInfo, form]);
 
   const onSubmit = async (data: RefundFormData) => {
-    console.log("Submitting refund:", {
+    logger.debug("Submitting refund:", {
       paymentId: payment.id,
       refundAmount: data.amount,
       reason: data.reason,
@@ -116,11 +117,11 @@ export function RefundDialog({
         reason: data.reason,
       });
 
-      console.log("Refund processed successfully:", result);
+      logger.debug("Refund processed successfully:", { result });
       form.reset();
       onSuccess?.();
     } catch (error) {
-      console.error("Refund processing failed:", error);
+      logger.error("Refund processing failed:", { error });
       // Error handling is done in the mutation, but log for debugging
     }
   };

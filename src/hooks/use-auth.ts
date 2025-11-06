@@ -13,9 +13,9 @@ import { logger } from "@/lib/logger";
  * ```typescript
  * const success = await retryTokenRefresh(1, 3);
  * if (success) {
- *   console.log('Token refreshed successfully');
+ *   logger.debug('Token refreshed successfully');
  * } else {
- *   console.log('All retry attempts failed');
+ *   logger.debug('All retry attempts failed');
  * }
  * ```
  *

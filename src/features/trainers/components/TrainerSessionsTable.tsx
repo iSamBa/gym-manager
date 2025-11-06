@@ -58,6 +58,7 @@ type LocalTrainerSessionFilters = {
 };
 import { format, isToday, isTomorrow, isYesterday } from "date-fns";
 
+import { logger } from "@/lib/logger";
 interface TrainerSessionsTableProps {
   trainerId: string;
   className?: string;
@@ -336,7 +337,9 @@ export function TrainerSessionsTable({
                             size="sm"
                             onClick={() => {
                               // Handle edit session
-                              console.log("Edit session:", session.id);
+                              logger.debug("Edit session:", {
+                                sessionId: session.id,
+                              });
                             }}
                           >
                             <Edit className="h-4 w-4" />
@@ -347,7 +350,9 @@ export function TrainerSessionsTable({
                           size="sm"
                           onClick={() => {
                             // Handle view session details
-                            console.log("View session:", session.id);
+                            logger.debug("View session:", {
+                              sessionId: session.id,
+                            });
                           }}
                         >
                           <ExternalLink className="h-4 w-4" />

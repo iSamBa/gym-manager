@@ -5,6 +5,7 @@ import {
   validateAdminAccess,
   DatabaseError,
 } from "@/features/database/lib/query-helpers";
+import { logger } from "@/lib/logger";
 import type {
   Trainer,
   TrainerWithProfile,
@@ -118,7 +119,7 @@ export const trainerUtils = {
       .in("id", Array.from(allSpecializationUuids));
 
     if (error) {
-      console.error("Failed to fetch specialization names:", error);
+      logger.error("Failed to fetch specialization names:", { error });
       return trainers; // Return trainers with UUIDs if fetch fails
     }
 

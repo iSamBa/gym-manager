@@ -3,6 +3,7 @@
  * Replaces client-side filtering and aggregation with database-level operations
  */
 import { supabase } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
 
 export interface TrainerAnalytics {
   trainer_id: string;
@@ -48,13 +49,13 @@ export const getTrainerAnalytics = async (
     });
 
     if (error) {
-      console.error("Error fetching trainer analytics:", error);
+      logger.error("Error fetching trainer analytics:", { error });
       return null;
     }
 
     return data?.[0] || null;
   } catch (error) {
-    console.error("Database error in getTrainerAnalytics:", error);
+    logger.error("Database error in getTrainerAnalytics:", { error });
     return null;
   }
 };
@@ -71,13 +72,13 @@ export const getMemberStatusDistribution = async (): Promise<
     );
 
     if (error) {
-      console.error("Error fetching member status distribution:", error);
+      logger.error("Error fetching member status distribution:", { error });
       return [];
     }
 
     return data || [];
   } catch (error) {
-    console.error("Database error in getMemberStatusDistribution:", error);
+    logger.error("Database error in getMemberStatusDistribution:", { error });
     return [];
   }
 };
@@ -90,13 +91,13 @@ export const getDashboardStats = async () => {
     const { data, error } = await supabase.rpc("get_dashboard_stats");
 
     if (error) {
-      console.error("Error fetching dashboard stats:", error);
+      logger.error("Error fetching dashboard stats:", { error });
       return null;
     }
 
     return data?.[0] || null;
   } catch (error) {
-    console.error("Database error in getDashboardStats:", error);
+    logger.error("Database error in getDashboardStats:", { error });
     return null;
   }
 };

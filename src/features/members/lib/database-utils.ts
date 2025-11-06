@@ -4,6 +4,7 @@ import {
   executeQuery,
   validateAdminAccess,
 } from "@/features/database/lib/query-helpers";
+import { logger } from "@/lib/logger";
 import type {
   Member,
   MemberStatus,
@@ -245,7 +246,7 @@ export const memberUtils = {
         last_payment_date: row.last_payment_date,
       }));
     } catch (error) {
-      console.error("Failed to fetch enhanced members:", error);
+      logger.error("Failed to fetch enhanced members:", { error });
       throw error;
     }
   },

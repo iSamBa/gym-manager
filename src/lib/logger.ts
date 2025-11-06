@@ -76,7 +76,7 @@ class Logger {
         consoleFn(JSON.stringify(logData));
       }
 
-      // TODO: Send to external logging service (Sentry, LogRocket, etc.)
+      // TODO(#issue): Send to external logging service (Sentry, LogRocket, etc.) - Track in GitHub issues
       // if (level === 'error') {
       //   sendToExternalService(logData);
       // }

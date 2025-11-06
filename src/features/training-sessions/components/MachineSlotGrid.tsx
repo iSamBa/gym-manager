@@ -9,6 +9,7 @@ import { generateTimeSlots } from "../lib/slot-generator";
 import { MachineColumn } from "./MachineColumn";
 import type { TimeSlot, TrainingSession } from "../lib/types";
 
+import { logger } from "@/lib/logger";
 interface MachineSlotGridProps {
   selectedDate: Date;
   onSlotClick: (machine_id: string, timeSlot: TimeSlot) => void;
@@ -53,7 +54,7 @@ export const MachineSlotGrid: React.FC<MachineSlotGridProps> = ({
           setTimeSlots(slots);
         }
       } catch (error) {
-        console.error("Failed to generate time slots:", error);
+        logger.error("Failed to generate time slots:", { error });
         if (mounted) {
           setTimeSlots([]);
         }

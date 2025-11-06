@@ -43,6 +43,7 @@ import { cn } from "@/lib/utils";
 import type { Member, MemberStatus } from "@/features/database/lib/types";
 import type { BulkOperationResult } from "../hooks";
 
+import { logger } from "@/lib/logger";
 // Progress tracking interface for bulk operations
 export interface BulkOperationProgress {
   current: number;
@@ -138,7 +139,7 @@ export function BulkActionToolbar({
           onClearSelection();
         }
       } catch (error) {
-        console.error("Status change failed:", error);
+        logger.error("Status change failed:", { error });
         setOperationResult({
           successful: [],
           failed: selectedMemberIds.map((id) => ({
@@ -189,7 +190,7 @@ export function BulkActionToolbar({
         onClearSelection();
       }
     } catch (error) {
-      console.error("Delete failed:", error);
+      logger.error("Delete failed:", { error });
       setOperationResult({
         successful: [],
         failed: selectedMemberIds.map((id) => ({
@@ -244,7 +245,7 @@ export function BulkActionToolbar({
         // Cleanup URL
         URL.revokeObjectURL(result.url);
       } catch (error) {
-        console.error("Export failed:", error);
+        logger.error("Export failed:", { error });
       } finally {
         setIsOperationInProgress(false);
         setShowProgressDialog(false);

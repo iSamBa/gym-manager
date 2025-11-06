@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { OpeningHoursWeek, DayOfWeek } from "../lib/types";
 import { format, getDay, parseISO } from "date-fns";
 
+import { logger } from "@/lib/logger";
 export interface SessionConflict {
   session_id: string;
   date: string; // ISO date (YYYY-MM-DD)
@@ -71,7 +72,7 @@ async function checkConflicts(
     .order("scheduled_start", { ascending: true });
 
   if (error) {
-    console.error("Error fetching training sessions:", error);
+    logger.error("Error fetching training sessions:", { error });
     throw error;
   }
 

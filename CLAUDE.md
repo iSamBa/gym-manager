@@ -1437,11 +1437,23 @@ fi
 - ✅ Use specific types: `Member`, `BulkOperationResult`, etc.
 - ✅ For complex types, create interfaces in `types.ts`
 
+**Console Statement Policy:**
+
+- ❌ **NEVER use `console.log/warn/error/info` in production code**
+- ✅ **ALWAYS use logger utility** from `@/lib/logger`
+- ✅ Logger automatically filters logs in production builds
+- ✅ Use `logger.debug()` for debug information
+- ✅ Use `logger.info()` for informational messages
+- ✅ Use `logger.warn()` for warnings
+- ✅ Use `logger.error()` for errors
+- ✅ ESLint enforces zero console statements with `'no-console': 'error'`
+- ℹ️ Test files (.test., .spec., **tests**/) are exempt from this rule
+
 **Common Anti-Patterns to Avoid:**
 
 - ❌ Commenting out failing tests instead of fixing them
 - ❌ Using `// @ts-ignore` to bypass TypeScript errors
-- ❌ Leaving console.log statements in production code
+- ❌ Using console statements (use logger utility instead)
 - ❌ Creating overly complex integration tests without proper cleanup
 
 ---

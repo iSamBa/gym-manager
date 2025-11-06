@@ -21,6 +21,7 @@ import type {
 import { toast } from "sonner";
 import { getStartOfDay, formatForDatabase } from "@/lib/date-utils";
 
+import { logger } from "@/lib/logger";
 interface CommentDialogProps {
   member: MemberWithSubscription;
   isOpen: boolean;
@@ -128,7 +129,7 @@ export function CommentDialog({
       onOpenChange(false);
     } catch (error) {
       // Error toast is handled by the mutation hooks
-      console.error("Failed to save comment:", error);
+      logger.error("Failed to save comment:", { error });
     }
   };
 

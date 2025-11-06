@@ -1,5 +1,6 @@
 // Shared database utilities and query helpers
 import { supabase } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
 
 // Error handling utility
 export class DatabaseError extends Error {
@@ -81,7 +82,7 @@ export async function testDatabaseConnection(): Promise<boolean> {
       .select("count", { count: "exact", head: true });
     return !error;
   } catch (error) {
-    console.error("Database connection test failed:", error);
+    logger.error("Database connection test failed:", { error });
     return false;
   }
 }

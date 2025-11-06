@@ -54,6 +54,7 @@ import { MemberHealthFitnessStep } from "./form-steps/MemberHealthFitnessStep";
 import { MemberAddressStep } from "./form-steps/MemberAddressStep";
 import { isFutureDate } from "@/lib/date-utils";
 
+import { logger } from "@/lib/logger";
 // Schema for each step
 const personalInfoSchema = z.object({
   first_name: z
@@ -690,7 +691,7 @@ export function ProgressiveMemberForm({
     if (process.env.NODE_ENV === "development") {
       const subscription = form.watch((values, { name, type }) => {
         if (type === "change" && name) {
-          console.log("Field changed:", name, "New values:", values);
+          logger.debug("Field changed:", { fieldName: name, values });
         }
       });
       return () => subscription.unsubscribe();
@@ -811,7 +812,7 @@ export function ProgressiveMemberForm({
       await onSubmit(cleanedData);
       // No localStorage cleanup needed - we don't persist form data anymore
     } catch (error) {
-      console.error("Failed to submit form:", error);
+      logger.error("Failed to submit form:", { error });
       throw error; // Re-throw to let parent handle the error
     }
   };
