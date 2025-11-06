@@ -28,6 +28,7 @@ export const memberKeys = {
   count: () => [...memberKeys.all, "count"] as const,
   countByStatus: () => [...memberKeys.all, "count", "by-status"] as const,
   newThisMonth: () => [...memberKeys.all, "new-this-month"] as const,
+  collaborationCount: () => [...memberKeys.all, "collaboration-count"] as const,
   withSubscription: (id: string) =>
     [...memberKeys.details(), id, "with-subscription"] as const,
 };
@@ -114,6 +115,15 @@ export function useNewMembersThisMonth() {
     queryKey: memberKeys.newThisMonth(),
     queryFn: () => memberUtils.getNewMembersThisMonth(),
     staleTime: 30 * 60 * 1000, // 30 minutes for monthly stats
+  });
+}
+
+// Collaboration member count
+export function useCollaborationMemberCount() {
+  return useQuery({
+    queryKey: memberKeys.collaborationCount(),
+    queryFn: () => memberUtils.getCollaborationMemberCount(),
+    staleTime: 15 * 60 * 1000, // 15 minutes for counts
   });
 }
 

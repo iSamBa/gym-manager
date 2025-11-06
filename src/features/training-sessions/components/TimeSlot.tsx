@@ -94,9 +94,12 @@ export const TimeSlot = memo<TimeSlotProps>(
         displayName = "Guest Session";
       }
     } else if (session.session_type === "collaboration") {
-      // Collaboration session - show influencer name from collaboration_details
-      if (session.collaboration_details) {
-        displayName = session.collaboration_details; // Influencer name
+      // Collaboration session - prioritize member name (NEW system with collaboration members)
+      // Fallback to collaboration_details for backward compatibility (OLD system)
+      if (session.participants?.[0]?.name) {
+        displayName = session.participants[0].name; // Collaboration member name
+      } else if (session.collaboration_details) {
+        displayName = session.collaboration_details; // Legacy: Influencer name
       } else {
         displayName = "Collaboration";
       }
@@ -118,11 +121,13 @@ export const TimeSlot = memo<TimeSlotProps>(
       : "border-gray-500";
 
     // Check if this is a member session (has member data)
+    // Collaboration sessions now use collaboration members, so treat them like member sessions
     const isMemberSession =
       session.session_type === "member" ||
       session.session_type === "trial" ||
       session.session_type === "contractual" ||
-      session.session_type === "makeup";
+      session.session_type === "makeup" ||
+      session.session_type === "collaboration";
 
     // Check if we have additional info to add bottom padding
     const hasAdditionalInfo =

@@ -65,11 +65,11 @@ export interface TrainingSession {
   sessions_since_checkup?: number | null;
   outstanding_balance?: number | null;
 
-  // Guest information (for multi_site and collaboration sessions)
+  // Guest information (for multi_site sessions only)
+  // Collaboration sessions use collaboration members instead
   guest_first_name?: string | null;
   guest_last_name?: string | null;
   guest_gym_name?: string | null;
-  collaboration_details?: string | null;
 }
 
 // No separate progress notes - using simple notes field instead
@@ -110,13 +110,11 @@ export interface CreateSessionData {
   new_member_gender?: "male" | "female";
   new_member_referral_source?: ReferralSource;
 
-  // Guest session data (multi_site)
+  // Guest session data (multi_site only)
+  // Collaboration sessions use member_id with collaboration members
   guest_first_name?: string;
   guest_last_name?: string;
   guest_gym_name?: string;
-
-  // Collaboration session data
-  collaboration_details?: string;
 
   notes?: string;
 }
@@ -131,11 +129,10 @@ export interface UpdateSessionData {
   status?: "scheduled" | "in_progress" | "completed" | "cancelled";
   member_id?: string; // Single member (not array)
 
-  // Guest fields (for updates)
+  // Guest fields (for multi_site updates only)
   guest_first_name?: string;
   guest_last_name?: string;
   guest_gym_name?: string;
-  collaboration_details?: string;
 }
 
 // API response types

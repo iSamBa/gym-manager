@@ -32,10 +32,11 @@ export function useMemberEvolution(months: number = 12) {
       setError(null);
 
       try {
-        // Get member creation data for the last N months
+        // Get member creation data for the last N months (exclude collaboration members)
         const { data: members, error: membersError } = await supabase
           .from("members")
           .select("created_at")
+          .neq("member_type", "collaboration") // Exclude collaboration members from financial analytics
           .order("created_at", { ascending: true });
 
         if (membersError) throw membersError;
@@ -185,10 +186,11 @@ export function useMemberStatusDistribution() {
       setError(null);
 
       try {
-        // Get all members and count by status
+        // Get all members and count by status (exclude collaboration members)
         const { data: members, error: membersError } = await supabase
           .from("members")
-          .select("status");
+          .select("status")
+          .neq("member_type", "collaboration"); // Exclude collaboration members from financial analytics
 
         if (membersError) throw membersError;
 

@@ -432,7 +432,8 @@ export const memberUtils = {
     return executeQuery(async () => {
       const { count, error } = await supabase
         .from("members")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .neq("member_type", "collaboration"); // Exclude collaboration members from financial counts
       return { data: count, error };
     });
   },
@@ -442,7 +443,8 @@ export const memberUtils = {
       const { data, error } = await supabase
         .from("members")
         .select("status")
-        .not("status", "is", null);
+        .not("status", "is", null)
+        .neq("member_type", "collaboration"); // Exclude collaboration members from financial counts
 
       const counts: Record<MemberStatus, number> = {
         active: 0,
@@ -469,7 +471,18 @@ export const memberUtils = {
         .from("members")
         .select("*")
         .gte("join_date", getLocalDateString(firstDayOfMonth))
+        .neq("member_type", "collaboration") // Exclude collaboration members from financial counts
         .order("join_date", { ascending: false });
+    });
+  },
+
+  async getCollaborationMemberCount(): Promise<number> {
+    return executeQuery(async () => {
+      const { count, error } = await supabase
+        .from("members")
+        .select("*", { count: "exact", head: true })
+        .eq("member_type", "collaboration"); // Only count collaboration members
+      return { data: count, error };
     });
   },
 

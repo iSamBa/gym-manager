@@ -40,7 +40,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { getStartOfDay, formatForDatabase } from "@/lib/date-utils";
+import { formatForDatabase } from "@/lib/date-utils";
 import { useCreateMember } from "@/features/members/hooks/use-members";
 import { useActiveSubscriptionPlans } from "@/features/memberships/hooks/use-subscriptions";
 import { useCreateSubscription } from "@/features/memberships/hooks/use-subscriptions";
@@ -60,8 +60,25 @@ const quickCollaborationMemberSchema = z.object({
     "media",
     "other",
   ]),
-  partnership_contract_end: z.string().min(1, "Contract end date is required"),
+  partnership_contract_start: z
+    .string()
+    .min(1, "Contract start date is required"),
   partnership_notes: z.string().optional(),
+  uniform_size: z.enum(["XS", "S", "M", "L", "XL"]),
+  vest_size: z.enum(["V1", "V2", "V2_SMALL_EXT", "V3", "V4"]),
+  hip_belt_size: z.enum(["V1", "V2"]),
+  referral_source: z
+    .enum([
+      "instagram",
+      "member_referral",
+      "website_ib",
+      "prospection",
+      "studio",
+      "phone",
+      "chatbot",
+    ])
+    .optional(),
+  referred_by_member_id: z.string().optional(),
   subscription_plan_id: z.string().min(1, "Subscription plan is required"),
 });
 
@@ -80,8 +97,11 @@ export interface QuickCollaborationMemberDialogProps {
  *
  * Features:
  * - Essential member information (name, phone, email)
- * - Partnership details (company, type, contract end)
+ * - Partnership details (company, type, contract start date)
+ * - Equipment information (uniform, vest, hip belt sizes)
+ * - Referral tracking (how they heard about us)
  * - Subscription plan selection (collaboration plans only)
+ * - Auto-calculates contract end date from start date + subscription duration
  * - Creates member + active subscription in one flow
  * - Returns newly created member ID to parent
  */
@@ -117,8 +137,13 @@ export const QuickCollaborationMemberDialog =
           email: "",
           partnership_company: "",
           partnership_type: "influencer",
-          partnership_contract_end: "",
+          partnership_contract_start: "",
           partnership_notes: "",
+          uniform_size: "M",
+          vest_size: "V2",
+          hip_belt_size: "V1",
+          referral_source: undefined,
+          referred_by_member_id: "",
           subscription_plan_id: "",
         },
       });
@@ -136,7 +161,21 @@ export const QuickCollaborationMemberDialog =
               company: data.partnership_company,
             });
 
-            // Step 1: Create the collaboration member
+            // Step 1: Get the selected plan details to calculate end date
+            const selectedPlan = collaborationPlans.find(
+              (plan) => plan.id === data.subscription_plan_id
+            );
+
+            if (!selectedPlan) {
+              throw new Error("Selected subscription plan not found");
+            }
+
+            // Calculate contract end date from start date + subscription duration
+            const startDate = new Date(data.partnership_contract_start);
+            const endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + selectedPlan.duration_months);
+
+            // Step 2: Create the collaboration member
             const newMember = await createMemberMutation.mutateAsync({
               first_name: data.first_name,
               last_name: data.last_name,
@@ -146,8 +185,15 @@ export const QuickCollaborationMemberDialog =
               status: "active",
               partnership_company: data.partnership_company,
               partnership_type: data.partnership_type,
-              partnership_contract_end: data.partnership_contract_end,
+              partnership_contract_start: data.partnership_contract_start,
+              partnership_contract_end: formatForDatabase(endDate),
               partnership_notes: data.partnership_notes || "",
+              uniform_size: data.uniform_size,
+              vest_size: data.vest_size,
+              hip_belt_size: data.hip_belt_size,
+              uniform_received: false,
+              referral_source: data.referral_source || undefined,
+              referred_by_member_id: data.referred_by_member_id || undefined,
               // Set join date to today
               join_date: formatForDatabase(new Date()),
             });
@@ -156,20 +202,11 @@ export const QuickCollaborationMemberDialog =
               memberId: newMember.id,
             });
 
-            // Step 2: Get the selected plan details
-            const selectedPlan = collaborationPlans.find(
-              (plan) => plan.id === data.subscription_plan_id
-            );
-
-            if (!selectedPlan) {
-              throw new Error("Selected subscription plan not found");
-            }
-
             // Step 3: Create the subscription
             await createSubscriptionMutation.mutateAsync({
               member_id: newMember.id,
               plan_id: selectedPlan.id,
-              start_date: formatForDatabase(new Date()),
+              start_date: data.partnership_contract_start,
             });
 
             logger.info("Subscription created for collaboration member", {
@@ -367,7 +404,7 @@ export const QuickCollaborationMemberDialog =
 
                     <FormField
                       control={form.control}
-                      name="partnership_contract_end"
+                      name="partnership_contract_start"
                       render={({ field }) => {
                         const selectedDate = field.value
                           ? new Date(field.value)
@@ -375,7 +412,7 @@ export const QuickCollaborationMemberDialog =
 
                         return (
                           <FormItem className="flex flex-col">
-                            <FormLabel>Contract End Date *</FormLabel>
+                            <FormLabel>Contract Start Date *</FormLabel>
                             <Popover>
                               <PopoverTrigger asChild>
                                 <FormControl>
@@ -405,7 +442,6 @@ export const QuickCollaborationMemberDialog =
                                       field.onChange(formatForDatabase(date));
                                     }
                                   }}
-                                  disabled={(date) => date < getStartOfDay()}
                                   initialFocus
                                 />
                               </PopoverContent>
@@ -431,6 +467,141 @@ export const QuickCollaborationMemberDialog =
                             className="resize-none"
                           />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Equipment Information */}
+                <div className="space-y-4 rounded-lg border p-4">
+                  <h3 className="text-sm font-semibold">Equipment & Sizes</h3>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <FormField
+                      control={form.control}
+                      name="uniform_size"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Uniform Size *</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select size" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="XS">XS</SelectItem>
+                              <SelectItem value="S">S</SelectItem>
+                              <SelectItem value="M">M</SelectItem>
+                              <SelectItem value="L">L</SelectItem>
+                              <SelectItem value="XL">XL</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="vest_size"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Vest Size *</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select size" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="V1">V1</SelectItem>
+                              <SelectItem value="V2">V2</SelectItem>
+                              <SelectItem value="V2_SMALL_EXT">
+                                V2 Small Ext
+                              </SelectItem>
+                              <SelectItem value="V3">V3</SelectItem>
+                              <SelectItem value="V4">V4</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="hip_belt_size"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Hip Belt Size *</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select size" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="V1">V1</SelectItem>
+                              <SelectItem value="V2">V2</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Referral Information */}
+                <div className="space-y-4 rounded-lg border p-4">
+                  <h3 className="text-sm font-semibold">
+                    Referral Information
+                  </h3>
+
+                  <FormField
+                    control={form.control}
+                    name="referral_source"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>How did they hear about us?</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select source (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="instagram">Instagram</SelectItem>
+                            <SelectItem value="member_referral">
+                              Member Referral
+                            </SelectItem>
+                            <SelectItem value="website_ib">
+                              Website (IB)
+                            </SelectItem>
+                            <SelectItem value="prospection">
+                              Prospection
+                            </SelectItem>
+                            <SelectItem value="studio">
+                              Studio Walk-in
+                            </SelectItem>
+                            <SelectItem value="phone">Phone Inquiry</SelectItem>
+                            <SelectItem value="chatbot">Chatbot</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -479,8 +650,9 @@ export const QuickCollaborationMemberDialog =
 
                   <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-950/20">
                     <p className="text-sm text-blue-900 dark:text-blue-100">
-                      The subscription will start today and the member will be
-                      ready to book sessions immediately.
+                      The subscription will start on the selected contract start
+                      date. The contract end date will be automatically
+                      calculated based on the subscription plan duration.
                     </p>
                   </div>
                 </div>

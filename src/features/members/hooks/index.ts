@@ -9,6 +9,7 @@ export {
   useMemberCount,
   useMemberCountByStatus,
   useNewMembersThisMonth,
+  useCollaborationMemberCount,
   useCreateMember,
   useUpdateMember,
   useUpdateMemberStatus,

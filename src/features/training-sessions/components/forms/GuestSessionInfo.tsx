@@ -20,7 +20,7 @@ interface GuestSessionInfoProps {
  *
  * Conditionally renders guest information capture forms based on session type:
  * - Multi-site: 3 fields (guest_first_name, guest_last_name, guest_gym_name) with purple styling
- * - Collaboration: 1 field (collaboration_details textarea) with lime styling
+ * - Collaboration: No longer uses guest info - uses member selection instead
  * - Other types: returns null
  *
  * @param form - React Hook Form instance
@@ -28,6 +28,8 @@ interface GuestSessionInfoProps {
  */
 export const GuestSessionInfo = memo<GuestSessionInfoProps>(
   function GuestSessionInfo({ form, sessionType }) {
+    // Only render for multi_site sessions (true guest sessions)
+    // Collaboration sessions now use member selection (collaboration members)
     if (sessionType === "multi_site") {
       return (
         <div className="space-y-4 rounded-lg border bg-purple-50 p-4 dark:bg-purple-950/20">
@@ -82,33 +84,7 @@ export const GuestSessionInfo = memo<GuestSessionInfoProps>(
       );
     }
 
-    if (sessionType === "collaboration") {
-      return (
-        <div className="space-y-4 rounded-lg border bg-lime-50 p-4 dark:bg-lime-950/20">
-          <h3 className="text-sm font-semibold text-lime-900 dark:text-lime-100">
-            Collaboration Session
-          </h3>
-
-          <FormField
-            control={form.control}
-            name="collaboration_details"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Influencer Name *</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Influencer or partner name" />
-                </FormControl>
-                <FormMessage />
-                <p className="text-xs text-lime-800 dark:text-lime-200">
-                  This will be displayed as the session title
-                </p>
-              </FormItem>
-            )}
-          />
-        </div>
-      );
-    }
-
+    // Collaboration sessions now use member selection (no guest info needed)
     return null;
   }
 );

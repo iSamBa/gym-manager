@@ -18,6 +18,7 @@ import {
   useMembers,
   useMemberCount,
   useMemberCountByStatus,
+  useCollaborationMemberCount,
   useMemberPrefetch,
   useSimpleMemberFilters,
   useExportMembers,
@@ -33,6 +34,7 @@ import {
   Plus,
   Filter,
   X,
+  Handshake,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -86,6 +88,7 @@ export default function MembersPage() {
   // Member count for stats
   const { data: totalMemberCount } = useMemberCount();
   const { data: memberCountByStatus } = useMemberCountByStatus();
+  const { data: collaborationCount = 0 } = useCollaborationMemberCount();
 
   // Prefetching utilities
   const { prefetchOnHover } = useMemberPrefetch();
@@ -146,7 +149,7 @@ export default function MembersPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-5">
           <Card className="p-6">
             <div className="flex items-center space-x-2">
               <Users className="text-muted-foreground h-5 w-5" />
@@ -183,6 +186,16 @@ export default function MembersPage() {
               <div>
                 <p className="text-2xl font-bold">{pendingMembers}</p>
                 <p className="text-muted-foreground text-xs">Pending</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center space-x-2">
+              <Handshake className="h-5 w-5 text-orange-600" />
+              <div>
+                <p className="text-2xl font-bold">{collaborationCount}</p>
+                <p className="text-muted-foreground text-xs">Partnerships</p>
               </div>
             </div>
           </Card>

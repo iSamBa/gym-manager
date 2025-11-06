@@ -293,11 +293,12 @@ export const useCreateTrainingSession = () => {
       }
 
       // Determine if this is a guest session (no member association)
-      const isGuestSession =
-        data.session_type === "multi_site" ||
-        data.session_type === "collaboration";
+      // Only multi_site sessions are true guest sessions (external gym members)
+      // Collaboration sessions CAN have member associations (collaboration members from our gym)
+      const isGuestSession = data.session_type === "multi_site";
 
       // For guest sessions, pass empty member_ids array
+      // For collaboration sessions, pass member_id if provided (collaboration member)
       const memberIds = isGuestSession ? [] : memberId ? [memberId] : [];
 
       // Call Supabase function to create session with members
@@ -311,11 +312,11 @@ export const useCreateTrainingSession = () => {
           p_member_ids: memberIds,
           p_session_type: data.session_type,
           p_notes: data.notes || null,
-          // Guest fields (only populated for guest sessions)
+          // Guest fields (only populated for multi_site guest sessions)
+          // Collaboration sessions use member_ids with collaboration members
           p_guest_first_name: data.guest_first_name || null,
           p_guest_last_name: data.guest_last_name || null,
           p_guest_gym_name: data.guest_gym_name || null,
-          p_collaboration_details: data.collaboration_details || null,
         }
       );
 

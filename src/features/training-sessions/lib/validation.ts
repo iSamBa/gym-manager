@@ -94,13 +94,11 @@ export const createSessionSchema = z
       ])
       .optional(),
 
-    // Guest session fields (validation happens in .refine() below)
+    // Guest session fields for multi_site (validation happens in .refine() below)
+    // Collaboration sessions use member_id with collaboration members
     guest_first_name: z.string().optional(),
     guest_last_name: z.string().optional(),
     guest_gym_name: z.string().optional(),
-
-    // Collaboration session fields (validation happens in .refine() below)
-    collaboration_details: z.string().optional(),
 
     notes: z.string().optional(),
   })
@@ -280,11 +278,10 @@ export const updateSessionSchema = z
       ])
       .optional(),
 
-    // Guest fields (for updates)
+    // Guest fields (for multi_site updates only)
     guest_first_name: z.string().min(1).optional(),
     guest_last_name: z.string().min(1).optional(),
     guest_gym_name: z.string().min(1).optional(),
-    collaboration_details: z.string().min(1).optional(),
 
     notes: z.string().optional(),
     status: z
