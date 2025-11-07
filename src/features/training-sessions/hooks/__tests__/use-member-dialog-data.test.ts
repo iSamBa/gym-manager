@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode } from "react";
-import { useMemberDialogData } from "../use-member-dialog-data";
+import { useMemberDialogData } from "../use-training-sessions";
 import * as useMembersModule from "@/features/members/hooks/use-members";
 import * as useSubscriptionsModule from "@/features/memberships/hooks/use-subscriptions";
 import { supabase } from "@/lib/supabase";

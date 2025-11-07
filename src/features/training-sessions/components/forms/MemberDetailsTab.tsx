@@ -29,7 +29,7 @@ import { SessionStatsCards } from "../SessionStatsCards";
 import { SessionAlertsSection } from "../SessionAlertsSection";
 import type { TrainingSession } from "../../lib/types";
 import type { MemberComment } from "@/features/database/lib/types";
-import type { MemberDialogData } from "../../hooks/use-member-dialog-data";
+import type { MemberDialogData } from "../../hooks/use-training-sessions";
 import { useUpdateMember } from "@/features/members/hooks/use-members";
 import type {
   UniformSize,

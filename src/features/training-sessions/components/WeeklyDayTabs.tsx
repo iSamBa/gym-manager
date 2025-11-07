@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, eachDayOfInterval, endOfWeek } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getLocalDateString, isToday } from "@/lib/date-utils";
-import { useDailyStatistics } from "../hooks/use-daily-statistics";
+import { useDailyStatistics } from "../hooks/use-training-sessions";
 import { getSessionTypeSolidColor } from "../lib/session-colors";
 import { SESSION_TYPE_LABELS } from "../lib/constants";
 import type { SessionType } from "@/features/database/lib/types";

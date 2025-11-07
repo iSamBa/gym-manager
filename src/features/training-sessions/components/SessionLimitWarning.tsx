@@ -1,7 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { AlertTriangle } from "lucide-react";
-import { useStudioSessionLimit } from "../hooks/use-studio-session-limit";
+import { useStudioSessionLimit } from "../hooks/use-session-alerts";
 import {
   getCapacityColorScheme,
   getWeekRange,

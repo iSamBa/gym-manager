@@ -5,17 +5,30 @@ import {
   useInfiniteQuery,
 } from "@tanstack/react-query";
 import { keepPreviousData } from "@tanstack/react-query";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import {
   memberUtils,
   type MemberFilters,
 } from "@/features/members/lib/database-utils";
-import type { Member, MemberStatus } from "@/features/database/lib/types";
+import type {
+  Member,
+  MemberStatus,
+  MemberType,
+} from "@/features/database/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { exportMembersToCSV } from "../lib/csv-utils";
-import { formatTimestampForDatabase } from "@/lib/date-utils";
+import {
+  formatTimestampForDatabase,
+  getLocalDateString,
+} from "@/lib/date-utils";
+import { supabase } from "@/lib/supabase";
+import type { SimpleMemberFilters } from "../components/SimpleMemberFilters";
+import {
+  convertCollaborationMember,
+  type ConvertCollaborationMemberInput,
+} from "../lib/collaboration-utils";
 
 // Query key factory for consistent cache management
 export const memberKeys = {
@@ -682,4 +695,729 @@ export function useBulkDeleteMembers() {
     bulkDelete,
     isDeleting,
   };
+}
+
+// ============================================================================
+// DEBOUNCED SEARCH (merged from use-member-search.ts)
+// ============================================================================
+
+/**
+ * Custom hook for debounced member search with loading states
+ * Merged from use-member-search.ts for consolidation
+ */
+export function useDebouncedMemberSearch(initialQuery = "", debounceMs = 300) {
+  const [query, setQuery] = useState(initialQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
+
+  // Debounce the search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, debounceMs);
+
+    return () => clearTimeout(timer);
+  }, [query, debounceMs]);
+
+  // Use the search hook with debounced query
+  const searchResult = useSearchMembers(debouncedQuery);
+
+  const updateQuery = useCallback((newQuery: string) => {
+    setQuery(newQuery);
+  }, []);
+
+  const clearQuery = useCallback(() => {
+    setQuery("");
+    setDebouncedQuery("");
+  }, []);
+
+  return {
+    query,
+    debouncedQuery,
+    updateQuery,
+    clearQuery,
+    isSearching: query !== debouncedQuery || searchResult.isLoading,
+    results: searchResult.data || [],
+    error: searchResult.error,
+    isError: searchResult.isError,
+  };
+}
+
+// ============================================================================
+// MEMBER VALIDATION (merged from use-member-search.ts)
+// ============================================================================
+
+/**
+ * Hook for member validation during forms
+ * Merged from use-member-search.ts for consolidation
+ */
+export function useMemberValidation() {
+  const queryClient = useQueryClient();
+
+  const checkEmailExists = useCallback(
+    async (email: string, excludeId?: string): Promise<boolean> => {
+      try {
+        // Check cache first
+        const cachedMembers = queryClient.getQueriesData<Member[]>({
+          queryKey: memberKeys.lists(),
+        });
+
+        // Look through cached data first
+        for (const [, members] of cachedMembers) {
+          if (members) {
+            const exists = members.some(
+              (member) =>
+                member.email.toLowerCase() === email.toLowerCase() &&
+                member.id !== excludeId
+            );
+            if (exists) return true;
+          }
+        }
+
+        // If not found in cache, check database
+        return await memberUtils.checkEmailExists(email, excludeId);
+      } catch (error) {
+        logger.error("Error checking email:", { error });
+        return false;
+      }
+    },
+    [queryClient]
+  );
+
+  return {
+    checkEmailExists,
+  };
+}
+
+// ============================================================================
+// MEMBER PREFETCH (merged from use-member-search.ts)
+// ============================================================================
+
+/**
+ * Hook for prefetching member details (useful for hover cards, navigation)
+ * Merged from use-member-search.ts for consolidation
+ */
+export function useMemberPrefetch() {
+  const queryClient = useQueryClient();
+
+  const prefetchMember = useCallback(
+    (id: string) => {
+      queryClient.prefetchQuery({
+        queryKey: memberKeys.detail(id),
+        queryFn: () => memberUtils.getMemberById(id),
+        staleTime: 10 * 60 * 1000, // 10 minutes
+      });
+    },
+    [queryClient]
+  );
+
+  const prefetchMemberWithSubscription = useCallback(
+    (id: string) => {
+      queryClient.prefetchQuery({
+        queryKey: memberKeys.withSubscription(id),
+        queryFn: () => memberUtils.getMemberWithSubscription(id),
+        staleTime: 10 * 60 * 1000,
+      });
+    },
+    [queryClient]
+  );
+
+  // Prefetch next and previous members for navigation optimization
+  const prefetchAdjacentMembers = useCallback(
+    (currentMemberId: string) => {
+      // Get members list from cache to find adjacent members
+      const cachedMembers = queryClient.getQueriesData<Member[]>({
+        queryKey: memberKeys.lists(),
+      });
+
+      for (const [, members] of cachedMembers) {
+        if (members && Array.isArray(members)) {
+          const currentIndex = members.findIndex(
+            (m) => m.id === currentMemberId
+          );
+          if (currentIndex !== -1) {
+            // Prefetch previous member
+            if (currentIndex > 0) {
+              const prevMember = members[currentIndex - 1];
+              prefetchMemberWithSubscription(prevMember.id);
+            }
+            // Prefetch next member
+            if (currentIndex < members.length - 1) {
+              const nextMember = members[currentIndex + 1];
+              prefetchMemberWithSubscription(nextMember.id);
+            }
+            break;
+          }
+        }
+      }
+    },
+    [queryClient, prefetchMemberWithSubscription]
+  );
+
+  // Prefetch members for table row hover
+  const prefetchOnHover = useCallback(
+    (id: string) => {
+      // Use shorter stale time for hover prefetching
+      queryClient.prefetchQuery({
+        queryKey: memberKeys.withSubscription(id),
+        queryFn: () => memberUtils.getMemberWithSubscription(id),
+        staleTime: 5 * 60 * 1000, // 5 minutes for hover prefetch
+      });
+    },
+    [queryClient]
+  );
+
+  // Navigation-based prefetching
+  const prefetchNextMember = useCallback(
+    (currentMemberId: string) => {
+      const cachedMembers = queryClient.getQueriesData<Member[]>({
+        queryKey: memberKeys.lists(),
+      });
+
+      for (const [, members] of cachedMembers) {
+        if (members && Array.isArray(members)) {
+          const currentIndex = members.findIndex(
+            (m) => m.id === currentMemberId
+          );
+          if (currentIndex !== -1 && currentIndex < members.length - 1) {
+            const nextMember = members[currentIndex + 1];
+            prefetchMemberWithSubscription(nextMember.id);
+            return nextMember.id;
+          }
+        }
+      }
+      return null;
+    },
+    [queryClient, prefetchMemberWithSubscription]
+  );
+
+  const prefetchPreviousMember = useCallback(
+    (currentMemberId: string) => {
+      const cachedMembers = queryClient.getQueriesData<Member[]>({
+        queryKey: memberKeys.lists(),
+      });
+
+      for (const [, members] of cachedMembers) {
+        if (members && Array.isArray(members)) {
+          const currentIndex = members.findIndex(
+            (m) => m.id === currentMemberId
+          );
+          if (currentIndex > 0) {
+            const prevMember = members[currentIndex - 1];
+            prefetchMemberWithSubscription(prevMember.id);
+            return prevMember.id;
+          }
+        }
+      }
+      return null;
+    },
+    [queryClient, prefetchMemberWithSubscription]
+  );
+
+  return {
+    prefetchMember,
+    prefetchMemberWithSubscription,
+    prefetchAdjacentMembers,
+    prefetchOnHover,
+    prefetchNextMember,
+    prefetchPreviousMember,
+  };
+}
+
+// ============================================================================
+// MEMBER CACHE UTILITIES (merged from use-member-search.ts)
+// ============================================================================
+
+/**
+ * Hook for member cache invalidation and management utilities
+ * Merged from use-member-search.ts for consolidation
+ */
+export function useMemberCacheUtils() {
+  const queryClient = useQueryClient();
+
+  const invalidateAllMembers = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: memberKeys.all });
+  }, [queryClient]);
+
+  const invalidateMemberLists = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: memberKeys.lists() });
+  }, [queryClient]);
+
+  const invalidateMember = useCallback(
+    (id: string) => {
+      queryClient.invalidateQueries({ queryKey: memberKeys.detail(id) });
+      queryClient.invalidateQueries({
+        queryKey: memberKeys.withSubscription(id),
+      });
+    },
+    [queryClient]
+  );
+
+  // Smart cache invalidation for member updates
+  const invalidateMemberCache = useCallback(
+    async (id: string) => {
+      // Invalidate the specific member
+      await queryClient.invalidateQueries({ queryKey: memberKeys.detail(id) });
+      await queryClient.invalidateQueries({
+        queryKey: memberKeys.withSubscription(id),
+      });
+
+      // Invalidate member lists that might contain this member
+      await queryClient.invalidateQueries({ queryKey: memberKeys.lists() });
+
+      // Invalidate counts and analytics
+      await queryClient.invalidateQueries({ queryKey: memberKeys.count() });
+      await queryClient.invalidateQueries({
+        queryKey: memberKeys.countByStatus(),
+      });
+
+      // Invalidate search results that might include this member
+      const searchQueries = queryClient.getQueriesData({
+        queryKey: memberKeys.all,
+        predicate: (query) => query.queryKey.includes("search"),
+      });
+
+      for (const [queryKey] of searchQueries) {
+        await queryClient.invalidateQueries({ queryKey });
+      }
+    },
+    [queryClient]
+  );
+
+  const removeMemberFromCache = useCallback(
+    (id: string) => {
+      queryClient.removeQueries({ queryKey: memberKeys.detail(id) });
+      queryClient.removeQueries({ queryKey: memberKeys.withSubscription(id) });
+    },
+    [queryClient]
+  );
+
+  const getMemberFromCache = useCallback(
+    (id: string): Member | undefined => {
+      return queryClient.getQueryData<Member>(memberKeys.detail(id));
+    },
+    [queryClient]
+  );
+
+  const setMemberInCache = useCallback(
+    (member: Member) => {
+      queryClient.setQueryData(memberKeys.detail(member.id), member);
+
+      // Also update member lists if they contain this member
+      const cachedLists = queryClient.getQueriesData<Member[]>({
+        queryKey: memberKeys.lists(),
+      });
+
+      for (const [queryKey, members] of cachedLists) {
+        if (members) {
+          const updatedMembers = members.map((m) =>
+            m.id === member.id ? member : m
+          );
+          queryClient.setQueryData(queryKey, updatedMembers);
+        }
+      }
+    },
+    [queryClient]
+  );
+
+  // Background refresh for active pages
+  const refreshMemberInBackground = useCallback(
+    (id: string) => {
+      queryClient.refetchQueries({
+        queryKey: memberKeys.detail(id),
+        type: "active", // Only refetch active queries
+      });
+    },
+    [queryClient]
+  );
+
+  return {
+    invalidateAllMembers,
+    invalidateMemberLists,
+    invalidateMember,
+    invalidateMemberCache,
+    removeMemberFromCache,
+    getMemberFromCache,
+    setMemberInCache,
+    prefetchMember: (id: string) =>
+      queryClient.prefetchQuery({
+        queryKey: memberKeys.detail(id),
+        queryFn: () => memberUtils.getMemberById(id),
+        staleTime: 10 * 60 * 1000,
+      }),
+    refreshMemberInBackground,
+  };
+}
+
+// ============================================================================
+// SIMPLE MEMBER FILTERS (merged from use-simple-member-filters.ts)
+// ============================================================================
+
+/**
+ * Hook for simple member filtering with UI helpers
+ * Merged from use-simple-member-filters.ts for consolidation
+ */
+export function useSimpleMemberFilters() {
+  const [filters, setFilters] = useState<SimpleMemberFilters>({
+    status: "all",
+  });
+
+  const updateFilters = useCallback((newFilters: SimpleMemberFilters) => {
+    setFilters(newFilters);
+  }, []);
+
+  const updateFilter = useCallback(
+    (
+      key: keyof SimpleMemberFilters,
+      value: SimpleMemberFilters[keyof SimpleMemberFilters]
+    ) => {
+      setFilters((prev) => ({ ...prev, [key]: value }));
+    },
+    []
+  );
+
+  const resetFilters = useCallback(() => {
+    setFilters({
+      status: "all",
+      memberType: undefined,
+      hasActiveSubscription: undefined,
+      hasUpcomingSessions: undefined,
+      hasOutstandingBalance: undefined,
+    });
+  }, []);
+
+  // Convert simple filters to database-compatible format
+  const databaseFilters = useMemo(() => {
+    const dbFilters: {
+      status?: MemberStatus;
+      memberType?: MemberType;
+      hasActiveSubscription?: boolean;
+      hasUpcomingSessions?: boolean;
+      hasOutstandingBalance?: boolean;
+    } = {};
+
+    // Status filter
+    if (filters.status && filters.status !== "all") {
+      dbFilters.status = filters.status as MemberStatus;
+    }
+
+    // Member type filter
+    if (filters.memberType) {
+      dbFilters.memberType = filters.memberType;
+    }
+
+    // Active subscription filter
+    if (filters.hasActiveSubscription !== undefined) {
+      dbFilters.hasActiveSubscription = filters.hasActiveSubscription;
+    }
+
+    // Upcoming sessions filter
+    if (filters.hasUpcomingSessions !== undefined) {
+      dbFilters.hasUpcomingSessions = filters.hasUpcomingSessions;
+    }
+
+    // Outstanding balance filter
+    if (filters.hasOutstandingBalance !== undefined) {
+      dbFilters.hasOutstandingBalance = filters.hasOutstandingBalance;
+    }
+
+    return dbFilters;
+  }, [filters]);
+
+  // Get a human-readable summary of active filters
+  const getFilterSummary = useCallback(() => {
+    const summary: string[] = [];
+
+    if (filters.status && filters.status !== "all") {
+      summary.push(`Status: ${filters.status}`);
+    }
+
+    if (filters.memberType) {
+      summary.push(`Type: ${filters.memberType}`);
+    }
+
+    if (filters.hasActiveSubscription !== undefined) {
+      summary.push(
+        `Subscription: ${filters.hasActiveSubscription ? "Active" : "None"}`
+      );
+    }
+
+    if (filters.hasUpcomingSessions !== undefined) {
+      summary.push(
+        `Sessions: ${filters.hasUpcomingSessions ? "Has Upcoming" : "No Upcoming"}`
+      );
+    }
+
+    if (filters.hasOutstandingBalance !== undefined) {
+      summary.push(
+        `Balance: ${filters.hasOutstandingBalance ? "Has Balance" : "Fully Paid"}`
+      );
+    }
+
+    return summary;
+  }, [filters]);
+
+  // Check if any filters are active
+  const hasActiveFilters = useMemo(() => {
+    return (
+      (filters.status !== undefined && filters.status !== "all") ||
+      filters.memberType !== undefined ||
+      filters.hasActiveSubscription !== undefined ||
+      filters.hasUpcomingSessions !== undefined ||
+      filters.hasOutstandingBalance !== undefined
+    );
+  }, [filters]);
+
+  // Get active filter count
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.status && filters.status !== "all") count++;
+    if (filters.memberType) count++;
+    if (filters.hasActiveSubscription !== undefined) count++;
+    if (filters.hasUpcomingSessions !== undefined) count++;
+    if (filters.hasOutstandingBalance !== undefined) count++;
+    return count;
+  }, [filters]);
+
+  // Quick filter helpers
+  const setStatusFilter = useCallback(
+    (status: SimpleMemberFilters["status"]) => {
+      setFilters((prev) => ({ ...prev, status }));
+    },
+    []
+  );
+
+  const setMemberTypeFilter = useCallback(
+    (memberType: SimpleMemberFilters["memberType"]) => {
+      setFilters((prev) => ({ ...prev, memberType }));
+    },
+    []
+  );
+
+  const setSubscriptionFilter = useCallback(
+    (hasActiveSubscription: boolean | undefined) => {
+      setFilters((prev) => ({ ...prev, hasActiveSubscription }));
+    },
+    []
+  );
+
+  const setSessionsFilter = useCallback(
+    (hasUpcomingSessions: boolean | undefined) => {
+      setFilters((prev) => ({ ...prev, hasUpcomingSessions }));
+    },
+    []
+  );
+
+  const setBalanceFilter = useCallback(
+    (hasOutstandingBalance: boolean | undefined) => {
+      setFilters((prev) => ({ ...prev, hasOutstandingBalance }));
+    },
+    []
+  );
+
+  // Common filter presets
+  const applyPreset = useCallback(
+    (presetName: string) => {
+      switch (presetName) {
+        case "active-members":
+          setFilters({
+            status: "active",
+            memberType: undefined,
+            hasActiveSubscription: undefined,
+            hasUpcomingSessions: undefined,
+            hasOutstandingBalance: undefined,
+          });
+          break;
+        case "trial-members":
+          setFilters({
+            status: "all",
+            memberType: "trial",
+            hasActiveSubscription: undefined,
+            hasUpcomingSessions: undefined,
+            hasOutstandingBalance: undefined,
+          });
+          break;
+        case "active-subscribers":
+          setFilters({
+            status: "active",
+            memberType: undefined,
+            hasActiveSubscription: true,
+            hasUpcomingSessions: undefined,
+            hasOutstandingBalance: undefined,
+          });
+          break;
+        case "outstanding-balance":
+          setFilters({
+            status: "all",
+            memberType: undefined,
+            hasActiveSubscription: undefined,
+            hasUpcomingSessions: undefined,
+            hasOutstandingBalance: true,
+          });
+          break;
+        default:
+          resetFilters();
+      }
+    },
+    [resetFilters]
+  );
+
+  // Filter options for dropdowns
+  const filterOptions = useMemo(
+    () => ({
+      status: [
+        { value: "all", label: "All Statuses" },
+        { value: "active", label: "Active" },
+        { value: "inactive", label: "Inactive" },
+        { value: "suspended", label: "Suspended" },
+        { value: "pending", label: "Pending" },
+      ] as const,
+      memberType: [
+        { value: "all", label: "All Types" },
+        { value: "full", label: "Full Members" },
+        { value: "trial", label: "Trial Members" },
+        { value: "collaboration", label: "Collaboration" },
+      ] as const,
+      subscription: [
+        { value: "all", label: "All Subscriptions" },
+        { value: "yes", label: "Active Subscription" },
+        { value: "no", label: "No Subscription" },
+      ] as const,
+      sessions: [
+        { value: "all", label: "All Sessions" },
+        { value: "yes", label: "Has Upcoming" },
+        { value: "no", label: "No Upcoming" },
+      ] as const,
+      balance: [
+        { value: "all", label: "All Balances" },
+        { value: "yes", label: "Has Balance Due" },
+        { value: "no", label: "Fully Paid" },
+      ] as const,
+    }),
+    []
+  );
+
+  return {
+    filters,
+    updateFilters,
+    updateFilter,
+    resetFilters,
+    databaseFilters,
+    getFilterSummary,
+    hasActiveFilters,
+    activeFilterCount,
+    // Quick filter setters
+    setStatusFilter,
+    setMemberTypeFilter,
+    setSubscriptionFilter,
+    setSessionsFilter,
+    setBalanceFilter,
+    // Presets
+    applyPreset,
+    // Options for UI components
+    filterOptions,
+  };
+}
+
+// ============================================================================
+// MEMBER ACTIVITY METRICS (merged from use-member-activity-metrics.ts)
+// ============================================================================
+
+interface ActivityMetrics {
+  sessionsThisMonth: number;
+  lastSessionDate: Date | null;
+  overduePaymentsCount: number;
+}
+
+/**
+ * Hook for fetching member activity metrics
+ * Merged from use-member-activity-metrics.ts for consolidation
+ */
+export function useMemberActivityMetrics(memberId: string) {
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
+  return useQuery({
+    queryKey: ["member-activity-metrics", memberId],
+    enabled: !!memberId && isAuthenticated && !isAuthLoading,
+    queryFn: async (): Promise<ActivityMetrics> => {
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      // Sessions this month
+      const { count: sessionsCount } = await supabase
+        .from("training_sessions")
+        .select("*, training_session_members!inner(member_id)", {
+          count: "exact",
+          head: true,
+        })
+        .eq("training_session_members.member_id", memberId)
+        .eq("status", "completed")
+        .gte(
+          "scheduled_start",
+          new Date(currentYear, currentMonth, 1).toISOString()
+        )
+        .lt(
+          "scheduled_start",
+          new Date(currentYear, currentMonth + 1, 1).toISOString()
+        );
+
+      // Last session
+      const { data: lastSessionData } = await supabase
+        .from("training_sessions")
+        .select(
+          "scheduled_start, status, training_session_members!inner(member_id)"
+        )
+        .eq("training_session_members.member_id", memberId)
+        .eq("status", "completed")
+        .order("scheduled_start", { ascending: false })
+        .limit(1);
+
+      const lastSession = lastSessionData?.[0] || null;
+
+      // Overdue payments
+      const { count: overdueCount } = await supabase
+        .from("subscription_payments")
+        .select("*", { count: "exact", head: true })
+        .eq("member_id", memberId)
+        .in("payment_status", ["pending", "failed"])
+        .lt("due_date", getLocalDateString(new Date()));
+
+      return {
+        sessionsThisMonth: sessionsCount || 0,
+        lastSessionDate: lastSession?.scheduled_start
+          ? new Date(lastSession.scheduled_start)
+          : null,
+        overduePaymentsCount: overdueCount || 0,
+      };
+    },
+    refetchInterval: 60000, // Refresh every minute
+  });
+}
+
+// ============================================================================
+// COLLABORATION MEMBER CONVERSION (merged from use-convert-collaboration-member.ts)
+// ============================================================================
+
+/**
+ * Hook for converting collaboration members to full members
+ * Merged from use-convert-collaboration-member.ts for consolidation
+ */
+export function useConvertCollaborationMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: ConvertCollaborationMemberInput) =>
+      convertCollaborationMember(input),
+    onSuccess: (result) => {
+      if (result.success) {
+        // Invalidate all member queries
+        queryClient.invalidateQueries({ queryKey: memberKeys.all });
+        if (result.member?.id) {
+          queryClient.invalidateQueries({
+            queryKey: memberKeys.detail(result.member.id),
+          });
+        }
+      }
+    },
+  });
 }

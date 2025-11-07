@@ -84,9 +84,29 @@ export const getMemberStatusDistribution = async (): Promise<
 };
 
 /**
- * Get dashboard stats using SQL aggregations
+ * Dashboard stats interface (extended in Phase 2 to include collaboration count and status distribution)
  */
-export const getDashboardStats = async () => {
+export interface DashboardStats {
+  total_members: number;
+  active_members: number;
+  total_revenue: number;
+  sessions_today: number;
+  sessions_this_week: number;
+  monthly_revenue: number;
+  member_retention_rate: number;
+  collaboration_count: number;
+  member_status_distribution: Array<{
+    status: string;
+    count: number;
+    percentage: number;
+  }>;
+}
+
+/**
+ * Get dashboard stats using SQL aggregations
+ * Performance Phase 2: Now includes collaboration count and status distribution in a single query
+ */
+export const getDashboardStats = async (): Promise<DashboardStats | null> => {
   try {
     const { data, error } = await supabase.rpc("get_dashboard_stats");
 

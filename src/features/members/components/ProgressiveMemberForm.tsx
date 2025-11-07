@@ -1,31 +1,18 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect, useId } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useId,
+  memo,
+} from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { DatePicker } from "@/components/ui/date-picker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -37,217 +24,46 @@ import {
   Mail,
   MapPin,
   Target,
-  Settings,
+  Settings as SettingsIcon,
   ChevronLeft,
   ChevronRight,
   Check,
   UserCog,
   Handshake,
+  Package,
+  UserPlus,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Member } from "@/features/database/lib/types";
 import { toast } from "sonner";
-import { Package, UserPlus, Users } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useMembers } from "@/features/members/hooks";
 import { MemberHealthFitnessStep } from "./form-steps/MemberHealthFitnessStep";
 import { MemberAddressStep } from "./form-steps/MemberAddressStep";
-import { isFutureDate } from "@/lib/date-utils";
+import {
+  PersonalInfoStep,
+  ContactInfoStep,
+  MemberTypeStep,
+  PartnershipDetailsStep,
+  EquipmentStep,
+  ReferralStep,
+  TrainingPreferenceStep,
+  SettingsStep,
+  memberFormSchema,
+  personalInfoSchema,
+  contactInfoSchema,
+  addressSchema,
+  memberTypeSchema,
+  partnershipSchema,
+  equipmentSchema,
+  referralSchema,
+  trainingPreferenceSchema,
+  healthInfoSchema,
+  settingsSchema,
+  type MemberFormData,
+  type StepInfo,
+} from "./progressive-form";
 
 import { logger } from "@/lib/logger";
-// Schema for each step
-const personalInfoSchema = z.object({
-  first_name: z
-    .string()
-    .min(1, "Please enter your first name")
-    .max(50, "First name must be 50 characters or less"),
-  last_name: z
-    .string()
-    .min(1, "Please enter your last name")
-    .max(50, "Last name must be 50 characters or less"),
-  date_of_birth: z.string().min(1, "Please select your date of birth"),
-  gender: z.enum(["male", "female"], { message: "Please select your gender" }),
-});
-
-const contactInfoSchema = z.object({
-  email: z
-    .string()
-    .email("Please enter a valid email address (e.g., john@example.com)"),
-  phone: z.string().optional(),
-  preferred_contact_method: z.enum(["email", "phone", "sms"], {
-    message: "Please select your preferred contact method",
-  }),
-});
-
-const addressSchema = z.object({
-  address: z.object({
-    street: z.string().optional(),
-    city: z.string().optional(),
-    postal_code: z.string().optional(),
-    country: z.string().optional(),
-  }),
-});
-
-const healthInfoSchema = z.object({
-  fitness_goals: z.string().optional(),
-  medical_conditions: z.string().optional(),
-});
-
-const settingsSchema = z.object({
-  status: z.enum(["active", "inactive", "suspended", "expired", "pending"], {
-    message: "Please select a member status",
-  }),
-  notes: z.string().optional(),
-  marketing_consent: z.boolean(),
-  waiver_signed: z.boolean(),
-});
-
-// US-004: Equipment, Referral, and Training Preference schemas
-const equipmentSchema = z.object({
-  uniform_size: z.enum(["XS", "S", "M", "L", "XL"]),
-  uniform_received: z.boolean(),
-  vest_size: z.enum([
-    "V1",
-    "V2",
-    "V2_SMALL_EXT",
-    "V2_LARGE_EXT",
-    "V2_DOUBLE_EXT",
-  ]),
-  hip_belt_size: z.enum(["V1", "V2"]),
-});
-
-const referralSchema = z.object({
-  referral_source: z.enum([
-    "instagram",
-    "member_referral",
-    "website_ib",
-    "prospection",
-    "studio",
-    "phone",
-    "chatbot",
-  ]),
-  referred_by_member_id: z.string().uuid().optional(),
-});
-
-const trainingPreferenceSchema = z.object({
-  training_preference: z.enum(["mixed", "women_only"]).optional(),
-});
-
-// Member Type schema
-const memberTypeSchema = z.object({
-  member_type: z.enum(["trial", "full", "collaboration"], {
-    message: "Please select a member type",
-  }),
-});
-
-// Partnership Details schema (for collaboration members)
-const partnershipSchema = z.object({
-  partnership_company: z.string().optional(),
-  partnership_type: z
-    .enum(["influencer", "corporate", "brand", "media", "other"])
-    .optional(),
-  partnership_contract_start: z.string().optional(),
-  partnership_contract_end: z.string().optional(),
-  partnership_notes: z.string().optional(),
-});
-
-// Complete form schema
-const memberFormSchema = personalInfoSchema
-  .merge(contactInfoSchema)
-  .merge(addressSchema)
-  .merge(memberTypeSchema)
-  .merge(partnershipSchema)
-  .merge(equipmentSchema)
-  .merge(referralSchema)
-  .merge(trainingPreferenceSchema)
-  .merge(healthInfoSchema)
-  .merge(settingsSchema)
-  .refine(
-    (data) => {
-      // Conditional validation: referred_by required if member_referral
-      if (
-        data.referral_source === "member_referral" &&
-        !data.referred_by_member_id
-      ) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Please select the referring member",
-      path: ["referred_by_member_id"],
-    }
-  )
-  .refine(
-    (data) => {
-      // Conditional validation: training_preference only for females
-      if (data.training_preference && data.gender !== "female") {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Training preference only applies to female members",
-      path: ["training_preference"],
-    }
-  )
-  .refine(
-    (data) => {
-      // Conditional validation: partnership_company required if collaboration
-      if (data.member_type === "collaboration" && !data.partnership_company) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Company name is required for collaboration members",
-      path: ["partnership_company"],
-    }
-  )
-  .refine(
-    (data) => {
-      // Conditional validation: partnership_contract_end required if collaboration
-      if (
-        data.member_type === "collaboration" &&
-        !data.partnership_contract_end
-      ) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Contract end date is required for collaboration members",
-      path: ["partnership_contract_end"],
-    }
-  )
-  .refine(
-    (data) => {
-      // Conditional validation: partnership_contract_end must be future date
-      if (
-        data.member_type === "collaboration" &&
-        data.partnership_contract_end &&
-        !isFutureDate(data.partnership_contract_end)
-      ) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Contract end date must be in the future",
-      path: ["partnership_contract_end"],
-    }
-  );
-
-type MemberFormData = z.infer<typeof memberFormSchema>;
-
-interface StepInfo {
-  id: number;
-  title: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  schema: z.ZodSchema;
-  isOptional?: boolean;
-}
 
 const steps: StepInfo[] = [
   {
@@ -321,7 +137,7 @@ const steps: StepInfo[] = [
     id: 10,
     title: "Settings",
     description: "Status and preferences",
-    icon: Settings,
+    icon: SettingsIcon,
     schema: settingsSchema,
   },
 ];
@@ -335,167 +151,7 @@ interface ProgressiveMemberFormProps {
   showHeader?: boolean;
 }
 
-// Helper component for Referral Section
-function ReferralSectionContent({
-  form,
-  member,
-}: {
-  form: ReturnType<typeof useForm<MemberFormData>>;
-  member?: Member | null;
-}) {
-  const referralSource = form.watch("referral_source");
-  const { data: membersData } = useMembers({
-    limit: 1000,
-  });
-
-  const availableMembers = React.useMemo(() => {
-    const members = membersData || [];
-    if (!member?.id) return members;
-    return members.filter((m) => m.id !== member.id);
-  }, [membersData, member?.id]);
-
-  const showReferredBy = referralSource === "member_referral";
-
-  return (
-    <div className="space-y-4">
-      <FormField
-        control={form.control}
-        name="referral_source"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>How did you hear about us? *</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl>
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Select referral source" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="instagram">Instagram</SelectItem>
-                <SelectItem value="member_referral">Member Referral</SelectItem>
-                <SelectItem value="website_ib">Website (Inbound)</SelectItem>
-                <SelectItem value="prospection">
-                  Prospection (Outbound)
-                </SelectItem>
-                <SelectItem value="studio">Studio (Walk-in)</SelectItem>
-                <SelectItem value="phone">Phone</SelectItem>
-                <SelectItem value="chatbot">Chatbot</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {showReferredBy && (
-        <FormField
-          control={form.control}
-          name="referred_by_member_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Referred By Member *</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Select member" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {availableMembers.length === 0 ? (
-                    <SelectItem value="no-members" disabled>
-                      No members available
-                    </SelectItem>
-                  ) : (
-                    availableMembers.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.first_name} {m.last_name} ({m.email})
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                Select the member who referred this new member
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      )}
-    </div>
-  );
-}
-
-// Helper component for Training Preference Section
-function TrainingPreferenceSectionContent({
-  form,
-}: {
-  form: ReturnType<typeof useForm<MemberFormData>>;
-}) {
-  const gender = form.watch("gender");
-
-  React.useEffect(() => {
-    // Clear training_preference when gender changes to male
-    if (gender === "male") {
-      form.setValue("training_preference", undefined);
-    }
-  }, [gender, form]);
-
-  // Only show this section for female members
-  if (gender !== "female") {
-    return (
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Training preferences are only available for female members. Please
-          select gender as &quot;Female&quot; in Personal Information if this
-          applies.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <FormField
-        control={form.control}
-        name="training_preference"
-        render={({ field }) => (
-          <FormItem className="space-y-3">
-            <FormLabel>Session Preference</FormLabel>
-            <FormDescription>
-              Choose your preferred training session type (optional)
-            </FormDescription>
-            <FormControl>
-              <RadioGroup
-                onValueChange={field.onChange}
-                value={field.value}
-                className="flex flex-col space-y-1"
-              >
-                <FormItem className="flex items-center space-y-0 space-x-3">
-                  <FormControl>
-                    <RadioGroupItem value="mixed" />
-                  </FormControl>
-                  <FormLabel className="font-normal">Mixed Sessions</FormLabel>
-                </FormItem>
-                <FormItem className="flex items-center space-y-0 space-x-3">
-                  <FormControl>
-                    <RadioGroupItem value="women_only" />
-                  </FormControl>
-                  <FormLabel className="font-normal">
-                    Women Only Sessions
-                  </FormLabel>
-                </FormItem>
-              </RadioGroup>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </div>
-  );
-}
-
-export function ProgressiveMemberForm({
+export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
   member,
   onSubmit,
   onCancel,
@@ -729,746 +385,142 @@ export function ProgressiveMemberForm({
     }
   }, [currentStep, currentStepInfo.schema, form, completedSteps]);
 
-  const handleNextStep = async () => {
+  const handleNextStep = useCallback(async () => {
     const isValid = await validateCurrentStep();
     if (isValid && currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     }
-  };
+  }, [validateCurrentStep, currentStep]); // steps.length is constant
 
-  const handlePreviousStep = () => {
+  const handlePreviousStep = useCallback(() => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
-  };
+  }, [currentStep]);
 
-  const handleStepClick = async (stepId: number) => {
+  const handleStepClick = useCallback(async (stepId: number) => {
     // Allow free navigation to any step
     setCurrentStep(stepId);
-  };
+  }, []);
 
-  const handleSubmit = async (data: MemberFormData) => {
-    // Clean up partnership data for non-collaboration members
-    const cleanedData = { ...data };
-    if (cleanedData.member_type !== "collaboration") {
-      // Clear partnership fields if not collaboration member
-      cleanedData.partnership_company = undefined;
-      cleanedData.partnership_type = undefined;
-      cleanedData.partnership_contract_start = undefined;
-      cleanedData.partnership_contract_end = undefined;
-      cleanedData.partnership_notes = undefined;
-    } else {
-      // For collaboration members, ensure dates are properly formatted
-      // Convert empty strings to undefined for optional date fields
-      if (
-        !cleanedData.partnership_contract_start ||
-        cleanedData.partnership_contract_start.trim() === ""
-      ) {
+  const handleSubmit = useCallback(
+    async (data: MemberFormData) => {
+      // Clean up partnership data for non-collaboration members
+      const cleanedData = { ...data };
+      if (cleanedData.member_type !== "collaboration") {
+        // Clear partnership fields if not collaboration member
+        cleanedData.partnership_company = undefined;
+        cleanedData.partnership_type = undefined;
         cleanedData.partnership_contract_start = undefined;
+        cleanedData.partnership_contract_end = undefined;
+        cleanedData.partnership_notes = undefined;
+      } else {
+        // For collaboration members, ensure dates are properly formatted
+        // Convert empty strings to undefined for optional date fields
+        if (
+          !cleanedData.partnership_contract_start ||
+          cleanedData.partnership_contract_start.trim() === ""
+        ) {
+          cleanedData.partnership_contract_start = undefined;
+        }
+        // partnership_contract_end is required for collaboration, so don't clear it
       }
-      // partnership_contract_end is required for collaboration, so don't clear it
-    }
 
-    // In edit mode: validate and submit
-    if (member) {
+      // In edit mode: validate and submit
+      if (member) {
+        try {
+          await memberFormSchema.parseAsync(cleanedData);
+
+          // Submit all form data (database will handle the update)
+          await onSubmit(cleanedData);
+        } catch (error) {
+          if (error instanceof z.ZodError) {
+            // Show validation errors without jumping to steps
+            const zodError = error as z.ZodError;
+            const errorMessages = zodError.issues
+              .map((e) => `${e.path.join(".")}: ${e.message}`)
+              .join("; ");
+            toast.error("Validation Failed", {
+              description:
+                errorMessages.length > 100
+                  ? "Please check all required fields"
+                  : errorMessages,
+            });
+          }
+          throw error;
+        }
+        return;
+      }
+
+      // Create mode: step-by-step validation
+      for (const step of steps) {
+        try {
+          await step.schema.parseAsync(cleanedData);
+        } catch (error) {
+          if (error instanceof z.ZodError && !step.isOptional) {
+            toast.error(`Please complete step ${step.id}: ${step.title}`);
+            setCurrentStep(step.id);
+            return;
+          }
+        }
+      }
+
       try {
-        await memberFormSchema.parseAsync(cleanedData);
-
-        // Submit all form data (database will handle the update)
         await onSubmit(cleanedData);
+        // No localStorage cleanup needed - we don't persist form data anymore
       } catch (error) {
-        if (error instanceof z.ZodError) {
-          // Show validation errors without jumping to steps
-          const zodError = error as z.ZodError;
-          const errorMessages = zodError.issues
-            .map((e) => `${e.path.join(".")}: ${e.message}`)
-            .join("; ");
-          toast.error("Validation Failed", {
-            description:
-              errorMessages.length > 100
-                ? "Please check all required fields"
-                : errorMessages,
-          });
-        }
-        throw error;
+        logger.error("Failed to submit form:", { error });
+        throw error; // Re-throw to let parent handle the error
       }
-      return;
-    }
-
-    // Create mode: step-by-step validation
-    for (const step of steps) {
-      try {
-        await step.schema.parseAsync(cleanedData);
-      } catch (error) {
-        if (error instanceof z.ZodError && !step.isOptional) {
-          toast.error(`Please complete step ${step.id}: ${step.title}`);
-          setCurrentStep(step.id);
-          return;
-        }
-      }
-    }
-
-    try {
-      await onSubmit(cleanedData);
-      // No localStorage cleanup needed - we don't persist form data anymore
-    } catch (error) {
-      logger.error("Failed to submit form:", { error });
-      throw error; // Re-throw to let parent handle the error
-    }
-  };
+    },
+    [member, onSubmit]
+  ); // steps is constant
 
   // Handle cancel - no cleanup needed
   const handleCancel = useCallback(() => {
     onCancel();
   }, [onCancel]);
 
-  const renderStepContent = () => {
+  // Memoized callbacks for inline functions (Performance Phase 2)
+  const handleStepClickIfAccessible = useCallback(
+    (stepId: number, isAccessible: boolean) => () => {
+      if (isAccessible) {
+        handleStepClick(stepId);
+      }
+    },
+    [handleStepClick]
+  );
+
+  const handleFormSubmit = useCallback(() => {
+    form.handleSubmit(handleSubmit)();
+  }, [form, handleSubmit]);
+
+  const renderStepContent = useCallback(() => {
     switch (currentStep) {
       case 1:
-        return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                key="step1-first-name"
-                control={form.control}
-                name="first_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name *</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        id="first_name"
-                        placeholder="e.g., John"
-                        className="h-12"
-                        aria-describedby="first-name-error first-name-help"
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                      />
-                    </FormControl>
-                    <FormDescription id="first-name-help" className="text-xs">
-                      Enter your legal first name
-                    </FormDescription>
-                    <FormMessage id="first-name-error" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                key="step1-last-name"
-                control={form.control}
-                name="last_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name *</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        id="last_name"
-                        placeholder="e.g., Smith"
-                        className="h-12"
-                        aria-describedby="last-name-error last-name-help"
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                      />
-                    </FormControl>
-                    <FormDescription id="last-name-help" className="text-xs">
-                      Enter your legal last name
-                    </FormDescription>
-                    <FormMessage id="last-name-error" />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="date_of_birth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date of Birth *</FormLabel>
-                    <FormControl>
-                      <DatePicker
-                        value={field.value ? new Date(field.value) : undefined}
-                        onChange={(date) => {
-                          field.onChange(
-                            date ? format(date, "yyyy-MM-dd") : ""
-                          );
-                        }}
-                        placeholder="Select date of birth"
-                        format="PPP"
-                        className="h-12"
-                        showYearMonthPickers={true}
-                        yearRange={{
-                          from: 1930,
-                          to: new Date().getFullYear() - 13,
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gender *</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        );
-
+        return <PersonalInfoStep form={form} member={member} />;
       case 2:
-        return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
-              <FormField
-                key="step2-email"
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address *</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        id="email"
-                        type="email"
-                        placeholder="john.doe@example.com"
-                        className="h-12"
-                        aria-describedby="email-error email-help"
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                      />
-                    </FormControl>
-                    <FormDescription id="email-help" className="text-xs">
-                      We&apos;ll use this to send important updates about your
-                      membership
-                    </FormDescription>
-                    <FormMessage id="email-error" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                key="step2-phone"
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        id="phone"
-                        placeholder="+1 (555) 123-4567"
-                        className="h-12"
-                        aria-describedby="phone-error phone-help"
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                      />
-                    </FormControl>
-                    <FormDescription id="phone-help" className="text-xs">
-                      Optional - we&apos;ll use this for urgent communications
-                      only
-                    </FormDescription>
-                    <FormMessage id="phone-error" />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="preferred_contact_method"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Preferred Contact Method *</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-12">
-                        <SelectValue placeholder="Select contact method" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="email">📧 Email</SelectItem>
-                      <SelectItem value="phone">📞 Phone Call</SelectItem>
-                      <SelectItem value="sms">💬 SMS/Text</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
-
+        return <ContactInfoStep form={form} member={member} />;
       case 3:
-        // Address
         return <MemberAddressStep form={form} />;
-
       case 4:
-        // Member Type Selection
-        return (
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="member_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Member Type *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-12">
-                        <SelectValue placeholder="Select member type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="trial">Trial</SelectItem>
-                      <SelectItem value="full">Full Member</SelectItem>
-                      <SelectItem value="collaboration">
-                        Collaboration Partner
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    Trial members can try out sessions before committing. Full
-                    members have regular memberships. Collaboration partners are
-                    for commercial partnerships and influencers.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
-
+        return <MemberTypeStep form={form} member={member} />;
       case 5:
-        // Partnership Details (conditional for collaboration members)
-        const memberType = form.watch("member_type");
-
-        if (memberType !== "collaboration") {
-          return (
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 dark:border-gray-800 dark:bg-gray-950">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Partnership details are only required for collaboration members.
-                Please select &quot;Collaboration Partner&quot; as the member
-                type if this applies.
-              </p>
-            </div>
-          );
-        }
-
-        return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="partnership_company"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Partnership Company *</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="e.g., Nike, Gymshark, etc."
-                        className="h-12"
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Name of the partner company or organization
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="partnership_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Partnership Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select type (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="influencer">Influencer</SelectItem>
-                        <SelectItem value="corporate">Corporate</SelectItem>
-                        <SelectItem value="brand">Brand</SelectItem>
-                        <SelectItem value="media">Media</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="partnership_contract_start"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contract Start Date</FormLabel>
-                    <FormControl>
-                      <DatePicker
-                        value={field.value ? new Date(field.value) : undefined}
-                        onChange={(date) => {
-                          field.onChange(
-                            date ? format(date, "yyyy-MM-dd") : ""
-                          );
-                        }}
-                        placeholder="Select start date"
-                        format="PPP"
-                        className="h-12"
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Optional - when the partnership contract begins
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="partnership_contract_end"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contract End Date *</FormLabel>
-                    <FormControl>
-                      <DatePicker
-                        value={field.value ? new Date(field.value) : undefined}
-                        onChange={(date) => {
-                          field.onChange(
-                            date ? format(date, "yyyy-MM-dd") : ""
-                          );
-                        }}
-                        placeholder="Select end date"
-                        format="PPP"
-                        className="h-12"
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Required - must be a future date
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="partnership_notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Partnership Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Contract terms, deliverables, special conditions..."
-                      className="min-h-[100px] resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Additional details about the partnership agreement
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
-
+        return <PartnershipDetailsStep form={form} member={member} />;
       case 6:
-        // US-004: Equipment Section
-        return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="uniform_size"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Uniform Size *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select size" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="XS">XS</SelectItem>
-                        <SelectItem value="S">S</SelectItem>
-                        <SelectItem value="M">M</SelectItem>
-                        <SelectItem value="L">L</SelectItem>
-                        <SelectItem value="XL">XL</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="uniform_received"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-y-0 space-x-3 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Uniform Received</FormLabel>
-                      <FormDescription className="text-xs">
-                        Check when member picks up uniform
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="vest_size"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Vest Size *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select vest size" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="V1">V1</SelectItem>
-                        <SelectItem value="V2">V2</SelectItem>
-                        <SelectItem value="V2_SMALL_EXT">
-                          V2 with Small Extension
-                        </SelectItem>
-                        <SelectItem value="V2_LARGE_EXT">
-                          V2 with Large Extension
-                        </SelectItem>
-                        <SelectItem value="V2_DOUBLE_EXT">
-                          V2 with Double Extension
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="hip_belt_size"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Hip Belt Size *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select belt size" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="V1">V1</SelectItem>
-                        <SelectItem value="V2">V2</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        );
-
+        return <EquipmentStep form={form} member={member} />;
       case 7:
-        // US-004: Referral Section
-        return <ReferralSectionContent form={form} member={member} />;
-
+        return <ReferralStep form={form} member={member} />;
       case 8:
-        // US-004: Training Preference Section (conditional for females)
-        return <TrainingPreferenceSectionContent form={form} />;
-
+        return <TrainingPreferenceStep form={form} member={member} />;
       case 9:
-        // Health & Fitness
         return <MemberHealthFitnessStep form={form} />;
-
       case 10:
-        // Settings (moved from case 5)
-        return (
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Member Status *</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-12">
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="active">
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                          Active
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="inactive">
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-full bg-gray-500"></div>
-                          Inactive
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="suspended">
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
-                          Suspended
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="expired">
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                          Expired
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="pending">
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-full bg-blue-500"></div>
-                          Pending
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Internal Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Add any internal staff notes..."
-                      className="min-h-[100px] resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Notes visible only to staff members.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-4 rounded-lg border p-4">
-              <h4 className="font-medium">Member Agreements</h4>
-
-              <FormField
-                control={form.control}
-                name="waiver_signed"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-y-0 space-x-3">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        aria-describedby="waiver-description"
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="font-medium">
-                        Liability Waiver Signed *
-                      </FormLabel>
-                      <FormDescription id="waiver-description">
-                        Member has signed the required liability waiver
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="marketing_consent"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-y-0 space-x-3">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        aria-describedby="marketing-description"
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="font-medium">
-                        Marketing Communications
-                      </FormLabel>
-                      <FormDescription id="marketing-description">
-                        Member consents to receive promotional emails and
-                        updates
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        );
-
+        return <SettingsStep form={form} member={member} />;
       default:
         return null;
     }
-  };
+  }, [currentStep, form, member]);
 
   return (
     <div
@@ -1545,7 +597,7 @@ export function ProgressiveMemberForm({
                       "h-auto min-h-[44px] flex-1 touch-manipulation flex-col gap-1 p-2 text-xs sm:flex-initial",
                       !isAccessible && "cursor-not-allowed opacity-50"
                     )}
-                    onClick={() => isAccessible && handleStepClick(step.id)}
+                    onClick={handleStepClickIfAccessible(step.id, isAccessible)}
                     disabled={!isAccessible}
                     aria-current={isCurrent ? "step" : undefined}
                     aria-label={`Step ${step.id}: ${step.title}${step.isOptional ? " (optional)" : ""}${isCompleted ? ", completed" : ""}${isCurrent ? ", current step" : ""}`}
@@ -1629,7 +681,7 @@ export function ProgressiveMemberForm({
           <Button
             type="button"
             disabled={isLoading}
-            onClick={() => form.handleSubmit(handleSubmit)()}
+            onClick={handleFormSubmit}
             className="min-h-[44px]"
           >
             {isLoading ? (
@@ -1696,7 +748,7 @@ export function ProgressiveMemberForm({
                 type="submit"
                 disabled={isLoading}
                 className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
-                onClick={() => form.handleSubmit(handleSubmit)()}
+                onClick={handleFormSubmit}
                 aria-label="Create member with provided information"
               >
                 {isLoading ? (
@@ -1723,4 +775,4 @@ export function ProgressiveMemberForm({
       )}
     </div>
   );
-}
+});
