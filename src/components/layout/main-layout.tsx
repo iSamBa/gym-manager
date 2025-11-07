@@ -7,7 +7,7 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex md:w-56 md:flex-col">
         <div className="bg-card flex flex-grow flex-col border-r">
@@ -16,15 +16,13 @@ export function MainLayout({ children }: MainLayoutProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col">
         {/* Mobile menu trigger */}
         <div className="border-b p-4 md:hidden">
           <MobileSidebar />
         </div>
 
-        <main className="bg-background flex-1 overflow-x-hidden overflow-y-auto p-6">
-          {children}
-        </main>
+        <main className="bg-background flex-1 p-6">{children}</main>
       </div>
     </div>
   );

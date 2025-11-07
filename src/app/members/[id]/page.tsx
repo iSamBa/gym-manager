@@ -272,9 +272,9 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
         />
 
         {/* Main Content: 2-Column Layout with Tabs */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid auto-rows-min grid-cols-1 items-start gap-6 lg:grid-cols-3">
           {/* Left Column: Tabbed Content */}
-          <div className="lg:col-span-2">
+          <div className="self-start lg:col-span-2">
             <Tabs defaultValue="profile" className="w-full">
               <TabsList className="mb-6">
                 <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -382,7 +382,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
           </div>
 
           {/* Right Column: Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-6 self-start">
             {/* Subscription Status Card - Admin Only (shows balance due, last payment) */}
             {isAdmin && <SubscriptionStatusCard member={member} />}
 
