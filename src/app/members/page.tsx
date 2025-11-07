@@ -47,8 +47,7 @@ export default function MembersPage() {
 
   // Require staff role (admin or trainer) for entire page
   const { isLoading: isAuthLoading } = useRequireStaff("/login");
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { isAdmin } = useAuth();
 
   // Simplified filter state management
   const { filters, updateFilters, databaseFilters } = useSimpleMemberFilters();

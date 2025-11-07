@@ -54,8 +54,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
 
   // Require staff role (admin or trainer) for this page
   const { isLoading: isAuthLoading } = useRequireStaff("/login");
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { isAdmin } = useAuth();
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
