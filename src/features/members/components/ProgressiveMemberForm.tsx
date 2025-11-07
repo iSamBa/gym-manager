@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useId,
   memo,
+  useMemo,
 } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -149,6 +150,7 @@ interface ProgressiveMemberFormProps {
   isLoading?: boolean;
   className?: string;
   showHeader?: boolean;
+  isAdmin?: boolean;
 }
 
 export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
@@ -158,6 +160,7 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
   isLoading = false,
   className,
   showHeader = true,
+  isAdmin = true,
 }: ProgressiveMemberFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
@@ -165,6 +168,15 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
   const formRef = useRef<HTMLFormElement>(null);
   const announceRef = useRef<HTMLDivElement>(null);
   const formId = useId();
+
+  // Filter steps - hide partnership details from trainers
+  const visibleSteps = useMemo(() => {
+    if (isAdmin) {
+      return steps;
+    }
+    // Hide step 5 (Partnership Details) from trainers
+    return steps.filter((step) => step.id !== 5);
+  }, [isAdmin]);
 
   const form = useForm<MemberFormData>({
     resolver: zodResolver(memberFormSchema),
@@ -257,8 +269,8 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
         },
   });
 
-  const progress = (currentStep / steps.length) * 100;
-  const currentStepInfo = steps.find((step) => step.id === currentStep)!;
+  const progress = (currentStep / visibleSteps.length) * 100;
+  const currentStepInfo = visibleSteps.find((step) => step.id === currentStep)!;
 
   // Reset form when member prop changes (for edit mode)
   useEffect(() => {
@@ -319,9 +331,9 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
   // Accessibility: Announce step changes to screen readers
   useEffect(() => {
     if (announceRef.current) {
-      announceRef.current.textContent = `Step ${currentStep} of ${steps.length}: ${currentStepInfo.title}`;
+      announceRef.current.textContent = `Step ${currentStep} of ${visibleSteps.length}: ${currentStepInfo.title}`;
     }
-  }, [currentStep, currentStepInfo.title]);
+  }, [currentStep, currentStepInfo.title, visibleSteps.length]);
 
   // Focus management: Focus first input when step changes (with form stability check)
   useEffect(() => {
@@ -387,10 +399,10 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
 
   const handleNextStep = useCallback(async () => {
     const isValid = await validateCurrentStep();
-    if (isValid && currentStep < steps.length) {
+    if (isValid && currentStep < visibleSteps.length) {
       setCurrentStep(currentStep + 1);
     }
-  }, [validateCurrentStep, currentStep]); // steps.length is constant
+  }, [validateCurrentStep, currentStep, visibleSteps.length]);
 
   const handlePreviousStep = useCallback(() => {
     if (currentStep > 1) {
@@ -453,7 +465,7 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
       }
 
       // Create mode: step-by-step validation
-      for (const step of steps) {
+      for (const step of visibleSteps) {
         try {
           await step.schema.parseAsync(cleanedData);
         } catch (error) {
@@ -473,8 +485,8 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
         throw error; // Re-throw to let parent handle the error
       }
     },
-    [member, onSubmit]
-  ); // steps is constant
+    [member, onSubmit, visibleSteps]
+  );
 
   // Handle cancel - no cleanup needed
   const handleCancel = useCallback(() => {
@@ -561,7 +573,7 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">
-              Step {currentStep} of {steps.length}
+              Step {currentStep} of {visibleSteps.length}
             </span>
             <span className="text-muted-foreground">
               {Math.round(progress)}% Complete
@@ -570,14 +582,14 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
           <Progress
             value={progress}
             className="h-3"
-            aria-label={`Form progress: step ${currentStep} of ${steps.length}, ${Math.round(progress)}% complete`}
+            aria-label={`Form progress: step ${currentStep} of ${visibleSteps.length}, ${Math.round(progress)}% complete`}
           />
         </div>
 
         {/* Step Navigation */}
         <nav aria-label="Form steps" className="w-full">
           <ol className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
-            {steps.map((step) => {
+            {visibleSteps.map((step) => {
               const isCompleted = completedSteps.includes(step.id);
               const isCurrent = step.id === currentStep;
               const isAccessible = true; // Allow navigation to all steps
@@ -709,7 +721,7 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
             aria-label={
               currentStep === 1
                 ? "Previous step (disabled - first step)"
-                : `Go to previous step: ${steps[currentStep - 2]?.title}`
+                : `Go to previous step: ${visibleSteps[currentStep - 2]?.title}`
             }
           >
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -717,13 +729,13 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
           </Button>
 
           <div className="flex gap-2">
-            {currentStep < steps.length ? (
+            {currentStep < visibleSteps.length ? (
               <Button
                 type="button"
                 onClick={handleNextStep}
                 disabled={isValidatingStep}
                 className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
-                aria-label={`Continue to next step: ${steps[currentStep]?.title}`}
+                aria-label={`Continue to next step: ${visibleSteps[currentStep]?.title}`}
               >
                 {isValidatingStep ? (
                   <>

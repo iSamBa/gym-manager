@@ -8,6 +8,7 @@ import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRequireStaff } from "@/hooks/use-require-auth";
 import {
   MemberProfileHeader,
   EditMemberDialog,
@@ -49,6 +50,10 @@ interface MemberDetailPageProps {
 function MemberDetailPage({ params }: MemberDetailPageProps) {
   const { id } = use(params);
   const router = useRouter();
+
+  // Require staff role (admin or trainer) for this page
+  const { isLoading: isAuthLoading } = useRequireStaff("/login");
+
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditingEquipment, setIsEditingEquipment] = useState(false);
@@ -192,7 +197,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
     [refetch]
   );
 
-  if (isLoading) {
+  if (isAuthLoading || isLoading) {
     return (
       <MainLayout>
         <div className="space-y-6">
