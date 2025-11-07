@@ -82,6 +82,16 @@ export default function Home() {
           },
         },
         {
+          title: "Partnerships",
+          value: dashboardStats.collaboration_count.toLocaleString(),
+          description: "Collaboration members",
+          icon: Handshake,
+          trend: {
+            value: dashboardStats.collaboration_count,
+            label: "active partnerships",
+          },
+        },
+        {
           title: "Monthly Revenue",
           value: `$${dashboardStats.monthly_revenue.toLocaleString()}`,
           description: "Current month earnings",
@@ -108,16 +118,6 @@ export default function Home() {
             label: "retention rate",
           },
         },
-        {
-          title: "Partnerships",
-          value: dashboardStats.collaboration_count.toLocaleString(),
-          description: "Collaboration members",
-          icon: Handshake,
-          trend: {
-            value: dashboardStats.collaboration_count,
-            label: "active partnerships",
-          },
-        },
       ]
     : [
         // Loading fallback stats
@@ -126,6 +126,13 @@ export default function Home() {
           value: "...",
           description: "Loading...",
           icon: Users,
+          trend: { value: 0, label: "loading" },
+        },
+        {
+          title: "Partnerships",
+          value: "...",
+          description: "Loading...",
+          icon: Handshake,
           trend: { value: 0, label: "loading" },
         },
         {
@@ -147,13 +154,6 @@ export default function Home() {
           value: "...",
           description: "Loading...",
           icon: Activity,
-          trend: { value: 0, label: "loading" },
-        },
-        {
-          title: "Partnerships",
-          value: "...",
-          description: "Loading...",
-          icon: Handshake,
           trend: { value: 0, label: "loading" },
         },
       ];

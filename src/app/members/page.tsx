@@ -167,6 +167,16 @@ export default function MembersPage() {
 
           <Card className="p-6">
             <div className="flex items-center space-x-2">
+              <Handshake className="h-5 w-5 text-orange-600" />
+              <div>
+                <p className="text-2xl font-bold">{collaborationCount}</p>
+                <p className="text-muted-foreground text-xs">Partnerships</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center space-x-2">
               <UserCheck className="h-5 w-5 text-green-600" />
               <div>
                 <p className="text-2xl font-bold">{activeMembers}</p>
@@ -191,16 +201,6 @@ export default function MembersPage() {
               <div>
                 <p className="text-2xl font-bold">{pendingMembers}</p>
                 <p className="text-muted-foreground text-xs">Pending</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center space-x-2">
-              <Handshake className="h-5 w-5 text-orange-600" />
-              <div>
-                <p className="text-2xl font-bold">{collaborationCount}</p>
-                <p className="text-muted-foreground text-xs">Partnerships</p>
               </div>
             </div>
           </Card>
