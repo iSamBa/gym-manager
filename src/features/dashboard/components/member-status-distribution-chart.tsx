@@ -80,7 +80,7 @@ export function MemberStatusDistributionChart({
   const totalMembers = data.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <Card className="h-[400px] w-[40vw]">
+    <Card className="h-[400px] w-full">
       <CardHeader>
         <CardTitle>Member Status</CardTitle>
         <CardDescription>Distribution by member status</CardDescription>

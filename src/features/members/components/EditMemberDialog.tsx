@@ -93,7 +93,7 @@ export function EditMemberDialog({
   if (isSubmitted && updateMemberMutation.isSuccess) {
     return (
       <Dialog open={isOpen} onOpenChange={() => {}}>
-        <DialogContent className="w-[90vw] sm:max-w-[500px]">
+        <DialogContent className="w-[90%] sm:max-w-[500px]">
           <div className="p-8 text-center">
             <CheckCircle className="mx-auto mb-4 h-16 w-16 text-green-600" />
             <h2 className="mb-2 text-2xl font-bold">
@@ -116,7 +116,7 @@ export function EditMemberDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[85vh] w-[95vw] overflow-y-auto sm:max-w-[1400px]">
+      <DialogContent className="max-h-[85vh] w-[95%] overflow-y-auto sm:max-w-[95%] lg:max-w-[1400px]">
         <DialogHeader>
           <DialogTitle>
             Edit Member: {member.first_name} {member.last_name}
