@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useDailyStatistics } from "../use-daily-statistics";
+import { useDailyStatistics } from "../use-training-sessions";
 import { supabase } from "@/lib/supabase";
 import type { ReactNode } from "react";
 

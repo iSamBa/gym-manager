@@ -56,7 +56,7 @@ import {
 } from "../../lib/validation";
 import { MemberCombobox } from "./MemberCombobox";
 import { SessionLimitWarning } from "../SessionLimitWarning";
-import { useStudioSessionLimit } from "../../hooks/use-studio-session-limit";
+import { useStudioSessionLimit } from "../../hooks/use-session-alerts";
 import { SessionTypeSelector } from "./SessionTypeSelector";
 import { TrialMemberRegistration } from "./TrialMemberRegistration";
 import { GuestSessionInfo } from "./GuestSessionInfo";
