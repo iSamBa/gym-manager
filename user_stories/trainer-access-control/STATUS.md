@@ -1,0 +1,370 @@
+# Trainer Access Control - Implementation Status
+
+**Last Updated:** [Auto-generated]
+**Branch:** `feature/trainer-access-control`
+**Status:** 🔴 Not Started
+
+---
+
+## 📊 Overall Progress
+
+```
+[░░░░░░░░░░░░░░░░░░░░] 0% Complete (0/5 user stories)
+```
+
+**Estimated Time Remaining:** 2.5-3 hours
+
+---
+
+## 📋 User Story Status
+
+### US-001: Create Staff Authentication Hook
+
+**Status:** 🔴 Not Started
+**Priority:** P0 (Critical - Foundation)
+**Complexity:** Small
+**Estimated:** 20 minutes
+**Actual:** - minutes
+
+**Acceptance Criteria:**
+
+- [ ] `useRequireStaff()` hook created
+- [ ] Hook accepts optional `redirectTo` parameter
+- [ ] Returns `{ isAuthenticated, isLoading, user, isStaff }`
+- [ ] Redirects non-authenticated users
+- [ ] Allows admin AND trainer roles
+- [ ] Follows existing patterns
+- [ ] JSDoc documentation added
+- [ ] No TypeScript `any` types
+
+**Files Modified:**
+
+- [ ] `src/hooks/use-require-auth.ts`
+
+**Blockers:** None
+
+**Notes:** Foundation for all other stories
+
+---
+
+### US-002: Enable Trainer Access to Training Sessions
+
+**Status:** 🔴 Not Started
+**Priority:** P0 (Critical)
+**Complexity:** Small
+**Estimated:** 30 minutes
+**Actual:** - minutes
+**Depends On:** US-001
+
+**Acceptance Criteria:**
+
+- [ ] `/training-sessions` uses `useRequireStaff`
+- [ ] `/training-sessions/new` uses `useRequireStaff`
+- [ ] Trainers can view all sessions
+- [ ] Trainers can create sessions
+- [ ] Machine toggle hidden from trainers
+- [ ] Edit/cancel actions work
+- [ ] Loading states handled
+- [ ] ESLint passes (0 errors/warnings)
+
+**Files Modified:**
+
+- [ ] `src/app/training-sessions/page.tsx`
+- [ ] `src/app/training-sessions/new/page.tsx`
+
+**Blockers:** Waiting for US-001
+
+**Notes:** Machine toggle already has admin check (verified)
+
+---
+
+### US-003: Enable Trainer Access to Members
+
+**Status:** 🔴 Not Started
+**Priority:** P0 (Critical)
+**Complexity:** Medium
+**Estimated:** 45 minutes
+**Actual:** - minutes
+**Depends On:** US-001
+
+**Acceptance Criteria:**
+
+- [ ] `/members` uses `useRequireStaff`
+- [ ] `/members/new` uses `useRequireStaff`
+- [ ] `/members/[id]` has staff auth check
+- [ ] Trainers can view all members
+- [ ] Trainers can create members
+- [ ] Trainers can edit profiles
+- [ ] Trainers can view detail pages
+- [ ] Export button hidden from trainers
+- [ ] Collaboration fields hidden from trainers
+- [ ] ESLint passes
+
+**Files Modified:**
+
+- [ ] `src/app/members/page.tsx`
+- [ ] `src/app/members/new/page.tsx`
+- [ ] `src/app/members/[id]/page.tsx`
+
+**Blockers:** Waiting for US-001
+
+**Notes:** Check if collaboration fields exist in form
+
+---
+
+### US-004: Role-Based Navigation and Redirects
+
+**Status:** 🔴 Not Started
+**Priority:** P0 (Critical)
+**Complexity:** Medium
+**Estimated:** 40 minutes
+**Actual:** - minutes
+**Depends On:** US-001, US-002, US-003
+
+**Acceptance Criteria:**
+
+- [ ] Sidebar shows Members + Sessions for trainers
+- [ ] Sidebar hides admin pages from trainers
+- [ ] Sidebar shows all items for admins
+- [ ] Navigation items memoized (`useMemo`)
+- [ ] Login redirects trainers to `/training-sessions`
+- [ ] Login redirects admins to `/` (dashboard)
+- [ ] useAuth provides role info
+- [ ] No infinite redirect loops
+- [ ] ESLint passes
+
+**Files Modified:**
+
+- [ ] `src/components/layout/sidebar.tsx`
+- [ ] `[login-form].tsx` (exact path TBD)
+
+**Blockers:** Pages must be accessible first (US-002, US-003)
+
+**Notes:** Fix for main issue (infinite redirect loop)
+
+---
+
+### US-005: Hide Admin-Only UI Features
+
+**Status:** 🔴 Not Started
+**Priority:** P1 (Important)
+**Complexity:** Small
+**Estimated:** 25 minutes
+**Actual:** - minutes
+**Depends On:** US-002, US-003
+
+**Acceptance Criteria:**
+
+- [ ] Machine toggle verified hidden (existing check)
+- [ ] Export button hidden from trainers
+- [ ] Bulk operations hidden (if exist)
+- [ ] Collaboration fields hidden (if present)
+- [ ] Column visibility checked
+- [ ] All checks use `isAdmin` flag
+- [ ] Documentation updated
+- [ ] ESLint passes
+
+**Files Modified:**
+
+- [ ] Verification only (no file changes expected)
+- [ ] STATUS.md (documentation update)
+
+**Blockers:** Pages must be accessible first
+
+**Notes:** Mostly verification, minimal code changes
+
+---
+
+## 🎯 Milestones
+
+### Milestone 1: Foundation Complete
+
+- [ ] US-001 complete
+- [ ] Hook tested and working
+- [ ] ESLint passes
+- [ ] Build succeeds
+      **Target:** +20 minutes
+
+### Milestone 2: Page Access Enabled
+
+- [ ] US-002 complete
+- [ ] US-003 complete
+- [ ] Trainers can access sessions and members
+- [ ] All quality checks pass
+      **Target:** +75 minutes (cumulative: 95 min)
+
+### Milestone 3: Navigation Fixed
+
+- [ ] US-004 complete
+- [ ] No redirect loops
+- [ ] Sidebar working correctly
+- [ ] Login redirects properly
+      **Target:** +40 minutes (cumulative: 135 min)
+
+### Milestone 4: Feature Complete
+
+- [ ] US-005 complete
+- [ ] All admin features verified
+- [ ] Full testing complete
+- [ ] PR ready
+      **Target:** +25 minutes (cumulative: 160 min = 2.7 hours)
+
+---
+
+## 🧪 Testing Status
+
+### Manual Testing
+
+- [ ] Trainer login successful
+- [ ] Redirects to `/training-sessions`
+- [ ] Can view sessions (all trainers)
+- [ ] Can create session
+- [ ] Can edit session
+- [ ] Can cancel session
+- [ ] Machine toggle NOT visible
+- [ ] Can view members
+- [ ] Can create member
+- [ ] Can view member detail
+- [ ] Can edit member
+- [ ] Export button NOT visible
+- [ ] Collaboration fields NOT visible
+- [ ] Sidebar shows correct items (trainer)
+- [ ] Cannot access `/` (dashboard)
+- [ ] Cannot access admin pages
+
+### Admin Testing (Verify Unchanged)
+
+- [ ] Admin login works
+- [ ] Dashboard accessible
+- [ ] All features work
+- [ ] Machine toggle visible
+- [ ] Export visible
+- [ ] All menu items visible
+
+### Quality Checks
+
+- [ ] `npm run lint` passes (0 errors/warnings)
+- [ ] `npm test` passes (100% success rate)
+- [ ] `npm run build` succeeds
+- [ ] No TypeScript errors
+- [ ] No console statements
+- [ ] All components < 300 lines
+
+---
+
+## 🐛 Known Issues
+
+_No issues yet - feature not started_
+
+---
+
+## 📝 Implementation Notes
+
+### Session: [Date/Time]
+
+- **Implementer:** [Name]
+- **Duration:** [Actual time]
+- **Stories Completed:** US-XXX
+- **Issues Encountered:** [Any blockers or challenges]
+- **Resolution:** [How issues were resolved]
+
+---
+
+### Session: [Date/Time]
+
+- **Implementer:**
+- **Duration:**
+- **Stories Completed:**
+- **Issues Encountered:**
+- **Resolution:**
+
+---
+
+## 🔄 Change Log
+
+### [Date] - Feature Created
+
+- Created user stories documentation
+- Setup feature branch
+- Generated implementation guides
+- Status: Ready for implementation
+
+---
+
+### [Date] - US-001 Complete
+
+- _Update after completing US-001_
+
+---
+
+### [Date] - US-002 Complete
+
+- _Update after completing US-002_
+
+---
+
+### [Date] - US-003 Complete
+
+- _Update after completing US-003_
+
+---
+
+### [Date] - US-004 Complete
+
+- _Update after completing US-004_
+
+---
+
+### [Date] - US-005 Complete
+
+- _Update after completing US-005_
+
+---
+
+## 📊 Metrics
+
+### Estimated vs Actual
+
+| Story     | Est. Time   | Actual Time | Variance |
+| --------- | ----------- | ----------- | -------- |
+| US-001    | 20 min      | -           | -        |
+| US-002    | 30 min      | -           | -        |
+| US-003    | 45 min      | -           | -        |
+| US-004    | 40 min      | -           | -        |
+| US-005    | 25 min      | -           | -        |
+| **Total** | **160 min** | **-**       | **-**    |
+
+### Quality Metrics
+
+| Metric          | Target | Actual |
+| --------------- | ------ | ------ |
+| ESLint errors   | 0      | -      |
+| ESLint warnings | 0      | -      |
+| Test pass rate  | 100%   | -      |
+| Build success   | Yes    | -      |
+| Files modified  | 8      | -      |
+| Lines changed   | ~108   | -      |
+
+---
+
+## 🎯 Definition of Done
+
+Feature is complete when ALL checkboxes below are marked:
+
+- [ ] All 5 user stories implemented
+- [ ] All acceptance criteria met
+- [ ] All quality checks pass
+- [ ] Manual testing complete (trainer + admin)
+- [ ] No infinite redirect loops
+- [ ] Admin functionality unchanged
+- [ ] Trainers can use system
+- [ ] Admin UI features hidden from trainers
+- [ ] Navigation shows correct items
+- [ ] Documentation updated
+- [ ] PR created to dev branch
+- [ ] Code reviewed
+- [ ] Merged to dev
+
+---
+
+**Next Action:** Review START-HERE.md and AGENT-GUIDE.md, then run `/implement-userstory US-001`
