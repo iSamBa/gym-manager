@@ -232,6 +232,7 @@ export default function MembersPage() {
               {/* Column Visibility Toggle */}
               <ColumnVisibilityToggle
                 onVisibilityChange={setColumnVisibility}
+                isAdmin={isAdmin}
               />
 
               {/* Export Button - Admin Only */}
@@ -318,6 +319,7 @@ export default function MembersPage() {
             onMemberClick={handleMemberClick}
             onMemberHover={handleMemberHover}
             columnVisibility={columnVisibility}
+            isAdmin={isAdmin}
             className="border-0"
           />
         </Card>
