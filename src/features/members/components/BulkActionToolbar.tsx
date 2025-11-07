@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import {
   Trash2,
   Download,
@@ -79,7 +79,7 @@ export interface BulkActionToolbarProps {
   maxSelections?: number;
 }
 
-export function BulkActionToolbar({
+export const BulkActionToolbar = memo(function BulkActionToolbar({
   selectedMembers,
   selectedCount,
   onStatusChange,
@@ -597,4 +597,4 @@ export function BulkActionToolbar({
       </AlertDialog>
     </>
   );
-}
+});

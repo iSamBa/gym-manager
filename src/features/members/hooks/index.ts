@@ -58,3 +58,11 @@ export {
   useRunAutoInactivation,
   useReactivateMember,
 } from "./use-auto-inactivation";
+
+// Consolidated member page data (Performance optimization)
+export {
+  useMemberPageData,
+  memberPageDataKeys,
+  type MemberPageFilters,
+  type MemberPageData,
+} from "./use-member-page-data";

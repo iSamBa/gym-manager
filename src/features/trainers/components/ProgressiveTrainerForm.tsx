@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect, useId } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useId,
+  memo,
+} from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -199,7 +206,7 @@ interface ProgressiveTrainerFormProps {
   showHeader?: boolean;
 }
 
-export function ProgressiveTrainerForm({
+export const ProgressiveTrainerForm = memo(function ProgressiveTrainerForm({
   trainer,
   onSubmit,
   onCancel,
@@ -1313,4 +1320,4 @@ export function ProgressiveTrainerForm({
       </div>
     </div>
   );
-}
+});

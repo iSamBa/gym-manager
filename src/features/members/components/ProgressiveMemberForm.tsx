@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect, useId } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useId,
+  memo,
+} from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -495,7 +502,7 @@ function TrainingPreferenceSectionContent({
   );
 }
 
-export function ProgressiveMemberForm({
+export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
   member,
   onSubmit,
   onCancel,
@@ -1723,4 +1730,4 @@ export function ProgressiveMemberForm({
       )}
     </div>
   );
-}
+});
