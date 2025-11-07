@@ -38,14 +38,17 @@ export const MachineColumn = memo<MachineColumnProps>(
 
     return (
       <Card
-        className={cn("flex flex-col", !machine.is_available && "opacity-60")}
+        className={cn(
+          "flex min-w-[250px] flex-col sm:min-w-[200px]",
+          !machine.is_available && "opacity-60"
+        )}
       >
-        <CardHeader className="py-1.5">
-          <CardTitle className="flex items-center justify-between text-sm font-semibold">
+        <CardHeader className="py-2 sm:py-3">
+          <CardTitle className="flex items-center justify-between text-sm font-semibold sm:text-base">
             <span className="uppercase">{machine.name}</span>
             <div className="flex items-center gap-2">
               {!machine.is_available && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-[10px] sm:text-xs">
                   Unavailable
                 </Badge>
               )}
@@ -53,7 +56,7 @@ export const MachineColumn = memo<MachineColumnProps>(
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-1 flex-col gap-1 pt-0">
+        <CardContent className="flex flex-1 flex-col gap-1 pt-0 sm:gap-2">
           {timeSlots.map((slot, index) => {
             const session = getSessionForSlot(slot);
             return (

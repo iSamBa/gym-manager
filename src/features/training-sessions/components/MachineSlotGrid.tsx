@@ -17,9 +17,9 @@ interface MachineSlotGridProps {
 }
 
 /**
- * MachineSlotGrid - Main grid component displaying 3 machine columns with time slots
+ * MachineSlotGrid - Main grid component displaying machine columns with time slots
  * Features:
- * - 3-column responsive layout
+ * - Responsive layout: 1 column (mobile), 2 columns (tablet), 3 columns (desktop)
  * - Time axis labels on left
  * - Dynamic slot generation based on opening hours
  * - Handles closed days
@@ -121,9 +121,9 @@ export const MachineSlotGrid: React.FC<MachineSlotGridProps> = ({
   }
 
   return (
-    <div className="flex gap-4">
-      {/* Machine columns - 3-column grid */}
-      <div className="grid flex-1 grid-cols-3 gap-4">
+    <div className="flex gap-2 sm:gap-4">
+      {/* Machine columns - Responsive grid: 1 column mobile, 2 tablet, 3 desktop */}
+      <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
         {machines.map((machine) => (
           <MachineColumn
             key={machine.id}

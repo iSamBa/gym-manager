@@ -68,14 +68,16 @@ export const TimeSlot = memo<TimeSlotProps>(
         <div
           data-testid="time-slot"
           className={cn(
-            "flex h-16 cursor-pointer items-center justify-center rounded border p-2 transition-colors",
+            "flex min-h-16 cursor-pointer items-center justify-center rounded border p-2 transition-colors sm:min-h-20 md:h-24",
             machine.is_available
               ? "border-gray-200 hover:bg-gray-50"
               : "cursor-not-allowed opacity-50"
           )}
           onClick={() => machine.is_available && onClick()}
         >
-          <span className="text-xs text-gray-400">{timeSlot.label}</span>
+          <span className="text-xs text-gray-400 sm:text-sm">
+            {timeSlot.label}
+          </span>
         </div>
       );
     }
@@ -141,7 +143,7 @@ export const TimeSlot = memo<TimeSlotProps>(
       <div
         data-testid="time-slot"
         className={cn(
-          "relative flex h-16 cursor-pointer flex-col items-center justify-center gap-0.5 rounded border-l-4 transition-shadow hover:shadow-md",
+          "relative flex min-h-16 cursor-pointer flex-col items-center justify-center gap-1 rounded border-l-4 transition-shadow hover:shadow-md sm:min-h-20 sm:gap-2 md:h-24",
           hasAdditionalInfo ? "p-2 pb-3" : "p-2",
           isCancelled
             ? "border-gray-300 bg-gray-100 text-gray-800 line-through"
@@ -171,7 +173,12 @@ export const TimeSlot = memo<TimeSlotProps>(
 
         {/* Row 1: Member name (centered) */}
         <div className="w-full text-center">
-          <div className="truncate text-base font-medium">{displayName}</div>
+          <div
+            className="truncate text-sm font-medium sm:text-base"
+            title={displayName}
+          >
+            {displayName}
+          </div>
         </div>
 
         {/* Row 2 & 3: Equipment and subscription info (only for member sessions, centered) */}
@@ -179,7 +186,7 @@ export const TimeSlot = memo<TimeSlotProps>(
           <>
             {/* Row 2: Vest and hip size (centered, bold) */}
             {(session.vest_size || session.hip_belt_size) && (
-              <div className="w-full text-center text-xs font-semibold">
+              <div className="w-full text-center text-[10px] font-semibold sm:text-xs">
                 {session.vest_size && <span>V: {session.vest_size}</span>}
                 {session.vest_size && session.hip_belt_size && <span> • </span>}
                 {session.hip_belt_size && (
@@ -192,7 +199,7 @@ export const TimeSlot = memo<TimeSlotProps>(
             {(session.remaining_sessions !== null &&
               session.remaining_sessions !== undefined) ||
             session.subscription_end_date ? (
-              <div className="w-full text-center text-xs">
+              <div className="w-full text-center text-[10px] sm:text-xs">
                 {session.remaining_sessions !== null &&
                   session.remaining_sessions !== undefined && (
                     <span className="font-bold">

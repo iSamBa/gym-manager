@@ -28,6 +28,7 @@ export interface WeeklyDayTabsProps {
  * Displays 7 day tabs (Monday through Sunday) for weekly navigation.
  * Highlights today with distinct styling and allows tab selection to change the selected date.
  * Shows session distribution with color-coded badges for all 7 session types.
+ * Responsive: Horizontal scroll on mobile, all tabs visible on larger screens.
  *
  * Performance optimized with React.memo, useMemo, and useCallback.
  *
@@ -89,7 +90,7 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
       value={getLocalDateString(selectedDate)}
       onValueChange={handleTabChange}
     >
-      <TabsList className="grid h-auto w-full grid-cols-7">
+      <TabsList className="flex h-auto w-full overflow-x-auto">
         {weekDays.map((day) => {
           const dateKey = getLocalDateString(day);
           const todayIndicator = isToday(day);
@@ -100,7 +101,7 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
               key={dateKey}
               value={dateKey}
               className={cn(
-                "flex min-h-[60px] flex-col items-center gap-0.5 py-2",
+                "flex min-h-[80px] min-w-[100px] flex-shrink-0 flex-col items-center gap-1 py-2 sm:min-h-[100px] sm:gap-2",
                 todayIndicator &&
                   "border-primary bg-primary/10 text-primary font-semibold"
               )}
@@ -109,10 +110,10 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
             >
               {/* Day name and date on the same line */}
               <div className="flex items-center gap-1">
-                <span className="text-xs font-semibold tracking-wide uppercase">
+                <span className="text-xs font-semibold tracking-wide uppercase sm:text-sm">
                   {format(day, "EEE")}
                 </span>
-                <span className="text-xs leading-none font-semibold">
+                <span className="text-xs leading-none font-semibold sm:text-sm">
                   {format(day, "d")}
                 </span>
               </div>
@@ -121,12 +122,12 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
               {isLoading ? (
                 <div className="bg-muted h-6 w-12 animate-pulse rounded" />
               ) : stats ? (
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-base font-bold">
+                <div className="flex flex-col items-center gap-1 sm:gap-2">
+                  <span className="text-sm font-bold sm:text-base">
                     {stats.total} session{stats.total !== 1 ? "s" : ""}
                   </span>
                   {/* Color-coded badges for session types */}
-                  <div className="flex flex-wrap justify-center gap-1">
+                  <div className="flex flex-wrap justify-center gap-1 sm:gap-1.5">
                     {(
                       [
                         "trial",
@@ -146,7 +147,7 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
                       return (
                         <div
                           key={type}
-                          className={`${colorClass} rounded-md px-2 py-0.5 text-xs font-semibold`}
+                          className={`${colorClass} rounded-md px-2 py-0.5 text-[10px] font-semibold sm:text-xs`}
                           title={SESSION_TYPE_LABELS[type]}
                         >
                           {count}
@@ -156,8 +157,10 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-base font-bold">0 sessions</span>
+                <div className="flex flex-col items-center gap-1 sm:gap-2">
+                  <span className="text-sm font-bold sm:text-base">
+                    0 sessions
+                  </span>
                 </div>
               )}
             </TabsTrigger>
