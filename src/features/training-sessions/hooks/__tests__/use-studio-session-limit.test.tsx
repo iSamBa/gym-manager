@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useStudioSessionLimit } from "../use-studio-session-limit";
+import { useStudioSessionLimit } from "../use-session-alerts";
 import * as sessionLimitUtils from "../../lib/session-limit-utils";
 
 // Mock the session limit utilities

@@ -6,7 +6,8 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ProgressiveMemberForm } from "@/features/members/components";
 import { useCreateMember } from "@/features/members/hooks";
-import { useRequireAdmin } from "@/hooks/use-require-auth";
+import { useRequireStaff } from "@/hooks/use-require-auth";
+import { useAuth } from "@/hooks/use-auth";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import type { CreateMemberData } from "@/features/members/lib/database-utils";
 
@@ -15,9 +16,9 @@ export default function AddMemberPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const router = useRouter();
 
-  // Require admin role for this page
-  const { isLoading: isAuthLoading, hasRequiredRole } =
-    useRequireAdmin("/login");
+  // Require staff role (admin or trainer) for this page
+  const { isLoading: isAuthLoading } = useRequireStaff("/login");
+  const { isAdmin } = useAuth();
 
   // Create member mutation
   const createMemberMutation = useCreateMember();
@@ -30,10 +31,6 @@ export default function AddMemberPage() {
         </div>
       </MainLayout>
     );
-  }
-
-  if (!hasRequiredRole) {
-    return null; // Will redirect to login
   }
 
   const handleSubmit = async (data: CreateMemberData) => {
@@ -106,6 +103,7 @@ export default function AddMemberPage() {
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           isLoading={createMemberMutation.isPending}
+          isAdmin={isAdmin}
         />
       </div>
     </MainLayout>

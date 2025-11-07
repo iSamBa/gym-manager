@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -209,53 +209,91 @@ export function TrainerForm({
         },
   });
 
-  const addSpecialization = (spec: string) => {
-    const current = form.getValues("specializations") || [];
-    if (!current.includes(spec)) {
-      form.setValue("specializations", [...current, spec]);
-    }
-  };
+  const addSpecialization = useCallback(
+    (spec: string) => {
+      const current = form.getValues("specializations") || [];
+      if (!current.includes(spec)) {
+        form.setValue("specializations", [...current, spec]);
+      }
+    },
+    [form]
+  );
 
-  const removeSpecialization = (spec: string) => {
-    const current = form.getValues("specializations") || [];
-    form.setValue(
-      "specializations",
-      current.filter((s) => s !== spec)
-    );
-  };
-
-  const addCertification = (cert: string) => {
-    const current = form.getValues("certifications") || [];
-    if (!current.includes(cert)) {
-      form.setValue("certifications", [...current, cert]);
-    }
-  };
-
-  const removeCertification = (cert: string) => {
-    const current = form.getValues("certifications") || [];
-    form.setValue(
-      "certifications",
-      current.filter((c) => c !== cert)
-    );
-  };
-
-  const addLanguage = (lang: string) => {
-    const current = form.getValues("languages") || [];
-    if (!current.includes(lang)) {
-      form.setValue("languages", [...current, lang]);
-    }
-  };
-
-  const removeLanguage = (lang: string) => {
-    const current = form.getValues("languages") || [];
-    if (current.length > 1) {
-      // Keep at least one language
+  const removeSpecialization = useCallback(
+    (spec: string) => {
+      const current = form.getValues("specializations") || [];
       form.setValue(
-        "languages",
-        current.filter((l) => l !== lang)
+        "specializations",
+        current.filter((s) => s !== spec)
       );
-    }
-  };
+    },
+    [form]
+  );
+
+  const addCertification = useCallback(
+    (cert: string) => {
+      const current = form.getValues("certifications") || [];
+      if (!current.includes(cert)) {
+        form.setValue("certifications", [...current, cert]);
+      }
+    },
+    [form]
+  );
+
+  const removeCertification = useCallback(
+    (cert: string) => {
+      const current = form.getValues("certifications") || [];
+      form.setValue(
+        "certifications",
+        current.filter((c) => c !== cert)
+      );
+    },
+    [form]
+  );
+
+  const addLanguage = useCallback(
+    (lang: string) => {
+      const current = form.getValues("languages") || [];
+      if (!current.includes(lang)) {
+        form.setValue("languages", [...current, lang]);
+      }
+    },
+    [form]
+  );
+
+  const removeLanguage = useCallback(
+    (lang: string) => {
+      const current = form.getValues("languages") || [];
+      if (current.length > 1) {
+        // Keep at least one language
+        form.setValue(
+          "languages",
+          current.filter((l) => l !== lang)
+        );
+      }
+    },
+    [form]
+  );
+
+  // Memoized callbacks for inline functions (Performance Phase 2)
+  const handleRemoveSpecialization = useCallback(
+    (spec: string) => () => removeSpecialization(spec),
+    [removeSpecialization]
+  );
+
+  const handleRemoveCertification = useCallback(
+    (cert: string) => () => removeCertification(cert),
+    [removeCertification]
+  );
+
+  const handleRemoveLanguage = useCallback(
+    (lang: string, fieldValue: string[]) => () => {
+      if (fieldValue.length > 1) {
+        removeLanguage(lang);
+      }
+    },
+    [removeLanguage]
+  );
 
   const handleFormSubmit = (data: TrainerFormData) => {
     // Convert specialization names to UUIDs before submission
@@ -553,7 +591,7 @@ export function TrainerForm({
                           key={spec}
                           variant="secondary"
                           className="hover:bg-destructive hover:text-destructive-foreground cursor-pointer"
-                          onClick={() => removeSpecialization(spec)}
+                          onClick={handleRemoveSpecialization(spec)}
                         >
                           {spec} ×
                         </Badge>
@@ -603,7 +641,7 @@ export function TrainerForm({
                           key={cert}
                           variant="outline"
                           className="hover:bg-destructive hover:text-destructive-foreground cursor-pointer"
-                          onClick={() => removeCertification(cert)}
+                          onClick={handleRemoveCertification(cert)}
                         >
                           {cert} ×
                         </Badge>
@@ -658,10 +696,10 @@ export function TrainerForm({
                               ? "cursor-not-allowed opacity-50"
                               : "hover:bg-destructive hover:text-destructive-foreground"
                           )}
-                          onClick={() =>
-                            (field.value || []).length > 1 &&
-                            removeLanguage(lang)
-                          }
+                          onClick={handleRemoveLanguage(
+                            lang,
+                            field.value || []
+                          )}
                         >
                           {lang} {(field.value || []).length > 1 && "×"}
                         </Badge>

@@ -45,7 +45,7 @@ import { useTrainers } from "@/features/trainers/hooks";
 import { useCreateTrainingSession } from "../../hooks/use-training-sessions";
 import { MemberCombobox } from "./MemberCombobox";
 import { SessionLimitWarning } from "../SessionLimitWarning";
-import { useStudioSessionLimit } from "../../hooks/use-studio-session-limit";
+import { useStudioSessionLimit } from "../../hooks/use-session-alerts";
 
 // Validation schema for session booking
 const sessionBookingSchema = z.object({

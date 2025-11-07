@@ -41,10 +41,12 @@ export const DEFAULT_VISIBILITY: ColumnVisibility = {
 
 interface ColumnVisibilityToggleProps {
   onVisibilityChange?: (visibility: ColumnVisibility) => void;
+  isAdmin?: boolean;
 }
 
 export const ColumnVisibilityToggle = memo(function ColumnVisibilityToggle({
   onVisibilityChange,
+  isAdmin = true,
 }: ColumnVisibilityToggleProps) {
   const [visibility, setVisibility] = useLocalStorage<ColumnVisibility>(
     "members-table-columns",
@@ -131,19 +133,24 @@ export const ColumnVisibilityToggle = memo(function ColumnVisibilityToggle({
           Scheduled Sessions
         </DropdownMenuCheckboxItem>
 
-        <DropdownMenuCheckboxItem
-          checked={visibility.balanceDue}
-          onCheckedChange={() => handleToggle("balanceDue")}
-        >
-          Balance Due
-        </DropdownMenuCheckboxItem>
+        {/* Admin-only columns */}
+        {isAdmin && (
+          <>
+            <DropdownMenuCheckboxItem
+              checked={visibility.balanceDue}
+              onCheckedChange={() => handleToggle("balanceDue")}
+            >
+              Balance Due
+            </DropdownMenuCheckboxItem>
 
-        <DropdownMenuCheckboxItem
-          checked={visibility.lastPayment}
-          onCheckedChange={() => handleToggle("lastPayment")}
-        >
-          Last Payment
-        </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={visibility.lastPayment}
+              onCheckedChange={() => handleToggle("lastPayment")}
+            >
+              Last Payment
+            </DropdownMenuCheckboxItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

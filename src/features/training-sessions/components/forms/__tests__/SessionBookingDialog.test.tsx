@@ -192,13 +192,13 @@ vi.mock("../../../hooks/use-machines");
 vi.mock("@/features/members/hooks/use-members");
 vi.mock("@/features/trainers/hooks/use-trainers");
 vi.mock("../../../hooks/use-training-sessions");
-vi.mock("../../../hooks/use-studio-session-limit");
+vi.mock("../../../hooks/use-session-alerts");
 
 import { useMachines } from "../../../hooks/use-machines";
 import { useMembers } from "@/features/members/hooks/use-members";
 import { useTrainers } from "@/features/trainers/hooks/use-trainers";
 import { useCreateTrainingSession } from "../../../hooks/use-training-sessions";
-import { useStudioSessionLimit } from "../../../hooks/use-studio-session-limit";
+import { useStudioSessionLimit } from "../../../hooks/use-session-alerts";
 import { toast } from "sonner";
 
 const mockMachines = [

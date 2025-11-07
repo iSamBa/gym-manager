@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, memo } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import {
   Table,
   TableBody,
@@ -10,26 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -39,19 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Loader2,
-  ChevronDown,
-  Users,
-} from "lucide-react";
-import { MemberAvatar } from "./MemberAvatar";
-import { MemberStatusBadge } from "./MemberStatusBadge";
-import { DateCell, SessionCountBadge, MemberTypeBadge } from "./cells";
-import { AddSessionButton } from "./AddSessionButton";
-import { AddPaymentButton } from "./AddPaymentButton";
+import { ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import {
   useMembers,
   useMemberCount,
@@ -67,6 +35,11 @@ import type {
 import type { MemberFilters } from "@/features/members/lib/database-utils";
 import type { ColumnVisibility } from "./ColumnVisibilityToggle";
 import { DEFAULT_VISIBILITY } from "./ColumnVisibilityToggle";
+import {
+  MemberTableRow,
+  MemberTableActions,
+  MemberTablePagination,
+} from "./table-components";
 
 type SortField =
   | "name"
@@ -81,44 +54,6 @@ type SortField =
   | "last_payment_date";
 type SortDirection = "asc" | "desc";
 
-// US-003: Balance display utilities
-interface BalanceStyles {
-  backgroundColor: string;
-  textColor: string;
-}
-
-function getBalanceStyles(balance: number): BalanceStyles {
-  if (balance > 0) {
-    // Positive balance = member OWES money = red (outstanding debt)
-    return {
-      backgroundColor: "bg-red-50",
-      textColor: "text-red-700",
-    };
-  } else if (balance < 0) {
-    // Negative balance = member OVERPAID = green (credit to member)
-    return {
-      backgroundColor: "bg-green-50",
-      textColor: "text-green-700",
-    };
-  } else {
-    // Zero balance = fully paid = gray (neutral)
-    return {
-      backgroundColor: "bg-gray-50",
-      textColor: "text-gray-600",
-    };
-  }
-}
-
-function formatBalance(balance: number): string {
-  const absBalance = Math.abs(balance);
-  const formatted = absBalance.toFixed(2);
-
-  if (balance < 0) {
-    return `-$${formatted}`;
-  }
-  return `$${formatted}`;
-}
-
 interface AdvancedMemberTableProps {
   // Support both filtering and direct member list approaches
   filters?: MemberFilters;
@@ -130,6 +65,7 @@ interface AdvancedMemberTableProps {
   showActions?: boolean;
   className?: string;
   columnVisibility?: ColumnVisibility | null;
+  isAdmin?: boolean;
 }
 
 interface SortConfig {
@@ -147,9 +83,19 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
   showActions = true,
   className,
   columnVisibility: propColumnVisibility,
+  isAdmin = true,
 }: AdvancedMemberTableProps) {
-  // Use provided visibility or default
-  const columnVisibility = propColumnVisibility || DEFAULT_VISIBILITY;
+  // Get default visibility based on role
+  const getDefaultVisibility = useCallback((): ColumnVisibility => {
+    return {
+      ...DEFAULT_VISIBILITY,
+      balanceDue: isAdmin,
+      lastPayment: isAdmin,
+    };
+  }, [isAdmin]);
+
+  // Use provided visibility or role-based default
+  const columnVisibility = propColumnVisibility || getDefaultVisibility();
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
     new Set()
   );
@@ -308,6 +254,22 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
     window.scrollTo({ top: 0, behavior: "smooth" }); // Scroll to top on page change
   }, []);
 
+  // Memoized callbacks for inline functions (Performance Phase 2)
+  const handleRefresh = useCallback(() => refetch(), [refetch]);
+
+  const handleOpenDeleteDialog = useCallback(
+    () => setBulkActionDialog({ isOpen: true, action: "delete" }),
+    []
+  );
+
+  const handleChangeStatus = useCallback((newStatus: MemberStatus) => {
+    setBulkActionDialog({
+      isOpen: true,
+      action: "status",
+      newStatus,
+    });
+  }, []);
+
   const SortButton = memo(function SortButton({
     field,
     children,
@@ -315,12 +277,14 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
     field: SortField;
     children: React.ReactNode;
   }) {
+    const handleClick = useCallback(() => handleSort(field), [field]);
+
     return (
       <Button
         variant="ghost"
         size="sm"
         className="h-auto p-0 font-medium hover:bg-transparent"
-        onClick={() => handleSort(field)}
+        onClick={handleClick}
       >
         <span className="flex items-center gap-1">
           {children}
@@ -342,7 +306,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <p className="text-muted-foreground mb-4">Failed to load members</p>
-        <Button variant="outline" onClick={() => refetch()}>
+        <Button variant="outline" onClick={handleRefresh}>
           Try Again
         </Button>
       </div>
@@ -352,71 +316,11 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
   return (
     <div className={cn("space-y-4", className)}>
       {/* Bulk Actions Bar */}
-      {selectedMembers.size > 0 && (
-        <div className="bg-muted flex items-center justify-between rounded-lg p-4">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            <span className="font-medium">
-              {selectedMembers.size} member
-              {selectedMembers.size !== 1 ? "s" : ""} selected
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Change Status
-                  <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onClick={() =>
-                    setBulkActionDialog({
-                      isOpen: true,
-                      action: "status",
-                      newStatus: "active",
-                    })
-                  }
-                >
-                  Set Active
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    setBulkActionDialog({
-                      isOpen: true,
-                      action: "status",
-                      newStatus: "inactive",
-                    })
-                  }
-                >
-                  Set Inactive
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    setBulkActionDialog({
-                      isOpen: true,
-                      action: "status",
-                      newStatus: "suspended",
-                    })
-                  }
-                >
-                  Set Suspended
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() =>
-                setBulkActionDialog({ isOpen: true, action: "delete" })
-              }
-            >
-              Delete Selected
-            </Button>
-          </div>
-        </div>
-      )}
+      <MemberTableActions
+        selectedCount={selectedMembers.size}
+        onChangeStatus={handleChangeStatus}
+        onDelete={handleOpenDeleteDialog}
+      />
 
       {/* Table */}
       <div className="rounded-md border">
@@ -527,173 +431,17 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
               </TableRow>
             ) : (
               allMembers.map((member) => (
-                <TableRow
+                <MemberTableRow
                   key={member.id}
-                  className="hover:bg-muted/50 cursor-pointer"
-                  onClick={() => onMemberClick?.(member)}
-                  onMouseEnter={() => onMemberHover?.(member)}
-                >
-                  {showActions && (
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Checkbox
-                        checked={selectedMembers.has(member.id)}
-                        onCheckedChange={(checked) =>
-                          handleSelectMember(member.id, !!checked)
-                        }
-                        aria-label={`Select ${member.first_name} ${member.last_name}`}
-                      />
-                    </TableCell>
-                  )}
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <MemberAvatar member={member} size="sm" />
-                      <span className="font-medium">
-                        {member.first_name} {member.last_name}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-muted-foreground text-sm">
-                      {member.phone || "-"}
-                    </div>
-                  </TableCell>
-
-                  {/* Gender */}
-                  {columnVisibility.gender && (
-                    <TableCell className="hidden xl:table-cell">
-                      <span className="text-sm capitalize">
-                        {member.gender || "-"}
-                      </span>
-                    </TableCell>
-                  )}
-
-                  {/* Date of Birth */}
-                  {columnVisibility.dateOfBirth && (
-                    <TableCell className="hidden xl:table-cell">
-                      <DateCell date={member.date_of_birth || null} />
-                    </TableCell>
-                  )}
-
-                  {/* Member Type */}
-                  {columnVisibility.memberType && (
-                    <TableCell>
-                      <MemberTypeBadge
-                        type={member.member_type as "full" | "trial"}
-                      />
-                    </TableCell>
-                  )}
-
-                  {/* Status */}
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <MemberStatusBadge
-                      status={member.status}
-                      memberId={member.id}
-                      readonly={!showActions}
-                    />
-                  </TableCell>
-
-                  {/* Subscription End Date */}
-                  {columnVisibility.subscriptionEnd && (
-                    <TableCell className="hidden lg:table-cell">
-                      <DateCell
-                        date={member.active_subscription?.end_date || null}
-                      />
-                    </TableCell>
-                  )}
-
-                  {/* Last Session */}
-                  {columnVisibility.lastSession && (
-                    <TableCell className="hidden lg:table-cell">
-                      <DateCell
-                        date={member.session_stats?.last_session_date || null}
-                        format="short"
-                      />
-                    </TableCell>
-                  )}
-
-                  {/* Next Session */}
-                  {columnVisibility.nextSession && (
-                    <TableCell className="hidden lg:table-cell">
-                      <DateCell
-                        date={member.session_stats?.next_session_date || null}
-                        format="short"
-                      />
-                    </TableCell>
-                  )}
-
-                  {/* Remaining Sessions */}
-                  {columnVisibility.remainingSessions && (
-                    <TableCell className="hidden lg:table-cell">
-                      <SessionCountBadge
-                        count={
-                          member.active_subscription?.remaining_sessions || 0
-                        }
-                        showTooltip={false}
-                        colorVariant="yellow"
-                      />
-                    </TableCell>
-                  )}
-
-                  {/* Scheduled Sessions */}
-                  {columnVisibility.scheduledSessions && (
-                    <TableCell className="hidden lg:table-cell">
-                      <SessionCountBadge
-                        count={
-                          member.session_stats?.scheduled_sessions_count || 0
-                        }
-                        showTooltip={false}
-                      />
-                    </TableCell>
-                  )}
-
-                  {/* Balance Due */}
-                  {columnVisibility.balanceDue && (
-                    <TableCell className="hidden lg:table-cell">
-                      {(() => {
-                        const balance =
-                          member.active_subscription?.balance_due || 0;
-                        const styles = getBalanceStyles(balance);
-                        return (
-                          <div
-                            className={cn(
-                              "inline-block rounded-md px-3 py-1 text-sm font-medium",
-                              styles.backgroundColor,
-                              styles.textColor
-                            )}
-                          >
-                            {formatBalance(balance)}
-                          </div>
-                        );
-                      })()}
-                    </TableCell>
-                  )}
-
-                  {/* Last Payment */}
-                  {columnVisibility.lastPayment && (
-                    <TableCell className="hidden xl:table-cell">
-                      <DateCell date={member.last_payment_date} />
-                    </TableCell>
-                  )}
-
-                  {showActions && (
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center space-x-1">
-                        <AddSessionButton
-                          member={member}
-                          onSuccess={() => refetch()}
-                          variant="ghost"
-                          size="sm"
-                        />
-                        <AddPaymentButton
-                          member={member}
-                          onSuccess={() => refetch()}
-                          variant="ghost"
-                          size="sm"
-                        />
-                      </div>
-                    </TableCell>
-                  )}
-                </TableRow>
+                  member={member}
+                  isSelected={selectedMembers.has(member.id)}
+                  onSelect={handleSelectMember}
+                  onClick={onMemberClick}
+                  onHover={onMemberHover}
+                  onRefresh={handleRefresh}
+                  showActions={showActions}
+                  columnVisibility={columnVisibility}
+                />
               ))
             )}
           </TableBody>
@@ -712,78 +460,15 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
 
       {/* Pagination Component */}
       {!isLoading && allMembers.length > 0 && (
-        <div className="flex items-center justify-between border-t px-4 py-3">
-          <div className="text-muted-foreground text-sm">
-            {selectedMembers.size} of {totalCount || 0} row(s) selected.
-          </div>
-
-          <div className="flex items-center gap-6">
-            {/* Rows per page selector */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm whitespace-nowrap">Rows per page</span>
-              <Select
-                value={String(rowsPerPage)}
-                onValueChange={handleRowsPerPageChange}
-              >
-                <SelectTrigger className="h-8 w-[70px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="30">30</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Page indicator */}
-            <div className="text-sm whitespace-nowrap">
-              Page {page} of {totalPages}
-            </div>
-
-            {/* Navigation buttons */}
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(1)}
-                    disabled={page === 1}
-                  >
-                    First
-                  </Button>
-                </PaginationItem>
-
-                <PaginationPrevious
-                  onClick={() => handlePageChange(Math.max(1, page - 1))}
-                  className={cn(page === 1 && "pointer-events-none opacity-50")}
-                />
-
-                <PaginationNext
-                  onClick={() =>
-                    handlePageChange(Math.min(totalPages, page + 1))
-                  }
-                  className={cn(
-                    page === totalPages && "pointer-events-none opacity-50"
-                  )}
-                />
-
-                <PaginationItem>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(totalPages)}
-                    disabled={page === totalPages}
-                  >
-                    Last
-                  </Button>
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        </div>
+        <MemberTablePagination
+          currentPage={page}
+          totalPages={totalPages}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount || 0}
+          selectedCount={selectedMembers.size}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
       )}
 
       {/* Bulk Action Confirmation Dialogs */}

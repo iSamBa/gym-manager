@@ -12,7 +12,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { useDebouncedMemberSearch } from "../hooks/use-member-search";
+import { useDebouncedMemberSearch } from "../hooks";
 import type { Member } from "@/features/database/lib/types";
 
 interface AdvancedMemberSearchProps {

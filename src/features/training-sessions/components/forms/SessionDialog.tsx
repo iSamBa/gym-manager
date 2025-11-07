@@ -8,9 +8,11 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQueryClient } from "@tanstack/react-query";
-import { useTrainingSession } from "../../hooks/use-training-sessions";
+import {
+  useTrainingSession,
+  useMemberDialogData,
+} from "../../hooks/use-training-sessions";
 import { useSessionAlerts } from "../../hooks/use-session-alerts";
-import { useMemberDialogData } from "../../hooks/use-member-dialog-data";
 import { SessionInfoTab } from "./SessionInfoTab";
 import { MemberDetailsTab } from "./MemberDetailsTab";
 import { TRAINING_SESSIONS_KEYS } from "../../hooks/use-training-sessions";

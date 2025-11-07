@@ -15,7 +15,12 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/hooks/use-auth", () => ({
   useAuth: vi.fn(() => ({
-    user: { email: "test@example.com", first_name: "Test", last_name: "User" },
+    user: {
+      email: "test@example.com",
+      first_name: "Test",
+      last_name: "User",
+      role: "admin",
+    },
     signOut: vi.fn(),
     isLoading: false,
   })),

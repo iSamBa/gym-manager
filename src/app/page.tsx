@@ -35,13 +35,9 @@ const MemberStatusDistributionChart = lazy(() =>
     default: module.MemberStatusDistributionChart,
   }))
 );
-import {
-  useMemberEvolution,
-  useMemberStatusDistribution,
-} from "@/features/dashboard/hooks/use-member-analytics";
+import { useMemberEvolution } from "@/features/dashboard/hooks/use-member-analytics";
 import { useDashboardStats } from "@/features/database/hooks/use-analytics";
 import { useRecentActivities } from "@/features/dashboard/hooks/use-recent-activities";
-import { useCollaborationMemberCount } from "@/features/members/hooks/use-members";
 
 export default function Home() {
   const { user, isLoading } = useRequireAdmin();
@@ -49,14 +45,13 @@ export default function Home() {
   // Fetch analytics data
   const { data: memberEvolutionData, isLoading: isEvolutionLoading } =
     useMemberEvolution(12);
-  const { data: memberStatusData, isLoading: isStatusDistributionLoading } =
-    useMemberStatusDistribution();
 
-  // Get dashboard stats using SQL aggregation (replaces mock data)
+  // Get consolidated dashboard stats (Performance Phase 2: includes collaboration count and status distribution)
   const { data: dashboardStats } = useDashboardStats();
 
-  // Get collaboration member count
-  const { data: collaborationCount = 0 } = useCollaborationMemberCount();
+  // Extract member status data from consolidated dashboard stats
+  const memberStatusData = dashboardStats?.member_status_distribution || [];
+  const isStatusDistributionLoading = !dashboardStats;
 
   // Get real recent activities data (replaces mock data)
   const { data: recentActivities, isLoading: isActivitiesLoading } =
@@ -87,6 +82,16 @@ export default function Home() {
           },
         },
         {
+          title: "Partnerships",
+          value: dashboardStats.collaboration_count.toLocaleString(),
+          description: "Collaboration members",
+          icon: Handshake,
+          trend: {
+            value: dashboardStats.collaboration_count,
+            label: "active partnerships",
+          },
+        },
+        {
           title: "Monthly Revenue",
           value: `$${dashboardStats.monthly_revenue.toLocaleString()}`,
           description: "Current month earnings",
@@ -113,16 +118,6 @@ export default function Home() {
             label: "retention rate",
           },
         },
-        {
-          title: "Partnerships",
-          value: collaborationCount.toLocaleString(),
-          description: "Collaboration members",
-          icon: Handshake,
-          trend: {
-            value: collaborationCount,
-            label: "active partnerships",
-          },
-        },
       ]
     : [
         // Loading fallback stats
@@ -131,6 +126,13 @@ export default function Home() {
           value: "...",
           description: "Loading...",
           icon: Users,
+          trend: { value: 0, label: "loading" },
+        },
+        {
+          title: "Partnerships",
+          value: "...",
+          description: "Loading...",
+          icon: Handshake,
           trend: { value: 0, label: "loading" },
         },
         {
@@ -152,13 +154,6 @@ export default function Home() {
           value: "...",
           description: "Loading...",
           icon: Activity,
-          trend: { value: 0, label: "loading" },
-        },
-        {
-          title: "Partnerships",
-          value: "...",
-          description: "Loading...",
-          icon: Handshake,
           trend: { value: 0, label: "loading" },
         },
       ];
@@ -322,18 +317,22 @@ export default function Home() {
 
         {/* Analytics Charts */}
         <div className="flex gap-6">
-          <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-            <MemberEvolutionChart
-              data={memberEvolutionData}
-              isLoading={isEvolutionLoading}
-            />
-          </Suspense>
-          <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-            <MemberStatusDistributionChart
-              data={memberStatusData}
-              isLoading={isStatusDistributionLoading}
-            />
-          </Suspense>
+          <div className="flex-[0.6]">
+            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+              <MemberEvolutionChart
+                data={memberEvolutionData}
+                isLoading={isEvolutionLoading}
+              />
+            </Suspense>
+          </div>
+          <div className="flex-[0.4]">
+            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+              <MemberStatusDistributionChart
+                data={memberStatusData}
+                isLoading={isStatusDistributionLoading}
+              />
+            </Suspense>
+          </div>
         </div>
       </div>
     </MainLayout>

@@ -24,7 +24,7 @@ interface MachineAvailabilityToggleProps {
  */
 export const MachineAvailabilityToggle = memo<MachineAvailabilityToggleProps>(
   function MachineAvailabilityToggle({ machine }) {
-    const { user } = useAuth();
+    const { isAdmin } = useAuth();
     const { mutateAsync: updateMachine, isPending } = useUpdateMachine();
 
     // Handle toggle with optimistic updates and toast notifications
@@ -55,8 +55,6 @@ export const MachineAvailabilityToggle = memo<MachineAvailabilityToggleProps>(
     }, [machine.id, machine.is_available, machine.name, updateMachine]);
 
     // Only show to admin users (AC-1: Only visible to admin role)
-    const isAdmin = user?.role === "admin";
-
     if (!isAdmin) return null;
 
     return (

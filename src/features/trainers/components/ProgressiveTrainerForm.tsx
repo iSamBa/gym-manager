@@ -1,32 +1,19 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect, useId } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useId,
+  memo,
+} from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { DatePicker } from "@/components/ui/date-picker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -47,85 +34,23 @@ import { cn } from "@/lib/utils";
 import type { TrainerWithProfile } from "@/features/database/lib/types";
 import type { CreateTrainerData } from "@/features/trainers/lib/database-utils";
 import { toast } from "sonner";
+import {
+  PersonalInfoStep,
+  ProfessionalDetailsStep,
+  SpecializationsStep,
+  CapacityStep,
+  ComplianceStep,
+  trainerFormSchema,
+  personalInfoSchema,
+  professionalDetailsSchema,
+  specializationsSchema,
+  capacitySchema,
+  complianceSchema,
+  type TrainerFormData,
+  type StepInfo,
+} from "./progressive-form";
 
 import { logger } from "@/lib/logger";
-// Schema for each step
-const personalInfoSchema = z.object({
-  first_name: z
-    .string()
-    .min(1, "Please enter your first name")
-    .max(50, "First name must be 50 characters or less"),
-  last_name: z
-    .string()
-    .min(1, "Please enter your last name")
-    .max(50, "Last name must be 50 characters or less"),
-  date_of_birth: z.string().min(1, "Please select your date of birth"),
-  email: z
-    .string()
-    .email("Please enter a valid email address (e.g., john@example.com)"),
-  phone: z.string().optional(),
-});
-
-const professionalDetailsSchema = z.object({
-  hourly_rate: z.number().min(0, "Hourly rate must be positive").optional(),
-  commission_rate: z
-    .union([
-      z
-        .number()
-        .min(0, "Commission rate must be positive")
-        .max(100, "Commission rate cannot exceed 100%"),
-      z.string().length(0),
-    ])
-    .optional(),
-  years_experience: z
-    .number()
-    .min(0, "Experience cannot be negative")
-    .optional(),
-});
-
-const specializationsSchema = z.object({
-  certifications: z.array(z.string()).optional(),
-  specializations: z.array(z.string()).optional(),
-  languages: z.array(z.string()).min(1, "At least one language is required"),
-});
-
-const capacitySchema = z.object({
-  max_clients_per_session: z
-    .union([
-      z
-        .number()
-        .min(1, "Must allow at least 1 client")
-        .max(50, "Maximum 50 clients per session"),
-      z.string().length(0),
-    ])
-    .optional(),
-  is_accepting_new_clients: z.boolean(),
-});
-
-const complianceSchema = z.object({
-  insurance_policy_number: z.string().optional(),
-  background_check_date: z.string().optional(),
-  cpr_certification_expires: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-// Complete form schema
-const trainerFormSchema = personalInfoSchema
-  .merge(professionalDetailsSchema)
-  .merge(specializationsSchema)
-  .merge(capacitySchema)
-  .merge(complianceSchema);
-
-type TrainerFormData = z.infer<typeof trainerFormSchema>;
-
-interface StepInfo {
-  id: number;
-  title: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  schema: z.ZodSchema;
-  isOptional?: boolean;
-}
 
 const steps: StepInfo[] = [
   {
@@ -168,28 +93,6 @@ const steps: StepInfo[] = [
   },
 ];
 
-// Common certifications options
-const certificationOptions = [
-  "NASM-CPT",
-  "ACE-CPT",
-  "ACSM-CPT",
-  "NSCA-CSCS",
-  "ISSA-CPT",
-  "NCCPT",
-  "CPR/AED",
-  "First Aid",
-  "CES (Corrective Exercise Specialist)",
-  "PES (Performance Enhancement Specialist)",
-  "Youth Exercise Specialist",
-  "Senior Fitness Specialist",
-  "Nutrition Coach",
-  "Yoga Teacher Training (RYT)",
-  "Pilates Instructor",
-];
-
-// Common languages - restricted to required languages only
-const languageOptions = ["English", "French", "Arabic"];
-
 interface ProgressiveTrainerFormProps {
   trainer?: TrainerWithProfile | null;
   onSubmit: (data: CreateTrainerData) => Promise<void>;
@@ -199,7 +102,7 @@ interface ProgressiveTrainerFormProps {
   showHeader?: boolean;
 }
 
-export function ProgressiveTrainerForm({
+export const ProgressiveTrainerForm = memo(function ProgressiveTrainerForm({
   trainer,
   onSubmit,
   onCancel,
@@ -437,662 +340,117 @@ export function ProgressiveTrainerForm({
   }, [onCancel]);
 
   // Helper functions for array field management
-  const addSpecialization = (spec: string) => {
-    const current = form.getValues("specializations");
-    const currentArray = Array.isArray(current) ? current : [];
-    if (!currentArray.includes(spec)) {
-      form.setValue("specializations", [...currentArray, spec]);
-    }
-  };
+  const addSpecialization = useCallback(
+    (spec: string) => {
+      const current = form.getValues("specializations");
+      const currentArray = Array.isArray(current) ? current : [];
+      if (!currentArray.includes(spec)) {
+        form.setValue("specializations", [...currentArray, spec]);
+      }
+    },
+    [form]
+  );
 
-  const removeSpecialization = (spec: string) => {
-    const current = form.getValues("specializations");
-    const currentArray = Array.isArray(current) ? current : [];
-    form.setValue(
-      "specializations",
-      currentArray.filter((s) => s !== spec)
-    );
-  };
-
-  const addCertification = (cert: string) => {
-    const current = form.getValues("certifications");
-    const currentArray = Array.isArray(current) ? current : [];
-    if (!currentArray.includes(cert)) {
-      form.setValue("certifications", [...currentArray, cert]);
-    }
-  };
-
-  const removeCertification = (cert: string) => {
-    const current = form.getValues("certifications");
-    const currentArray = Array.isArray(current) ? current : [];
-    form.setValue(
-      "certifications",
-      currentArray.filter((c) => c !== cert)
-    );
-  };
-
-  const addLanguage = (lang: string) => {
-    const current = form.getValues("languages");
-    const currentArray = Array.isArray(current) ? current : [];
-    if (!currentArray.includes(lang)) {
-      form.setValue("languages", [...currentArray, lang]);
-    }
-  };
-
-  const removeLanguage = (lang: string) => {
-    const current = form.getValues("languages");
-    const currentArray = Array.isArray(current) ? current : [];
-    if (currentArray.length > 1) {
-      // Keep at least one language
+  const removeSpecialization = useCallback(
+    (spec: string) => {
+      const current = form.getValues("specializations");
+      const currentArray = Array.isArray(current) ? current : [];
       form.setValue(
-        "languages",
-        currentArray.filter((l) => l !== lang)
+        "specializations",
+        currentArray.filter((s) => s !== spec)
       );
-    }
-  };
+    },
+    [form]
+  );
 
-  const renderStepContent = () => {
+  const addCertification = useCallback(
+    (cert: string) => {
+      const current = form.getValues("certifications");
+      const currentArray = Array.isArray(current) ? current : [];
+      if (!currentArray.includes(cert)) {
+        form.setValue("certifications", [...currentArray, cert]);
+      }
+    },
+    [form]
+  );
+
+  const removeCertification = useCallback(
+    (cert: string) => {
+      const current = form.getValues("certifications");
+      const currentArray = Array.isArray(current) ? current : [];
+      form.setValue(
+        "certifications",
+        currentArray.filter((c) => c !== cert)
+      );
+    },
+    [form]
+  );
+
+  const addLanguage = useCallback(
+    (lang: string) => {
+      const current = form.getValues("languages");
+      const currentArray = Array.isArray(current) ? current : [];
+      if (!currentArray.includes(lang)) {
+        form.setValue("languages", [...currentArray, lang]);
+      }
+    },
+    [form]
+  );
+
+  const removeLanguage = useCallback(
+    (lang: string) => {
+      const current = form.getValues("languages");
+      const currentArray = Array.isArray(current) ? current : [];
+      if (currentArray.length > 1) {
+        // Keep at least one language
+        form.setValue(
+          "languages",
+          currentArray.filter((l) => l !== lang)
+        );
+      }
+    },
+    [form]
+  );
+
+  const renderStepContent = useCallback(() => {
     switch (currentStep) {
       case 1:
-        return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                key="step1-first-name"
-                control={form.control}
-                name="first_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name *</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        id="first_name"
-                        placeholder="e.g., John"
-                        className="h-12"
-                        aria-describedby="first-name-error first-name-help"
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                      />
-                    </FormControl>
-                    <FormDescription id="first-name-help" className="text-xs">
-                      Enter trainer&apos;s legal first name
-                    </FormDescription>
-                    <FormMessage id="first-name-error" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                key="step1-last-name"
-                control={form.control}
-                name="last_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name *</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        id="last_name"
-                        placeholder="e.g., Smith"
-                        className="h-12"
-                        aria-describedby="last-name-error last-name-help"
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                      />
-                    </FormControl>
-                    <FormDescription id="last-name-help" className="text-xs">
-                      Enter trainer&apos;s legal last name
-                    </FormDescription>
-                    <FormMessage id="last-name-error" />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
-              <FormField
-                control={form.control}
-                name="date_of_birth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date of Birth *</FormLabel>
-                    <FormControl>
-                      <DatePicker
-                        value={field.value ? new Date(field.value) : undefined}
-                        onChange={(date) => {
-                          field.onChange(
-                            date ? format(date, "yyyy-MM-dd") : ""
-                          );
-                        }}
-                        placeholder="Select date of birth"
-                        format="PPP"
-                        className="h-12"
-                        showYearMonthPickers={true}
-                        yearRange={{
-                          from: 1930,
-                          to: new Date().getFullYear() - 18,
-                        }}
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Trainer must be at least 18 years old
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                key="step1-email"
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address *</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        id="email"
-                        type="email"
-                        placeholder="john.trainer@example.com"
-                        className="h-12"
-                        aria-describedby="email-error email-help"
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                      />
-                    </FormControl>
-                    <FormDescription id="email-help" className="text-xs">
-                      Professional email for client communications
-                    </FormDescription>
-                    <FormMessage id="email-error" />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              key="step1-phone"
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      id="phone"
-                      placeholder="+1 (555) 123-4567"
-                      className="h-12"
-                      aria-describedby="phone-error phone-help"
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                    />
-                  </FormControl>
-                  <FormDescription id="phone-help" className="text-xs">
-                    Optional - for urgent communications and client contact
-                  </FormDescription>
-                  <FormMessage id="phone-error" />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
-
+        return <PersonalInfoStep form={form} trainer={trainer} />;
       case 2:
-        return (
-          <div className="space-y-4">
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>Optional:</strong> Professional details help with
-                scheduling and payment processing.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="hourly_rate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Hourly Rate</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        placeholder="50"
-                        className="h-12"
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value ? Number(e.target.value) : undefined
-                          )
-                        }
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Standard hourly rate for personal training sessions
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="commission_rate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Commission Rate (%)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        placeholder="15"
-                        className="h-12"
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value === "" ? "" : Number(e.target.value)
-                          )
-                        }
-                        value={
-                          field.value === undefined || field.value === null
-                            ? ""
-                            : field.value
-                        }
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Percentage commission on class and session bookings
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="years_experience"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Years of Experience</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      placeholder="5"
-                      className="h-12 sm:max-w-xs"
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value ? Number(e.target.value) : undefined
-                        )
-                      }
-                      value={field.value ?? ""}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Total years of fitness training experience
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
-
+        return <ProfessionalDetailsStep form={form} trainer={trainer} />;
       case 3:
         return (
-          <div className="space-y-4">
-            {/* Languages - Required */}
-            <FormField
-              control={form.control}
-              name="languages"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Languages *</FormLabel>
-                  <Select value="" onValueChange={addLanguage}>
-                    <FormControl>
-                      <SelectTrigger className="h-12">
-                        <SelectValue placeholder="Add language..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {languageOptions
-                        .filter((lang) => {
-                          const currentLangs = Array.isArray(field.value)
-                            ? field.value
-                            : [];
-                          return !currentLangs.includes(lang);
-                        })
-                        .map((lang) => (
-                          <SelectItem key={lang} value={lang}>
-                            {lang}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {Array.isArray(field.value)
-                      ? field.value.map((lang) => (
-                          <Badge
-                            key={lang}
-                            variant="default"
-                            className={cn(
-                              "cursor-pointer",
-                              field.value.length === 1
-                                ? "cursor-not-allowed opacity-50"
-                                : "hover:bg-destructive hover:text-destructive-foreground"
-                            )}
-                            onClick={() =>
-                              field.value.length > 1 && removeLanguage(lang)
-                            }
-                          >
-                            {lang} {field.value.length > 1 && "×"}
-                          </Badge>
-                        ))
-                      : null}
-                  </div>
-                  <FormDescription>
-                    At least one language is required for client communication
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Specializations - Optional */}
-            <FormField
-              control={form.control}
-              name="specializations"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Specializations</FormLabel>
-                  <Select value="" onValueChange={addSpecialization}>
-                    <FormControl>
-                      <SelectTrigger className="h-12">
-                        <SelectValue placeholder="Add specialization..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {availableSpecializations
-                        .filter((spec) => {
-                          const currentSpecs = Array.isArray(field.value)
-                            ? field.value
-                            : [];
-                          return !currentSpecs.includes(spec.name);
-                        })
-                        .map((spec) => (
-                          <SelectItem key={spec.id} value={spec.name}>
-                            {spec.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {Array.isArray(field.value)
-                      ? field.value.map((spec) => (
-                          <Badge
-                            key={spec}
-                            variant="secondary"
-                            className="hover:bg-destructive hover:text-destructive-foreground cursor-pointer"
-                            onClick={() => removeSpecialization(spec)}
-                          >
-                            {spec} ×
-                          </Badge>
-                        ))
-                      : null}
-                  </div>
-                  <FormDescription>
-                    Optional - areas of fitness expertise and focus
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Certifications - Optional */}
-            <FormField
-              control={form.control}
-              name="certifications"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Certifications</FormLabel>
-                  <Select value="" onValueChange={addCertification}>
-                    <FormControl>
-                      <SelectTrigger className="h-12">
-                        <SelectValue placeholder="Add certification..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {certificationOptions
-                        .filter((cert) => {
-                          const currentCerts = Array.isArray(field.value)
-                            ? field.value
-                            : [];
-                          return !currentCerts.includes(cert);
-                        })
-                        .map((cert) => (
-                          <SelectItem key={cert} value={cert}>
-                            {cert}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {Array.isArray(field.value)
-                      ? field.value.map((cert) => (
-                          <Badge
-                            key={cert}
-                            variant="outline"
-                            className="hover:bg-destructive hover:text-destructive-foreground cursor-pointer"
-                            onClick={() => removeCertification(cert)}
-                          >
-                            {cert} ×
-                          </Badge>
-                        ))
-                      : null}
-                  </div>
-                  <FormDescription>
-                    Optional - professional certifications and qualifications
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <SpecializationsStep
+            form={form}
+            trainer={trainer}
+            availableSpecializations={availableSpecializations}
+            addLanguage={addLanguage}
+            removeLanguage={removeLanguage}
+            addSpecialization={addSpecialization}
+            removeSpecialization={removeSpecialization}
+            addCertification={addCertification}
+            removeCertification={removeCertification}
+          />
         );
-
       case 4:
-        return (
-          <div className="space-y-4">
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>Optional:</strong> Configure trainer capacity and
-                availability settings.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="max_clients_per_session"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Max Clients per Session</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        placeholder="1"
-                        className="h-12"
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value === "" ? "" : Number(e.target.value)
-                          )
-                        }
-                        value={
-                          field.value === undefined || field.value === null
-                            ? ""
-                            : field.value
-                        }
-                        min="1"
-                        max="50"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Maximum number of clients in a single training session
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="is_accepting_new_clients"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col justify-center rounded-lg border p-4">
-                    <div className="flex items-center space-x-3">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          aria-describedby="accepting-clients-description"
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="font-medium">
-                          Accepting New Clients
-                        </FormLabel>
-                        <FormDescription id="accepting-clients-description">
-                          Allow this trainer to accept new client bookings
-                        </FormDescription>
-                      </div>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        );
-
+        return <CapacityStep form={form} trainer={trainer} />;
       case 5:
-        return (
-          <div className="space-y-4">
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>Optional:</strong> Safety compliance and additional
-                trainer information.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="insurance_policy_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Insurance Policy Number</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="POL-123456789"
-                        className="h-12"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Professional liability insurance policy number
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="background_check_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Background Check Date</FormLabel>
-                    <FormControl>
-                      <DatePicker
-                        value={field.value ? new Date(field.value) : new Date()}
-                        onChange={(date) =>
-                          field.onChange(date ? format(date, "yyyy-MM-dd") : "")
-                        }
-                        placeholder="Select date (defaults to today)"
-                        className="h-12 w-full"
-                        showYearMonthPickers={true}
-                        yearRange={{
-                          from: 1990,
-                          to: new Date().getFullYear(),
-                        }}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Date when background check was completed (defaults to
-                      today)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="cpr_certification_expires"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>CPR Certification Expires</FormLabel>
-                    <FormControl>
-                      <DatePicker
-                        value={field.value ? new Date(field.value) : undefined}
-                        onChange={(date) =>
-                          field.onChange(date ? format(date, "yyyy-MM-dd") : "")
-                        }
-                        placeholder="Select expiry date"
-                        className="h-12 w-full"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      CPR/First Aid certification expiration date
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Internal Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Add any internal staff notes about this trainer..."
-                      className="min-h-[100px] resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Notes visible only to staff members.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
-
+        return <ComplianceStep form={form} trainer={trainer} />;
       default:
         return null;
     }
-  };
+  }, [
+    currentStep,
+    form,
+    trainer,
+    availableSpecializations,
+    addLanguage,
+    removeLanguage,
+    addSpecialization,
+    removeSpecialization,
+    addCertification,
+    removeCertification,
+  ]);
 
   return (
     <div
@@ -1152,7 +510,8 @@ export function ProgressiveTrainerForm({
             {steps.map((step) => {
               const isCompleted = completedSteps.includes(step.id);
               const isCurrent = step.id === currentStep;
-              const isAccessible = step.id <= currentStep || isCompleted;
+              const isAccessible =
+                step.id <= currentStep || completedSteps.includes(step.id);
 
               return (
                 <li key={step.id} className="flex">
@@ -1217,7 +576,7 @@ export function ProgressiveTrainerForm({
             {currentStepInfo.description}
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-h-[400px]">
           <Form {...form}>
             <form
               ref={formRef}
@@ -1288,7 +647,7 @@ export function ProgressiveTrainerForm({
               disabled={isLoading}
               className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
               onClick={() => form.handleSubmit(handleSubmit)()}
-              aria-label={`${trainer ? "Update" : "Create"} trainer with provided information`}
+              aria-label="Create trainer with provided information"
             >
               {isLoading ? (
                 <>
@@ -1304,7 +663,7 @@ export function ProgressiveTrainerForm({
               ) : (
                 <>
                   <Save className="h-4 w-4" aria-hidden="true" />
-                  <span>{trainer ? "Update Trainer" : "Create Trainer"}</span>
+                  <span>Create Trainer</span>
                 </>
               )}
             </Button>
@@ -1313,4 +672,4 @@ export function ProgressiveTrainerForm({
       </div>
     </div>
   );
-}
+});

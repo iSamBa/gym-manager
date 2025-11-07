@@ -57,7 +57,7 @@ export function MemberEvolutionChart({
   }
 
   return (
-    <Card className="h-[400px] w-[60vw]">
+    <Card className="h-[400px] w-full">
       <CardHeader>
         <CardTitle>Member Growth</CardTitle>
         <CardDescription>

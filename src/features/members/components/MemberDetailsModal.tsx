@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -92,7 +92,7 @@ const formatTrainingPreference = (pref?: string): string => {
   return pref === "mixed" ? "Mixed Sessions" : "Women Only Sessions";
 };
 
-export function MemberDetailsModal({
+export const MemberDetailsModal = memo(function MemberDetailsModal({
   member,
   isOpen,
   onClose,
@@ -505,4 +505,4 @@ export function MemberDetailsModal({
       </AlertDialog>
     </Dialog>
   );
-}
+});

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import {
   Trash2,
   Download,
@@ -79,7 +79,7 @@ export interface BulkActionToolbarProps {
   maxSelections?: number;
 }
 
-export function BulkActionToolbar({
+export const BulkActionToolbar = memo(function BulkActionToolbar({
   selectedMembers,
   selectedCount,
   onStatusChange,
@@ -265,6 +265,64 @@ export function BulkActionToolbar({
     return `${minutes}m ${remainingSeconds}s`;
   };
 
+  // Memoized callbacks for inline functions (Performance Phase 2)
+  const handleSetActiveStatus = useCallback(() => {
+    setPendingStatus("active");
+    setShowStatusConfirm(true);
+  }, []);
+
+  const handleSetInactiveStatus = useCallback(() => {
+    setPendingStatus("inactive");
+    setShowStatusConfirm(true);
+  }, []);
+
+  const handleSetSuspendedStatus = useCallback(() => {
+    setPendingStatus("suspended");
+    setShowStatusConfirm(true);
+  }, []);
+
+  const handleSetPendingStatus = useCallback(() => {
+    setPendingStatus("pending");
+    setShowStatusConfirm(true);
+  }, []);
+
+  const handleExportCSV = useCallback(
+    () => handleExport("csv"),
+    [handleExport]
+  );
+  const handleExportExcel = useCallback(
+    () => handleExport("excel"),
+    [handleExport]
+  );
+  const handleExportJSON = useCallback(
+    () => handleExport("json"),
+    [handleExport]
+  );
+  const handleExportPDF = useCallback(
+    () => handleExport("pdf"),
+    [handleExport]
+  );
+
+  const handleOpenSoftDelete = useCallback(() => {
+    setDeleteType("soft");
+    setShowDeleteConfirm(true);
+  }, []);
+
+  const handleOpenHardDelete = useCallback(() => {
+    setDeleteType("hard");
+    setShowDeleteConfirm(true);
+  }, []);
+
+  const handleConfirmStatusChange = useCallback(() => {
+    if (pendingStatus) {
+      handleStatusChange(pendingStatus);
+    }
+  }, [pendingStatus, handleStatusChange]);
+
+  const handleCloseResultDialog = useCallback(() => {
+    setShowResultDialog(false);
+  }, []);
+
   if (selectedCount === 0) {
     return null;
   }
@@ -307,39 +365,19 @@ export function BulkActionToolbar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  setPendingStatus("active");
-                  setShowStatusConfirm(true);
-                }}
-              >
+              <DropdownMenuItem onClick={handleSetActiveStatus}>
                 <UserCheck className="mr-2 h-4 w-4 text-green-500" />
                 Set Active
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setPendingStatus("inactive");
-                  setShowStatusConfirm(true);
-                }}
-              >
+              <DropdownMenuItem onClick={handleSetInactiveStatus}>
                 <UserX className="mr-2 h-4 w-4 text-gray-500" />
                 Set Inactive
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setPendingStatus("suspended");
-                  setShowStatusConfirm(true);
-                }}
-              >
+              <DropdownMenuItem onClick={handleSetSuspendedStatus}>
                 <Clock className="mr-2 h-4 w-4 text-orange-500" />
                 Suspend
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setPendingStatus("pending");
-                  setShowStatusConfirm(true);
-                }}
-              >
+              <DropdownMenuItem onClick={handleSetPendingStatus}>
                 <UserPlus className="mr-2 h-4 w-4 text-blue-500" />
                 Set Pending
               </DropdownMenuItem>
@@ -361,17 +399,17 @@ export function BulkActionToolbar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleExport("csv")}>
+              <DropdownMenuItem onClick={handleExportCSV}>
                 Export as CSV
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("excel")}>
+              <DropdownMenuItem onClick={handleExportExcel}>
                 Export as Excel
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("json")}>
+              <DropdownMenuItem onClick={handleExportJSON}>
                 Export as JSON
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleExport("pdf")}>
+              <DropdownMenuItem onClick={handleExportPDF}>
                 Export as PDF
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -392,21 +430,13 @@ export function BulkActionToolbar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  setDeleteType("soft");
-                  setShowDeleteConfirm(true);
-                }}
-              >
+              <DropdownMenuItem onClick={handleOpenSoftDelete}>
                 <UserX className="mr-2 h-4 w-4" />
                 Deactivate Members
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => {
-                  setDeleteType("hard");
-                  setShowDeleteConfirm(true);
-                }}
+                onClick={handleOpenHardDelete}
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -455,9 +485,7 @@ export function BulkActionToolbar({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => handleStatusChange(pendingStatus)}
-            >
+            <AlertDialogAction onClick={handleConfirmStatusChange}>
               Update Status
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -589,7 +617,7 @@ export function BulkActionToolbar({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setShowResultDialog(false)}>
+            <AlertDialogAction onClick={handleCloseResultDialog}>
               OK
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -597,4 +625,4 @@ export function BulkActionToolbar({
       </AlertDialog>
     </>
   );
-}
+});

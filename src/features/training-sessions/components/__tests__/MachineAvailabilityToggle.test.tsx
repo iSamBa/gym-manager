@@ -62,6 +62,7 @@ describe("MachineAvailabilityToggle", () => {
       vi.mocked(useAuth).mockReturnValue({
         user: { id: "user-1", email: "user@gym.com", role: "member" },
         isAuthenticated: true,
+        isAdmin: false,
       } as any);
 
       const { container } = renderComponent(mockMachine);
@@ -74,6 +75,7 @@ describe("MachineAvailabilityToggle", () => {
       vi.mocked(useAuth).mockReturnValue({
         user: { id: "admin-1", email: "admin@gym.com", role: "admin" },
         isAuthenticated: true,
+        isAdmin: true,
       } as any);
 
       renderComponent(mockMachine);
@@ -84,6 +86,7 @@ describe("MachineAvailabilityToggle", () => {
       vi.mocked(useAuth).mockReturnValue({
         user: null,
         isAuthenticated: false,
+        isAdmin: false,
       } as any);
 
       const { container } = renderComponent(mockMachine);
@@ -97,6 +100,7 @@ describe("MachineAvailabilityToggle", () => {
       vi.mocked(useAuth).mockReturnValue({
         user: { id: "admin-1", email: "admin@gym.com", role: "admin" },
         isAuthenticated: true,
+        isAdmin: true,
       } as any);
     });
 
@@ -166,6 +170,7 @@ describe("MachineAvailabilityToggle", () => {
       vi.mocked(useAuth).mockReturnValue({
         user: { id: "admin-1", email: "admin@gym.com", role: "admin" },
         isAuthenticated: true,
+        isAdmin: true,
       } as any);
     });
 
@@ -242,6 +247,7 @@ describe("MachineAvailabilityToggle", () => {
       vi.mocked(useAuth).mockReturnValue({
         user: { id: "admin-1", email: "admin@gym.com", role: "admin" },
         isAuthenticated: true,
+        isAdmin: true,
       } as any);
     });
 

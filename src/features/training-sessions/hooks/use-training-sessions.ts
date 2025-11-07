@@ -4,7 +4,8 @@ import { logger } from "@/lib/logger";
 import { trainingSessionUtils } from "../lib/database-utils";
 import { subscriptionKeys } from "@/features/memberships/hooks/use-subscriptions";
 import { subscriptionUtils } from "@/features/memberships/lib/subscription-utils";
-import { memberKeys } from "@/features/members/hooks/use-members";
+import { memberKeys, useMember } from "@/features/members/hooks/use-members";
+import { useActiveSubscription } from "@/features/memberships/hooks/use-subscriptions";
 import {
   mapSessionRpcResponse,
   type RpcSessionResponse,
@@ -808,5 +809,267 @@ export const useDeleteTrainingSession = () => {
         type: "active",
       });
     },
+  });
+};
+
+// ============================================================================
+// MEMBER DIALOG DATA - Consolidated from use-member-dialog-data.ts
+// ============================================================================
+
+/**
+ * Session statistics for a member
+ * Uses same logic as members table for consistency
+ */
+export interface MemberSessionStats {
+  /** Number of completed sessions (past sessions with status=completed) */
+  done: number;
+  /** Number of scheduled/upcoming sessions (future sessions with confirmed/waitlisted booking) */
+  scheduled: number;
+}
+
+/**
+ * Member information needed for the dialog
+ */
+export interface MemberDialogInfo {
+  phone?: string;
+  first_name?: string;
+  last_name?: string;
+  uniform_size?: string;
+  vest_size?: string;
+  hip_belt_size?: string;
+}
+
+/**
+ * Complete data needed for the Member Details tab in SessionDialog
+ */
+export interface MemberDialogData {
+  member: MemberDialogInfo;
+  sessionStats: MemberSessionStats;
+  isLoading: boolean;
+  error: Error | null;
+}
+
+/**
+ * Hook to fetch all data needed for the Member Details tab
+ *
+ * Fetches:
+ * 1. Member details (phone, name, equipment sizes)
+ * 2. Current active subscription
+ * 3. Completed sessions count (past sessions with status=completed)
+ * 4. Scheduled sessions count (future sessions with confirmed/waitlisted booking)
+ *
+ * Note: Uses same session counting logic as members table RPC function
+ * (time-based + status-based filtering) for consistency across the app.
+ *
+ * @param memberId - The member's ID
+ * @returns Member data, session stats, loading state, and error
+ */
+export function useMemberDialogData(
+  memberId: string | undefined
+): MemberDialogData {
+  // 1. Fetch member details
+  const {
+    data: member,
+    isLoading: memberLoading,
+    error: memberError,
+  } = useMember(memberId || "");
+
+  // 2. Fetch active subscription (for remaining sessions display)
+  const { isLoading: subscriptionLoading, error: subscriptionError } =
+    useActiveSubscription(memberId || "");
+
+  // 3. Query completed sessions (same logic as members table RPC)
+  const {
+    data: completedSessions,
+    isLoading: completedLoading,
+    error: completedError,
+  } = useQuery({
+    queryKey: ["member-completed-sessions", memberId],
+    queryFn: async () => {
+      if (!memberId) {
+        return [];
+      }
+
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from("training_session_members")
+        .select(
+          "session_id, training_sessions!inner(id, status, scheduled_start)"
+        )
+        .eq("member_id", memberId)
+        .eq("booking_status", "confirmed")
+        .eq("training_sessions.status", "completed")
+        .lt("training_sessions.scheduled_start", now);
+
+      if (error) {
+        throw new Error(`Failed to fetch completed sessions: ${error.message}`);
+      }
+
+      return data || [];
+    },
+    enabled: !!memberId,
+    staleTime: 1 * 60 * 1000, // 1 minute - session counts change frequently
+  });
+
+  // 4. Query scheduled sessions (same logic as members table RPC)
+  const {
+    data: scheduledSessions,
+    isLoading: scheduledLoading,
+    error: scheduledError,
+  } = useQuery({
+    queryKey: ["member-scheduled-sessions", memberId],
+    queryFn: async () => {
+      if (!memberId) {
+        return [];
+      }
+
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from("training_session_members")
+        .select(
+          "session_id, training_sessions!inner(id, status, scheduled_start)"
+        )
+        .eq("member_id", memberId)
+        .in("booking_status", ["confirmed", "waitlisted"])
+        .in("training_sessions.status", ["scheduled", "in_progress"])
+        .gte("training_sessions.scheduled_start", now);
+
+      if (error) {
+        throw new Error(`Failed to fetch scheduled sessions: ${error.message}`);
+      }
+
+      return data || [];
+    },
+    enabled: !!memberId,
+    staleTime: 1 * 60 * 1000, // 1 minute - session counts change frequently
+  });
+
+  // Combine loading states
+  const isLoading =
+    memberLoading ||
+    subscriptionLoading ||
+    completedLoading ||
+    scheduledLoading;
+
+  // Combine errors (prioritize member error as it's most critical)
+  const error =
+    memberError ||
+    subscriptionError ||
+    completedError ||
+    scheduledError ||
+    null;
+
+  return {
+    member: {
+      phone: member?.phone,
+      first_name: member?.first_name,
+      last_name: member?.last_name,
+      uniform_size: member?.uniform_size,
+      vest_size: member?.vest_size,
+      hip_belt_size: member?.hip_belt_size,
+    },
+    sessionStats: {
+      done: completedSessions?.length || 0,
+      scheduled: scheduledSessions?.length || 0,
+    },
+    isLoading,
+    error: error as Error | null,
+  };
+}
+
+// ============================================================================
+// DAILY STATISTICS - Consolidated from use-daily-statistics.ts
+// ============================================================================
+
+/**
+ * Daily statistics interface
+ */
+export interface DailyStatistics {
+  date: string;
+  total: number;
+  trial: number;
+  member: number;
+  contractual: number;
+  makeup: number;
+  multi_site: number;
+  collaboration: number;
+  non_bookable: number;
+}
+
+/**
+ * RPC response interface matching database function return type
+ */
+interface DailyStatisticsRpcResponse {
+  day_date: string;
+  total_count: number;
+  trial_count: number;
+  member_count: number;
+  contractual_count: number;
+  makeup_count: number;
+  multi_site_count: number;
+  collaboration_count: number;
+  non_bookable_count: number;
+}
+
+/**
+ * Hook for fetching daily session statistics for a date range
+ *
+ * Fetches aggregated session counts (total, standard, trial) for each day
+ * in the specified date range using the `get_daily_session_statistics` RPC function.
+ *
+ * @param weekStart - Start date of the week (Monday)
+ * @param weekEnd - End date of the week (Sunday)
+ * @returns React Query result with DailyStatistics array
+ *
+ * @example
+ * ```tsx
+ * const { data: statistics, isLoading } = useDailyStatistics(weekStart, weekEnd);
+ *
+ * // statistics = [
+ * //   { date: '2025-10-14', total: 10, trial: 2, member: 5, contractual: 2, makeup: 1, multi_site: 0, collaboration: 0, non_bookable: 0 },
+ * //   { date: '2025-10-15', total: 12, trial: 3, member: 6, contractual: 2, makeup: 1, multi_site: 0, collaboration: 0, non_bookable: 0 },
+ * //   ...
+ * // ]
+ * ```
+ */
+export const useDailyStatistics = (weekStart: Date, weekEnd: Date) => {
+  return useQuery({
+    queryKey: [
+      "daily-statistics",
+      getLocalDateString(weekStart),
+      getLocalDateString(weekEnd),
+    ],
+    queryFn: async (): Promise<DailyStatistics[]> => {
+      const { data, error } = await supabase.rpc(
+        "get_daily_session_statistics",
+        {
+          p_start_date: getLocalDateString(weekStart),
+          p_end_date: getLocalDateString(weekEnd),
+        }
+      );
+
+      if (error) {
+        throw new Error(`Failed to fetch daily statistics: ${error.message}`);
+      }
+
+      // Transform RPC response to DailyStatistics[]
+      const statistics: DailyStatistics[] = (
+        (data as DailyStatisticsRpcResponse[]) || []
+      ).map((row) => ({
+        date: row.day_date,
+        total: row.total_count,
+        trial: row.trial_count,
+        member: row.member_count,
+        contractual: row.contractual_count,
+        makeup: row.makeup_count,
+        multi_site: row.multi_site_count,
+        collaboration: row.collaboration_count,
+        non_bookable: row.non_bookable_count,
+      }));
+
+      return statistics;
+    },
+    staleTime: 1000 * 60, // 1 minute - fresh enough for real-time feel
+    gcTime: 1000 * 60 * 5, // 5 minutes - keep in cache
   });
 };
