@@ -340,59 +340,77 @@ export const ProgressiveTrainerForm = memo(function ProgressiveTrainerForm({
   }, [onCancel]);
 
   // Helper functions for array field management
-  const addSpecialization = (spec: string) => {
-    const current = form.getValues("specializations");
-    const currentArray = Array.isArray(current) ? current : [];
-    if (!currentArray.includes(spec)) {
-      form.setValue("specializations", [...currentArray, spec]);
-    }
-  };
+  const addSpecialization = useCallback(
+    (spec: string) => {
+      const current = form.getValues("specializations");
+      const currentArray = Array.isArray(current) ? current : [];
+      if (!currentArray.includes(spec)) {
+        form.setValue("specializations", [...currentArray, spec]);
+      }
+    },
+    [form]
+  );
 
-  const removeSpecialization = (spec: string) => {
-    const current = form.getValues("specializations");
-    const currentArray = Array.isArray(current) ? current : [];
-    form.setValue(
-      "specializations",
-      currentArray.filter((s) => s !== spec)
-    );
-  };
-
-  const addCertification = (cert: string) => {
-    const current = form.getValues("certifications");
-    const currentArray = Array.isArray(current) ? current : [];
-    if (!currentArray.includes(cert)) {
-      form.setValue("certifications", [...currentArray, cert]);
-    }
-  };
-
-  const removeCertification = (cert: string) => {
-    const current = form.getValues("certifications");
-    const currentArray = Array.isArray(current) ? current : [];
-    form.setValue(
-      "certifications",
-      currentArray.filter((c) => c !== cert)
-    );
-  };
-
-  const addLanguage = (lang: string) => {
-    const current = form.getValues("languages");
-    const currentArray = Array.isArray(current) ? current : [];
-    if (!currentArray.includes(lang)) {
-      form.setValue("languages", [...currentArray, lang]);
-    }
-  };
-
-  const removeLanguage = (lang: string) => {
-    const current = form.getValues("languages");
-    const currentArray = Array.isArray(current) ? current : [];
-    if (currentArray.length > 1) {
-      // Keep at least one language
+  const removeSpecialization = useCallback(
+    (spec: string) => {
+      const current = form.getValues("specializations");
+      const currentArray = Array.isArray(current) ? current : [];
       form.setValue(
-        "languages",
-        currentArray.filter((l) => l !== lang)
+        "specializations",
+        currentArray.filter((s) => s !== spec)
       );
-    }
-  };
+    },
+    [form]
+  );
+
+  const addCertification = useCallback(
+    (cert: string) => {
+      const current = form.getValues("certifications");
+      const currentArray = Array.isArray(current) ? current : [];
+      if (!currentArray.includes(cert)) {
+        form.setValue("certifications", [...currentArray, cert]);
+      }
+    },
+    [form]
+  );
+
+  const removeCertification = useCallback(
+    (cert: string) => {
+      const current = form.getValues("certifications");
+      const currentArray = Array.isArray(current) ? current : [];
+      form.setValue(
+        "certifications",
+        currentArray.filter((c) => c !== cert)
+      );
+    },
+    [form]
+  );
+
+  const addLanguage = useCallback(
+    (lang: string) => {
+      const current = form.getValues("languages");
+      const currentArray = Array.isArray(current) ? current : [];
+      if (!currentArray.includes(lang)) {
+        form.setValue("languages", [...currentArray, lang]);
+      }
+    },
+    [form]
+  );
+
+  const removeLanguage = useCallback(
+    (lang: string) => {
+      const current = form.getValues("languages");
+      const currentArray = Array.isArray(current) ? current : [];
+      if (currentArray.length > 1) {
+        // Keep at least one language
+        form.setValue(
+          "languages",
+          currentArray.filter((l) => l !== lang)
+        );
+      }
+    },
+    [form]
+  );
 
   const renderStepContent = useCallback(() => {
     switch (currentStep) {
