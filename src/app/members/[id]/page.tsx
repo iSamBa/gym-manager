@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRequireStaff } from "@/hooks/use-require-auth";
+import { useAuth } from "@/hooks/use-auth";
 import {
   MemberProfileHeader,
   EditMemberDialog,
@@ -53,6 +54,8 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
 
   // Require staff role (admin or trainer) for this page
   const { isLoading: isAuthLoading } = useRequireStaff("/login");
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -262,10 +265,10 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
         <MemberProfileHeader
           member={member}
           onEdit={() => setIsEditDialogOpen(true)}
-          onDelete={handleDeleteMember}
+          onDelete={isAdmin ? handleDeleteMember : undefined}
           onSessionSuccess={refetch}
-          onPaymentSuccess={refetch}
-          onConvert={() => setIsConvertDialogOpen(true)}
+          onPaymentSuccess={isAdmin ? refetch : undefined}
+          onConvert={isAdmin ? () => setIsConvertDialogOpen(true) : undefined}
         />
 
         {/* Main Content: 2-Column Layout with Tabs */}
@@ -278,8 +281,12 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                 <TabsTrigger value="training-sessions">
                   Training Sessions
                 </TabsTrigger>
-                <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-                <TabsTrigger value="payments">Payments</TabsTrigger>
+                {isAdmin && (
+                  <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
+                )}
+                {isAdmin && (
+                  <TabsTrigger value="payments">Payments</TabsTrigger>
+                )}
               </TabsList>
 
               {/* Profile Tab */}
@@ -358,22 +365,26 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                 />
               </TabsContent>
 
-              {/* Subscriptions Tab */}
-              <TabsContent value="subscriptions">
-                <MemberSubscriptions member={member} />
-              </TabsContent>
+              {/* Subscriptions Tab - Admin Only */}
+              {isAdmin && (
+                <TabsContent value="subscriptions">
+                  <MemberSubscriptions member={member} />
+                </TabsContent>
+              )}
 
-              {/* Payments Tab */}
-              <TabsContent value="payments">
-                <MemberPayments member={member} />
-              </TabsContent>
+              {/* Payments Tab - Admin Only */}
+              {isAdmin && (
+                <TabsContent value="payments">
+                  <MemberPayments member={member} />
+                </TabsContent>
+              )}
             </Tabs>
           </div>
 
           {/* Right Column: Sidebar */}
           <div className="space-y-6">
-            {/* Subscription Status Card */}
-            <SubscriptionStatusCard member={member} />
+            {/* Subscription Status Card - Admin Only (shows balance due, last payment) */}
+            {isAdmin && <SubscriptionStatusCard member={member} />}
 
             {/* Enhanced Activity Summary Card */}
             <EnhancedActivityCard member={member} />

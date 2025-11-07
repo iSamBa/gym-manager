@@ -15,7 +15,7 @@ import type { Member } from "@/features/database/lib/types";
 interface MemberProfileHeaderProps {
   member: Member;
   onEdit: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   onSessionSuccess?: () => void;
   onPaymentSuccess?: () => void;
   onConvert?: () => void;
@@ -74,13 +74,15 @@ export const MemberProfileHeader = memo(function MemberProfileHeader({
           showText
           onSuccess={onSessionSuccess}
         />
-        <AddPaymentButton
-          member={member}
-          variant="outline"
-          size="default"
-          showText
-          onSuccess={onPaymentSuccess}
-        />
+        {onPaymentSuccess && (
+          <AddPaymentButton
+            member={member}
+            variant="outline"
+            size="default"
+            showText
+            onSuccess={onPaymentSuccess}
+          />
+        )}
         {member.member_type === "collaboration" && onConvert && (
           <Button variant="outline" onClick={onConvert}>
             <UserCog className="mr-2 h-4 w-4" />
@@ -91,10 +93,12 @@ export const MemberProfileHeader = memo(function MemberProfileHeader({
           <Edit className="mr-2 h-4 w-4" />
           Edit Profile
         </Button>
-        <Button variant="destructive" onClick={onDelete}>
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
-        </Button>
+        {onDelete && (
+          <Button variant="destructive" onClick={onDelete}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </Button>
+        )}
       </div>
     </div>
   );
