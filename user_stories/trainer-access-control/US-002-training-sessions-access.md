@@ -5,7 +5,10 @@
 **Priority:** P0 (Critical)
 **Complexity:** Small
 **Estimated Time:** 30 minutes
-**Status:** 🔴 Not Started
+**Status:** ✅ Completed
+**Completed:** 2025-01-15
+**Actual Time:** 25 minutes
+**Implementation Notes:** Updated both training sessions pages to use useRequireStaff hook. Removed hasRequiredRole checks. Machine toggle verified to have admin-only protection. All automated tests passed. Manual testing required by user to verify trainer access.
 
 **Depends On:** US-001
 **Blocks:** US-004

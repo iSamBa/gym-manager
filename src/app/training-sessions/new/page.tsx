@@ -7,16 +7,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { SessionBookingDialog } from "@/features/training-sessions/components";
 import { useCreateTrainingSession } from "@/features/training-sessions/hooks/use-training-sessions";
-import { useRequireAdmin } from "@/hooks/use-require-auth";
+import { useRequireStaff } from "@/hooks/use-require-auth";
 import { AlertCircle, CheckCircle } from "lucide-react";
 
 export default function AddTrainingSessionPage() {
   const [dialogOpen, setDialogOpen] = useState(true);
   const router = useRouter();
 
-  // Require admin role for this page
-  const { isLoading: isAuthLoading, hasRequiredRole } =
-    useRequireAdmin("/login");
+  // Require staff role (admin + trainer) for this page
+  const { isLoading: isAuthLoading } = useRequireStaff("/login");
 
   // Create session mutation
   const createSessionMutation = useCreateTrainingSession();
@@ -29,10 +28,6 @@ export default function AddTrainingSessionPage() {
         </div>
       </MainLayout>
     );
-  }
-
-  if (!hasRequiredRole) {
-    return null; // Will redirect to login
   }
 
   const handleDialogClose = (open: boolean) => {
