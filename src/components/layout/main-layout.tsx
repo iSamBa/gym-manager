@@ -10,7 +10,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     <div className="flex min-h-screen">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex md:w-56 md:flex-col">
-        <div className="bg-card flex flex-grow flex-col border-r">
+        <div className="bg-card sticky top-0 flex h-screen flex-col border-r">
           <Sidebar />
         </div>
       </div>

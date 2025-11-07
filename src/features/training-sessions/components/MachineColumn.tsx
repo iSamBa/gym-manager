@@ -40,9 +40,9 @@ export const MachineColumn = memo<MachineColumnProps>(
       <Card
         className={cn("flex flex-col", !machine.is_available && "opacity-60")}
       >
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between text-lg">
-            <span>{machine.name}</span>
+        <CardHeader className="py-1.5">
+          <CardTitle className="flex items-center justify-between text-sm font-semibold">
+            <span className="uppercase">{machine.name}</span>
             <div className="flex items-center gap-2">
               {!machine.is_available && (
                 <Badge variant="secondary" className="text-xs">

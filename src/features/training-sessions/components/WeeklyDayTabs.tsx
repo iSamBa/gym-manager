@@ -100,7 +100,7 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
               key={dateKey}
               value={dateKey}
               className={cn(
-                "flex min-h-[80px] flex-col items-center gap-1 py-4",
+                "flex min-h-[60px] flex-col items-center gap-0.5 py-2",
                 todayIndicator &&
                   "border-primary bg-primary/10 text-primary font-semibold"
               )}
@@ -109,10 +109,10 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
             >
               {/* Day name and date on the same line */}
               <div className="flex items-center gap-1">
-                <span className="text-base font-semibold tracking-wide uppercase">
+                <span className="text-xs font-semibold tracking-wide uppercase">
                   {format(day, "EEE")}
                 </span>
-                <span className="text-base leading-none font-semibold">
+                <span className="text-xs leading-none font-semibold">
                   {format(day, "d")}
                 </span>
               </div>
@@ -121,12 +121,12 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
               {isLoading ? (
                 <div className="bg-muted h-6 w-12 animate-pulse rounded" />
               ) : stats ? (
-                <div className="flex flex-col items-center gap-2">
-                  <span className="text-lg font-bold">
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-base font-bold">
                     {stats.total} session{stats.total !== 1 ? "s" : ""}
                   </span>
                   {/* Color-coded badges for session types */}
-                  <div className="flex flex-wrap justify-center gap-2">
+                  <div className="flex flex-wrap justify-center gap-1">
                     {(
                       [
                         "trial",
@@ -146,7 +146,7 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
                       return (
                         <div
                           key={type}
-                          className={`${colorClass} rounded-md px-3 py-1 text-base font-bold`}
+                          className={`${colorClass} rounded-md px-2 py-0.5 text-xs font-semibold`}
                           title={SESSION_TYPE_LABELS[type]}
                         >
                           {count}
@@ -157,7 +157,7 @@ export const WeeklyDayTabs = memo(function WeeklyDayTabs({
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-lg font-bold">0 sessions</span>
+                  <span className="text-base font-bold">0 sessions</span>
                 </div>
               )}
             </TabsTrigger>

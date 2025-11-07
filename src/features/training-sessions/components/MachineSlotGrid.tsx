@@ -122,19 +122,6 @@ export const MachineSlotGrid: React.FC<MachineSlotGridProps> = ({
 
   return (
     <div className="flex gap-4">
-      {/* Time axis labels */}
-      <div className="flex flex-col gap-1 pt-12">
-        {timeSlots.map((slot, index) => (
-          <div
-            key={index}
-            className="text-muted-foreground flex h-16 items-center text-xs"
-            style={{ minWidth: "70px" }}
-          >
-            {slot.label.split(" - ")[0]}
-          </div>
-        ))}
-      </div>
-
       {/* Machine columns - 3-column grid */}
       <div className="grid flex-1 grid-cols-3 gap-4">
         {machines.map((machine) => (

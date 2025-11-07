@@ -161,7 +161,7 @@ export const TimeSlot = memo<TimeSlotProps>(
           <Badge
             variant="secondary"
             className={cn(
-              "absolute top-2 right-2 shrink-0 border text-xs",
+              "absolute top-1 right-1 shrink-0 border px-1.5 py-0 text-[10px]",
               getSessionTypeBadgeColor(session.session_type)
             )}
           >
