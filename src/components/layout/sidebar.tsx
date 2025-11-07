@@ -18,11 +18,12 @@ import {
   Settings,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 import { ThemeSwitcher } from "@/components/kibo-ui/theme-switcher";
 import { useTheme } from "@/components/providers/theme-provider";
+import { useAuth } from "@/hooks/use-auth";
 
 interface SidebarProps {
   className?: string;
@@ -32,28 +33,73 @@ interface SidebarProps {
 export function Sidebar({ className, onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
 
-  const overviewNav = [{ name: "Dashboard", href: "/", icon: Home }] as const;
+  // Determine user role
+  const isAdmin = user?.role === "admin";
+  const isStaff = isAdmin || user?.role === "trainer";
 
-  const peopleNav = [
-    { name: "Members", href: "/members", icon: Users },
-    { name: "Trainers", href: "/trainers", icon: UserCheck },
-    { name: "Training Sessions", href: "/training-sessions", icon: Calendar },
-  ] as const;
+  /**
+   * Memoized navigation sections based on user role
+   * - Staff (trainers + admins): See Members and Training Sessions
+   * - Admin only: See all sections (Overview, Business, Insights, Studio)
+   */
+  const navigationSections = useMemo(() => {
+    const sections: Array<{
+      title: string;
+      items: Array<{ name: string; href: string; icon: React.ElementType }>;
+    }> = [];
 
-  const businessNav = [
-    { name: "Plans", href: "/plans", icon: Package },
-    { name: "Subscriptions", href: "/subscriptions", icon: CreditCard },
-    { name: "Payments", href: "/payments", icon: DollarSign },
-  ] as const;
+    // Staff-accessible section (both trainers and admins)
+    if (isStaff) {
+      sections.push({
+        title: "People Management",
+        items: [
+          { name: "Members", href: "/members", icon: Users },
+          {
+            name: "Training Sessions",
+            href: "/training-sessions",
+            icon: Calendar,
+          },
+        ],
+      });
+    }
 
-  const insightsNav = [
-    { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  ] as const;
+    // Admin-only sections
+    if (isAdmin) {
+      sections.unshift({
+        title: "Overview",
+        items: [{ name: "Dashboard", href: "/", icon: Home }],
+      });
 
-  const studioNav = [
-    { name: "Settings", href: "/settings/studio", icon: Settings },
-  ] as const;
+      sections.push(
+        {
+          title: "Trainers",
+          items: [{ name: "Trainers", href: "/trainers", icon: UserCheck }],
+        },
+        {
+          title: "Business Operations",
+          items: [
+            { name: "Plans", href: "/plans", icon: Package },
+            { name: "Subscriptions", href: "/subscriptions", icon: CreditCard },
+            { name: "Payments", href: "/payments", icon: DollarSign },
+          ],
+        },
+        {
+          title: "Insights",
+          items: [{ name: "Analytics", href: "/analytics", icon: BarChart3 }],
+        },
+        {
+          title: "Studio",
+          items: [
+            { name: "Settings", href: "/settings/studio", icon: Settings },
+          ],
+        }
+      );
+    }
+
+    return sections;
+  }, [isAdmin, isStaff]);
 
   const isActiveRoute = (href: string) => {
     return pathname === href || (href !== "/" && pathname.startsWith(href));
@@ -95,53 +141,18 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
             Gym Manager
           </h2>
 
-          {/* Overview Section */}
-          <div className="space-y-1">
-            <h4 className="text-muted-foreground px-4 py-2 text-sm font-semibold">
-              Overview
-            </h4>
-            {renderNavItems(overviewNav)}
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* People Management Section */}
-          <div className="space-y-1">
-            <h4 className="text-muted-foreground px-4 py-2 text-sm font-semibold">
-              People Management
-            </h4>
-            {renderNavItems(peopleNav)}
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* Business Operations Section */}
-          <div className="space-y-1">
-            <h4 className="text-muted-foreground px-4 py-2 text-sm font-semibold">
-              Business Operations
-            </h4>
-            {renderNavItems(businessNav)}
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* Insights Section */}
-          <div className="space-y-1">
-            <h4 className="text-muted-foreground px-4 py-2 text-sm font-semibold">
-              Insights
-            </h4>
-            {renderNavItems(insightsNav)}
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* Studio Section */}
-          <div className="space-y-1">
-            <h4 className="text-muted-foreground px-4 py-2 text-sm font-semibold">
-              Studio
-            </h4>
-            {renderNavItems(studioNav)}
-          </div>
+          {/* Dynamic navigation sections based on role */}
+          {navigationSections.map((section, index) => (
+            <div key={section.title}>
+              {index > 0 && <Separator className="my-4" />}
+              <div className="space-y-1">
+                <h4 className="text-muted-foreground px-4 py-2 text-sm font-semibold">
+                  {section.title}
+                </h4>
+                {renderNavItems(section.items)}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

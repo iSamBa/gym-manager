@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,26 +25,50 @@ export function LoginForm({
   const { signIn, isLoading } = useAuth();
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  /**
+   * Handle login form submission with role-based redirects
+   * - Admins redirect to dashboard (/)
+   * - Trainers redirect to training sessions (/training-sessions)
+   * - Respects middleware redirect parameter if present
+   */
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError("");
 
-    const { user, error: signInError } = await signIn(email, password);
+      const { user, error: signInError } = await signIn(email, password);
 
-    if (signInError) {
-      setError(
-        (signInError as { message?: string })?.message || "Failed to sign in"
-      );
-      return;
-    }
+      if (signInError) {
+        setError(
+          (signInError as { message?: string })?.message || "Failed to sign in"
+        );
+        return;
+      }
 
-    if (user) {
-      // Check for redirect parameter from middleware
-      const searchParams = new URLSearchParams(window.location.search);
-      const redirectTo = searchParams.get("redirect") || "/";
-      router.push(redirectTo);
-    }
-  };
+      if (user) {
+        // Check for redirect parameter from middleware
+        const searchParams = new URLSearchParams(window.location.search);
+        const middlewareRedirect = searchParams.get("redirect");
+
+        // If middleware provided a redirect, use it
+        if (middlewareRedirect) {
+          router.push(middlewareRedirect);
+          return;
+        }
+
+        // Role-based redirect
+        if (user.role === "admin") {
+          router.push("/");
+        } else if (user.role === "trainer") {
+          router.push("/training-sessions");
+        } else {
+          // Fallback for unknown roles
+          router.push("/login");
+        }
+      }
+    },
+    [email, password, signIn, router]
+  );
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>

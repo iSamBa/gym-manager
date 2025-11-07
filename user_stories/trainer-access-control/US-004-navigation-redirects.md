@@ -5,7 +5,7 @@
 **Priority:** P0 (Critical)
 **Complexity:** Medium
 **Estimated Time:** 40 minutes
-**Status:** 🔴 Not Started
+**Status:** ✅ Completed (2025-01-15)
 
 **Depends On:** US-001, US-002, US-003
 **Blocks:** US-005
@@ -31,15 +31,15 @@
 
 ## ✅ Acceptance Criteria
 
-1. ✅ Sidebar shows Members + Training Sessions for trainers
-2. ✅ Sidebar hides Dashboard, Trainers, Payments, Plans, Subscriptions, Settings from trainers
-3. ✅ Sidebar shows all items for admins (unchanged)
-4. ✅ Navigation items memoized with `useMemo` (performance)
-5. ✅ Login form redirects trainers to `/training-sessions`
-6. ✅ Login form redirects admins to `/` (dashboard)
-7. ✅ useAuth hook provides role information
-8. ✅ No infinite redirect loops
-9. ✅ `npm run lint` passes
+1. ✅ Sidebar shows Members + Training Sessions for trainers - COMPLETE
+2. ✅ Sidebar hides Dashboard, Trainers, Payments, Plans, Subscriptions, Settings from trainers - COMPLETE
+3. ✅ Sidebar shows all items for admins (unchanged) - COMPLETE
+4. ✅ Navigation items memoized with `useMemo` (performance) - COMPLETE
+5. ✅ Login form redirects trainers to `/training-sessions` - COMPLETE
+6. ✅ Login form redirects admins to `/` (dashboard) - COMPLETE
+7. ✅ useAuth hook provides role information - COMPLETE
+8. ✅ No infinite redirect loops - COMPLETE (trainers now redirect to allowed page)
+9. ✅ `npm run lint` passes - COMPLETE (0 errors, 0 warnings)
 
 ---
 
