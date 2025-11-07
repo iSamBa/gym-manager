@@ -65,6 +65,7 @@ interface AdvancedMemberTableProps {
   showActions?: boolean;
   className?: string;
   columnVisibility?: ColumnVisibility | null;
+  isAdmin?: boolean;
 }
 
 interface SortConfig {
@@ -82,9 +83,19 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
   showActions = true,
   className,
   columnVisibility: propColumnVisibility,
+  isAdmin = true,
 }: AdvancedMemberTableProps) {
-  // Use provided visibility or default
-  const columnVisibility = propColumnVisibility || DEFAULT_VISIBILITY;
+  // Get default visibility based on role
+  const getDefaultVisibility = useCallback((): ColumnVisibility => {
+    return {
+      ...DEFAULT_VISIBILITY,
+      balanceDue: isAdmin,
+      lastPayment: isAdmin,
+    };
+  }, [isAdmin]);
+
+  // Use provided visibility or role-based default
+  const columnVisibility = propColumnVisibility || getDefaultVisibility();
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
     new Set()
   );

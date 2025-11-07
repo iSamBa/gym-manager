@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/lib/store";
 
 export function LoginForm({
   className,
@@ -25,26 +26,69 @@ export function LoginForm({
   const { signIn, isLoading } = useAuth();
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  /**
+   * Handle login form submission with role-based redirects
+   * - Admins redirect to dashboard (/)
+   * - Trainers redirect to training sessions (/training-sessions)
+   * - Respects middleware redirect parameter if present
+   */
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError("");
 
-    const { user, error: signInError } = await signIn(email, password);
+      const { user, error: signInError } = await signIn(email, password);
 
-    if (signInError) {
-      setError(
-        (signInError as { message?: string })?.message || "Failed to sign in"
-      );
-      return;
-    }
+      if (signInError) {
+        setError(
+          (signInError as { message?: string })?.message || "Failed to sign in"
+        );
+        return;
+      }
 
-    if (user) {
-      // Check for redirect parameter from middleware
-      const searchParams = new URLSearchParams(window.location.search);
-      const redirectTo = searchParams.get("redirect") || "/";
-      router.push(redirectTo);
-    }
-  };
+      if (user) {
+        // Check for redirect parameter from middleware
+        const searchParams = new URLSearchParams(window.location.search);
+        const middlewareRedirect = searchParams.get("redirect");
+
+        // If middleware provided a redirect, use it
+        if (middlewareRedirect) {
+          router.push(middlewareRedirect);
+          return;
+        }
+
+        // Wait for profile to load (AuthProvider loads user_profiles data)
+        // Poll for the user profile with role data (max 3 seconds)
+        const maxAttempts = 30; // 30 attempts * 100ms = 3 seconds max
+        let attempts = 0;
+
+        const checkProfile = () => {
+          const { user: profileUser } = useAuthStore.getState();
+
+          if (profileUser?.role) {
+            // Profile loaded with role - perform role-based redirect
+            if (profileUser.role === "admin") {
+              router.push("/");
+            } else if (profileUser.role === "trainer") {
+              router.push("/training-sessions");
+            } else {
+              // Unknown role - redirect to login
+              router.push("/login");
+            }
+          } else if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(checkProfile, 100);
+          } else {
+            // Timeout - fallback to dashboard
+            router.push("/");
+          }
+        };
+
+        checkProfile();
+      }
+    },
+    [email, password, signIn, router]
+  );
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>

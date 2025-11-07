@@ -317,18 +317,22 @@ export default function Home() {
 
         {/* Analytics Charts */}
         <div className="flex gap-6">
-          <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-            <MemberEvolutionChart
-              data={memberEvolutionData}
-              isLoading={isEvolutionLoading}
-            />
-          </Suspense>
-          <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-            <MemberStatusDistributionChart
-              data={memberStatusData}
-              isLoading={isStatusDistributionLoading}
-            />
-          </Suspense>
+          <div className="flex-[0.6]">
+            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+              <MemberEvolutionChart
+                data={memberEvolutionData}
+                isLoading={isEvolutionLoading}
+              />
+            </Suspense>
+          </div>
+          <div className="flex-[0.4]">
+            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+              <MemberStatusDistributionChart
+                data={memberStatusData}
+                isLoading={isStatusDistributionLoading}
+              />
+            </Suspense>
+          </div>
         </div>
       </div>
     </MainLayout>

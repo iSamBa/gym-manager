@@ -8,6 +8,8 @@ import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRequireStaff } from "@/hooks/use-require-auth";
+import { useAuth } from "@/hooks/use-auth";
 import {
   MemberProfileHeader,
   EditMemberDialog,
@@ -49,6 +51,11 @@ interface MemberDetailPageProps {
 function MemberDetailPage({ params }: MemberDetailPageProps) {
   const { id } = use(params);
   const router = useRouter();
+
+  // Require staff role (admin or trainer) for this page
+  const { isLoading: isAuthLoading } = useRequireStaff("/login");
+  const { isAdmin } = useAuth();
+
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditingEquipment, setIsEditingEquipment] = useState(false);
@@ -192,7 +199,7 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
     [refetch]
   );
 
-  if (isLoading) {
+  if (isAuthLoading || isLoading) {
     return (
       <MainLayout>
         <div className="space-y-6">
@@ -257,24 +264,28 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
         <MemberProfileHeader
           member={member}
           onEdit={() => setIsEditDialogOpen(true)}
-          onDelete={handleDeleteMember}
+          onDelete={isAdmin ? handleDeleteMember : undefined}
           onSessionSuccess={refetch}
-          onPaymentSuccess={refetch}
-          onConvert={() => setIsConvertDialogOpen(true)}
+          onPaymentSuccess={isAdmin ? refetch : undefined}
+          onConvert={isAdmin ? () => setIsConvertDialogOpen(true) : undefined}
         />
 
         {/* Main Content: 2-Column Layout with Tabs */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid auto-rows-min grid-cols-1 items-start gap-6 lg:grid-cols-3">
           {/* Left Column: Tabbed Content */}
-          <div className="lg:col-span-2">
+          <div className="self-start lg:col-span-2">
             <Tabs defaultValue="profile" className="w-full">
               <TabsList className="mb-6">
                 <TabsTrigger value="profile">Profile</TabsTrigger>
                 <TabsTrigger value="training-sessions">
                   Training Sessions
                 </TabsTrigger>
-                <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-                <TabsTrigger value="payments">Payments</TabsTrigger>
+                {isAdmin && (
+                  <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
+                )}
+                {isAdmin && (
+                  <TabsTrigger value="payments">Payments</TabsTrigger>
+                )}
               </TabsList>
 
               {/* Profile Tab */}
@@ -353,22 +364,26 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
                 />
               </TabsContent>
 
-              {/* Subscriptions Tab */}
-              <TabsContent value="subscriptions">
-                <MemberSubscriptions member={member} />
-              </TabsContent>
+              {/* Subscriptions Tab - Admin Only */}
+              {isAdmin && (
+                <TabsContent value="subscriptions">
+                  <MemberSubscriptions member={member} />
+                </TabsContent>
+              )}
 
-              {/* Payments Tab */}
-              <TabsContent value="payments">
-                <MemberPayments member={member} />
-              </TabsContent>
+              {/* Payments Tab - Admin Only */}
+              {isAdmin && (
+                <TabsContent value="payments">
+                  <MemberPayments member={member} />
+                </TabsContent>
+              )}
             </Tabs>
           </div>
 
           {/* Right Column: Sidebar */}
-          <div className="space-y-6">
-            {/* Subscription Status Card */}
-            <SubscriptionStatusCard member={member} />
+          <div className="space-y-6 self-start">
+            {/* Subscription Status Card - Admin Only (shows balance due, last payment) */}
+            {isAdmin && <SubscriptionStatusCard member={member} />}
 
             {/* Enhanced Activity Summary Card */}
             <EnhancedActivityCard member={member} />

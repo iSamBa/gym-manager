@@ -22,7 +22,8 @@ import {
   useExportMembers,
 } from "@/features/members/hooks";
 import { memberUtils } from "@/features/members/lib/database-utils";
-import { useRequireAdmin } from "@/hooks/use-require-auth";
+import { useRequireStaff } from "@/hooks/use-require-auth";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Users,
   UserCheck,
@@ -44,9 +45,9 @@ export default function MembersPage() {
     useState<ColumnVisibility | null>(null);
   const router = useRouter();
 
-  // Require admin role for entire page
-  const { isLoading: isAuthLoading, hasRequiredRole } =
-    useRequireAdmin("/login");
+  // Require staff role (admin or trainer) for entire page
+  const { isLoading: isAuthLoading } = useRequireStaff("/login");
+  const { isAdmin } = useAuth();
 
   // Simplified filter state management
   const { filters, updateFilters, databaseFilters } = useSimpleMemberFilters();
@@ -103,10 +104,6 @@ export default function MembersPage() {
         </div>
       </MainLayout>
     );
-  }
-
-  if (!hasRequiredRole) {
-    return null; // Will redirect to login
   }
 
   // Extract stats from consolidated data
@@ -234,19 +231,22 @@ export default function MembersPage() {
               {/* Column Visibility Toggle */}
               <ColumnVisibilityToggle
                 onVisibilityChange={setColumnVisibility}
+                isAdmin={isAdmin}
               />
 
-              {/* Export Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExportMembers}
-                disabled={isExporting}
-                className="gap-2"
-              >
-                <Download className="h-4 w-4" />
-                {isExporting ? "Exporting..." : "Export"}
-              </Button>
+              {/* Export Button - Admin Only */}
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportMembers}
+                  disabled={isExporting}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  {isExporting ? "Exporting..." : "Export"}
+                </Button>
+              )}
 
               {/* Background sync indicator */}
               {isRefetching && (
@@ -318,6 +318,7 @@ export default function MembersPage() {
             onMemberClick={handleMemberClick}
             onMemberHover={handleMemberHover}
             columnVisibility={columnVisibility}
+            isAdmin={isAdmin}
             className="border-0"
           />
         </Card>

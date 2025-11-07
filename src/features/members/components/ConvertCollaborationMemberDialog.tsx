@@ -89,7 +89,7 @@ export function ConvertCollaborationMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[60vw] sm:max-w-[500px]">
+      <DialogContent className="w-[90%] sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Convert to Full Member</DialogTitle>
           <DialogDescription>
