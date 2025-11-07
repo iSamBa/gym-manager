@@ -1,6 +1,15 @@
-// Main member hooks - consolidated and optimized
+// ============================================================================
+// CONSOLIDATED MEMBER HOOKS - Performance Optimization Phase 2
+// ============================================================================
+// All member CRUD, search, filtering, metrics, and conversion functionality
+// has been consolidated into use-members.ts for better performance and
+// maintainability. Hook count reduced from 10 → 4.
+//
+// Consolidation completed: 2025-11-07
+// ============================================================================
+
 export {
-  // Core CRUD operations
+  // ========== CORE CRUD OPERATIONS ==========
   useMembers,
   useMember,
   useMemberWithSubscription,
@@ -17,28 +26,34 @@ export {
   useDeleteMember,
   useMembersInfinite,
   useMembersPrefetch,
-  // Export functionality (merged from use-export-members)
+
+  // ========== EXPORT & BULK OPERATIONS ==========
   useExportMembers,
-  // Simplified bulk operations (essential functionality only)
   useBulkDeleteMembers,
   type BulkOperationResult,
-  // Query key factory
-  memberKeys,
-} from "./use-members";
 
-// Core search functionality
-export {
+  // ========== SEARCH & VALIDATION ==========
+  // (merged from use-member-search.ts)
   useDebouncedMemberSearch,
   useMemberValidation,
   useMemberPrefetch,
   useMemberCacheUtils,
-} from "./use-member-search";
 
-// Simple filtering (used in pages)
-export { useSimpleMemberFilters } from "./use-simple-member-filters";
+  // ========== FILTERING ==========
+  // (merged from use-simple-member-filters.ts)
+  useSimpleMemberFilters,
 
-// Activity metrics (US-007)
-export { useMemberActivityMetrics } from "./use-member-activity-metrics";
+  // ========== ACTIVITY METRICS ==========
+  // (merged from use-member-activity-metrics.ts)
+  useMemberActivityMetrics,
+
+  // ========== COLLABORATION CONVERSION ==========
+  // (merged from use-convert-collaboration-member.ts)
+  useConvertCollaborationMember,
+
+  // ========== QUERY KEY FACTORY ==========
+  memberKeys,
+} from "./use-members";
 
 // Member comments (US-010)
 export {

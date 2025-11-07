@@ -736,98 +736,115 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
     }
   }, [currentStep, currentStepInfo.schema, form, completedSteps]);
 
-  const handleNextStep = async () => {
+  const handleNextStep = useCallback(async () => {
     const isValid = await validateCurrentStep();
     if (isValid && currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     }
-  };
+  }, [validateCurrentStep, currentStep]); // steps.length is constant
 
-  const handlePreviousStep = () => {
+  const handlePreviousStep = useCallback(() => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
-  };
+  }, [currentStep]);
 
-  const handleStepClick = async (stepId: number) => {
+  const handleStepClick = useCallback(async (stepId: number) => {
     // Allow free navigation to any step
     setCurrentStep(stepId);
-  };
+  }, []);
 
-  const handleSubmit = async (data: MemberFormData) => {
-    // Clean up partnership data for non-collaboration members
-    const cleanedData = { ...data };
-    if (cleanedData.member_type !== "collaboration") {
-      // Clear partnership fields if not collaboration member
-      cleanedData.partnership_company = undefined;
-      cleanedData.partnership_type = undefined;
-      cleanedData.partnership_contract_start = undefined;
-      cleanedData.partnership_contract_end = undefined;
-      cleanedData.partnership_notes = undefined;
-    } else {
-      // For collaboration members, ensure dates are properly formatted
-      // Convert empty strings to undefined for optional date fields
-      if (
-        !cleanedData.partnership_contract_start ||
-        cleanedData.partnership_contract_start.trim() === ""
-      ) {
+  const handleSubmit = useCallback(
+    async (data: MemberFormData) => {
+      // Clean up partnership data for non-collaboration members
+      const cleanedData = { ...data };
+      if (cleanedData.member_type !== "collaboration") {
+        // Clear partnership fields if not collaboration member
+        cleanedData.partnership_company = undefined;
+        cleanedData.partnership_type = undefined;
         cleanedData.partnership_contract_start = undefined;
+        cleanedData.partnership_contract_end = undefined;
+        cleanedData.partnership_notes = undefined;
+      } else {
+        // For collaboration members, ensure dates are properly formatted
+        // Convert empty strings to undefined for optional date fields
+        if (
+          !cleanedData.partnership_contract_start ||
+          cleanedData.partnership_contract_start.trim() === ""
+        ) {
+          cleanedData.partnership_contract_start = undefined;
+        }
+        // partnership_contract_end is required for collaboration, so don't clear it
       }
-      // partnership_contract_end is required for collaboration, so don't clear it
-    }
 
-    // In edit mode: validate and submit
-    if (member) {
+      // In edit mode: validate and submit
+      if (member) {
+        try {
+          await memberFormSchema.parseAsync(cleanedData);
+
+          // Submit all form data (database will handle the update)
+          await onSubmit(cleanedData);
+        } catch (error) {
+          if (error instanceof z.ZodError) {
+            // Show validation errors without jumping to steps
+            const zodError = error as z.ZodError;
+            const errorMessages = zodError.issues
+              .map((e) => `${e.path.join(".")}: ${e.message}`)
+              .join("; ");
+            toast.error("Validation Failed", {
+              description:
+                errorMessages.length > 100
+                  ? "Please check all required fields"
+                  : errorMessages,
+            });
+          }
+          throw error;
+        }
+        return;
+      }
+
+      // Create mode: step-by-step validation
+      for (const step of steps) {
+        try {
+          await step.schema.parseAsync(cleanedData);
+        } catch (error) {
+          if (error instanceof z.ZodError && !step.isOptional) {
+            toast.error(`Please complete step ${step.id}: ${step.title}`);
+            setCurrentStep(step.id);
+            return;
+          }
+        }
+      }
+
       try {
-        await memberFormSchema.parseAsync(cleanedData);
-
-        // Submit all form data (database will handle the update)
         await onSubmit(cleanedData);
+        // No localStorage cleanup needed - we don't persist form data anymore
       } catch (error) {
-        if (error instanceof z.ZodError) {
-          // Show validation errors without jumping to steps
-          const zodError = error as z.ZodError;
-          const errorMessages = zodError.issues
-            .map((e) => `${e.path.join(".")}: ${e.message}`)
-            .join("; ");
-          toast.error("Validation Failed", {
-            description:
-              errorMessages.length > 100
-                ? "Please check all required fields"
-                : errorMessages,
-          });
-        }
-        throw error;
+        logger.error("Failed to submit form:", { error });
+        throw error; // Re-throw to let parent handle the error
       }
-      return;
-    }
-
-    // Create mode: step-by-step validation
-    for (const step of steps) {
-      try {
-        await step.schema.parseAsync(cleanedData);
-      } catch (error) {
-        if (error instanceof z.ZodError && !step.isOptional) {
-          toast.error(`Please complete step ${step.id}: ${step.title}`);
-          setCurrentStep(step.id);
-          return;
-        }
-      }
-    }
-
-    try {
-      await onSubmit(cleanedData);
-      // No localStorage cleanup needed - we don't persist form data anymore
-    } catch (error) {
-      logger.error("Failed to submit form:", { error });
-      throw error; // Re-throw to let parent handle the error
-    }
-  };
+    },
+    [member, onSubmit]
+  ); // steps is constant
 
   // Handle cancel - no cleanup needed
   const handleCancel = useCallback(() => {
     onCancel();
   }, [onCancel]);
+
+  // Memoized callbacks for inline functions (Performance Phase 2)
+  const handleStepClickIfAccessible = useCallback(
+    (stepId: number, isAccessible: boolean) => () => {
+      if (isAccessible) {
+        handleStepClick(stepId);
+      }
+    },
+    [handleStepClick]
+  );
+
+  const handleFormSubmit = useCallback(() => {
+    form.handleSubmit(handleSubmit)();
+  }, [form, handleSubmit]);
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -1552,7 +1569,7 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
                       "h-auto min-h-[44px] flex-1 touch-manipulation flex-col gap-1 p-2 text-xs sm:flex-initial",
                       !isAccessible && "cursor-not-allowed opacity-50"
                     )}
-                    onClick={() => isAccessible && handleStepClick(step.id)}
+                    onClick={handleStepClickIfAccessible(step.id, isAccessible)}
                     disabled={!isAccessible}
                     aria-current={isCurrent ? "step" : undefined}
                     aria-label={`Step ${step.id}: ${step.title}${step.isOptional ? " (optional)" : ""}${isCompleted ? ", completed" : ""}${isCurrent ? ", current step" : ""}`}
@@ -1636,7 +1653,7 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
           <Button
             type="button"
             disabled={isLoading}
-            onClick={() => form.handleSubmit(handleSubmit)()}
+            onClick={handleFormSubmit}
             className="min-h-[44px]"
           >
             {isLoading ? (
@@ -1703,7 +1720,7 @@ export const ProgressiveMemberForm = memo(function ProgressiveMemberForm({
                 type="submit"
                 disabled={isLoading}
                 className="flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 sm:ml-auto sm:w-auto"
-                onClick={() => form.handleSubmit(handleSubmit)()}
+                onClick={handleFormSubmit}
                 aria-label="Create member with provided information"
               >
                 {isLoading ? (

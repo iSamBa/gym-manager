@@ -308,6 +308,74 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
     window.scrollTo({ top: 0, behavior: "smooth" }); // Scroll to top on page change
   }, []);
 
+  // Memoized callbacks for inline functions (Performance Phase 2)
+  const handleRefresh = useCallback(() => refetch(), [refetch]);
+
+  const handleSetActiveStatus = useCallback(
+    () =>
+      setBulkActionDialog({
+        isOpen: true,
+        action: "status",
+        newStatus: "active",
+      }),
+    []
+  );
+
+  const handleSetInactiveStatus = useCallback(
+    () =>
+      setBulkActionDialog({
+        isOpen: true,
+        action: "status",
+        newStatus: "inactive",
+      }),
+    []
+  );
+
+  const handleSetSuspendedStatus = useCallback(
+    () =>
+      setBulkActionDialog({
+        isOpen: true,
+        action: "status",
+        newStatus: "suspended",
+      }),
+    []
+  );
+
+  const handleOpenDeleteDialog = useCallback(
+    () => setBulkActionDialog({ isOpen: true, action: "delete" }),
+    []
+  );
+
+  const handleRowClick = useCallback(
+    (member: MemberWithEnhancedDetails) => () => onMemberClick?.(member),
+    [onMemberClick]
+  );
+
+  const handleRowHover = useCallback(
+    (member: MemberWithEnhancedDetails) => () => onMemberHover?.(member),
+    [onMemberHover]
+  );
+
+  const handleFirstPage = useCallback(
+    () => handlePageChange(1),
+    [handlePageChange]
+  );
+
+  const handlePreviousPage = useCallback(
+    () => handlePageChange(Math.max(1, page - 1)),
+    [handlePageChange, page]
+  );
+
+  const handleNextPage = useCallback(
+    () => handlePageChange(Math.min(totalPages, page + 1)),
+    [handlePageChange, totalPages, page]
+  );
+
+  const handleLastPage = useCallback(
+    () => handlePageChange(totalPages),
+    [handlePageChange, totalPages]
+  );
+
   const SortButton = memo(function SortButton({
     field,
     children,
@@ -315,12 +383,14 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
     field: SortField;
     children: React.ReactNode;
   }) {
+    const handleClick = useCallback(() => handleSort(field), [field]);
+
     return (
       <Button
         variant="ghost"
         size="sm"
         className="h-auto p-0 font-medium hover:bg-transparent"
-        onClick={() => handleSort(field)}
+        onClick={handleClick}
       >
         <span className="flex items-center gap-1">
           {children}
@@ -342,7 +412,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <p className="text-muted-foreground mb-4">Failed to load members</p>
-        <Button variant="outline" onClick={() => refetch()}>
+        <Button variant="outline" onClick={handleRefresh}>
           Try Again
         </Button>
       </div>
@@ -370,37 +440,13 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem
-                  onClick={() =>
-                    setBulkActionDialog({
-                      isOpen: true,
-                      action: "status",
-                      newStatus: "active",
-                    })
-                  }
-                >
+                <DropdownMenuItem onClick={handleSetActiveStatus}>
                   Set Active
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    setBulkActionDialog({
-                      isOpen: true,
-                      action: "status",
-                      newStatus: "inactive",
-                    })
-                  }
-                >
+                <DropdownMenuItem onClick={handleSetInactiveStatus}>
                   Set Inactive
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    setBulkActionDialog({
-                      isOpen: true,
-                      action: "status",
-                      newStatus: "suspended",
-                    })
-                  }
-                >
+                <DropdownMenuItem onClick={handleSetSuspendedStatus}>
                   Set Suspended
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -408,9 +454,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
             <Button
               variant="destructive"
               size="sm"
-              onClick={() =>
-                setBulkActionDialog({ isOpen: true, action: "delete" })
-              }
+              onClick={handleOpenDeleteDialog}
             >
               Delete Selected
             </Button>
@@ -530,8 +574,8 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                 <TableRow
                   key={member.id}
                   className="hover:bg-muted/50 cursor-pointer"
-                  onClick={() => onMemberClick?.(member)}
-                  onMouseEnter={() => onMemberHover?.(member)}
+                  onClick={handleRowClick(member)}
+                  onMouseEnter={handleRowHover(member)}
                 >
                   {showActions && (
                     <TableCell onClick={(e) => e.stopPropagation()}>
@@ -680,13 +724,13 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                       <div className="flex items-center space-x-1">
                         <AddSessionButton
                           member={member}
-                          onSuccess={() => refetch()}
+                          onSuccess={handleRefresh}
                           variant="ghost"
                           size="sm"
                         />
                         <AddPaymentButton
                           member={member}
-                          onSuccess={() => refetch()}
+                          onSuccess={handleRefresh}
                           variant="ghost"
                           size="sm"
                         />
@@ -749,7 +793,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePageChange(1)}
+                    onClick={handleFirstPage}
                     disabled={page === 1}
                   >
                     First
@@ -757,14 +801,12 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                 </PaginationItem>
 
                 <PaginationPrevious
-                  onClick={() => handlePageChange(Math.max(1, page - 1))}
+                  onClick={handlePreviousPage}
                   className={cn(page === 1 && "pointer-events-none opacity-50")}
                 />
 
                 <PaginationNext
-                  onClick={() =>
-                    handlePageChange(Math.min(totalPages, page + 1))
-                  }
+                  onClick={handleNextPage}
                   className={cn(
                     page === totalPages && "pointer-events-none opacity-50"
                   )}
@@ -774,7 +816,7 @@ const AdvancedMemberTable = memo(function AdvancedMemberTable({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePageChange(totalPages)}
+                    onClick={handleLastPage}
                     disabled={page === totalPages}
                   >
                     Last
