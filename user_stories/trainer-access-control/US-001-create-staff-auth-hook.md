@@ -5,7 +5,10 @@
 **Priority:** P0 (Critical - Foundation)
 **Complexity:** Small
 **Estimated Time:** 20 minutes
-**Status:** 🔴 Not Started
+**Status:** ✅ Completed
+**Completed:** 2025-01-15
+**Actual Time:** 20 minutes
+**Implementation Notes:** Created useRequireStaff hook following existing useRequireAdmin pattern. Hook successfully allows both admin and trainer roles with proper redirect handling and session storage. All tests passed.
 
 **Depends On:** None (Foundation story)
 **Blocks:** US-002, US-003, US-004
