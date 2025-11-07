@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/lib/store";
 
 export function LoginForm({
   className,
@@ -56,15 +57,34 @@ export function LoginForm({
           return;
         }
 
-        // Role-based redirect
-        if (user.role === "admin") {
-          router.push("/");
-        } else if (user.role === "trainer") {
-          router.push("/training-sessions");
-        } else {
-          // Fallback for unknown roles
-          router.push("/login");
-        }
+        // Wait for profile to load (AuthProvider loads user_profiles data)
+        // Poll for the user profile with role data (max 3 seconds)
+        const maxAttempts = 30; // 30 attempts * 100ms = 3 seconds max
+        let attempts = 0;
+
+        const checkProfile = () => {
+          const { user: profileUser } = useAuthStore.getState();
+
+          if (profileUser?.role) {
+            // Profile loaded with role - perform role-based redirect
+            if (profileUser.role === "admin") {
+              router.push("/");
+            } else if (profileUser.role === "trainer") {
+              router.push("/training-sessions");
+            } else {
+              // Unknown role - redirect to login
+              router.push("/login");
+            }
+          } else if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(checkProfile, 100);
+          } else {
+            // Timeout - fallback to dashboard
+            router.push("/");
+          }
+        };
+
+        checkProfile();
       }
     },
     [email, password, signIn, router]
