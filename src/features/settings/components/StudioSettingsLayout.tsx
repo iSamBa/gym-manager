@@ -2,11 +2,11 @@
 
 import { memo, useCallback, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
 import { OpeningHoursTab } from "./OpeningHoursTab";
 import { PlanningTab } from "./PlanningTab";
 import { MultiSiteSessionsTab } from "./MultiSiteSessionsTab";
 import { GeneralTab } from "./GeneralTab";
+import { InvoiceSettingsTab } from "./InvoiceSettingsTab";
 import { Clock, CreditCard, Building, Settings, Users } from "lucide-react";
 
 function StudioSettingsLayoutComponent() {
@@ -50,12 +50,9 @@ function StudioSettingsLayoutComponent() {
             <Users className="h-4 w-4" />
             Multi-Site Sessions
           </TabsTrigger>
-          <TabsTrigger value="payment" disabled className="gap-2">
+          <TabsTrigger value="invoices" className="gap-2">
             <CreditCard className="h-4 w-4" />
-            Payment
-            <span className="text-muted-foreground ml-2 text-xs">
-              (Coming Soon)
-            </span>
+            Invoices
           </TabsTrigger>
         </TabsList>
 
@@ -75,12 +72,8 @@ function StudioSettingsLayoutComponent() {
           <MultiSiteSessionsTab />
         </TabsContent>
 
-        <TabsContent value="payment">
-          <Card className="p-6">
-            <p className="text-muted-foreground">
-              Payment settings coming soon...
-            </p>
-          </Card>
+        <TabsContent value="invoices">
+          <InvoiceSettingsTab />
         </TabsContent>
       </Tabs>
     </div>

@@ -8,11 +8,11 @@
 **Current Phase:** Infrastructure Complete
 
 ```
-Progress: ████████░░░░░░░░░░░░ 40% Complete
+Progress: ████████████░░░░░░░░ 60% Complete
 
 Infrastructure ████████████████████ 100%
 US-001         ████████████████████ 100%
-US-002         ░░░░░░░░░░░░░░░░░░░░   0%
+US-002         ████████████████████ 100%
 US-003         ░░░░░░░░░░░░░░░░░░░░   0%
 US-004         ░░░░░░░░░░░░░░░░░░░░   0%
 US-005         ░░░░░░░░░░░░░░░░░░░░   0%
@@ -22,6 +22,21 @@ US-006         ░░░░░░░░░░░░░░░░░░░░   0%
 ---
 
 ## ✅ Completed
+
+### US-002: Invoice Settings Tab
+
+**Completed:** 2025-01-08 - ✅ All acceptance criteria met
+
+- [x] `InvoiceSettingsTab` component with read/edit modes
+- [x] `use-invoice-settings` hook for CRUD operations
+- [x] VAT rate input (0-100%, default 20%)
+- [x] Invoice footer notes textarea (max 500 chars, with counter)
+- [x] Auto-generate toggle checkbox (default: enabled)
+- [x] Integration with StudioSettingsLayout (renamed "Payment" to "Invoices")
+- [x] 21 unit tests for hook (all passing)
+- [x] 26 unit tests for component (all passing)
+- [x] 0 linting errors/warnings
+- [x] Successful build
 
 ### US-001: General Settings Tab
 
@@ -118,23 +133,32 @@ _No user stories in progress yet._
 
 ### US-002: Invoice Settings Tab
 
-**Status:** ⏸️ Not Started
+**Status:** ✅ Completed
 **Priority:** P0 (Must Have)
 **Complexity:** Small
-**Estimated Duration:** 1-2 hours
+**Completed:** 2025-01-08
+**Duration:** 1.5 hours
 
 **Acceptance Criteria:**
 
-- [ ] Invoice settings tab enabled in StudioSettingsLayout
-- [ ] VAT rate input (percentage 0-100)
-- [ ] Invoice footer notes textarea
-- [ ] Auto-generate toggle checkbox
-- [ ] Settings saved to `studio_settings` table
-- [ ] Unit tests for components and hooks
+- [x] Invoice settings tab enabled in StudioSettingsLayout
+- [x] VAT rate input (percentage 0-100)
+- [x] Invoice footer notes textarea
+- [x] Auto-generate toggle checkbox
+- [x] Settings saved to `studio_settings` table
+- [x] Unit tests for components and hooks
 
-**Dependencies:** None (can be done in parallel with US-001)
+**Implementation Notes:**
 
-**Notes:** _Simpler than US-001, no file upload required_
+- Created `use-invoice-settings` hook wrapping `useStudioSettings`
+- Built `InvoiceSettingsTab` with read/edit modes
+- Renamed "Payment" tab to "Invoices" in StudioSettingsLayout
+- VAT rate validation (0-100%) with HTML5 input constraints
+- Footer notes with 500 character limit and live counter
+- Auto-generate toggle with clear explanatory text
+- All tests passing (47 tests total: 21 hook + 26 component)
+- Linting: 0 errors, 0 warnings
+- Build: Successful
 
 ---
 
@@ -240,33 +264,33 @@ _No user stories in progress yet._
 
 ### Code Quality
 
-| Metric            | Target  | Current       | Status  |
-| ----------------- | ------- | ------------- | ------- |
-| Test Coverage     | >80%    | 100% (US-001) | ✅ Pass |
-| ESLint Errors     | 0       | 0             | ✅ Pass |
-| TypeScript Errors | 0       | 0             | ✅ Pass |
-| Build Status      | Success | Success       | ✅ Pass |
+| Metric            | Target  | Current               | Status  |
+| ----------------- | ------- | --------------------- | ------- |
+| Test Coverage     | >80%    | 100% (US-001, US-002) | ✅ Pass |
+| ESLint Errors     | 0       | 0                     | ✅ Pass |
+| TypeScript Errors | 0       | 0                     | ✅ Pass |
+| Build Status      | Success | Success               | ✅ Pass |
 
 ### Performance
 
 | Metric               | Target | Current | Status  |
 | -------------------- | ------ | ------- | ------- |
-| Component Count      | TBD    | 3       | ✅ Pass |
-| Hook Count           | <4     | 1       | ✅ Pass |
-| Bundle Size Increase | <50KB  | ~8KB    | ✅ Pass |
+| Component Count      | TBD    | 4       | ✅ Pass |
+| Hook Count           | <4     | 2       | ✅ Pass |
+| Bundle Size Increase | <50KB  | ~10KB   | ✅ Pass |
 
 ---
 
 ## 🎯 Current Sprint
 
 **Sprint Goal:** Complete Foundation (US-001, US-002)
-**Sprint Duration:** TBD
-**Sprint Status:** Not Started
+**Sprint Duration:** 2025-01-08
+**Sprint Status:** ✅ Completed
 
 **Sprint Backlog:**
 
-- [ ] US-001: General Settings Tab
-- [ ] US-002: Invoice Settings Tab
+- [x] US-001: General Settings Tab - ✅ Completed (2.5 hours)
+- [x] US-002: Invoice Settings Tab - ✅ Completed (1.5 hours)
 
 ---
 
@@ -306,14 +330,24 @@ _None identified_
 
 ## 📝 Implementation Notes
 
-### 2025-01-08: Infrastructure Complete
+### 2025-01-08: Foundation Sprint Complete (US-001, US-002)
 
 **Completed:**
 
-- Database schema fully implemented
-- Storage bucket and policies configured
-- TypeScript types defined
-- Documentation generated
+- US-001: General Settings Tab (2.5 hours)
+- US-002: Invoice Settings Tab (1.5 hours)
+- Total: 4 hours for complete settings foundation
+- All tests passing (114 tests combined)
+- 0 linting errors/warnings
+- Successful production build
+
+**Key Achievements:**
+
+- Settings infrastructure fully functional
+- Both tabs use consistent read/edit mode pattern
+- Excellent test coverage (100%)
+- Performance optimizations applied (React.memo, useCallback)
+- Clean code following CLAUDE.md guidelines
 
 **Decisions Made:**
 
@@ -324,8 +358,8 @@ _None identified_
 
 **Next Steps:**
 
-- Begin US-001 implementation
-- Can parallelize US-001 and US-002
+- Begin US-003: Invoice PDF Generation Engine (largest story)
+- US-003 depends on US-001 and US-002 (settings infrastructure)
 
 ---
 
