@@ -27,7 +27,7 @@ function SettingsDisplay({ settings }: { settings: InvoiceSettings }) {
     <div className="space-y-6">
       {/* Tax Configuration */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Tax Configuration</h3>
+        <h3 className="font-semibold">Tax Configuration</h3>
         <div className="grid gap-4">
           <div>
             <p className="text-muted-foreground text-sm">VAT Rate</p>
@@ -38,7 +38,7 @@ function SettingsDisplay({ settings }: { settings: InvoiceSettings }) {
 
       {/* Invoice Customization */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Invoice Customization</h3>
+        <h3 className="font-semibold">Invoice Customization</h3>
         <div className="grid gap-4">
           <div>
             <p className="text-muted-foreground text-sm">Footer Notes</p>
@@ -55,7 +55,7 @@ function SettingsDisplay({ settings }: { settings: InvoiceSettings }) {
 
       {/* Automation */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Automation</h3>
+        <h3 className="font-semibold">Automation</h3>
         <div className="grid gap-4">
           <div>
             <p className="text-muted-foreground text-sm">
@@ -169,7 +169,7 @@ function SettingsForm({
 
       {/* Tax Configuration Section */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Tax Configuration</h3>
+        <h3 className="font-semibold">Tax Configuration</h3>
         <div className="space-y-2">
           <Label htmlFor="vat-rate">
             VAT Rate <span className="text-destructive">*</span>
@@ -196,7 +196,7 @@ function SettingsForm({
 
       {/* Invoice Customization Section */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Invoice Customization</h3>
+        <h3 className="font-semibold">Invoice Customization</h3>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="footer-notes">Footer Notes (Optional)</Label>
@@ -218,7 +218,7 @@ function SettingsForm({
 
       {/* Automation Section */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Automation</h3>
+        <h3 className="font-semibold">Automation</h3>
         <div className="flex items-start space-x-3 rounded-lg border p-4">
           <Checkbox
             id="auto-generate"

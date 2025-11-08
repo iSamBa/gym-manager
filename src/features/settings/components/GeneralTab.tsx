@@ -35,7 +35,7 @@ function SettingsDisplay({ settings }: { settings: GeneralSettings }) {
 
       {/* Company Information */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Company Information</h3>
+        <h3 className="font-semibold">Company Information</h3>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <p className="text-muted-foreground text-sm">Business Name</p>
@@ -61,7 +61,7 @@ function SettingsDisplay({ settings }: { settings: GeneralSettings }) {
 
       {/* Contact Information */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Contact Information</h3>
+        <h3 className="font-semibold">Contact Information</h3>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <p className="text-muted-foreground text-sm">Phone</p>
