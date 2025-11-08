@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { OpeningHoursTab } from "./OpeningHoursTab";
 import { PlanningTab } from "./PlanningTab";
 import { MultiSiteSessionsTab } from "./MultiSiteSessionsTab";
+import { GeneralTab } from "./GeneralTab";
 import { Clock, CreditCard, Building, Settings, Users } from "lucide-react";
 
 function StudioSettingsLayoutComponent() {
@@ -45,12 +46,9 @@ function StudioSettingsLayoutComponent() {
             <Users className="h-4 w-4" />
             Multi-Site Sessions
           </TabsTrigger>
-          <TabsTrigger value="general" disabled className="gap-2">
+          <TabsTrigger value="general" className="gap-2">
             <Building className="h-4 w-4" />
             General
-            <span className="text-muted-foreground ml-2 text-xs">
-              (Coming Soon)
-            </span>
           </TabsTrigger>
           <TabsTrigger value="payment" disabled className="gap-2">
             <CreditCard className="h-4 w-4" />
@@ -74,11 +72,7 @@ function StudioSettingsLayoutComponent() {
         </TabsContent>
 
         <TabsContent value="general">
-          <Card className="p-6">
-            <p className="text-muted-foreground">
-              General settings coming soon...
-            </p>
-          </Card>
+          <GeneralTab />
         </TabsContent>
 
         <TabsContent value="payment">

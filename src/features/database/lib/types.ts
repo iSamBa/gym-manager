@@ -62,6 +62,7 @@ export type SessionType =
   | "collaboration" // Commercial partnership/influencer (guest)
   | "makeup" // Additional session (bypasses weekly limit)
   | "non_bookable"; // Time blocker (no member needed)
+export type InvoiceStatus = "draft" | "issued" | "paid" | "cancelled";
 
 // Member Profile Enhancement - Equipment & Referral Tracking
 export type UniformSize = "XS" | "S" | "M" | "L" | "XL";
@@ -91,11 +92,36 @@ export interface Address {
   country?: string;
 }
 
+// Business address interface for general settings
+export interface BusinessAddress {
+  street: string;
+  city: string;
+  postal_code: string;
+  country: string;
+}
+
 // Emergency contact interface for JSON field
 export interface EmergencyContact {
   name: string;
   relationship: string;
   phone: string;
+}
+
+// General Settings (for studio-wide configuration)
+export interface GeneralSettings {
+  business_name: string;
+  business_address: BusinessAddress;
+  tax_id: string; // ICE number
+  phone: string;
+  email: string;
+  logo_url?: string; // Path to logo in Supabase Storage
+}
+
+// Invoice Settings (invoice-specific configuration)
+export interface InvoiceSettings {
+  vat_rate: number; // Percentage (e.g., 20 for 20%)
+  invoice_footer_notes?: string; // Optional custom footer text
+  auto_generate: boolean; // Auto-generate invoice on payment
 }
 
 // Collaboration partnership details (for collaboration members)
@@ -427,6 +453,56 @@ export interface SubscriptionPayment {
 }
 
 // PaymentReminder table has been removed - feature not implemented
+
+// Invoices
+export interface Invoice {
+  id: string;
+  invoice_number: string; // Format: DDMMYYYY-XX (e.g., 01052025-01)
+  payment_id?: string; // Reference to subscription_payments
+  member_id: string;
+  subscription_id?: string;
+  issue_date: string;
+  amount: number;
+  tax_amount: number;
+  total_amount: number;
+  // Business info snapshot (from general settings at time of generation)
+  business_name?: string;
+  business_address?: BusinessAddress;
+  business_tax_id?: string;
+  business_phone?: string;
+  business_email?: string;
+  business_logo_url?: string;
+  // Invoice configuration snapshot
+  vat_rate?: number;
+  footer_notes?: string;
+  // File storage
+  pdf_url?: string; // Path to PDF in Supabase Storage
+  status: InvoiceStatus;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Invoice with member details
+ * Used when displaying invoices with customer information
+ */
+export interface InvoiceWithMember extends Invoice {
+  members?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+}
+
+/**
+ * Invoice with payment details
+ * Used when displaying invoices with payment information
+ */
+export interface InvoiceWithPayment extends Invoice {
+  subscription_payments?: SubscriptionPayment;
+}
 
 // Trainers and Classes
 export interface TrainerSpecialization {
