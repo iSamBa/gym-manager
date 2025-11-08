@@ -205,6 +205,13 @@ function BusinessInfoFormComponent({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Logo Upload Section - at top without label */}
+      <LogoUploadField
+        currentLogoUrl={initialData?.logo_url}
+        onChange={setLogoFile}
+        disabled={isSaving}
+      />
+
       {/* Company Information Section */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Company Information</h3>
@@ -345,16 +352,6 @@ function BusinessInfoFormComponent({
             <p className="text-destructive text-sm">{errors.email}</p>
           )}
         </div>
-      </div>
-
-      {/* Logo Upload Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Company Logo</h3>
-        <LogoUploadField
-          currentLogoUrl={initialData?.logo_url}
-          onChange={setLogoFile}
-          disabled={isSaving}
-        />
       </div>
 
       {/* Form Actions */}

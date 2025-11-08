@@ -21,6 +21,18 @@ import type { GeneralSettings } from "@/features/database/lib/types";
 function SettingsDisplay({ settings }: { settings: GeneralSettings }) {
   return (
     <div className="space-y-6">
+      {/* Logo - displayed at top without label */}
+      {settings.logo_url && (
+        <div className="flex items-center justify-start">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={settings.logo_url}
+            alt="Company logo"
+            className="max-h-[120px] max-w-[200px] rounded-lg border object-contain"
+          />
+        </div>
+      )}
+
       {/* Company Information */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Company Information</h3>
@@ -61,21 +73,6 @@ function SettingsDisplay({ settings }: { settings: GeneralSettings }) {
           </div>
         </div>
       </div>
-
-      {/* Logo */}
-      {settings.logo_url && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Company Logo</h3>
-          <div className="flex items-center justify-start">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={settings.logo_url}
-              alt="Company logo"
-              className="max-h-[120px] max-w-[200px] rounded-lg border object-contain"
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
