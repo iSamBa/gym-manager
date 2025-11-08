@@ -163,51 +163,30 @@ function GeneralTabComponent() {
     );
   }
 
-  // Empty state (no settings configured yet)
-  if (!settings && !isEditing) {
-    return (
-      <Card className="max-w-4xl">
-        <CardHeader>
-          <CardTitle>General Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              No general settings configured yet. Click the button below to set
-              up your business information.
-            </AlertDescription>
-          </Alert>
-          <Button onClick={handleEdit}>
-            <Edit className="mr-2 h-4 w-4" />
-            Configure Settings
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Show form directly when no settings exist or when editing
+  const shouldShowForm = isEditing || !settings;
 
   return (
     <Card className="max-w-4xl">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>General Settings</CardTitle>
-        {!isEditing && settings && (
+        {!shouldShowForm && (
           <Button variant="ghost" size="sm" onClick={handleEdit}>
             <Edit className="h-4 w-4" />
           </Button>
         )}
       </CardHeader>
       <CardContent>
-        {isEditing ? (
+        {shouldShowForm ? (
           <BusinessInfoForm
             initialData={settings}
             onSave={handleSave}
             onCancel={handleCancel}
             isSaving={isSaving}
           />
-        ) : settings ? (
-          <SettingsDisplay settings={settings} />
-        ) : null}
+        ) : (
+          <SettingsDisplay settings={settings!} />
+        )}
       </CardContent>
     </Card>
   );

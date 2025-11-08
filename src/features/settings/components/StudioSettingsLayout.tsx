@@ -10,7 +10,7 @@ import { GeneralTab } from "./GeneralTab";
 import { Clock, CreditCard, Building, Settings, Users } from "lucide-react";
 
 function StudioSettingsLayoutComponent() {
-  const [activeTab, setActiveTab] = useState("opening-hours");
+  const [activeTab, setActiveTab] = useState("general");
 
   // Use useCallback for event handler
   const handleTabChange = useCallback((value: string) => {
@@ -34,6 +34,10 @@ function StudioSettingsLayoutComponent() {
         className="space-y-4"
       >
         <TabsList>
+          <TabsTrigger value="general" className="gap-2">
+            <Building className="h-4 w-4" />
+            General
+          </TabsTrigger>
           <TabsTrigger value="opening-hours" className="gap-2">
             <Clock className="h-4 w-4" />
             Opening Hours
@@ -46,10 +50,6 @@ function StudioSettingsLayoutComponent() {
             <Users className="h-4 w-4" />
             Multi-Site Sessions
           </TabsTrigger>
-          <TabsTrigger value="general" className="gap-2">
-            <Building className="h-4 w-4" />
-            General
-          </TabsTrigger>
           <TabsTrigger value="payment" disabled className="gap-2">
             <CreditCard className="h-4 w-4" />
             Payment
@@ -58,6 +58,10 @@ function StudioSettingsLayoutComponent() {
             </span>
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="general">
+          <GeneralTab />
+        </TabsContent>
 
         <TabsContent value="opening-hours">
           <OpeningHoursTab />
@@ -69,10 +73,6 @@ function StudioSettingsLayoutComponent() {
 
         <TabsContent value="multi-site">
           <MultiSiteSessionsTab />
-        </TabsContent>
-
-        <TabsContent value="general">
-          <GeneralTab />
         </TabsContent>
 
         <TabsContent value="payment">
