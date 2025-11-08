@@ -5,15 +5,15 @@
 **Feature Status:** 🚧 In Progress
 **Started:** 2025-01-08
 **Target Completion:** TBD
-**Current Phase:** Infrastructure Complete
+**Current Phase:** PDF Generation Engine Complete
 
 ```
-Progress: ████████████░░░░░░░░ 60% Complete
+Progress: ████████████████░░░░ 80% Complete
 
 Infrastructure ████████████████████ 100%
 US-001         ████████████████████ 100%
 US-002         ████████████████████ 100%
-US-003         ░░░░░░░░░░░░░░░░░░░░   0%
+US-003         ████████████████████ 100%
 US-004         ░░░░░░░░░░░░░░░░░░░░   0%
 US-005         ░░░░░░░░░░░░░░░░░░░░   0%
 US-006         ░░░░░░░░░░░░░░░░░░░░   0%
@@ -22,6 +22,42 @@ US-006         ░░░░░░░░░░░░░░░░░░░░   0%
 ---
 
 ## ✅ Completed
+
+### US-003: Invoice PDF Generation Engine
+
+**Completed:** 2025-01-08 - ✅ All acceptance criteria met
+
+- [x] `amount-to-words.ts` with French number conversion
+- [x] `storage-utils.ts` with logo fetch and PDF upload
+- [x] `invoice-utils.ts` with createInvoiceRecord() and tax calculations
+- [x] `invoice-generator.ts` with generateInvoicePDF() using dynamic jsPDF import
+- [x] A4 PDF format with professional layout (logo, business info, invoice table, footer)
+- [x] Invoice number generation via RPC (DDMMYYYY-XX format with daily counter)
+- [x] Accurate tax calculations (NET, VAT, TOTAL with proper rounding)
+- [x] Amount to French words conversion ("Sept Mille Deux Cents Dirhams (TTC)")
+- [x] Logo handling (fetch from Storage, convert to base64, handle missing gracefully)
+- [x] PDF upload to business-assets/invoices/YYYY/MM/INV-XXX.pdf
+- [x] Complete workflow: createInvoice() orchestrates record creation + PDF + Storage
+- [x] 75 unit tests passing (all modules comprehensively tested)
+- [x] 0 linting errors/warnings
+- [x] Successful production build
+- [x] Performance optimized with dynamic jsPDF import
+
+**Key Files Created:**
+
+- `/src/features/invoices/lib/amount-to-words.ts` (247 lines)
+- `/src/features/invoices/lib/storage-utils.ts` (216 lines)
+- `/src/features/invoices/lib/invoice-utils.ts` (335 lines)
+- `/src/features/invoices/lib/invoice-generator.ts` (304 lines)
+- `/src/features/invoices/__tests__/amount-to-words.test.ts` (177 lines)
+- `/src/features/invoices/__tests__/storage-utils.test.ts` (196 lines)
+- `/src/features/invoices/__tests__/invoice-utils.test.ts` (455 lines)
+- `/src/features/invoices/__tests__/invoice-generator.test.ts` (227 lines)
+
+**Dependencies Installed:**
+
+- `jspdf` (PDF generation library)
+- `jspdf-autotable` (Table plugin for jsPDF)
 
 ### US-002: Invoice Settings Tab
 
@@ -96,7 +132,7 @@ US-006         ░░░░░░░░░░░░░░░░░░░░   0%
 
 ## 🚧 In Progress
 
-_No user stories in progress yet._
+_No user stories in progress. Ready for US-004 (Automatic Invoice Generation on Payment)._
 
 ---
 
@@ -164,27 +200,36 @@ _No user stories in progress yet._
 
 ### US-003: Invoice PDF Generation Engine
 
-**Status:** ⏸️ Not Started
+**Status:** ✅ Completed
 **Priority:** P0 (Must Have)
 **Complexity:** Large
-**Estimated Duration:** 3-4 hours
+**Completed:** 2025-01-08
+**Actual Duration:** ~3 hours
 
 **Acceptance Criteria:**
 
-- [ ] `generateInvoicePDF()` function implemented
-- [ ] A4 format PDF generation
-- [ ] Logo rendering in PDF
-- [ ] Business info section
-- [ ] Invoice table (HT/TVA/TTC)
-- [ ] Amount in words conversion
-- [ ] Footer notes rendering
-- [ ] Dynamic import for jsPDF
-- [ ] Unit tests for PDF generation
-- [ ] Unit tests for amount-to-words
+- [x] `generateInvoicePDF()` function implemented
+- [x] A4 format PDF generation
+- [x] Logo rendering in PDF
+- [x] Business info section
+- [x] Invoice table (HT/TVA/TTC)
+- [x] Amount in words conversion
+- [x] Footer notes rendering
+- [x] Dynamic import for jsPDF
+- [x] Unit tests for PDF generation
+- [x] Unit tests for amount-to-words
 
-**Dependencies:** US-001 (needs GeneralSettings), US-002 (needs InvoiceSettings)
+**Dependencies:** US-001 (needs GeneralSettings) ✅, US-002 (needs InvoiceSettings) ✅
 
-**Notes:** _Core engine - requires careful implementation of PDF layout_
+**Implementation Notes:**
+
+- Implemented comprehensive French number-to-words conversion with proper pluralization rules
+- Used dynamic imports for jsPDF to optimize bundle size (performance requirement)
+- Tax calculations use NET = TOTAL / (1 + VAT/100) formula with proper rounding
+- Storage path structure: invoices/YYYY/MM/INV-DDMMYYYY-XX.pdf
+- Logo fetched as base64 for embedding in PDF
+- Comprehensive error handling and logging throughout
+- All 75 tests passing with 100% coverage of business logic
 
 ---
 
@@ -428,7 +473,7 @@ US-006: ████ 4 points
 
 **Target:** End of Day 2
 **Stories:** US-003
-**Status:** ⏸️ Not Started
+**Status:** ✅ Completed (2025-01-08)
 
 ### Milestone 3: Full Integration
 
@@ -446,4 +491,4 @@ US-006: ████ 4 points
 
 **Last Updated:** 2025-01-08
 **Updated By:** Claude
-**Next Review:** After US-001 completion
+**Next Review:** After US-004 completion

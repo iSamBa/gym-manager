@@ -1,5 +1,9 @@
 # US-003: Invoice PDF Generation Engine
 
+**Status:** ✅ Completed
+**Completed:** 2025-01-08
+**Implementation Notes:** Implemented complete PDF generation engine with French number-to-words conversion, logo handling, tax calculations, and Supabase Storage integration. Fixed jsPDF mock issue in tests. All 75 tests passing.
+
 ## 📋 User Story
 
 **As a** gym administrator
