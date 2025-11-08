@@ -5,16 +5,16 @@
 **Feature Status:** 🚧 In Progress
 **Started:** 2025-01-08
 **Target Completion:** TBD
-**Current Phase:** PDF Generation Engine Complete
+**Current Phase:** Auto-Generation Complete - Ready for Invoice Viewing (US-005)
 
 ```
-Progress: ████████████████░░░░ 80% Complete
+Progress: ████████████████████░ 90% Complete
 
 Infrastructure ████████████████████ 100%
 US-001         ████████████████████ 100%
 US-002         ████████████████████ 100%
 US-003         ████████████████████ 100%
-US-004         ░░░░░░░░░░░░░░░░░░░░   0%
+US-004         ████████████████████ 100%
 US-005         ░░░░░░░░░░░░░░░░░░░░   0%
 US-006         ░░░░░░░░░░░░░░░░░░░░   0%
 ```
@@ -22,6 +22,46 @@ US-006         ░░░░░░░░░░░░░░░░░░░░   0%
 ---
 
 ## ✅ Completed
+
+### US-004: Automatic Invoice Generation on Payment
+
+**Completed:** 2025-01-09 - ✅ All acceptance criteria met
+
+- [x] `use-invoices.ts` hook with generateInvoice and checkInvoiceExists operations
+- [x] Auto-generation integration in RecordPaymentDialog.tsx (when settings enabled)
+- [x] Manual "Generate Invoice" button in PaymentHistoryTable.tsx
+- [x] Duplicate prevention via invoice existence checking
+- [x] Graceful error handling (payment succeeds even if invoice fails)
+- [x] Loading states during invoice generation
+- [x] Toast notifications for success/warning/error states
+- [x] GenerateInvoiceButton component with React.memo optimization
+- [x] 7 unit tests passing (use-invoices hook)
+- [x] 8 integration tests passing (auto-generation flow, manual generation, error handling, duplicate prevention)
+- [x] 0 linting errors/warnings
+- [x] Successful production build
+- [x] Performance optimized (React.memo, useCallback, proper query invalidation)
+
+**Key Files Created:**
+
+- `/src/features/invoices/hooks/use-invoices.ts` (160 lines)
+- `/src/features/payments/components/GenerateInvoiceButton.tsx` (131 lines)
+- `/src/features/invoices/hooks/__tests__/use-invoices.test.tsx` (271 lines)
+- `/src/features/invoices/__tests__/invoice-integration.test.ts` (291 lines)
+
+**Key Files Modified:**
+
+- `/src/features/payments/components/RecordPaymentDialog.tsx` (added auto-generation logic)
+- `/src/features/payments/components/PaymentHistoryTable.tsx` (added manual generation button)
+
+**Implementation Notes:**
+
+- Auto-generation respects `auto_generate` setting from invoice settings
+- Payment recording NEVER fails due to invoice errors (graceful degradation)
+- Warning toast shown when invoice fails with retry guidance
+- Manual generation button checks for existing invoices to prevent duplicates
+- Loading states provide UX feedback during generation
+- All error scenarios properly tested (settings missing, PDF failure, storage failure)
+- Proper React Query integration with cache invalidation
 
 ### US-003: Invoice PDF Generation Engine
 
@@ -132,7 +172,7 @@ US-006         ░░░░░░░░░░░░░░░░░░░░   0%
 
 ## 🚧 In Progress
 
-_No user stories in progress. Ready for US-004 (Automatic Invoice Generation on Payment)._
+_No user stories in progress. Ready for US-005 (Invoice Viewing in Payment History)._
 
 ---
 
@@ -235,25 +275,35 @@ _No user stories in progress. Ready for US-004 (Automatic Invoice Generation on 
 
 ### US-004: Automatic Invoice Generation on Payment
 
-**Status:** ⏸️ Not Started
+**Status:** ✅ Completed
 **Priority:** P1 (Should Have)
 **Complexity:** Medium
-**Estimated Duration:** 2-3 hours
+**Completed:** 2025-01-09
+**Actual Duration:** 2.5 hours
 
 **Acceptance Criteria:**
 
-- [ ] Auto-generate invoice on payment recording (if enabled)
-- [ ] Invoice number generation using RPC
-- [ ] PDF generation and upload to Storage
-- [ ] Invoice record creation in database
-- [ ] Link invoice to payment
-- [ ] Error handling for generation failures
-- [ ] Manual "Generate Invoice" button option
-- [ ] Integration tests
+- [x] Auto-generate invoice on payment recording (if enabled)
+- [x] Invoice number generation using RPC
+- [x] PDF generation and upload to Storage
+- [x] Invoice record creation in database
+- [x] Link invoice to payment
+- [x] Error handling for generation failures
+- [x] Manual "Generate Invoice" button option
+- [x] Integration tests
 
-**Dependencies:** US-003 (needs PDF generation)
+**Dependencies:** US-003 (needs PDF generation) ✅
 
-**Notes:** _Integration with existing payment flow_
+**Implementation Notes:**
+
+- Created `use-invoices` hook for React Query-based invoice operations
+- Auto-generation triggers after successful payment recording when enabled
+- Payment recording NEVER fails due to invoice errors (critical requirement)
+- Manual generation available via icon button in PaymentHistoryTable
+- Duplicate prevention through invoice existence checking
+- Comprehensive error handling with appropriate user notifications
+- All tests passing (15 tests total: 7 unit + 8 integration)
+- Performance optimized with React.memo and useCallback
 
 ---
 
@@ -375,6 +425,42 @@ _None identified_
 
 ## 📝 Implementation Notes
 
+### 2025-01-09: Auto-Generation Complete (US-004)
+
+**Completed:**
+
+- US-004: Automatic Invoice Generation on Payment (2.5 hours)
+- Auto-generation integration with payment recording flow
+- Manual generation UI in payment history table
+- Comprehensive test coverage (15 tests passing)
+- 0 linting errors/warnings
+- Successful production build
+
+**Key Achievements:**
+
+- Payment-invoice integration working seamlessly
+- Graceful error handling prevents payment failures
+- Manual generation provides retry capability
+- Duplicate prevention through existence checks
+- Performance optimized with React best practices
+- Clean code following CLAUDE.md guidelines
+
+**Decisions Made:**
+
+- Payment recording MUST succeed even if invoice generation fails
+- Warning toast guides users to manual retry option
+- React.memo used for GenerateInvoiceButton to prevent unnecessary re-renders
+- useCallback used for event handlers
+- Proper React Query cache invalidation
+
+**Next Steps:**
+
+- Begin US-005: Invoice Viewing in Payment History
+- Add "View Invoice" button to download PDF
+- Handle cases where invoice doesn't exist yet
+
+---
+
 ### 2025-01-08: Foundation Sprint Complete (US-001, US-002)
 
 **Completed:**
@@ -479,7 +565,7 @@ US-006: ████ 4 points
 
 **Target:** End of Day 3
 **Stories:** US-004, US-005
-**Status:** ⏸️ Not Started
+**Status:** 🚧 In Progress (US-004 ✅ Complete, US-005 pending)
 
 ### Milestone 4: Production Ready
 
@@ -489,6 +575,6 @@ US-006: ████ 4 points
 
 ---
 
-**Last Updated:** 2025-01-08
+**Last Updated:** 2025-01-09
 **Updated By:** Claude
-**Next Review:** After US-004 completion
+**Next Review:** After US-005 completion

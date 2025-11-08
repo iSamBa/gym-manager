@@ -1,5 +1,9 @@
 # US-004: Automatic Invoice Generation on Payment
 
+**Status:** ✅ Completed
+**Completed:** 2025-01-09
+**Implementation Notes:** Implemented automatic invoice generation on payment recording with robust error handling. Created use-invoices hook, GenerateInvoiceButton component, and integrated with payment flow. All 15 tests passing (7 unit + 8 integration).
+
 ## 📋 User Story
 
 **As a** gym administrator

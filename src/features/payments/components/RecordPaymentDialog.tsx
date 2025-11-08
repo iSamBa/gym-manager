@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { CalendarIcon, DollarSign } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,8 @@ import { AdvancedMemberSearch } from "@/features/members/components/AdvancedMemb
 import { useMemberSubscriptionHistory } from "@/features/memberships/hooks/use-subscriptions";
 import { paymentUtils } from "@/features/payments/lib/payment-utils";
 import { logger } from "@/lib/logger";
+import { useInvoices } from "@/features/invoices/hooks/use-invoices";
+import { useInvoiceSettings } from "@/features/settings/hooks/use-invoice-settings";
 import type {
   Member,
   PartialMember,
@@ -86,6 +89,10 @@ export function RecordPaymentDialog({
   const { data: memberSubscriptions, isLoading: isLoadingSubscriptions } =
     useMemberSubscriptionHistory(selectedMember?.id || "");
 
+  // Invoice generation hooks
+  const { generateInvoice } = useInvoices();
+  const { settings: invoiceSettings } = useInvoiceSettings();
+
   const form = useForm<RecordPaymentFormData>({
     resolver: zodResolver(recordPaymentSchema),
     defaultValues: {
@@ -107,7 +114,8 @@ export function RecordPaymentDialog({
 
     setIsSubmitting(true);
     try {
-      await paymentUtils.recordPayment({
+      // 1. Record payment
+      const payment = await paymentUtils.recordPayment({
         member_id: selectedMember.id,
         subscription_id: data.subscription_id || undefined,
         amount: data.amount,
@@ -116,6 +124,48 @@ export function RecordPaymentDialog({
         reference_number: data.referenceNumber || undefined,
         notes: data.notes || undefined,
       });
+
+      logger.info("Payment recorded successfully", {
+        payment_id: payment.id,
+        member_id: selectedMember.id,
+        amount: data.amount,
+      });
+
+      // 2. Check if auto-generate is enabled
+      if (invoiceSettings?.auto_generate) {
+        try {
+          logger.info("Auto-generating invoice", {
+            payment_id: payment.id,
+          });
+
+          await generateInvoice({
+            payment_id: payment.id,
+            member_id: selectedMember.id,
+            subscription_id: data.subscription_id || undefined,
+            amount: data.amount,
+          });
+
+          logger.info("Invoice auto-generated successfully", {
+            payment_id: payment.id,
+          });
+        } catch (invoiceError) {
+          // CRITICAL: Payment should still succeed even if invoice fails
+          logger.error("Invoice generation failed (payment succeeded)", {
+            error:
+              invoiceError instanceof Error
+                ? invoiceError.message
+                : String(invoiceError),
+            payment_id: payment.id,
+          });
+
+          toast.warning("Payment recorded but invoice generation failed", {
+            description:
+              "You can retry generating the invoice from the payment history.",
+          });
+        }
+      } else {
+        logger.info("Auto-generate disabled, skipping invoice generation");
+      }
 
       // Reset form and close dialog
       form.reset();

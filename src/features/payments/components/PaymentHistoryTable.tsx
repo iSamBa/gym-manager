@@ -20,6 +20,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import type { SubscriptionPaymentWithReceiptAndPlan } from "@/features/database/lib/types";
 import { PaymentReceiptDialog } from "./PaymentReceiptDialog";
 import { RefundDialog } from "./RefundDialog";
+import { GenerateInvoiceButton } from "./GenerateInvoiceButton";
 
 interface PaymentHistoryTableProps {
   payments: SubscriptionPaymentWithReceiptAndPlan[];
@@ -203,10 +204,13 @@ export function PaymentHistoryTable({
                           onClick={() => handleDownloadReceipt(payment)}
                         />
                         {payment.payment_status === "completed" && (
-                          <Undo2
-                            className="h-4 w-4 cursor-pointer text-red-500 hover:text-red-600"
-                            onClick={() => handleRefund(payment)}
-                          />
+                          <>
+                            <GenerateInvoiceButton payment={payment} />
+                            <Undo2
+                              className="h-4 w-4 cursor-pointer text-red-500 hover:text-red-600"
+                              onClick={() => handleRefund(payment)}
+                            />
+                          </>
                         )}
                       </div>
                     </TableCell>
