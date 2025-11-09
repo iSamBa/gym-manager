@@ -554,27 +554,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           break;
 
         case "TOKEN_REFRESHED":
-          // Token successfully refreshed - reload profile to ensure fresh data
-          logger.debug("TOKEN_REFRESHED event - reloading profile");
-          if (session?.user) {
-            try {
-              await loadUserProfileWithRetry(
-                session.user,
-                RETRY_CONFIG.TOKEN_REFRESH_RETRIES, // Only 1 retry for token refresh
-                abortController.signal
-              );
-              setAuthError(null);
-            } catch {
-              logger.warn(
-                "Profile reload failed on token refresh, keeping existing data",
-                {
-                  userId: session.user.id,
-                }
-              );
-              // Keep existing user data on token refresh failure - don't disrupt the session
-              setAuthError(null);
-            }
-          }
+          // Token refreshed successfully - no need to reload profile (token refresh doesn't change profile data)
+          logger.debug("TOKEN_REFRESHED event - token refreshed successfully");
+          setAuthError(null);
           break;
 
         case "USER_UPDATED":

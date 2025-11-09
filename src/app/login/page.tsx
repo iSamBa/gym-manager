@@ -6,9 +6,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 
 export default function LoginPage() {
-  const { isLoading } = useAuth();
+  const { isLoading, isAuthenticated } = useAuth();
 
-  if (isLoading) {
+  // Show loading skeleton while checking auth state OR if already authenticated
+  // This prevents flash of login form during redirect after successful login
+  if (isLoading || isAuthenticated) {
     return <LoadingSkeleton variant="auth" />;
   }
 
