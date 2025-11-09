@@ -27,13 +27,16 @@ import type {
  * Format currency for display
  *
  * @param amount - Amount to format
- * @returns Formatted amount (e.g., "7,200.00 MAD")
+ * @returns Formatted amount (e.g., "7 200,00 MAD")
  */
 function formatCurrency(amount: number): string {
-  return `${amount.toLocaleString("fr-FR", {
+  const formatted = amount.toLocaleString("fr-FR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })} MAD`;
+  });
+  // Replace non-breaking space (U+00A0) with regular space for PDF compatibility
+  // fr-FR locale uses non-breaking space as thousand separator, which renders as "/" in jsPDF
+  return `${formatted.replace(/\u00A0/g, " ")} MAD`;
 }
 
 /**
@@ -229,6 +232,8 @@ export async function generateInvoicePDF(
         fillColor: [255, 255, 255], // White background (no color)
         textColor: [0, 0, 0], // Black text
         fontStyle: "bold", // Bold header text
+        lineWidth: 0.1, // Border thickness for header cells
+        lineColor: [0, 0, 0], // Black borders between header cells
       },
       columnStyles: {
         0: { cellWidth: 120 }, // Description column width
