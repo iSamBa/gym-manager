@@ -93,8 +93,9 @@ export async function generateInvoicePDF(
     // Import jsPDF using named export (works in browser/Next.js runtime)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { jsPDF } = (await import("jspdf")) as any;
-    // Import autotable plugin (extends jsPDF prototype)
-    await import("jspdf-autotable");
+    // Import autotable as default export (v5.x uses default export)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const autoTable = (await import("jspdf-autotable")).default as any;
 
     // Create A4 PDF in portrait mode
     const doc = new jsPDF({
@@ -213,18 +214,8 @@ export async function generateInvoicePDF(
     // ========================================
 
     // Use autoTable for professional table formatting
-    (
-      doc as unknown as {
-        autoTable: (options: {
-          startY: number;
-          head: string[][];
-          body: string[][];
-          theme: string;
-          headStyles: { fillColor: number[] };
-          columnStyles?: Record<number, { halign: string }>;
-        }) => void;
-      }
-    ).autoTable({
+    // In jspdf-autotable v5.x, autoTable is a standalone function
+    autoTable(doc, {
       startY: currentY,
       head: [["Description", "Montant (MAD)"]],
       body: [
@@ -245,9 +236,8 @@ export async function generateInvoicePDF(
     });
 
     // Get Y position after table
-    const finalTableY =
-      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable
-        .finalY || currentY + 40;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const finalTableY = (doc as any).lastAutoTable?.finalY || currentY + 40;
 
     currentY = finalTableY + 10;
 

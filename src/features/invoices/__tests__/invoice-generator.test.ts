@@ -21,7 +21,7 @@ vi.mock("../lib/storage-utils", () => ({
   uploadInvoicePDF: vi.fn(),
 }));
 
-// Mock jsPDF
+// Mock jsPDF and autoTable
 const mockAutoTable = vi.fn();
 const mockAddImage = vi.fn();
 const mockText = vi.fn();
@@ -31,7 +31,6 @@ const mockSplitTextToSize = vi.fn();
 const mockOutput = vi.fn();
 
 const MockJsPDF = class {
-  autoTable = mockAutoTable;
   addImage = mockAddImage;
   text = mockText;
   setFontSize = mockSetFontSize;
@@ -45,7 +44,10 @@ vi.mock("jspdf", () => ({
   jsPDF: MockJsPDF,
 }));
 
-vi.mock("jspdf-autotable", () => ({}));
+// Mock jspdf-autotable as a default export function
+vi.mock("jspdf-autotable", () => ({
+  default: mockAutoTable,
+}));
 
 describe("invoice-generator", () => {
   const mockInvoice: Invoice = {
@@ -153,8 +155,9 @@ describe("invoice-generator", () => {
       expect(mockSetFontSize).toHaveBeenCalled();
       expect(mockSetFont).toHaveBeenCalled();
 
-      // Verify table was created
+      // Verify table was created (autoTable is now a standalone function)
       expect(mockAutoTable).toHaveBeenCalledWith(
+        expect.any(Object), // First arg is the doc instance
         expect.objectContaining({
           head: [["Description", "Montant (MAD)"]],
           body: expect.arrayContaining([
@@ -281,6 +284,7 @@ describe("invoice-generator", () => {
       );
 
       expect(mockAutoTable).toHaveBeenCalledWith(
+        expect.any(Object), // First arg is the doc instance
         expect.objectContaining({
           body: expect.arrayContaining([
             expect.arrayContaining(["TVA (10%)", expect.any(String)]),
@@ -301,6 +305,7 @@ describe("invoice-generator", () => {
       );
 
       expect(mockAutoTable).toHaveBeenCalledWith(
+        expect.any(Object), // First arg is the doc instance
         expect.objectContaining({
           body: expect.arrayContaining([
             expect.arrayContaining(["TVA (20%)", expect.any(String)]),
