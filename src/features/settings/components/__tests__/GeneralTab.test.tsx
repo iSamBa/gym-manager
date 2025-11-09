@@ -88,7 +88,7 @@ describe("GeneralTab", () => {
   });
 
   describe("empty state", () => {
-    it("should show empty state when no settings configured", () => {
+    it("should show form directly when no settings configured", () => {
       vi.mocked(useGeneralSettingsModule.useGeneralSettings).mockReturnValue({
         ...mockHookReturn,
         settings: null,
@@ -96,15 +96,11 @@ describe("GeneralTab", () => {
 
       render(<GeneralTab />);
 
-      expect(
-        screen.getByText(/No general settings configured yet/i)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /Configure Settings/i })
-      ).toBeInTheDocument();
+      // When no settings exist, should show form directly (UX optimization)
+      expect(screen.getByTestId("business-info-form")).toBeInTheDocument();
     });
 
-    it("should enter edit mode when Configure Settings clicked", () => {
+    it("should not show edit button when no settings exist", () => {
       vi.mocked(useGeneralSettingsModule.useGeneralSettings).mockReturnValue({
         ...mockHookReturn,
         settings: null,
@@ -112,12 +108,10 @@ describe("GeneralTab", () => {
 
       render(<GeneralTab />);
 
-      const configureButton = screen.getByRole("button", {
-        name: /Configure Settings/i,
-      });
-      fireEvent.click(configureButton);
-
-      expect(screen.getByTestId("business-info-form")).toBeInTheDocument();
+      // No edit button should be visible when in form mode
+      expect(
+        screen.queryByRole("button", { name: /edit/i })
+      ).not.toBeInTheDocument();
     });
   });
 

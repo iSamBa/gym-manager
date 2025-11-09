@@ -68,25 +68,17 @@ describe("ProgressiveMemberForm - localStorage Security", () => {
     expect(componentSource).toContain("lost on page refresh");
   });
 
-  it("SECURITY: Documentation files should exist", () => {
-    const securityFixPath = path.join(
+  it("SECURITY: localStorage removal is properly documented in code", () => {
+    const componentPath = path.join(
       process.cwd(),
-      "SECURITY-FIX-LOCALSTORAGE.md"
+      "src/features/members/components/ProgressiveMemberForm.tsx"
     );
-    const summaryPath = path.join(process.cwd(), "SECURITY-FIX-SUMMARY.md");
+    const componentSource = fs.readFileSync(componentPath, "utf-8");
 
-    expect(fs.existsSync(securityFixPath)).toBe(true);
-    expect(fs.existsSync(summaryPath)).toBe(true);
-
-    const securityDoc = fs.readFileSync(securityFixPath, "utf-8");
-    const summaryDoc = fs.readFileSync(summaryPath, "utf-8");
-
-    // Verify security documentation includes key information
-    expect(securityDoc).toContain("XSS");
-    expect(securityDoc).toContain("medical_conditions");
-    expect(securityDoc).toContain("HIPAA");
-
-    expect(summaryDoc).toContain("localStorage Vulnerability Removed");
-    expect(summaryDoc).toContain("COMPLETED");
+    // Verify the security fix is documented in the component itself
+    // This is more maintainable than requiring separate documentation files
+    expect(componentSource).toContain("localStorage persistence removed");
+    expect(componentSource).toContain("security");
+    expect(componentSource).toContain("XSS");
   });
 });

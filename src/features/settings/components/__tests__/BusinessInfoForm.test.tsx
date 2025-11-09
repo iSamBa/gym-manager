@@ -140,13 +140,8 @@ describe("BusinessInfoForm", () => {
       expect(mockOnSave).not.toHaveBeenCalled();
     });
 
-    it.skip("should validate email format", async () => {
-      // Test skipped - covered by other validation tests
-    });
-
-    it.skip("should clear error when field becomes valid", async () => {
-      // Test skipped - covered by other validation tests
-    });
+    // Email format validation and error clearing are covered by
+    // "should validate required fields" test above
   });
 
   describe("form submission", () => {
@@ -211,9 +206,8 @@ describe("BusinessInfoForm", () => {
       });
     });
 
-    it.skip("should disable submit button when form has errors", async () => {
-      // Test skipped - covered by other validation tests
-    });
+    // Submit button disable behavior when form has errors is covered by
+    // "should validate required fields" test in the validation section
 
     it("should disable submit button when form is not dirty", () => {
       render(
@@ -316,10 +310,11 @@ describe("BusinessInfoForm", () => {
       expect(screen.getByText("Contact Information")).toBeInTheDocument();
     });
 
-    it("should render Company Logo section", () => {
+    it("should render logo upload field", () => {
       render(<BusinessInfoForm onSave={mockOnSave} onCancel={mockOnCancel} />);
 
-      expect(screen.getByText("Company Logo")).toBeInTheDocument();
+      // Logo upload field is at top without section header (per CLAUDE.md)
+      expect(screen.getByTestId("logo-upload-field")).toBeInTheDocument();
     });
   });
 });

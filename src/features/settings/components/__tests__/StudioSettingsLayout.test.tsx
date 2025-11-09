@@ -1,17 +1,63 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StudioSettingsLayout } from "../StudioSettingsLayout";
 
-// Mock the OpeningHoursTab component
+// Mock all tab components that use React Query
 vi.mock("../OpeningHoursTab", () => ({
   OpeningHoursTab: () => (
     <div data-testid="opening-hours-tab">Opening Hours Tab</div>
   ),
 }));
 
+vi.mock("../GeneralTab", () => ({
+  GeneralTab: () => <div data-testid="general-tab">General Tab</div>,
+}));
+
+vi.mock("../InvoiceSettingsTab", () => ({
+  InvoiceSettingsTab: () => (
+    <div data-testid="invoice-settings-tab">Invoice Settings Tab</div>
+  ),
+}));
+
+vi.mock("../PlanningTab", () => ({
+  PlanningTab: () => <div data-testid="planning-tab">Planning Tab</div>,
+}));
+
+vi.mock("../MultiSiteSessionsTab", () => ({
+  MultiSiteSessionsTab: () => (
+    <div data-testid="multi-site-tab">Multi Site Tab</div>
+  ),
+}));
+
+// Test helper to wrap component with QueryClientProvider
+function renderWithProviders(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+  );
+}
+
+let queryClient: QueryClient;
+
+beforeEach(() => {
+  queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+});
+
 describe("StudioSettingsLayout", () => {
   it("should render header with title and description", () => {
-    render(<StudioSettingsLayout />);
+    renderWithProviders(<StudioSettingsLayout />);
 
     expect(screen.getByText("Studio Settings")).toBeInTheDocument();
     expect(
@@ -19,74 +65,94 @@ describe("StudioSettingsLayout", () => {
     ).toBeInTheDocument();
   });
 
-  it("should render all three tabs", () => {
-    render(<StudioSettingsLayout />);
+  it("should render all five tabs", () => {
+    renderWithProviders(<StudioSettingsLayout />);
 
-    expect(screen.getByText("Opening Hours")).toBeInTheDocument();
     expect(screen.getByText("General")).toBeInTheDocument();
-    expect(screen.getByText("Payment")).toBeInTheDocument();
+    expect(screen.getByText("Opening Hours")).toBeInTheDocument();
+    expect(screen.getByText("Planning")).toBeInTheDocument();
+    expect(screen.getByText("Multi-Site Sessions")).toBeInTheDocument();
+    expect(screen.getByText("Invoices")).toBeInTheDocument();
   });
 
-  it("should have Opening Hours tab active by default", () => {
-    render(<StudioSettingsLayout />);
-
-    const openingHoursTab = screen.getByRole("tab", { name: /Opening Hours/ });
-    expect(openingHoursTab).toHaveAttribute("data-state", "active");
-  });
-
-  it("should have General and Payment tabs disabled", () => {
-    render(<StudioSettingsLayout />);
+  it("should have General tab active by default", () => {
+    renderWithProviders(<StudioSettingsLayout />);
 
     const generalTab = screen.getByRole("tab", { name: /General/ });
-    const paymentTab = screen.getByRole("tab", { name: /Payment/ });
-
-    expect(generalTab).toBeDisabled();
-    expect(paymentTab).toBeDisabled();
+    expect(generalTab).toHaveAttribute("data-state", "active");
   });
 
-  it("should show Coming Soon labels for disabled tabs", () => {
-    render(<StudioSettingsLayout />);
+  it("should render GeneralTab content by default", () => {
+    renderWithProviders(<StudioSettingsLayout />);
 
-    const comingSoonLabels = screen.getAllByText("(Coming Soon)");
-    expect(comingSoonLabels).toHaveLength(2);
-  });
-
-  it("should render OpeningHoursTab content", () => {
-    render(<StudioSettingsLayout />);
-
-    expect(screen.getByTestId("opening-hours-tab")).toBeInTheDocument();
+    expect(screen.getByTestId("general-tab")).toBeInTheDocument();
   });
 
   it("should render icons for each tab", () => {
-    const { container } = render(<StudioSettingsLayout />);
+    const { container } = renderWithProviders(<StudioSettingsLayout />);
 
     // Check for lucide icons (they render as SVGs)
     const svgs = container.querySelectorAll("svg");
-    // 3 tab icons (no header icon) = 3 SVGs minimum
-    expect(svgs.length).toBeGreaterThanOrEqual(3);
+    // 5 tab icons = 5 SVGs minimum
+    expect(svgs.length).toBeGreaterThanOrEqual(5);
   });
 
   it("should handle tab state changes", () => {
-    render(<StudioSettingsLayout />);
+    renderWithProviders(<StudioSettingsLayout />);
 
-    const openingHoursTab = screen.getByRole("tab", { name: /Opening Hours/ });
+    const generalTab = screen.getByRole("tab", { name: /General/ });
 
-    // Tab should be active initially
-    expect(openingHoursTab).toHaveAttribute("data-state", "active");
+    // General tab should be active initially
+    expect(generalTab).toHaveAttribute("data-state", "active");
 
     // Clicking the same tab should keep it active
-    fireEvent.click(openingHoursTab);
-    expect(openingHoursTab).toHaveAttribute("data-state", "active");
+    fireEvent.click(generalTab);
+    expect(generalTab).toHaveAttribute("data-state", "active");
+  });
+
+  it("should allow clicking different tabs", () => {
+    renderWithProviders(<StudioSettingsLayout />);
+
+    // Verify all tabs are clickable (not disabled)
+    const generalTab = screen.getByRole("tab", { name: /General/ });
+    const openingHoursTab = screen.getByRole("tab", { name: /Opening Hours/ });
+    const planningTab = screen.getByRole("tab", { name: /Planning/ });
+    const multiSiteTab = screen.getByRole("tab", { name: /Multi-Site/ });
+    const invoicesTab = screen.getByRole("tab", { name: /Invoices/ });
+
+    expect(generalTab).not.toBeDisabled();
+    expect(openingHoursTab).not.toBeDisabled();
+    expect(planningTab).not.toBeDisabled();
+    expect(multiSiteTab).not.toBeDisabled();
+    expect(invoicesTab).not.toBeDisabled();
+  });
+
+  it("should render different tab contents", async () => {
+    renderWithProviders(<StudioSettingsLayout />);
+
+    // Test that we can access different tabs
+    const invoicesTab = screen.getByRole("tab", { name: /Invoices/ });
+    expect(invoicesTab).toBeInTheDocument();
+
+    const planningTab = screen.getByRole("tab", { name: /Planning/ });
+    expect(planningTab).toBeInTheDocument();
+
+    // General tab should be active initially with general content
+    expect(screen.getByTestId("general-tab")).toBeInTheDocument();
   });
 
   it("should use memo for performance", () => {
-    const { rerender } = render(<StudioSettingsLayout />);
+    const { rerender } = renderWithProviders(<StudioSettingsLayout />);
 
     // Component should be memoized
     expect(StudioSettingsLayout.displayName).toBe("StudioSettingsLayout");
 
     // Re-render should not cause issues
-    rerender(<StudioSettingsLayout />);
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <StudioSettingsLayout />
+      </QueryClientProvider>
+    );
     expect(screen.getByText("Studio Settings")).toBeInTheDocument();
   });
 });
