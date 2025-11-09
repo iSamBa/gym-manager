@@ -5,11 +5,13 @@ import {
   type CreateSubscriptionWithPaymentParams,
   type ProcessRefundParams,
 } from "../transaction-utils";
-import { createClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 // Mock Supabase client
 vi.mock("@/lib/supabase", () => ({
-  createClient: vi.fn(),
+  supabase: {
+    rpc: vi.fn(),
+  },
 }));
 
 // Mock logger
@@ -21,13 +23,10 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 describe("Transaction Utils", () => {
-  const mockSupabase = {
-    rpc: vi.fn(),
-  };
+  const mockRpc = vi.mocked(supabase.rpc);
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(createClient).mockReturnValue(mockSupabase as never);
   });
 
   describe("createSubscriptionWithPayment", () => {
@@ -46,23 +45,20 @@ describe("Transaction Utils", () => {
         message: "Subscription created successfully",
       };
 
-      mockSupabase.rpc.mockResolvedValue({
+      mockRpc.mockResolvedValue({
         data: mockResult,
         error: null,
       });
 
       const result = await createSubscriptionWithPayment(validParams);
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith(
-        "create_subscription_with_payment",
-        {
-          p_member_id: validParams.member_id,
-          p_plan_id: validParams.plan_id,
-          p_payment_amount: validParams.payment_amount,
-          p_payment_method: validParams.payment_method,
-          p_payment_date: expect.any(String),
-        }
-      );
+      expect(mockRpc).toHaveBeenCalledWith("create_subscription_with_payment", {
+        p_member_id: validParams.member_id,
+        p_plan_id: validParams.plan_id,
+        p_payment_amount: validParams.payment_amount,
+        p_payment_method: validParams.payment_method,
+        p_payment_date: expect.any(String),
+      });
 
       expect(result).toEqual(mockResult);
       expect(result.success).toBe(true);
@@ -77,7 +73,7 @@ describe("Transaction Utils", () => {
         payment_date: customDate,
       };
 
-      mockSupabase.rpc.mockResolvedValue({
+      mockRpc.mockResolvedValue({
         data: {
           success: true,
           subscription_id: "sub-789",
@@ -89,7 +85,7 @@ describe("Transaction Utils", () => {
 
       await createSubscriptionWithPayment(params);
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+      expect(mockRpc).toHaveBeenCalledWith(
         "create_subscription_with_payment",
         expect.objectContaining({
           p_payment_date: customDate,
@@ -98,7 +94,7 @@ describe("Transaction Utils", () => {
     });
 
     it("should throw error when RPC returns error", async () => {
-      mockSupabase.rpc.mockResolvedValue({
+      mockRpc.mockResolvedValue({
         data: null,
         error: { message: "Invalid plan ID" },
       });
@@ -109,7 +105,7 @@ describe("Transaction Utils", () => {
     });
 
     it("should throw error when RPC returns unsuccessful result", async () => {
-      mockSupabase.rpc.mockResolvedValue({
+      mockRpc.mockResolvedValue({
         data: { success: false },
         error: null,
       });
@@ -125,7 +121,7 @@ describe("Transaction Utils", () => {
       > = ["cash", "card", "bank_transfer", "online", "check"];
 
       for (const method of paymentMethods) {
-        mockSupabase.rpc.mockResolvedValue({
+        mockRpc.mockResolvedValue({
           data: {
             success: true,
             subscription_id: "sub-789",
@@ -140,7 +136,7 @@ describe("Transaction Utils", () => {
           payment_method: method,
         });
 
-        expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        expect(mockRpc).toHaveBeenCalledWith(
           "create_subscription_with_payment",
           expect.objectContaining({
             p_payment_method: method,
@@ -167,22 +163,19 @@ describe("Transaction Utils", () => {
         message: "Refund processed successfully",
       };
 
-      mockSupabase.rpc.mockResolvedValue({
+      mockRpc.mockResolvedValue({
         data: mockResult,
         error: null,
       });
 
       const result = await processRefundWithTransaction(validParams);
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith(
-        "process_refund_with_transaction",
-        {
-          p_payment_id: validParams.payment_id,
-          p_refund_amount: validParams.refund_amount,
-          p_refund_reason: validParams.refund_reason,
-          p_cancel_subscription: true, // Default value
-        }
-      );
+      expect(mockRpc).toHaveBeenCalledWith("process_refund_with_transaction", {
+        p_payment_id: validParams.payment_id,
+        p_refund_amount: validParams.refund_amount,
+        p_refund_reason: validParams.refund_reason,
+        p_cancel_subscription: true, // Default value
+      });
 
       expect(result).toEqual(mockResult);
       expect(result.success).toBe(true);
@@ -195,7 +188,7 @@ describe("Transaction Utils", () => {
         cancel_subscription: false,
       };
 
-      mockSupabase.rpc.mockResolvedValue({
+      mockRpc.mockResolvedValue({
         data: {
           success: true,
           refund_id: "ref-456",
@@ -209,7 +202,7 @@ describe("Transaction Utils", () => {
 
       const result = await processRefundWithTransaction(params);
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+      expect(mockRpc).toHaveBeenCalledWith(
         "process_refund_with_transaction",
         expect.objectContaining({
           p_cancel_subscription: false,
@@ -220,7 +213,7 @@ describe("Transaction Utils", () => {
     });
 
     it("should throw error when payment not found", async () => {
-      mockSupabase.rpc.mockResolvedValue({
+      mockRpc.mockResolvedValue({
         data: null,
         error: { message: "Payment not found" },
       });
@@ -231,7 +224,7 @@ describe("Transaction Utils", () => {
     });
 
     it("should throw error when refund amount exceeds payment", async () => {
-      mockSupabase.rpc.mockResolvedValue({
+      mockRpc.mockResolvedValue({
         data: null,
         error: {
           message: "Refund amount exceeds remaining refundable amount",
@@ -244,7 +237,7 @@ describe("Transaction Utils", () => {
     });
 
     it("should throw error when refunding a refund entry", async () => {
-      mockSupabase.rpc.mockResolvedValue({
+      mockRpc.mockResolvedValue({
         data: null,
         error: { message: "Cannot refund a refund entry" },
       });
@@ -255,7 +248,7 @@ describe("Transaction Utils", () => {
     });
 
     it("should throw error when RPC returns unsuccessful result", async () => {
-      mockSupabase.rpc.mockResolvedValue({
+      mockRpc.mockResolvedValue({
         data: { success: false },
         error: null,
       });
@@ -273,7 +266,7 @@ describe("Transaction Utils", () => {
         cancel_subscription: false,
       };
 
-      mockSupabase.rpc.mockResolvedValue({
+      mockRpc.mockResolvedValue({
         data: {
           success: true,
           refund_id: "ref-789",
