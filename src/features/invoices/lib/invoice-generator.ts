@@ -163,51 +163,49 @@ export async function generateInvoicePDF(
       });
     }
 
-    currentY = 70; // Move past header
+    currentY = 80; // Add more space after logo and company details
 
     // ========================================
     // INVOICE HEADER (Title, Number, Date)
     // ========================================
 
-    // Invoice title - centered
+    // Invoice title and number on same line, aligned right
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
-    doc.text("Facture", pageWidth / 2, currentY, { align: "center" });
-
-    currentY += 8;
-
-    // Invoice number - centered
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(`N° ${invoice.invoice_number}`, pageWidth / 2, currentY, {
-      align: "center",
-    });
-
-    currentY += 7;
-
-    // Invoice date - centered
     doc.text(
-      `Date: ${formatDate(invoice.issue_date)}`,
-      pageWidth / 2,
+      `Facture N° ${invoice.invoice_number}`,
+      pageWidth - margin,
       currentY,
-      { align: "center" }
+      { align: "right" }
     );
 
-    currentY += 15;
+    currentY += 10; // Bit of space before date
+
+    // Invoice date - aligned right
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(
+      `Date: ${formatDate(invoice.issue_date)}`,
+      pageWidth - margin,
+      currentY,
+      { align: "right" }
+    );
+
+    currentY += 20; // More space after date
 
     // ========================================
     // CUSTOMER SECTION
     // ========================================
 
     doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("helvetica", "bold"); // Make client name bold
     doc.text(
       `Client(e): ${member.first_name} ${member.last_name}`,
       margin,
       currentY
     );
 
-    currentY += 10;
+    currentY += 12;
 
     // ========================================
     // INVOICE TABLE (HT/TVA/TTC)
@@ -228,11 +226,15 @@ export async function generateInvoicePDF(
       ],
       theme: "grid",
       headStyles: {
-        fillColor: [41, 128, 185], // Professional blue color
+        fillColor: [255, 255, 255], // White background (no color)
+        textColor: [0, 0, 0], // Black text
+        fontStyle: "bold", // Bold header text
       },
       columnStyles: {
-        1: { halign: "right" }, // Right-align amounts
+        0: { cellWidth: 120 }, // Description column width
+        1: { halign: "right", cellWidth: 50 }, // Amount column - right-aligned with fixed width
       },
+      margin: { left: margin, right: margin },
     });
 
     // Get Y position after table
