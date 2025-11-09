@@ -160,9 +160,9 @@ function convertThreeDigits(n: number): string {
  *
  * Converts numeric amount to French words and appends currency and TTC notation.
  * Handles amounts up to 999,999 (less than 1 million).
- * Decimal amounts are rounded to nearest integer.
+ * Includes decimal cents as "Centimes" in the output.
  *
- * @param amount - Amount to convert (will be rounded to nearest integer)
+ * @param amount - Amount to convert (supports decimals)
  * @param currency - Currency name (default: "Dirhams")
  * @returns French words representation with currency and TTC
  *
@@ -174,7 +174,8 @@ function convertThreeDigits(n: number): string {
  * amountToWords(1000)    // "Mille Dirhams (TTC)"
  * amountToWords(7200)    // "Sept Mille Deux Cent Dirhams (TTC)"
  * amountToWords(50500)   // "Cinquante Mille Cinq Cent Dirhams (TTC)"
- * amountToWords(7200.50) // "Sept Mille Deux Cent Dirhams (TTC)" (rounded)
+ * amountToWords(7200.50) // "Sept Mille Deux Cent Dirhams et Cinquante Centimes (TTC)"
+ * amountToWords(2236.43) // "Deux Mille Deux Cent Trente-Six Dirhams et Quarante-Trois Centimes (TTC)"
  * amountToWords(7200, "Euros") // "Sept Mille Deux Cent Euros (TTC)"
  * ```
  */
@@ -182,63 +183,81 @@ export function amountToWords(
   amount: number,
   currency: string = "Dirhams"
 ): string {
-  // Round to nearest integer
-  const roundedAmount = Math.round(amount);
+  // Split into dirhams (integer part) and centimes (decimal part)
+  const dirhams = Math.floor(amount);
+  const centimes = Math.round((amount - dirhams) * 100);
 
   // Handle zero
-  if (roundedAmount === 0) {
+  if (dirhams === 0 && centimes === 0) {
     return `Zéro ${currency} (TTC)`;
   }
 
   // Handle negative numbers
-  if (roundedAmount < 0) {
-    const positiveWords = amountToWords(Math.abs(roundedAmount), currency);
+  if (amount < 0) {
+    const positiveWords = amountToWords(Math.abs(amount), currency);
     return `Moins ${positiveWords}`;
   }
 
   // Handle amounts >= 1 million (not expected in typical invoices)
-  if (roundedAmount >= 1000000) {
+  if (dirhams >= 1000000) {
     throw new Error("Amount exceeds maximum supported value (999,999)");
   }
 
   let result = "";
 
-  // Thousands (1,000 - 999,999)
-  const thousands = Math.floor(roundedAmount / 1000);
-  const remainder = roundedAmount % 1000;
+  // Convert dirhams (integer part)
+  if (dirhams > 0) {
+    // Thousands (1,000 - 999,999)
+    const thousands = Math.floor(dirhams / 1000);
+    const remainder = dirhams % 1000;
 
-  if (thousands > 0) {
-    if (thousands === 1) {
-      result = "Mille";
+    if (thousands > 0) {
+      if (thousands === 1) {
+        result = "Mille";
+      } else {
+        result = `${convertThreeDigits(thousands)} Mille`;
+      }
+    }
+
+    // Hundreds (0-999)
+    if (remainder > 0) {
+      const remainderWords = convertThreeDigits(remainder);
+      if (result) {
+        result += ` ${remainderWords}`;
+      } else {
+        result = remainderWords;
+      }
+    }
+
+    // Add pluralization to "Cent" ONLY if it's the last word before currency
+    // This means: multiple hundreds (Deux, Trois, etc.) + Cent with NO other words after
+    // Examples that should get 's':
+    //   - "Deux Cent" (200) → "Deux Cents"
+    //   - "Trois Cent" (300) → "Trois Cents"
+    //   - "Mille Deux Cent" (1200) → stays "Mille Deux Cent" (has Mille before)
+    // Pattern matches: (Deux|Trois|...|Neuf) Cent at the end
+    // But only if it's NOT preceded by "Mille" (which indicates it's part of larger number)
+    const isStandaloneCent =
+      /^(Deux|Trois|Quatre|Cinq|Six|Sept|Huit|Neuf) Cent$/;
+    if (isStandaloneCent.test(result)) {
+      result += "s";
+    }
+
+    result += ` ${currency}`;
+  }
+
+  // Add centimes if present
+  if (centimes > 0) {
+    const centimesWords = convertTwoDigits(centimes);
+    if (dirhams > 0) {
+      result += ` et ${centimesWords} Centimes`;
     } else {
-      result = `${convertThreeDigits(thousands)} Mille`;
+      // Only centimes, no dirhams
+      result = `${centimesWords} Centimes`;
     }
   }
 
-  // Hundreds (0-999)
-  if (remainder > 0) {
-    const remainderWords = convertThreeDigits(remainder);
-    if (result) {
-      result += ` ${remainderWords}`;
-    } else {
-      result = remainderWords;
-    }
-  }
-
-  // Add pluralization to "Cent" ONLY if it's the last word before currency
-  // This means: multiple hundreds (Deux, Trois, etc.) + Cent with NO other words after
-  // Examples that should get 's':
-  //   - "Deux Cent" (200) → "Deux Cents"
-  //   - "Trois Cent" (300) → "Trois Cents"
-  //   - "Mille Deux Cent" (1200) → stays "Mille Deux Cent" (has Mille before)
-  // Pattern matches: (Deux|Trois|...|Neuf) Cent at the end
-  // But only if it's NOT preceded by "Mille" (which indicates it's part of larger number)
-  const isStandaloneCent = /^(Deux|Trois|Quatre|Cinq|Six|Sept|Huit|Neuf) Cent$/;
-  if (isStandaloneCent.test(result)) {
-    result += "s";
-  }
-
-  return `${result} ${currency} (TTC)`;
+  return `${result} (TTC)`;
 }
 
 /**

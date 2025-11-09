@@ -7,13 +7,33 @@ describe("amountToWords", () => {
       expect(amountToWords(0)).toBe("Zéro Dirhams (TTC)");
     });
 
-    it("should handle decimal amounts by rounding", () => {
-      expect(amountToWords(7200.4)).toBe("Sept Mille Deux Cent Dirhams (TTC)");
+    it("should handle decimal amounts with centimes", () => {
+      expect(amountToWords(7200.4)).toBe(
+        "Sept Mille Deux Cent Dirhams et Quarante Centimes (TTC)"
+      );
       expect(amountToWords(7200.5)).toBe(
-        "Sept Mille Deux Cent Un Dirhams (TTC)"
+        "Sept Mille Deux Cent Dirhams et Cinquante Centimes (TTC)"
       );
       expect(amountToWords(7200.9)).toBe(
-        "Sept Mille Deux Cent Un Dirhams (TTC)"
+        "Sept Mille Deux Cent Dirhams et Quatre-Vingt-Dix Centimes (TTC)"
+      );
+    });
+
+    it("should handle amounts with only centimes (no dirhams)", () => {
+      expect(amountToWords(0.43)).toBe("Quarante-Trois Centimes (TTC)");
+      expect(amountToWords(0.99)).toBe("Quatre-Vingt-Dix-Neuf Centimes (TTC)");
+      expect(amountToWords(0.01)).toBe("Un Centimes (TTC)");
+    });
+
+    it("should handle centimes edge cases", () => {
+      expect(amountToWords(100.21)).toBe(
+        "Cent Dirhams et Vingt et Un Centimes (TTC)"
+      );
+      expect(amountToWords(1000.71)).toBe(
+        "Mille Dirhams et Soixante et Onze Centimes (TTC)"
+      );
+      expect(amountToWords(500.8)).toBe(
+        "Cinq Cents Dirhams et Quatre-Vingt Centimes (TTC)"
       );
     });
 
@@ -165,10 +185,16 @@ describe("amountToWords", () => {
       expect(amountToWords(7200)).toBe("Sept Mille Deux Cent Dirhams (TTC)");
     });
 
-    it("should handle amounts with decimals (rounded)", () => {
-      expect(amountToWords(299.99)).toBe("Trois Cents Dirhams (TTC)");
-      expect(amountToWords(1199.5)).toBe("Mille Deux Cent Dirhams (TTC)");
-      expect(amountToWords(7200.01)).toBe("Sept Mille Deux Cent Dirhams (TTC)");
+    it("should handle amounts with decimals (centimes)", () => {
+      expect(amountToWords(299.99)).toBe(
+        "Deux Cent Quatre-Vingt-Dix-Neuf Dirhams et Quatre-Vingt-Dix-Neuf Centimes (TTC)"
+      );
+      expect(amountToWords(1199.5)).toBe(
+        "Mille Cent Quatre-Vingt-Dix-Neuf Dirhams et Cinquante Centimes (TTC)"
+      );
+      expect(amountToWords(7200.01)).toBe(
+        "Sept Mille Deux Cent Dirhams et Un Centimes (TTC)"
+      );
     });
   });
 
@@ -191,9 +217,12 @@ describe("formatInvoiceAmount", () => {
     );
   });
 
-  it("should handle decimal amounts", () => {
+  it("should handle decimal amounts with centimes", () => {
     expect(formatInvoiceAmount(7200.5)).toBe(
-      "Sept Mille Deux Cent Un Dirhams (TTC)"
+      "Sept Mille Deux Cent Dirhams et Cinquante Centimes (TTC)"
+    );
+    expect(formatInvoiceAmount(2236.43)).toBe(
+      "Deux Mille Deux Cent Trente-Six Dirhams et Quarante-Trois Centimes (TTC)"
     );
   });
 });
