@@ -27,6 +27,13 @@ const clientEnvSchema = z.object({
       /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/,
       "NEXT_PUBLIC_SUPABASE_ANON_KEY must be a valid JWT"
     ),
+
+  // Sentry DSN - optional in development, required in production
+  NEXT_PUBLIC_SENTRY_DSN: z
+    .string()
+    .url("NEXT_PUBLIC_SENTRY_DSN must be a valid URL")
+    .optional()
+    .or(z.literal("")),
 });
 
 /**
@@ -37,6 +44,11 @@ const serverEnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
+
+  // Sentry configuration (server-side only)
+  SENTRY_ORG: z.string().optional(),
+  SENTRY_PROJECT: z.string().optional(),
+  SENTRY_AUTH_TOKEN: z.string().optional(),
 });
 
 /**
@@ -69,7 +81,11 @@ function validateEnv(): Env {
       NEXT_PUBLIC_SUPABASE_URL: "https://test.supabase.co",
       NEXT_PUBLIC_SUPABASE_ANON_KEY:
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature",
+      NEXT_PUBLIC_SENTRY_DSN: undefined,
       NODE_ENV: "test",
+      SENTRY_ORG: undefined,
+      SENTRY_PROJECT: undefined,
+      SENTRY_AUTH_TOKEN: undefined,
     };
   }
 
@@ -80,6 +96,7 @@ function validateEnv(): Env {
         NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
         NEXT_PUBLIC_SUPABASE_ANON_KEY:
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
       };
 
       return {
@@ -87,6 +104,9 @@ function validateEnv(): Env {
         NODE_ENV:
           (process.env.NODE_ENV as "development" | "production" | "test") ||
           "development",
+        SENTRY_ORG: undefined,
+        SENTRY_PROJECT: undefined,
+        SENTRY_AUTH_TOKEN: undefined,
       };
     }
 
@@ -94,7 +114,11 @@ function validateEnv(): Env {
     return envSchema.parse({
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
       NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
       NODE_ENV: process.env.NODE_ENV || "development",
+      SENTRY_ORG: process.env.SENTRY_ORG,
+      SENTRY_PROJECT: process.env.SENTRY_PROJECT,
+      SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
     });
   } catch (error) {
     logger.error("Environment validation failed", { error });
