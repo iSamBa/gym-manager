@@ -137,12 +137,17 @@ export async function generateInvoicePDF(
 
     // Business info (top-right)
     doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
 
     const rightX = pageWidth - margin;
+
+    // Company name - bold for emphasis
+    doc.setFont("helvetica", "bold");
     doc.text(generalSettings.business_name, rightX, currentY + 5, {
       align: "right",
     });
+
+    // Reset to normal for other business info
+    doc.setFont("helvetica", "normal");
     doc.text(generalSettings.business_address.street, rightX, currentY + 11, {
       align: "right",
     });
