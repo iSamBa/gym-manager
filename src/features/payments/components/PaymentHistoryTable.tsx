@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { format } from "date-fns";
-import { Receipt, Undo2, Download, Eye } from "lucide-react";
+import { Receipt, Undo2, Download, Eye, Loader2 } from "lucide-react";
 
 import {
   Table,
@@ -16,11 +16,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { toast } from "sonner";
 
 import type { SubscriptionPaymentWithReceiptAndPlan } from "@/features/database/lib/types";
 import { PaymentReceiptDialog } from "./PaymentReceiptDialog";
 import { RefundDialog } from "./RefundDialog";
-import { GenerateInvoiceButton } from "./GenerateInvoiceButton";
+import { useInvoices } from "@/features/invoices/hooks/use-invoices";
+import { supabase } from "@/lib/supabase";
 
 interface PaymentHistoryTableProps {
   payments: SubscriptionPaymentWithReceiptAndPlan[];
@@ -39,6 +41,9 @@ export function PaymentHistoryTable({
     useState<SubscriptionPaymentWithReceiptAndPlan | null>(null);
   const [showReceiptDialog, setShowReceiptDialog] = useState(false);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [loadingInvoice, setLoadingInvoice] = useState<string | null>(null);
+
+  const { generateInvoice } = useInvoices();
 
   if (isLoading) {
     return (
@@ -107,20 +112,92 @@ export function PaymentHistoryTable({
     return <Badge variant="secondary">{status}</Badge>;
   };
 
-  const handleViewReceipt = (
+  /**
+   * Get or generate invoice for a payment, then perform action (view/download)
+   */
+  const getOrGenerateInvoice = async (
     payment: SubscriptionPaymentWithReceiptAndPlan
   ) => {
-    setSelectedPayment(payment);
-    setShowReceiptDialog(true);
+    // Check if invoice already exists
+    const { data: existingInvoice } = await supabase
+      .from("invoices")
+      .select("id, pdf_url")
+      .eq("payment_id", payment.id)
+      .maybeSingle();
+
+    if (existingInvoice?.pdf_url) {
+      return existingInvoice.pdf_url;
+    }
+
+    // Invoice doesn't exist, generate it
+    toast.info("Generating invoice...");
+
+    await generateInvoice({
+      payment_id: payment.id,
+      member_id: payment.member_id,
+      subscription_id: payment.subscription_id,
+      amount: payment.amount,
+    });
+
+    // Fetch the newly created invoice
+    const { data: newInvoice } = await supabase
+      .from("invoices")
+      .select("pdf_url")
+      .eq("payment_id", payment.id)
+      .single();
+
+    if (!newInvoice?.pdf_url) {
+      throw new Error("Invoice generated but PDF URL not found");
+    }
+
+    return newInvoice.pdf_url;
   };
 
-  const handleDownloadReceipt = async (
+  const handleViewInvoice = async (
     payment: SubscriptionPaymentWithReceiptAndPlan
   ) => {
-    // Dynamically import PDF generator to reduce initial bundle size
-    const { generatePaymentReceiptPDF } = await import("../lib/pdf-generator");
+    try {
+      setLoadingInvoice(payment.id);
+      const pdfUrl = await getOrGenerateInvoice(payment);
 
-    await generatePaymentReceiptPDF({ payment });
+      // Open PDF in new tab
+      window.open(pdfUrl, "_blank");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to view invoice"
+      );
+    } finally {
+      setLoadingInvoice(null);
+    }
+  };
+
+  const handleDownloadInvoice = async (
+    payment: SubscriptionPaymentWithReceiptAndPlan
+  ) => {
+    try {
+      setLoadingInvoice(payment.id);
+      const pdfUrl = await getOrGenerateInvoice(payment);
+
+      // Download the PDF
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${payment.receipt_number}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success("Invoice downloaded successfully");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to download invoice"
+      );
+    } finally {
+      setLoadingInvoice(null);
+    }
   };
 
   const handleRefund = (payment: SubscriptionPaymentWithReceiptAndPlan) => {
@@ -195,22 +272,25 @@ export function PaymentHistoryTable({
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-3">
-                        <Eye
-                          className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer"
-                          onClick={() => handleViewReceipt(payment)}
-                        />
-                        <Download
-                          className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer"
-                          onClick={() => handleDownloadReceipt(payment)}
-                        />
-                        {payment.payment_status === "completed" && (
+                        {loadingInvoice === payment.id ? (
+                          <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+                        ) : (
                           <>
-                            <GenerateInvoiceButton payment={payment} />
-                            <Undo2
-                              className="h-4 w-4 cursor-pointer text-red-500 hover:text-red-600"
-                              onClick={() => handleRefund(payment)}
+                            <Eye
+                              className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer transition-colors"
+                              onClick={() => handleViewInvoice(payment)}
+                            />
+                            <Download
+                              className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer transition-colors"
+                              onClick={() => handleDownloadInvoice(payment)}
                             />
                           </>
+                        )}
+                        {payment.payment_status === "completed" && (
+                          <Undo2
+                            className="h-4 w-4 cursor-pointer text-red-500 transition-colors hover:text-red-600"
+                            onClick={() => handleRefund(payment)}
+                          />
                         )}
                       </div>
                     </TableCell>
