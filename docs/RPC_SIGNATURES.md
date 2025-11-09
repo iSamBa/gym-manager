@@ -728,6 +728,126 @@ console.log(`${stats.active_members} active members`);
 
 ---
 
+## Transactions & Payments
+
+### `create_subscription_with_payment(...)`
+
+**Purpose:** Atomically creates a subscription and payment record in a single transaction. Automatically converts trial members to full members.
+
+**Parameters:**
+
+- `p_member_id` (UUID) - Member ID
+- `p_plan_id` (UUID) - Subscription plan ID
+- `p_payment_amount` (DECIMAL) - Payment amount
+- `p_payment_method` (VARCHAR) - Payment method ('cash', 'card', 'bank_transfer', 'online', 'check')
+- `p_payment_date` (DATE) - Payment date (default: CURRENT_DATE)
+
+**Returns:** JSON object
+
+```typescript
+{
+  success: boolean;
+  subscription_id: string;
+  payment_id: string;
+  message: string;
+}
+```
+
+**Transaction Operations:**
+
+1. Creates subscription with plan session count
+2. Records payment with 'completed' status
+3. Updates member status to 'active'
+4. Converts trial members to 'full' type
+5. All operations succeed together or rollback on any failure
+
+**Access Control:** Uses SECURITY DEFINER for admin-level access
+
+**Usage:**
+
+```typescript
+const { data, error } = await supabase.rpc("create_subscription_with_payment", {
+  p_member_id: memberId,
+  p_plan_id: planId,
+  p_payment_amount: 150.0,
+  p_payment_method: "card",
+  p_payment_date: "2025-01-15",
+});
+
+if (error) throw new Error(`Transaction failed: ${error.message}`);
+console.log(`Created subscription: ${data.subscription_id}`);
+```
+
+---
+
+### `process_refund_with_transaction(...)`
+
+**Purpose:** Atomically processes a refund by creating a negative payment entry and optionally canceling the subscription.
+
+**Parameters:**
+
+- `p_payment_id` (UUID) - Original payment ID to refund
+- `p_refund_amount` (DECIMAL) - Refund amount (must be ≤ remaining refundable amount)
+- `p_refund_reason` (TEXT) - Reason for refund
+- `p_cancel_subscription` (BOOLEAN) - Cancel associated subscription (default: false)
+
+**Returns:** JSON object
+
+```typescript
+{
+  success: boolean;
+  refund_id: string;
+  payment_id: string;
+  refund_amount: number;
+  subscription_cancelled: boolean;
+  message: string;
+}
+```
+
+**Transaction Operations:**
+
+1. Validates payment exists and is not already a refund
+2. Calculates total refunded to ensure refund amount is valid
+3. Creates refund entry with negative amount
+4. Updates subscription paid_amount
+5. Optionally cancels subscription
+6. All operations succeed together or rollback on any failure
+
+**Validation Rules:**
+
+- Payment must exist
+- Payment must not be a refund entry itself
+- Refund amount must be > 0
+- Refund amount must not exceed remaining refundable amount
+- Row locking prevents concurrent modifications
+
+**Access Control:** Uses SECURITY DEFINER for admin-level access
+
+**Usage:**
+
+```typescript
+// Full refund with subscription cancellation
+const { data, error } = await supabase.rpc("process_refund_with_transaction", {
+  p_payment_id: paymentId,
+  p_refund_amount: 150.0,
+  p_refund_reason: "Customer request",
+  p_cancel_subscription: true,
+});
+
+// Partial refund without cancellation
+const { data, error } = await supabase.rpc("process_refund_with_transaction", {
+  p_payment_id: paymentId,
+  p_refund_amount: 50.0,
+  p_refund_reason: "Partial refund for service issue",
+  p_cancel_subscription: false,
+});
+
+if (error) throw new Error(`Refund failed: ${error.message}`);
+console.log(`Refund entry created: ${data.refund_id}`);
+```
+
+---
+
 ## Body Checkups
 
 ### `get_latest_body_checkup(p_member_id UUID)`
