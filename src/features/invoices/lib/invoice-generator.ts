@@ -90,8 +90,10 @@ export async function generateInvoicePDF(
     });
 
     // Dynamic import for bundle optimization (CRITICAL for performance)
-    const jsPDFModule = await import("jspdf");
-    const jsPDF = jsPDFModule.default;
+    // Import jsPDF using named export (works in browser/Next.js runtime)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { jsPDF } = (await import("jspdf")) as any;
+    // Import autotable plugin (extends jsPDF prototype)
     await import("jspdf-autotable");
 
     // Create A4 PDF in portrait mode

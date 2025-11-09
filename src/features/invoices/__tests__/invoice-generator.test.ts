@@ -42,7 +42,6 @@ const MockJsPDF = class {
 };
 
 vi.mock("jspdf", () => ({
-  default: MockJsPDF,
   jsPDF: MockJsPDF,
 }));
 
