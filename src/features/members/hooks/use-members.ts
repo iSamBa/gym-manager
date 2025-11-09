@@ -8,6 +8,7 @@ import { keepPreviousData } from "@tanstack/react-query";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
+import { getUserFriendlyErrorMessage } from "@/lib/error-messages";
 import {
   memberUtils,
   type MemberFilters,
@@ -1418,6 +1419,18 @@ export function useConvertCollaborationMember() {
           });
         }
       }
+    },
+    onError: (error) => {
+      const message = getUserFriendlyErrorMessage(error, {
+        operation: "update",
+        resource: "member",
+      });
+
+      logger.error("Failed to convert collaboration member", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      toast.error(message);
     },
   });
 }
