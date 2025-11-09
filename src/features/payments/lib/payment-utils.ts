@@ -416,6 +416,8 @@ export const paymentUtils = {
           payment_status: payment.payment_status,
           receipt_number: payment.receipt_number,
           payment_date: payment.payment_date,
+          member_id: payment.member_id,
+          subscription_id: payment.subscription_id,
           is_refund: payment.is_refund,
           refunded_payment_id: payment.refunded_payment_id,
           description: payment.description,
