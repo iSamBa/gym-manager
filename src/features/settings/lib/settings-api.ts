@@ -4,7 +4,8 @@ import { getLocalDateString, formatForDatabase } from "@/lib/date-utils";
 
 /**
  * Fetches the currently active studio setting by key
- * Returns the most recent setting where effective_from <= today
+ * Returns the most recent setting where effective_from <= today OR effective_from is null
+ * Null effective_from means immediate effect
  */
 export async function fetchActiveSettings(
   settingKey: string
@@ -16,7 +17,7 @@ export async function fetchActiveSettings(
     .select("*")
     .eq("setting_key", settingKey)
     .eq("is_active", true)
-    .lte("effective_from", today)
+    .or(`effective_from.is.null,effective_from.lte.${today}`)
     .order("effective_from", { ascending: false, nullsFirst: false })
     .limit(1)
     .maybeSingle();

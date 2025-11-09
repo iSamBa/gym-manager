@@ -2,14 +2,15 @@
 
 import { memo, useCallback, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
 import { OpeningHoursTab } from "./OpeningHoursTab";
 import { PlanningTab } from "./PlanningTab";
 import { MultiSiteSessionsTab } from "./MultiSiteSessionsTab";
+import { GeneralTab } from "./GeneralTab";
+import { InvoiceSettingsTab } from "./InvoiceSettingsTab";
 import { Clock, CreditCard, Building, Settings, Users } from "lucide-react";
 
 function StudioSettingsLayoutComponent() {
-  const [activeTab, setActiveTab] = useState("opening-hours");
+  const [activeTab, setActiveTab] = useState("general");
 
   // Use useCallback for event handler
   const handleTabChange = useCallback((value: string) => {
@@ -33,6 +34,10 @@ function StudioSettingsLayoutComponent() {
         className="space-y-4"
       >
         <TabsList>
+          <TabsTrigger value="general" className="gap-2">
+            <Building className="h-4 w-4" />
+            General
+          </TabsTrigger>
           <TabsTrigger value="opening-hours" className="gap-2">
             <Clock className="h-4 w-4" />
             Opening Hours
@@ -45,21 +50,15 @@ function StudioSettingsLayoutComponent() {
             <Users className="h-4 w-4" />
             Multi-Site Sessions
           </TabsTrigger>
-          <TabsTrigger value="general" disabled className="gap-2">
-            <Building className="h-4 w-4" />
-            General
-            <span className="text-muted-foreground ml-2 text-xs">
-              (Coming Soon)
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="payment" disabled className="gap-2">
+          <TabsTrigger value="invoices" className="gap-2">
             <CreditCard className="h-4 w-4" />
-            Payment
-            <span className="text-muted-foreground ml-2 text-xs">
-              (Coming Soon)
-            </span>
+            Invoices
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="general">
+          <GeneralTab />
+        </TabsContent>
 
         <TabsContent value="opening-hours">
           <OpeningHoursTab />
@@ -73,20 +72,8 @@ function StudioSettingsLayoutComponent() {
           <MultiSiteSessionsTab />
         </TabsContent>
 
-        <TabsContent value="general">
-          <Card className="p-6">
-            <p className="text-muted-foreground">
-              General settings coming soon...
-            </p>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="payment">
-          <Card className="p-6">
-            <p className="text-muted-foreground">
-              Payment settings coming soon...
-            </p>
-          </Card>
+        <TabsContent value="invoices">
+          <InvoiceSettingsTab />
         </TabsContent>
       </Tabs>
     </div>

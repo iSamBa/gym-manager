@@ -49,8 +49,8 @@ describe("settings-api", () => {
         .fn()
         .mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
-      const mockLte = vi.fn().mockReturnValue({ order: mockOrder });
-      const mockEq2 = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockOr = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ or: mockOr });
       const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
 
@@ -76,8 +76,8 @@ describe("settings-api", () => {
         .fn()
         .mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
-      const mockLte = vi.fn().mockReturnValue({ order: mockOrder });
-      const mockEq2 = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockOr = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ or: mockOr });
       const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
 
@@ -100,8 +100,8 @@ describe("settings-api", () => {
         .fn()
         .mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
-      const mockLte = vi.fn().mockReturnValue({ order: mockOrder });
-      const mockEq2 = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockOr = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ or: mockOr });
       const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
 
@@ -116,7 +116,7 @@ describe("settings-api", () => {
   });
 
   describe("fetchActiveSettings", () => {
-    it("should fetch settings where effective_from <= today", async () => {
+    it("should fetch settings where effective_from is null or <= today", async () => {
       const mockData = {
         id: "123",
         setting_key: "opening_hours",
@@ -137,8 +137,8 @@ describe("settings-api", () => {
         .fn()
         .mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
-      const mockLte = vi.fn().mockReturnValue({ order: mockOrder });
-      const mockEq2 = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockOr = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ or: mockOr });
       const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
 
@@ -153,9 +153,8 @@ describe("settings-api", () => {
       expect(mockSelect).toHaveBeenCalled();
       expect(mockEq1).toHaveBeenCalledWith("setting_key", "opening_hours");
       expect(mockEq2).toHaveBeenCalledWith("is_active", true);
-      expect(mockLte).toHaveBeenCalledWith(
-        "effective_from",
-        expect.stringContaining("2025")
+      expect(mockOr).toHaveBeenCalledWith(
+        expect.stringContaining("effective_from.is.null")
       );
     });
 
@@ -168,8 +167,8 @@ describe("settings-api", () => {
         .fn()
         .mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
-      const mockLte = vi.fn().mockReturnValue({ order: mockOrder });
-      const mockEq2 = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockOr = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ or: mockOr });
       const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
 
@@ -439,7 +438,7 @@ describe("settings-api", () => {
       expect(mockGt).toHaveBeenCalledWith("effective_from", today);
     });
 
-    it("should use getLocalDateString() for active settings", async () => {
+    it("should use getLocalDateString() for active settings with or() query", async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2025-10-18T12:00:00Z"));
 
@@ -463,8 +462,8 @@ describe("settings-api", () => {
         .fn()
         .mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
-      const mockLte = vi.fn().mockReturnValue({ order: mockOrder });
-      const mockEq2 = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockOr = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq2 = vi.fn().mockReturnValue({ or: mockOr });
       const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
 
@@ -474,8 +473,10 @@ describe("settings-api", () => {
 
       await fetchActiveSettings("opening_hours");
 
-      // Verify that the function uses the local date string, not UTC
-      expect(mockLte).toHaveBeenCalledWith("effective_from", today);
+      // Verify that the function uses the local date string in the or() query
+      expect(mockOr).toHaveBeenCalledWith(
+        `effective_from.is.null,effective_from.lte.${today}`
+      );
     });
 
     it("should use formatForDatabase() when updating settings", async () => {

@@ -10,6 +10,7 @@ import {
   Calendar as CalendarIcon,
   Eye,
   Undo2,
+  Loader2,
 } from "lucide-react";
 
 import { MainLayout } from "@/components/layout/main-layout";
@@ -50,6 +51,10 @@ import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { RecordPaymentDialog } from "@/features/payments/components/RecordPaymentDialog";
 import { PaymentReceiptDialog } from "@/features/payments/components/PaymentReceiptDialog";
 import { RefundDialog } from "@/features/payments/components/RefundDialog";
+import { InvoiceViewDialog } from "@/features/payments/components/InvoiceViewDialog";
+import { useInvoices } from "@/features/invoices/hooks/use-invoices";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export default function PaymentsManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -67,7 +72,14 @@ export default function PaymentsManagementPage() {
   >(null);
   const [showReceiptDialog, setShowReceiptDialog] = useState(false);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+  const [invoicePdfUrl, setInvoicePdfUrl] = useState<string | null>(null);
+  const [invoiceNumber, setInvoiceNumber] = useState<string>("");
+  const [loadingInvoice, setLoadingInvoice] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const pageSize = 50;
+
+  const { generateInvoice } = useInvoices();
 
   // Require admin role for entire page
   const { isLoading: isAuthLoading, hasRequiredRole } =
@@ -128,9 +140,102 @@ export default function PaymentsManagementPage() {
   };
 
   // Action handlers
-  const handleViewReceipt = (payment: AllPaymentsResponse["payments"][0]) => {
-    setSelectedPayment(payment);
-    setShowReceiptDialog(true);
+  /**
+   * Get or generate invoice for a payment, then perform action (view/download)
+   */
+  const getOrGenerateInvoice = async (
+    payment: AllPaymentsResponse["payments"][0]
+  ) => {
+    // Check if invoice already exists
+    const { data: existingInvoice } = await supabase
+      .from("invoices")
+      .select("id, pdf_url, invoice_number")
+      .eq("payment_id", payment.id)
+      .maybeSingle();
+
+    if (existingInvoice?.pdf_url) {
+      return {
+        pdfUrl: existingInvoice.pdf_url,
+        invoiceNumber: existingInvoice.invoice_number,
+      };
+    }
+
+    // Invoice doesn't exist, generate it
+    toast.info("Generating invoice...");
+
+    await generateInvoice({
+      payment_id: payment.id,
+      member_id: payment.member_id,
+      subscription_id: payment.subscription_id || undefined,
+      amount: payment.amount,
+    });
+
+    // Fetch the newly created invoice
+    const { data: newInvoice } = await supabase
+      .from("invoices")
+      .select("pdf_url, invoice_number")
+      .eq("payment_id", payment.id)
+      .single();
+
+    if (!newInvoice?.pdf_url) {
+      throw new Error("Invoice generated but PDF URL not found");
+    }
+
+    return {
+      pdfUrl: newInvoice.pdf_url,
+      invoiceNumber: newInvoice.invoice_number,
+    };
+  };
+
+  const handleViewInvoice = async (
+    payment: AllPaymentsResponse["payments"][0]
+  ) => {
+    try {
+      setLoadingInvoice(payment.id);
+      const { pdfUrl, invoiceNumber } = await getOrGenerateInvoice(payment);
+
+      // Open invoice in dialog
+      setInvoicePdfUrl(pdfUrl);
+      setInvoiceNumber(invoiceNumber);
+      setShowInvoiceDialog(true);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to view invoice"
+      );
+    } finally {
+      setLoadingInvoice(null);
+    }
+  };
+
+  const handleDownloadInvoice = async (
+    payment: AllPaymentsResponse["payments"][0]
+  ) => {
+    try {
+      setLoadingInvoice(payment.id);
+      setIsDownloading(true);
+      const { pdfUrl, invoiceNumber } = await getOrGenerateInvoice(payment);
+
+      // Download the PDF
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${invoiceNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success("Invoice downloaded successfully");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to download invoice"
+      );
+    } finally {
+      setLoadingInvoice(null);
+      setIsDownloading(false);
+    }
   };
 
   const handleRefund = (payment: AllPaymentsResponse["payments"][0]) => {
@@ -347,18 +452,24 @@ export default function PaymentsManagementPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-3">
-                        <Eye
-                          className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer"
-                          onClick={() => handleViewReceipt(payment)}
-                        />
-                        <Download
-                          className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer"
-                          onClick={() => handleViewReceipt(payment)}
-                        />
+                        {loadingInvoice === payment.id ? (
+                          <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Eye
+                              className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer transition-colors"
+                              onClick={() => handleViewInvoice(payment)}
+                            />
+                            <Download
+                              className="text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer transition-colors"
+                              onClick={() => handleDownloadInvoice(payment)}
+                            />
+                          </>
+                        )}
                         {payment.payment_status === "completed" &&
                           !payment.is_refund && (
                             <Undo2
-                              className="h-4 w-4 cursor-pointer text-red-500 hover:text-red-600"
+                              className="h-4 w-4 cursor-pointer text-red-500 transition-colors hover:text-red-600"
                               onClick={() => handleRefund(payment)}
                             />
                           )}
@@ -427,6 +538,41 @@ export default function PaymentsManagementPage() {
             }}
           />
         )}
+
+        {/* Invoice View Dialog */}
+        <InvoiceViewDialog
+          pdfUrl={invoicePdfUrl}
+          invoiceNumber={invoiceNumber}
+          open={showInvoiceDialog}
+          onOpenChange={setShowInvoiceDialog}
+          onDownload={async () => {
+            if (!invoicePdfUrl) return;
+
+            try {
+              setIsDownloading(true);
+              const response = await fetch(invoicePdfUrl);
+              const blob = await response.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `invoice-${invoiceNumber}.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              document.body.removeChild(a);
+              toast.success("Invoice downloaded successfully");
+            } catch (error) {
+              toast.error(
+                error instanceof Error
+                  ? error.message
+                  : "Failed to download invoice"
+              );
+            } finally {
+              setIsDownloading(false);
+            }
+          }}
+          isDownloading={isDownloading}
+        />
       </div>
     </MainLayout>
   );

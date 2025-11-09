@@ -57,34 +57,43 @@ export function LoginForm({
           return;
         }
 
-        // Wait for profile to load (AuthProvider loads user_profiles data)
-        // Poll for the user profile with role data (max 3 seconds)
-        const maxAttempts = 30; // 30 attempts * 100ms = 3 seconds max
-        let attempts = 0;
-
-        const checkProfile = () => {
-          const { user: profileUser } = useAuthStore.getState();
-
-          if (profileUser?.role) {
-            // Profile loaded with role - perform role-based redirect
-            if (profileUser.role === "admin") {
-              router.push("/");
-            } else if (profileUser.role === "trainer") {
-              router.push("/training-sessions");
-            } else {
-              // Unknown role - redirect to login
-              router.push("/login");
-            }
-          } else if (attempts < maxAttempts) {
-            attempts++;
-            setTimeout(checkProfile, 100);
-          } else {
-            // Timeout - fallback to dashboard
+        // Helper function to perform role-based redirect
+        const performRedirect = (role: string) => {
+          if (role === "admin") {
             router.push("/");
+          } else if (role === "trainer") {
+            router.push("/training-sessions");
+          } else {
+            // Unknown role - redirect to login
+            router.push("/login");
           }
         };
 
-        checkProfile();
+        // CRITICAL: Check if profile is ALREADY loaded (race condition fix)
+        // Profile might load before we set up the subscription
+        const currentState = useAuthStore.getState();
+        const currentRole = currentState.user?.role as string | undefined;
+        if (currentRole) {
+          // Profile already loaded - redirect immediately
+          performRedirect(currentRole);
+          return;
+        }
+
+        // Profile not loaded yet - subscribe to store changes
+        const unsubscribe = useAuthStore.subscribe((state) => {
+          const role = state.user?.role as string | undefined;
+          if (role) {
+            // Profile loaded with role - unsubscribe and redirect
+            unsubscribe();
+            performRedirect(role);
+          }
+        });
+
+        // Fallback timeout (in case profile never loads)
+        setTimeout(() => {
+          unsubscribe();
+          router.push("/");
+        }, 3000); // 3 second timeout (reduced from 5s)
       }
     },
     [email, password, signIn, router]

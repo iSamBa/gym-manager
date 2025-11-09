@@ -25,6 +25,8 @@ interface Payment {
   payment_status: PaymentStatus;
   receipt_number: string;
   payment_date: string;
+  member_id: string;
+  subscription_id?: string;
   is_refund: boolean;
   refunded_payment_id?: string;
   description?: string;
