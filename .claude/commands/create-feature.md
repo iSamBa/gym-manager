@@ -142,6 +142,66 @@ For each user story, I'll need:
 4. **Dependencies** - Does it depend on other stories?
 5. **Complexity** - Small/Medium/Large
 
+### 🎯 MANDATORY: Production Readiness User Story
+
+**IMPORTANT**: Every feature MUST include a final user story for production readiness:
+
+**US-XXX: Production Readiness & Optimization**
+
+This story ensures the feature meets all production standards from CLAUDE.md:
+
+**Acceptance Criteria:**
+
+1. **Security Audit**
+   - [ ] RLS policies documented in `docs/RLS-POLICIES.md`
+   - [ ] Input validation with Zod schemas implemented
+   - [ ] Environment variables validated
+   - [ ] No security vulnerabilities (XSS, SQL injection, etc.)
+
+2. **Database Optimization**
+   - [ ] Indexes added for all new queries
+   - [ ] N+1 queries eliminated with joins
+   - [ ] Transactions implemented for multi-step operations
+   - [ ] Query performance <100ms average
+
+3. **Performance Optimization**
+   - [ ] Bundle size <300 KB per route
+   - [ ] React.memo/useCallback/useMemo applied
+   - [ ] Images optimized with Next.js Image component
+   - [ ] Pagination for large datasets (>100 rows)
+
+4. **Error Handling**
+   - [ ] All mutations have onError handlers
+   - [ ] Error boundaries for dynamic routes
+   - [ ] User-friendly error messages
+   - [ ] Comprehensive error logging
+
+5. **Testing & Quality**
+   - [ ] All tests passing (100% pass rate)
+   - [ ] Edge cases covered
+   - [ ] Integration tests for critical flows
+   - [ ] `npm run lint` - 0 errors, 0 warnings
+   - [ ] `npm run build` - successful compilation
+
+6. **Monitoring & Operations**
+   - [ ] Error tracking configured (Sentry/Analytics)
+   - [ ] Performance monitoring setup
+   - [ ] Database query monitoring
+   - [ ] Documentation complete
+
+**Technical Scope:**
+
+- Review all code from previous user stories
+- Add missing optimizations
+- Complete security audit
+- Setup monitoring tools
+
+**Dependencies:** All previous user stories must be completed
+
+**Complexity:** Medium
+
+This user story will ALWAYS be automatically included as the last story in your feature plan.
+
 ---
 
 ## ✅ What Happens Next

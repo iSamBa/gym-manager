@@ -624,6 +624,214 @@ npm test | grep "passing"
 
 **Remember**: These optimizations were achieved through systematic refactoring. Maintain them by following these patterns in all new development!
 
+## Production Readiness Standards
+
+All features MUST meet these production readiness standards before deployment. These standards ensure security, performance, and reliability at scale.
+
+### 🔒 Security Requirements
+
+**MANDATORY Security Checks:**
+
+1. **Row Level Security (RLS) Policies**
+   - Document all RLS policies in `docs/RLS-POLICIES.md`
+   - Verify RLS enabled for all sensitive tables
+   - Test policies with different user roles
+
+2. **Input Validation & Sanitization**
+   - Use Zod schemas for all user inputs
+   - Sanitize HTML content (comments, notes) using DOMPurify
+   - Validate file uploads (type, size, content)
+   - Validate URLs before external links
+
+3. **Environment Variables Validation**
+
+   ```typescript
+   // ALWAYS validate env vars with Zod schema
+   import { z } from "zod";
+   const envSchema = z.object({
+     NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20),
+   });
+   export const env = envSchema.parse(process.env);
+   ```
+
+4. **Authentication & Authorization**
+   - Verify server-side auth middleware protection
+   - Use httpOnly cookies (never localStorage)
+   - Implement proper session validation
+   - Add rate limiting for sensitive operations
+
+### 📊 Database Requirements
+
+**MANDATORY Database Standards:**
+
+1. **Indexes for Performance**
+   - Add indexes on frequently queried columns
+   - Index foreign keys for joins
+   - Index status/date columns for filtering
+   - Document indexes in migration files
+
+   ```sql
+   -- Required index patterns:
+   CREATE INDEX idx_table_status ON table_name(status);
+   CREATE INDEX idx_table_foreign_key ON table_name(foreign_key_id);
+   CREATE INDEX idx_table_date ON table_name(date_column);
+   ```
+
+2. **Transaction Handling**
+   - Wrap multi-step operations in transactions
+   - Use Supabase RPC functions for atomic operations
+   - Handle rollback scenarios explicitly
+
+   ```typescript
+   // ✅ Use RPC for atomic operations
+   await supabase.rpc("atomic_operation", { params });
+
+   // ❌ NEVER: Multiple separate calls without transaction
+   await createRecord1(); // Could fail after this
+   await createRecord2(); // Orphaned data
+   ```
+
+3. **Query Optimization**
+   - Prevent N+1 queries with joins
+   - Use pagination for large datasets (>100 rows)
+   - Implement query result caching
+   - Server-side filtering/sorting only
+
+### 🎯 Performance Requirements
+
+**MANDATORY Performance Standards:**
+
+1. **Bundle Size Targets**
+   - Maximum route size: 300 KB First Load JS
+   - Use dynamic imports for heavy libraries (jsPDF, charts)
+   - Code splitting for large components
+   - Tree-shaking enabled for all dependencies
+
+2. **React Optimization**
+   - Use React.memo for components >100 lines
+   - Wrap event handlers in useCallback
+   - Memoize expensive computations with useMemo
+   - Implement virtual scrolling for lists >100 items
+
+3. **Image Optimization**
+   - Use Next.js Image component (never <img>)
+   - Enable WebP format conversion
+   - Lazy load images below fold
+   - Provide blur placeholders
+
+4. **Database Query Performance**
+   - Maximum 5 queries per page load
+   - Implement stale-while-revalidate caching
+   - Use database indexes (see above)
+   - Monitor query execution time (<100ms target)
+
+### ✅ Error Handling Requirements
+
+**MANDATORY Error Handling:**
+
+1. **User-Facing Errors**
+   - All mutations MUST have onError handlers
+   - Show user-friendly error messages (toast/alert)
+   - Log errors with context for debugging
+
+   ```typescript
+   // ✅ ALWAYS include error handler
+   useMutation({
+     mutationFn: createMember,
+     onSuccess: () => toast.success("Created!"),
+     onError: (error) => {
+       logger.error("Failed to create member", { error });
+       toast.error(`Failed: ${error.message}`);
+     },
+   });
+   ```
+
+2. **Error Boundaries**
+   - Add error.tsx for all dynamic routes
+   - Implement feature-level error boundaries
+   - Provide recovery actions (reset, retry)
+
+3. **Promise Handling**
+   - No unhandled promise rejections
+   - Wrap async operations in try-catch
+   - Handle loading and error states in UI
+
+### 🧪 Testing Requirements
+
+**MANDATORY Testing Standards:**
+
+1. **Test Coverage**
+   - All new features MUST have tests
+   - Critical paths: 100% coverage
+   - Edge cases and error scenarios covered
+   - Integration tests for multi-step workflows
+
+2. **Test Types Required**
+   - Unit tests: All utility functions
+   - Component tests: All UI components
+   - Integration tests: Database operations
+   - E2E tests: Critical user flows
+
+3. **Before Deployment**
+   - `npm run lint` - 0 errors, 0 warnings
+   - `npm test` - 100% pass rate
+   - `npm run build` - successful compilation
+   - Manual testing of changed functionality
+
+### 📈 Monitoring & Operations
+
+**MANDATORY for Production:**
+
+1. **Error Tracking**
+   - Setup Sentry or similar error tracking
+   - Configure source maps for debugging
+   - Set up error alerting rules
+
+2. **Performance Monitoring**
+   - Track Core Web Vitals (FCP, LCP, CLS)
+   - Monitor database query performance
+   - Set up alerts for slow queries (>200ms)
+
+3. **Database Monitoring**
+   - Monitor connection pool usage
+   - Track query execution times
+   - Alert on failed migrations
+
+### 🎯 Production Readiness Checklist
+
+**Before merging to production, verify:**
+
+- [ ] All RLS policies documented and tested
+- [ ] Environment variables validated with Zod
+- [ ] Database indexes added for new queries
+- [ ] Transactions implemented for multi-step operations
+- [ ] N+1 queries eliminated with joins
+- [ ] Pagination added for large datasets
+- [ ] Bundle size under 300 KB per route
+- [ ] React.memo/useCallback/useMemo applied
+- [ ] Images optimized with Next.js Image
+- [ ] All mutations have error handlers
+- [ ] Error boundaries for dynamic routes
+- [ ] Tests passing with coverage
+- [ ] Monitoring configured (Sentry/Analytics)
+- [ ] Security audit completed
+- [ ] Performance benchmarks met
+
+### 📋 Feature Implementation Template
+
+Every feature SHOULD include a final user story for production readiness:
+
+**US-XXX: Production Readiness & Optimization**
+
+- Security audit and RLS verification
+- Database indexes and query optimization
+- Bundle size and performance optimization
+- Error handling and monitoring setup
+- Testing and documentation
+
+This ensures features are production-ready before deployment.
+
 ## Additional Resources
 
 - [Authentication Guide](./docs/AUTH.md) - Complete auth documentation
