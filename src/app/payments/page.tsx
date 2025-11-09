@@ -51,6 +51,7 @@ import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { RecordPaymentDialog } from "@/features/payments/components/RecordPaymentDialog";
 import { PaymentReceiptDialog } from "@/features/payments/components/PaymentReceiptDialog";
 import { RefundDialog } from "@/features/payments/components/RefundDialog";
+import { InvoiceViewDialog } from "@/features/payments/components/InvoiceViewDialog";
 import { useInvoices } from "@/features/invoices/hooks/use-invoices";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -71,7 +72,11 @@ export default function PaymentsManagementPage() {
   >(null);
   const [showReceiptDialog, setShowReceiptDialog] = useState(false);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+  const [invoicePdfUrl, setInvoicePdfUrl] = useState<string | null>(null);
+  const [invoiceNumber, setInvoiceNumber] = useState<string>("");
   const [loadingInvoice, setLoadingInvoice] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const pageSize = 50;
 
   const { generateInvoice } = useInvoices();
@@ -144,12 +149,15 @@ export default function PaymentsManagementPage() {
     // Check if invoice already exists
     const { data: existingInvoice } = await supabase
       .from("invoices")
-      .select("id, pdf_url")
+      .select("id, pdf_url, invoice_number")
       .eq("payment_id", payment.id)
       .maybeSingle();
 
     if (existingInvoice?.pdf_url) {
-      return existingInvoice.pdf_url;
+      return {
+        pdfUrl: existingInvoice.pdf_url,
+        invoiceNumber: existingInvoice.invoice_number,
+      };
     }
 
     // Invoice doesn't exist, generate it
@@ -165,7 +173,7 @@ export default function PaymentsManagementPage() {
     // Fetch the newly created invoice
     const { data: newInvoice } = await supabase
       .from("invoices")
-      .select("pdf_url")
+      .select("pdf_url, invoice_number")
       .eq("payment_id", payment.id)
       .single();
 
@@ -173,7 +181,10 @@ export default function PaymentsManagementPage() {
       throw new Error("Invoice generated but PDF URL not found");
     }
 
-    return newInvoice.pdf_url;
+    return {
+      pdfUrl: newInvoice.pdf_url,
+      invoiceNumber: newInvoice.invoice_number,
+    };
   };
 
   const handleViewInvoice = async (
@@ -181,10 +192,12 @@ export default function PaymentsManagementPage() {
   ) => {
     try {
       setLoadingInvoice(payment.id);
-      const pdfUrl = await getOrGenerateInvoice(payment);
+      const { pdfUrl, invoiceNumber } = await getOrGenerateInvoice(payment);
 
-      // Open PDF in new tab
-      window.open(pdfUrl, "_blank");
+      // Open invoice in dialog
+      setInvoicePdfUrl(pdfUrl);
+      setInvoiceNumber(invoiceNumber);
+      setShowInvoiceDialog(true);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to view invoice"
@@ -199,7 +212,8 @@ export default function PaymentsManagementPage() {
   ) => {
     try {
       setLoadingInvoice(payment.id);
-      const pdfUrl = await getOrGenerateInvoice(payment);
+      setIsDownloading(true);
+      const { pdfUrl, invoiceNumber } = await getOrGenerateInvoice(payment);
 
       // Download the PDF
       const response = await fetch(pdfUrl);
@@ -207,7 +221,7 @@ export default function PaymentsManagementPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `invoice-${payment.receipt_number}.pdf`;
+      a.download = `invoice-${invoiceNumber}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -220,6 +234,7 @@ export default function PaymentsManagementPage() {
       );
     } finally {
       setLoadingInvoice(null);
+      setIsDownloading(false);
     }
   };
 
@@ -523,6 +538,41 @@ export default function PaymentsManagementPage() {
             }}
           />
         )}
+
+        {/* Invoice View Dialog */}
+        <InvoiceViewDialog
+          pdfUrl={invoicePdfUrl}
+          invoiceNumber={invoiceNumber}
+          open={showInvoiceDialog}
+          onOpenChange={setShowInvoiceDialog}
+          onDownload={async () => {
+            if (!invoicePdfUrl) return;
+
+            try {
+              setIsDownloading(true);
+              const response = await fetch(invoicePdfUrl);
+              const blob = await response.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `invoice-${invoiceNumber}.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              document.body.removeChild(a);
+              toast.success("Invoice downloaded successfully");
+            } catch (error) {
+              toast.error(
+                error instanceof Error
+                  ? error.message
+                  : "Failed to download invoice"
+              );
+            } finally {
+              setIsDownloading(false);
+            }
+          }}
+          isDownloading={isDownloading}
+        />
       </div>
     </MainLayout>
   );

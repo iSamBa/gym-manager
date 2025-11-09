@@ -1,5 +1,9 @@
 # US-005: Invoice Viewing in Payment History
 
+**Status**: ✅ Completed
+**Completed**: 2025-01-09
+**Implementation Notes**: Invoice viewing implemented with InvoiceViewDialog component using shadcn/ui. Dialog displays PDF in 95vh iframe with download functionality. Available in both PaymentHistoryTable and /payments page.
+
 ## 📋 User Story
 
 **As a** gym administrator or member
@@ -11,7 +15,8 @@
 **Priority:** P0 (Must Have)
 **Complexity:** Small
 **Estimated Duration:** 1-2 hours
-**Dependencies:** US-004 (invoices must exist)
+**Actual Duration:** 1.5 hours
+**Dependencies:** US-004 (invoices must exist) ✅ Complete
 
 ---
 

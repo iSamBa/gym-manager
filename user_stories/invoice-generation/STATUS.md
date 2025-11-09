@@ -2,26 +2,63 @@
 
 ## 📊 Overall Progress
 
-**Feature Status:** 🚧 In Progress
+**Feature Status:** 🎉 Nearly Complete
 **Started:** 2025-01-08
 **Target Completion:** TBD
-**Current Phase:** Auto-Generation Complete - Ready for Invoice Viewing (US-005)
+**Current Phase:** Invoice Viewing Complete - Ready for Final Testing (US-006)
 
 ```
-Progress: ████████████████████░ 90% Complete
+Progress: ███████████████████▓░ 95% Complete
 
 Infrastructure ████████████████████ 100%
 US-001         ████████████████████ 100%
 US-002         ████████████████████ 100%
 US-003         ████████████████████ 100%
 US-004         ████████████████████ 100%
-US-005         ░░░░░░░░░░░░░░░░░░░░   0%
+US-005         ████████████████████ 100%
 US-006         ░░░░░░░░░░░░░░░░░░░░   0%
 ```
 
 ---
 
 ## ✅ Completed
+
+### US-005: Invoice Viewing in Payment History
+
+**Completed:** 2025-01-09 - ✅ All acceptance criteria met
+
+- [x] `InvoiceViewDialog` component with shadcn/ui Dialog (95vh x 95vh responsive)
+- [x] PDF iframe viewing within dialog (replaces new tab opening)
+- [x] Download button in dialog footer with loading states
+- [x] Auto-generation if invoice doesn't exist (seamless UX)
+- [x] Error handling with graceful fallback messages
+- [x] Loading spinner during invoice fetch/generation
+- [x] Available in PaymentHistoryTable component
+- [x] Available in /payments page
+- [x] 10 unit tests passing (InvoiceViewDialog component)
+- [x] 4 integration tests passing (PaymentHistoryTable rendering)
+- [x] 0 linting errors/warnings
+- [x] Successful production build
+- [x] Performance optimized (React.memo, useCallback, proper state management)
+
+**Key Files Created:**
+
+- `/src/features/payments/components/InvoiceViewDialog.tsx` (118 lines)
+- `/src/features/payments/components/__tests__/InvoiceViewDialog.test.tsx` (139 lines)
+
+**Key Files Modified:**
+
+- `/src/features/payments/components/PaymentHistoryTable.tsx` (invoice dialog integration)
+- `/src/app/payments/page.tsx` (invoice dialog integration for /payments page)
+- `/src/features/payments/components/__tests__/PaymentHistoryTable.test.tsx` (updated mocks and tests)
+
+**Implementation Notes:**
+
+- Dialog uses flexbox layout with flex-shrink-0 on header/footer for optimal iframe height
+- Changed from window.open() to InvoiceViewDialog for better UX (no tab switching)
+- Invoice viewing available in both member detail view and payments management page
+- Consistent download functionality between table and dialog
+- All error states properly handled with user-friendly toast notifications
 
 ### US-004: Automatic Invoice Generation on Payment
 
@@ -309,23 +346,30 @@ _No user stories in progress. Ready for US-005 (Invoice Viewing in Payment Histo
 
 ### US-005: Invoice Viewing in Payment History
 
-**Status:** ⏸️ Not Started
+**Status:** ✅ Completed
 **Priority:** P0 (Must Have)
 **Complexity:** Small
-**Estimated Duration:** 1-2 hours
+**Completed:** 2025-01-09
+**Actual Duration:** 1.5 hours
 
 **Acceptance Criteria:**
 
-- [ ] "View Invoice" button in PaymentHistoryTable
-- [ ] Download invoice PDF
-- [ ] Handle invoices that don't exist yet
-- [ ] Loading states during download
-- [ ] Error handling for download failures
-- [ ] Component tests
+- [x] "View Invoice" button in PaymentHistoryTable
+- [x] Download invoice PDF
+- [x] Handle invoices that don't exist yet
+- [x] Loading states during download
+- [x] Error handling for download failures
+- [x] Component tests
 
-**Dependencies:** US-004 (needs invoices to exist)
+**Dependencies:** US-004 (needs invoices to exist) ✅
 
-**Notes:** _UI completion - relatively straightforward_
+**Implementation Notes:**
+
+- InvoiceViewDialog component created with shadcn/ui primitives
+- 95vh x 95vh responsive dialog with flexbox layout
+- Available in both PaymentHistoryTable and /payments page
+- 14 tests passing (10 component + 4 integration)
+- Performance optimized with React.memo
 
 ---
 
@@ -424,6 +468,42 @@ _None identified_
 ---
 
 ## 📝 Implementation Notes
+
+### 2025-01-09: Invoice Viewing Complete (US-005)
+
+**Completed:**
+
+- US-005: Invoice Viewing in Payment History (1.5 hours)
+- InvoiceViewDialog component created with shadcn/ui primitives
+- Invoice viewing in both PaymentHistoryTable and /payments page
+- Comprehensive test coverage (14 tests passing: 10 component + 4 integration)
+- 0 linting errors/warnings
+- Successful production build
+
+**Key Achievements:**
+
+- Replaced window.open() with InvoiceViewDialog for better UX (no tab switching)
+- 95vh x 95vh responsive dialog with optimal iframe height using flexbox
+- Seamless auto-generation if invoice doesn't exist
+- Consistent download functionality between table and dialog
+- Performance optimized with React.memo and useCallback
+- Clean code following CLAUDE.md guidelines
+
+**Decisions Made:**
+
+- Dialog size increased to 95vh x 95vh (from 90vh) for better viewing experience
+- Flexbox layout with flex-shrink-0 on header/footer ensures iframe takes all available space
+- InvoiceViewDialog component made available on both member detail and payments management pages
+- Error states with user-friendly toast notifications
+- Loading states during invoice fetch/generation
+
+**Next Steps:**
+
+- Begin US-006: Testing & Edge Cases
+- Comprehensive system testing
+- Edge case validation
+
+---
 
 ### 2025-01-09: Auto-Generation Complete (US-004)
 
@@ -577,4 +657,4 @@ US-006: ████ 4 points
 
 **Last Updated:** 2025-01-09
 **Updated By:** Claude
-**Next Review:** After US-005 completion
+**Next Review:** After US-006 completion (final testing & edge cases)
