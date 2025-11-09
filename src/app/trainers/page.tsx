@@ -5,11 +5,10 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { SearchInput } from "@/components/forms/search-input";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  AdvancedTrainerTable,
-  EditTrainerDialog,
-  SimpleTrainerFilters,
-} from "@/features/trainers/components";
+// Direct imports instead of barrel export to reduce bundle size
+import { AdvancedTrainerTable } from "@/features/trainers/components/AdvancedTrainerTable";
+import { EditTrainerDialog } from "@/features/trainers/components/EditTrainerDialog";
+import { SimpleTrainerFilters } from "@/features/trainers/components/SimpleTrainerFilters";
 import type { TrainerWithProfile } from "@/features/database/lib/types";
 import {
   useTrainers,

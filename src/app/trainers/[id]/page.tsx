@@ -9,13 +9,12 @@ import { Separator } from "@/components/ui/separator";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  TrainerAvatar,
-  TrainerStatusBadge,
-  EditTrainerDialog,
-  DeleteTrainerDialog,
-  TrainerSessions,
-} from "@/features/trainers/components";
+// Direct imports instead of barrel export to reduce bundle size
+import { TrainerAvatar } from "@/features/trainers/components/TrainerAvatar";
+import { TrainerStatusBadge } from "@/features/trainers/components/TrainerStatusBadge";
+import { EditTrainerDialog } from "@/features/trainers/components/EditTrainerDialog";
+import { DeleteTrainerDialog } from "@/features/trainers/components/DeleteTrainerDialog";
+import { TrainerSessions } from "@/features/trainers/components/TrainerSessions";
 import {
   useTrainerWithProfile,
   useDeleteTrainer,

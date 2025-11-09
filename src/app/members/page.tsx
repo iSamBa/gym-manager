@@ -1,18 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { SearchInput } from "@/components/forms/search-input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+// Direct imports for small components
+import { EditMemberDialog } from "@/features/members/components/EditMemberDialog";
+import { SimpleMemberFilters } from "@/features/members/components/SimpleMemberFilters";
 import {
-  AdvancedMemberTable,
-  EditMemberDialog,
-  SimpleMemberFilters,
   ColumnVisibilityToggle,
   type ColumnVisibility,
-} from "@/features/members/components";
+} from "@/features/members/components/ColumnVisibilityToggle";
+import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
+
+// Lazy load heavy table component to reduce initial bundle size
+const AdvancedMemberTable = lazy(() =>
+  import("@/features/members/components/AdvancedMemberTable").then((mod) => ({
+    default: mod.AdvancedMemberTable,
+  }))
+);
 import type { Member } from "@/features/database/lib/types";
 import {
   useMemberPageData,
@@ -300,27 +308,29 @@ export default function MembersPage() {
 
         {/* Members Table */}
         <Card>
-          <AdvancedMemberTable
-            // When searching: pass members array (controlled mode)
-            // When not searching: pass filters for infinite scroll (uncontrolled mode)
-            {...(searchQuery
-              ? {
-                  members: searchMembers || [],
-                  isLoading: isMembersLoading,
-                  error: error,
-                }
-              : {
-                  filters: {
-                    search: searchQuery,
-                    ...databaseFilters,
-                  },
-                })}
-            onMemberClick={handleMemberClick}
-            onMemberHover={handleMemberHover}
-            columnVisibility={columnVisibility}
-            isAdmin={isAdmin}
-            className="border-0"
-          />
+          <Suspense fallback={<LoadingSkeleton className="h-96" />}>
+            <AdvancedMemberTable
+              // When searching: pass members array (controlled mode)
+              // When not searching: pass filters for infinite scroll (uncontrolled mode)
+              {...(searchQuery
+                ? {
+                    members: searchMembers || [],
+                    isLoading: isMembersLoading,
+                    error: error,
+                  }
+                : {
+                    filters: {
+                      search: searchQuery,
+                      ...databaseFilters,
+                    },
+                  })}
+              onMemberClick={handleMemberClick}
+              onMemberHover={handleMemberHover}
+              columnVisibility={columnVisibility}
+              isAdmin={isAdmin}
+              className="border-0"
+            />
+          </Suspense>
         </Card>
 
         {/* Edit Member Dialog */}

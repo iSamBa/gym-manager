@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { logger } from "@/lib/logger";
 
 export interface CreateSubscriptionWithPaymentParams {
@@ -60,8 +60,6 @@ export interface ProcessRefundResult {
 export async function createSubscriptionWithPayment(
   params: CreateSubscriptionWithPaymentParams
 ): Promise<CreateSubscriptionWithPaymentResult> {
-  const supabase = createClient();
-
   try {
     const { data, error } = await supabase.rpc(
       "create_subscription_with_payment",
@@ -132,8 +130,6 @@ export async function createSubscriptionWithPayment(
 export async function processRefundWithTransaction(
   params: ProcessRefundParams
 ): Promise<ProcessRefundResult> {
-  const supabase = createClient();
-
   try {
     const { data, error } = await supabase.rpc(
       "process_refund_with_transaction",
