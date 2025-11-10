@@ -1,0 +1,118 @@
+# Artillery Load Testing Configuration
+# Gym Management System - Production Readiness Testing
+#
+# Usage:
+#   npm install -g artillery
+#   artillery run artillery.yml
+#
+# Generate HTML report:
+#   artillery run --output results.json artillery.yml
+#   artillery report results.json --output report.html
+#   open report.html
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    # Phase 1: Warm-up (verify baseline)
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm-up phase - 5 users/sec"
+
+    # Phase 2: Ramp-up (identify bottlenecks)
+    - duration: 60
+      arrivalRate: 10
+      rampTo: 25
+      name: "Ramp-up - 10 to 25 users/sec"
+
+    # Phase 3: Sustained load (target requirement)
+    - duration: 120
+      arrivalRate: 50
+      name: "Sustained load - 50 concurrent users"
+
+    # Phase 4: Peak load (stress test)
+    - duration: 60
+      arrivalRate: 75
+      name: "Peak load - 75 users/sec stress test"
+
+  defaults:
+    headers:
+      User-Agent: "Artillery Load Test"
+
+  # Performance thresholds
+  ensure:
+    # Response time targets
+    p95: 500 # 95th percentile should be < 500ms
+    p99: 1000 # 99th percentile should be < 1000ms
+    maxErrorRate: 1 # Error rate should be < 1%
+
+scenarios:
+  # Scenario 1: Browse members (most common action)
+  - name: "Browse members list"
+    weight: 40
+    flow:
+      - get:
+          url: "/login"
+          expect:
+            - statusCode: 200
+      - think: 2
+      - get:
+          url: "/members"
+          expect:
+            - statusCode: 200
+            - contentType: text/html
+      - think: 3
+      - get:
+          url: "/members?page=2"
+          expect:
+            - statusCode: 200
+
+  # Scenario 2: View member details
+  - name: "View member details"
+    weight: 30
+    flow:
+      - get:
+          url: "/members"
+          expect:
+            - statusCode: 200
+      - think: 2
+      - get:
+          url: "/members/new"
+          expect:
+            - statusCode: 200
+      - think: 3
+
+  # Scenario 3: Browse payments
+  - name: "Browse payments"
+    weight: 20
+    flow:
+      - get:
+          url: "/payments"
+          expect:
+            - statusCode: 200
+      - think: 2
+      - get:
+          url: "/payments?page=2"
+          expect:
+            - statusCode: 200
+
+  # Scenario 4: Browse training sessions
+  - name: "Browse training sessions"
+    weight: 10
+    flow:
+      - get:
+          url: "/training-sessions"
+          expect:
+            - statusCode: 200
+      - think: 2
+      - get:
+          url: "/trainers"
+          expect:
+            - statusCode: 200
+
+plugins:
+  # Enable response expectations
+  expect: {}
+
+  # Track metrics by endpoint
+  metrics-by-endpoint:
+    stripQueryString: true

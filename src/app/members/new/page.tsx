@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ProgressiveMemberForm } from "@/features/members/components";
+// Direct import instead of barrel export to reduce bundle size
+import { ProgressiveMemberForm } from "@/features/members/components/ProgressiveMemberForm";
 import { useCreateMember } from "@/features/members/hooks";
 import { useRequireStaff } from "@/hooks/use-require-auth";
 import { useAuth } from "@/hooks/use-auth";

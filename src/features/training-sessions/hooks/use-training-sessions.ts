@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { logger } from "@/lib/logger";
+import { getUserFriendlyErrorMessage } from "@/lib/error-messages";
+import { toast } from "sonner";
 import { trainingSessionUtils } from "../lib/database-utils";
 import { subscriptionKeys } from "@/features/memberships/hooks/use-subscriptions";
 import { subscriptionUtils } from "@/features/memberships/lib/subscription-utils";
@@ -394,6 +396,18 @@ export const useCreateTrainingSession = () => {
         type: "active",
       });
     },
+    onError: (error) => {
+      const message = getUserFriendlyErrorMessage(error, {
+        operation: "create",
+        resource: "training session",
+      });
+
+      logger.error("Failed to create training session", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      toast.error(message);
+    },
   });
 };
 
@@ -544,6 +558,18 @@ export const useUpdateTrainingSession = () => {
         queryKey: ["daily-statistics"],
         type: "active",
       });
+    },
+    onError: (error) => {
+      const message = getUserFriendlyErrorMessage(error, {
+        operation: "update",
+        resource: "training session",
+      });
+
+      logger.error("Failed to update training session", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      toast.error(message);
     },
   });
 };
@@ -808,6 +834,18 @@ export const useDeleteTrainingSession = () => {
         queryKey: memberKeys.all,
         type: "active",
       });
+    },
+    onError: (error) => {
+      const message = getUserFriendlyErrorMessage(error, {
+        operation: "delete",
+        resource: "training session",
+      });
+
+      logger.error("Failed to delete training session", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      toast.error(message);
     },
   });
 };

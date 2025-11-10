@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { SessionBookingDialog } from "@/features/training-sessions/components";
+// Direct import instead of barrel export to reduce bundle size
+import { SessionBookingDialog } from "@/features/training-sessions/components/forms/SessionBookingDialog";
 import { useCreateTrainingSession } from "@/features/training-sessions/hooks/use-training-sessions";
 import { useRequireStaff } from "@/hooks/use-require-auth";
 import { AlertCircle, CheckCircle } from "lucide-react";

@@ -8,8 +8,10 @@ import { beforeEach, afterEach, vi } from "vitest";
 // CRITICAL: Set Supabase env vars BEFORE any module imports
 // This prevents "Your project's URL and API key are required" errors
 // when src/lib/supabase.ts is imported (it creates client at module level)
+// NOTE: Anon key must be a valid JWT format (xxx.yyy.zzz) and at least 20 chars
 process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlRlc3QiLCJpYXQiOjE1MTYyMzkwMjJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 import {
   globalTestCleanup,
   cleanupDialogState,
@@ -326,8 +328,12 @@ beforeEach(() => {
   vi.unstubAllEnvs();
 
   // Set default environment variables for Supabase
+  // NOTE: Anon key must be a valid JWT format (xxx.yyy.zzz) and at least 20 chars
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://test.supabase.co");
-  vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "test-anon-key");
+  vi.stubEnv(
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlRlc3QiLCJpYXQiOjE1MTYyMzkwMjJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+  );
 
   // Clear localStorage before each test
   localStorage.clear();

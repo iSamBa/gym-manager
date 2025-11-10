@@ -10,25 +10,24 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRequireStaff } from "@/hooks/use-require-auth";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  MemberProfileHeader,
-  EditMemberDialog,
-  withMemberErrorBoundary,
-  MemberSessions,
-  MemberSubscriptions,
-  MemberPayments,
-  EquipmentDisplay,
-  ContactInformationCard,
-  PersonalDetailsCard,
-  SubscriptionStatusCard,
-  EnhancedActivityCard,
-  MemberAlertsCard,
-  EquipmentEditor,
-  MemberCommentsCard,
-  BodyCheckupDialog,
-  BodyCheckupHistory,
-  ConvertCollaborationMemberDialog,
-} from "@/features/members/components";
+// Direct imports instead of barrel export to reduce bundle size
+import { MemberProfileHeader } from "@/features/members/components/MemberProfileHeader";
+import { EditMemberDialog } from "@/features/members/components/EditMemberDialog";
+import { withMemberErrorBoundary } from "@/features/members/components/MemberErrorBoundary";
+import { MemberSessions } from "@/features/members/components/MemberSessions";
+import { MemberSubscriptions } from "@/features/members/components/MemberSubscriptions";
+import { MemberPayments } from "@/features/members/components/MemberPayments";
+import { EquipmentDisplay } from "@/features/members/components/EquipmentDisplay";
+import { ContactInformationCard } from "@/features/members/components/ContactInformationCard";
+import { PersonalDetailsCard } from "@/features/members/components/PersonalDetailsCard";
+import { SubscriptionStatusCard } from "@/features/members/components/SubscriptionStatusCard";
+import { EnhancedActivityCard } from "@/features/members/components/EnhancedActivityCard";
+import { MemberAlertsCard } from "@/features/members/components/MemberAlertsCard";
+import { EquipmentEditor } from "@/features/members/components/EquipmentEditor";
+import { MemberCommentsCard } from "@/features/members/components/MemberCommentsCard";
+import { BodyCheckupDialog } from "@/features/members/components/BodyCheckupDialog";
+import { BodyCheckupHistory } from "@/features/members/components/BodyCheckupHistory";
+import { ConvertCollaborationMemberDialog } from "@/features/members/components/ConvertCollaborationMemberDialog";
 import {
   useMemberWithSubscription,
   useDeleteMember,

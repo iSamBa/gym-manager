@@ -1,4 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from "@/lib/logger";
+import { getUserFriendlyErrorMessage } from "@/lib/error-messages";
+import { toast } from "sonner";
 import {
   fetchActiveSettings,
   fetchScheduledSettings,
@@ -46,6 +49,19 @@ export function useStudioSettings(settingKey: string) {
       queryClient.invalidateQueries({
         queryKey: ["studio-settings", "scheduled", settingKey],
       });
+    },
+    onError: (error) => {
+      const message = getUserFriendlyErrorMessage(error, {
+        operation: "update",
+        resource: "studio settings",
+      });
+
+      logger.error("Failed to update studio settings", {
+        error: error instanceof Error ? error.message : String(error),
+        settingKey,
+      });
+
+      toast.error(message);
     },
   });
 

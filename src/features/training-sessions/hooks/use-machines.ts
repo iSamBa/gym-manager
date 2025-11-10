@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
+import { getUserFriendlyErrorMessage } from "@/lib/error-messages";
+import { toast } from "sonner";
 import type { Machine } from "../lib/types";
 import { TRAINING_SESSIONS_KEYS } from "./use-training-sessions";
 
@@ -75,6 +78,18 @@ export function useUpdateMachine() {
 
       // Invalidate training sessions queries since machine availability affects session display
       queryClient.invalidateQueries({ queryKey: TRAINING_SESSIONS_KEYS.all });
+    },
+    onError: (error) => {
+      const message = getUserFriendlyErrorMessage(error, {
+        operation: "update",
+        resource: "machine",
+      });
+
+      logger.error("Failed to update machine", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      toast.error(message);
     },
   });
 }
