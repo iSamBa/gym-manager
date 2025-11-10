@@ -54,10 +54,10 @@ describe("Invoice Auto-Generation Integration", () => {
         reference_number: null,
         notes: null,
         is_refund: false,
-        refunded_payment_id: null,
+        refunded_payment_id: undefined,
         refund_reason: null,
         refund_amount: null,
-        refund_metadata: null,
+        refund_metadata: undefined,
         description: null,
       };
 
@@ -74,7 +74,7 @@ describe("Invoice Auto-Generation Integration", () => {
         issue_date: "2025-01-08",
         status: "paid",
         pdf_url: "https://example.com/invoice.pdf",
-        footer_notes: null,
+        footer_notes: undefined,
         created_at: "2025-01-08T10:00:00Z",
         updated_at: "2025-01-08T10:00:00Z",
       };
@@ -123,10 +123,10 @@ describe("Invoice Auto-Generation Integration", () => {
         reference_number: null,
         notes: null,
         is_refund: false,
-        refunded_payment_id: null,
+        refunded_payment_id: undefined,
         refund_reason: null,
         refund_amount: null,
-        refund_metadata: null,
+        refund_metadata: undefined,
         description: null,
       };
 
@@ -153,7 +153,7 @@ describe("Invoice Auto-Generation Integration", () => {
         invoice_number: "08012025-02",
         member_id: "mem_789",
         payment_id: "pay_abc",
-        subscription_id: null,
+        subscription_id: undefined,
         amount: 5000,
         tax_amount: 833.33,
         total_amount: 5833.33,
@@ -161,7 +161,7 @@ describe("Invoice Auto-Generation Integration", () => {
         issue_date: "2025-01-08",
         status: "paid",
         pdf_url: "https://example.com/invoice-2.pdf",
-        footer_notes: null,
+        footer_notes: undefined,
         created_at: "2025-01-08T11:00:00Z",
         updated_at: "2025-01-08T11:00:00Z",
       };
@@ -253,7 +253,7 @@ describe("Invoice Auto-Generation Integration", () => {
         invoice_number: "08012025-01",
         member_id: "mem_456",
         payment_id: "pay_123",
-        subscription_id: null,
+        subscription_id: undefined,
         amount: 7200,
         tax_amount: 1200,
         total_amount: 8400,
@@ -261,7 +261,7 @@ describe("Invoice Auto-Generation Integration", () => {
         issue_date: "2025-01-08",
         status: "paid",
         pdf_url: "https://example.com/invoice.pdf",
-        footer_notes: null,
+        footer_notes: undefined,
         created_at: "2025-01-08T10:00:00Z",
         updated_at: "2025-01-08T10:00:00Z",
       };

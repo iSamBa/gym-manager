@@ -10,11 +10,11 @@ import type {
   MemberSessionStats,
   Member,
 } from "../types";
-import type { MemberFilters } from "../utils";
+import type { MemberFilters } from "@/features/members/lib/database-utils";
 
 // Helper for required member fields (US-001)
 const requiredMemberFields = {
-  member_type: "full",
+  member_type: "full" as const,
   uniform_size: "M" as const,
   uniform_received: false,
   vest_size: "V1" as const,

@@ -23,7 +23,7 @@ describe("env validation", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature";
-    process.env.NODE_ENV = "development";
+    vi.stubEnv("NODE_ENV", "development");
 
     const { env } = await import("../env");
 
@@ -38,7 +38,7 @@ describe("env validation", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "not-a-url";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature";
-    process.env.NODE_ENV = "development"; // Force non-test mode
+    vi.stubEnv("NODE_ENV", "development"); // Force non-test mode
     delete process.env.VITEST;
 
     await expect(async () => {
@@ -50,7 +50,7 @@ describe("env validation", () => {
     delete process.env.NEXT_PUBLIC_SUPABASE_URL;
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature";
-    process.env.NODE_ENV = "development"; // Force non-test mode
+    vi.stubEnv("NODE_ENV", "development"); // Force non-test mode
     delete process.env.VITEST;
 
     await expect(async () => {
@@ -61,7 +61,7 @@ describe("env validation", () => {
   it("should throw error for invalid JWT format", async () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "invalid-jwt";
-    process.env.NODE_ENV = "development"; // Force non-test mode
+    vi.stubEnv("NODE_ENV", "development"); // Force non-test mode
     delete process.env.VITEST;
 
     await expect(async () => {
@@ -72,7 +72,7 @@ describe("env validation", () => {
   it("should throw error for JWT that is too short", async () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "short";
-    process.env.NODE_ENV = "development"; // Force non-test mode
+    vi.stubEnv("NODE_ENV", "development"); // Force non-test mode
     delete process.env.VITEST;
 
     await expect(async () => {
@@ -95,7 +95,7 @@ describe("env validation", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature";
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
 
     const { env } = await import("../env");
 
@@ -106,7 +106,7 @@ describe("env validation", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature";
-    process.env.NODE_ENV = "test";
+    vi.stubEnv("NODE_ENV", "test");
 
     const { env } = await import("../env");
 
@@ -123,7 +123,7 @@ describe("environment helper functions", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature";
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
 
     const { isProduction } = await import("../env");
 
@@ -134,7 +134,7 @@ describe("environment helper functions", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature";
-    process.env.NODE_ENV = "development";
+    vi.stubEnv("NODE_ENV", "development");
 
     const { isDevelopment } = await import("../env");
 
@@ -145,7 +145,7 @@ describe("environment helper functions", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature";
-    process.env.NODE_ENV = "test";
+    vi.stubEnv("NODE_ENV", "test");
 
     const { isTest } = await import("../env");
 

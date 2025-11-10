@@ -80,7 +80,9 @@ describe("Database Utility Functions: subscription-db-utils", () => {
 
       expect(result).toEqual(mockPlans);
       expect(result).toHaveLength(2);
-      expect(result.every((plan) => plan.is_active === true)).toBe(true);
+      expect(
+        result.every((plan: { is_active: boolean }) => plan.is_active === true)
+      ).toBe(true);
       expect(mockUtilityFunctions.getActivePlans).toHaveBeenCalledTimes(1);
     });
 
@@ -277,7 +279,7 @@ describe("Database Utility Functions: subscription-db-utils", () => {
 
     it("should handle PGRST116 error (no rows found) gracefully", async () => {
       const noRowsError = new Error("No rows found");
-      noRowsError.code = "PGRST116";
+      (noRowsError as any).code = "PGRST116";
 
       mockUtilityFunctions.getMemberActiveSubscription.mockRejectedValue(
         noRowsError
@@ -291,7 +293,7 @@ describe("Database Utility Functions: subscription-db-utils", () => {
 
     it("should re-throw other database errors", async () => {
       const otherError = new Error("Connection timeout");
-      otherError.code = "CONNECTION_ERROR";
+      (otherError as any).code = "CONNECTION_ERROR";
 
       mockUtilityFunctions.getMemberActiveSubscription.mockRejectedValue(
         otherError
@@ -528,7 +530,9 @@ describe("Database Utility Functions: subscription-db-utils", () => {
       expect(result).toHaveLength(2);
       expect(result[0].payment_date > result[1].payment_date).toBe(true);
       expect(
-        result.every((payment) => payment.member_id === "member-456")
+        result.every(
+          (payment: { member_id: string }) => payment.member_id === "member-456"
+        )
       ).toBe(true);
       expect(mockUtilityFunctions.getMemberAllPayments).toHaveBeenCalledWith(
         "member-456"
@@ -566,7 +570,9 @@ describe("Database Utility Functions: subscription-db-utils", () => {
       const result =
         await mockUtilityFunctions.getMemberAllPayments("member-456");
 
-      const subscriptionIds = result.map((p) => p.subscription_id);
+      const subscriptionIds = result.map(
+        (p: { subscription_id: string }) => p.subscription_id
+      );
       expect(subscriptionIds).toContain("sub-active");
       expect(subscriptionIds).toContain("sub-expired");
     });

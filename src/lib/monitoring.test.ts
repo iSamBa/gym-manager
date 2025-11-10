@@ -37,12 +37,12 @@ describe("monitoring utilities", () => {
   });
 
   afterEach(() => {
-    process.env.NODE_ENV = originalEnv;
+    vi.unstubAllEnvs();
   });
 
   describe("reportWebVital", () => {
     it("should log web vital in development mode", () => {
-      process.env.NODE_ENV = "development";
+      vi.stubEnv("NODE_ENV", "development");
 
       const metric: WebVitalData = {
         id: "test-id",
@@ -60,7 +60,7 @@ describe("monitoring utilities", () => {
     });
 
     it("should report good FCP metric to Sentry in production", () => {
-      process.env.NODE_ENV = "production";
+      vi.stubEnv("NODE_ENV", "production");
 
       const metric: WebVitalData = {
         id: "test-id",
@@ -92,7 +92,7 @@ describe("monitoring utilities", () => {
     });
 
     it("should warn about poor LCP metric", () => {
-      process.env.NODE_ENV = "production";
+      vi.stubEnv("NODE_ENV", "production");
 
       const metric: WebVitalData = {
         id: "test-id",
@@ -120,7 +120,7 @@ describe("monitoring utilities", () => {
     });
 
     it("should handle CLS metric correctly", () => {
-      process.env.NODE_ENV = "production";
+      vi.stubEnv("NODE_ENV", "production");
 
       const metric: WebVitalData = {
         id: "test-id",
@@ -143,7 +143,7 @@ describe("monitoring utilities", () => {
 
   describe("trackPerformance", () => {
     it("should log performance metric in development", () => {
-      process.env.NODE_ENV = "development";
+      vi.stubEnv("NODE_ENV", "development");
 
       const metric: PerformanceMetric = {
         name: "test_operation",
@@ -163,7 +163,7 @@ describe("monitoring utilities", () => {
     });
 
     it("should send performance metric to Sentry in production", () => {
-      process.env.NODE_ENV = "production";
+      vi.stubEnv("NODE_ENV", "production");
 
       const metric: PerformanceMetric = {
         name: "data_fetch",
@@ -192,7 +192,7 @@ describe("monitoring utilities", () => {
     });
 
     it("should use default values for optional parameters", () => {
-      process.env.NODE_ENV = "production";
+      vi.stubEnv("NODE_ENV", "production");
 
       const metric: PerformanceMetric = {
         name: "simple_metric",
@@ -211,7 +211,7 @@ describe("monitoring utilities", () => {
 
   describe("trackQueryPerformance", () => {
     it("should log fast query in development", () => {
-      process.env.NODE_ENV = "development";
+      vi.stubEnv("NODE_ENV", "development");
 
       const queryData: QueryPerformance = {
         query: "fetch_members",
@@ -234,7 +234,7 @@ describe("monitoring utilities", () => {
     });
 
     it("should warn about slow queries", () => {
-      process.env.NODE_ENV = "development";
+      vi.stubEnv("NODE_ENV", "development");
 
       const queryData: QueryPerformance = {
         query: "slow_query",
@@ -258,7 +258,7 @@ describe("monitoring utilities", () => {
     });
 
     it("should send slow query to Sentry in production", () => {
-      process.env.NODE_ENV = "production";
+      vi.stubEnv("NODE_ENV", "production");
 
       const queryData: QueryPerformance = {
         query: "complex_join",
@@ -293,7 +293,7 @@ describe("monitoring utilities", () => {
     });
 
     it("should handle failed queries", () => {
-      process.env.NODE_ENV = "production";
+      vi.stubEnv("NODE_ENV", "production");
 
       const queryData: QueryPerformance = {
         query: "failed_query",

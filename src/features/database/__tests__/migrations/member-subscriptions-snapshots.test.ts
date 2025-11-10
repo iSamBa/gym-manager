@@ -56,7 +56,7 @@ describe("Migration: member_subscriptions_snapshots", () => {
     it("should not have snapshot fields", async () => {
       const tables = await mockSupabaseServer.list_tables();
       const memberSubscriptionsTable = tables.find(
-        (t) => t.name === "member_subscriptions"
+        (t: { name: string }) => t.name === "member_subscriptions"
       );
 
       expect(memberSubscriptionsTable).toBeDefined();
@@ -70,7 +70,7 @@ describe("Migration: member_subscriptions_snapshots", () => {
 
       for (const fieldName of snapshotFields) {
         const field = memberSubscriptionsTable.columns.find(
-          (c) => c.name === fieldName
+          (c: { name: string }) => c.name === fieldName
         );
         expect(
           field,
@@ -82,7 +82,7 @@ describe("Migration: member_subscriptions_snapshots", () => {
     it("should not have tracking fields", async () => {
       const tables = await mockSupabaseServer.list_tables();
       const memberSubscriptionsTable = tables.find(
-        (t) => t.name === "member_subscriptions"
+        (t: { name: string }) => t.name === "member_subscriptions"
       );
 
       expect(memberSubscriptionsTable).toBeDefined();
@@ -91,7 +91,7 @@ describe("Migration: member_subscriptions_snapshots", () => {
 
       for (const fieldName of trackingFields) {
         const field = memberSubscriptionsTable.columns.find(
-          (c) => c.name === fieldName
+          (c: { name: string }) => c.name === fieldName
         );
         expect(
           field,
@@ -103,13 +103,13 @@ describe("Migration: member_subscriptions_snapshots", () => {
     it("should not have remaining_sessions computed column", async () => {
       const tables = await mockSupabaseServer.list_tables();
       const memberSubscriptionsTable = tables.find(
-        (t) => t.name === "member_subscriptions"
+        (t: { name: string }) => t.name === "member_subscriptions"
       );
 
       expect(memberSubscriptionsTable).toBeDefined();
 
       const remainingSessionsField = memberSubscriptionsTable.columns.find(
-        (c) => c.name === "remaining_sessions"
+        (c: { name: string }) => c.name === "remaining_sessions"
       );
 
       expect(remainingSessionsField).toBeUndefined();

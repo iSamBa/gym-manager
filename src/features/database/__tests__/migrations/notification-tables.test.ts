@@ -47,7 +47,9 @@ describe("Migration: notification_tables", () => {
   describe("Before Migration Application", () => {
     it("should not have notifications table", async () => {
       const tables = await mockSupabaseServer.list_tables();
-      const notificationsTable = tables.find((t) => t.name === "notifications");
+      const notificationsTable = tables.find(
+        (t: { name: string }) => t.name === "notifications"
+      );
 
       expect(notificationsTable).toBeUndefined();
     });
@@ -55,7 +57,7 @@ describe("Migration: notification_tables", () => {
     it("should not have realtime_notifications table", async () => {
       const tables = await mockSupabaseServer.list_tables();
       const realtimeNotificationsTable = tables.find(
-        (t) => t.name === "realtime_notifications"
+        (t: { name: string }) => t.name === "realtime_notifications"
       );
 
       expect(realtimeNotificationsTable).toBeUndefined();
@@ -559,7 +561,9 @@ describe("Migration: notification_tables", () => {
       });
 
       expect(result.data).toHaveLength(2);
-      expect(result.data.every((n) => n.read === false)).toBe(true);
+      expect(
+        result.data.every((n: { read: boolean }) => n.read === false)
+      ).toBe(true);
     });
 
     it("should support notification type filtering", async () => {
@@ -580,9 +584,11 @@ describe("Migration: notification_tables", () => {
       });
 
       expect(result.data).toHaveLength(2);
-      expect(result.data.every((n) => n.type === "subscription_alert")).toBe(
-        true
-      );
+      expect(
+        result.data.every(
+          (n: { type: string }) => n.type === "subscription_alert"
+        )
+      ).toBe(true);
     });
   });
 

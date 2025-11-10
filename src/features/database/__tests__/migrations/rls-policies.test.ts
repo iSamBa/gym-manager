@@ -21,10 +21,12 @@ describe("Migration: subscription_rls_policies", () => {
     const tables = await mockSupabaseServer.list_tables();
 
     expect(
-      tables.find((t) => t.name === "subscription_plans")?.rls_enabled
+      tables.find((t: { name: string }) => t.name === "subscription_plans")
+        ?.rls_enabled
     ).toBe(true);
     expect(
-      tables.find((t) => t.name === "member_subscriptions")?.rls_enabled
+      tables.find((t: { name: string }) => t.name === "member_subscriptions")
+        ?.rls_enabled
     ).toBe(true);
   });
 

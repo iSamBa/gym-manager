@@ -50,13 +50,13 @@ describe("Migration: subscription_plans_enhancement", () => {
     it("should not have sessions_count column", async () => {
       const tables = await mockSupabaseServer.list_tables();
       const subscriptionPlansTable = tables.find(
-        (t) => t.name === "subscription_plans"
+        (t: { name: string }) => t.name === "subscription_plans"
       );
 
       expect(subscriptionPlansTable).toBeDefined();
 
       const sessionsCountColumn = subscriptionPlansTable.columns.find(
-        (c) => c.name === "sessions_count"
+        (c: { name: string }) => c.name === "sessions_count"
       );
 
       expect(sessionsCountColumn).toBeUndefined();
@@ -65,13 +65,13 @@ describe("Migration: subscription_plans_enhancement", () => {
     it("should not have duration_type column", async () => {
       const tables = await mockSupabaseServer.list_tables();
       const subscriptionPlansTable = tables.find(
-        (t) => t.name === "subscription_plans"
+        (t: { name: string }) => t.name === "subscription_plans"
       );
 
       expect(subscriptionPlansTable).toBeDefined();
 
       const durationTypeColumn = subscriptionPlansTable.columns.find(
-        (c) => c.name === "duration_type"
+        (c: { name: string }) => c.name === "duration_type"
       );
 
       expect(durationTypeColumn).toBeUndefined();
@@ -97,7 +97,9 @@ describe("Migration: subscription_plans_enhancement", () => {
 
     it("should not be in migration list", async () => {
       const migrations = await mockSupabaseServer.list_migrations();
-      const migration = migrations.find((m) => m.name === MIGRATION_NAME);
+      const migration = migrations.find(
+        (m: { name: string }) => m.name === MIGRATION_NAME
+      );
 
       expect(migration).toBeUndefined();
     });

@@ -31,7 +31,7 @@ describe("Logger", () => {
 
   describe("Development Environment", () => {
     beforeEach(() => {
-      process.env.NODE_ENV = "development";
+      vi.stubEnv("NODE_ENV", "development");
     });
 
     it("should log debug messages in development", () => {
@@ -87,7 +87,7 @@ describe("Logger", () => {
 
   describe("Production Environment", () => {
     beforeEach(() => {
-      process.env.NODE_ENV = "production";
+      vi.stubEnv("NODE_ENV", "production");
     });
 
     it("should NOT log debug messages in production", () => {
@@ -143,7 +143,7 @@ describe("Logger", () => {
 
   describe("Context Handling", () => {
     beforeEach(() => {
-      process.env.NODE_ENV = "development";
+      vi.stubEnv("NODE_ENV", "development");
     });
 
     it("should handle complex context objects", () => {

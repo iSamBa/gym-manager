@@ -559,7 +559,7 @@ describe("ActiveSubscriptionCard", () => {
     it("handles missing end date", () => {
       render(
         <ActiveSubscriptionCard
-          subscription={{ ...baseSubscription, end_date: null }}
+          subscription={{ ...baseSubscription, end_date: undefined }}
           member={mockMember}
         />,
         { wrapper: createQueryWrapper() }
