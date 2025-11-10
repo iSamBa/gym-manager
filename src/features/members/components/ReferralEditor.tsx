@@ -58,7 +58,7 @@ export function ReferralEditor({
     const query = searchQuery.toLowerCase().trim();
     return selectableMembers.filter((m) => {
       const fullName = `${m.first_name} ${m.last_name}`.toLowerCase();
-      const email = m.email.toLowerCase();
+      const email = m.email?.toLowerCase() || "";
       return fullName.includes(query) || email.includes(query);
     });
   }, [selectableMembers, searchQuery]);
@@ -164,9 +164,11 @@ export function ReferralEditor({
                         onSelect={() => handleReferredByChange(m.id)}
                       >
                         {m.first_name} {m.last_name}
-                        <span className="text-muted-foreground ml-2 text-xs">
-                          ({m.email})
-                        </span>
+                        {m.email && (
+                          <span className="text-muted-foreground ml-2 text-xs">
+                            ({m.email})
+                          </span>
+                        )}
                       </CommandItem>
                     ))}
                   </CommandGroup>

@@ -767,7 +767,7 @@ export function useMemberValidation() {
           if (members) {
             const exists = members.some(
               (member) =>
-                member.email.toLowerCase() === email.toLowerCase() &&
+                member.email?.toLowerCase() === email.toLowerCase() &&
                 member.id !== excludeId
             );
             if (exists) return true;

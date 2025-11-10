@@ -200,30 +200,38 @@ export const useCreateTrainingSession = () => {
 
       // TRIAL SESSION: Create member first
       if (data.session_type === "trial") {
-        // 1. Check if member already exists
-        const { data: existing } = await supabase
-          .from("members")
-          .select("id, member_type")
-          .eq("email", data.new_member_email!)
-          .maybeSingle();
+        // Normalize email: convert empty string to null
+        const normalizedEmail =
+          data.new_member_email && data.new_member_email.trim()
+            ? data.new_member_email.trim()
+            : null;
 
-        if (existing) {
-          // Check if this is a trial member with no sessions (orphaned)
-          const { data: sessions } = await supabase
-            .from("training_session_members")
-            .select("id")
-            .eq("member_id", existing.id)
-            .limit(1);
+        // 1. Check if member already exists (only if email is provided)
+        if (normalizedEmail) {
+          const { data: existing } = await supabase
+            .from("members")
+            .select("id, member_type")
+            .eq("email", normalizedEmail)
+            .maybeSingle();
 
-          if (sessions && sessions.length > 0) {
-            // Member has sessions - cannot reuse
-            throw new Error(
-              "This email is already registered. Please use a different email."
-            );
+          if (existing) {
+            // Check if this is a trial member with no sessions (orphaned)
+            const { data: sessions } = await supabase
+              .from("training_session_members")
+              .select("id")
+              .eq("member_id", existing.id)
+              .limit(1);
+
+            if (sessions && sessions.length > 0) {
+              // Member has sessions - cannot reuse
+              throw new Error(
+                "This email is already registered. Please use a different email."
+              );
+            }
+
+            // Orphaned trial member - reuse it
+            memberId = existing.id;
           }
-
-          // Orphaned trial member - reuse it
-          memberId = existing.id;
         }
 
         // 2. Create trial member only if not reusing orphaned member
@@ -232,7 +240,7 @@ export const useCreateTrainingSession = () => {
             first_name: data.new_member_first_name,
             last_name: data.new_member_last_name,
             phone: data.new_member_phone,
-            email: data.new_member_email,
+            email: normalizedEmail, // NULL if empty
             gender: data.new_member_gender,
             referral_source: data.new_member_referral_source,
             member_type: "trial" as const,

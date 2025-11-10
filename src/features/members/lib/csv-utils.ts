@@ -40,7 +40,7 @@ function memberToCSVRow(member: Member): string[] {
   return [
     member.first_name,
     member.last_name,
-    member.email,
+    member.email || "",
     member.phone || "",
     formatDateForCSV(member.date_of_birth),
     member.gender || "",

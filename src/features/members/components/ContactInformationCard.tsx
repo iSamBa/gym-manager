@@ -26,6 +26,7 @@ export const ContactInformationCard = memo(function ContactInformationCard({
   const updateMember = useUpdateMember();
 
   const handleCopyEmail = useCallback(async () => {
+    if (!member.email) return;
     await navigator.clipboard.writeText(member.email);
     setCopiedEmail(true);
     toast.success("Email copied to clipboard");
@@ -45,7 +46,7 @@ export const ContactInformationCard = memo(function ContactInformationCard({
       await updateMember.mutateAsync({
         id: member.id,
         data: {
-          email: formData.email,
+          email: formData.email ?? undefined,
           phone: formData.phone,
           address: formData.address,
         },

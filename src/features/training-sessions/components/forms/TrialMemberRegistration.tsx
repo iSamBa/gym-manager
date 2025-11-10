@@ -78,12 +78,17 @@ export const TrialMemberRegistration = memo<TrialMemberRegistrationProps>(
           name="new_member_email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email *</FormLabel>
+              <FormLabel>
+                Email{" "}
+                <span className="text-muted-foreground text-sm font-normal">
+                  (Optional)
+                </span>
+              </FormLabel>
               <FormControl>
                 <Input
                   {...field}
                   type="email"
-                  placeholder="john.doe@example.com"
+                  placeholder="john.doe@example.com (optional)"
                 />
               </FormControl>
               <FormMessage />

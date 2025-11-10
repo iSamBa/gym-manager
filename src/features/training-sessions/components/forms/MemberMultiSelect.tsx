@@ -53,7 +53,7 @@ export const MemberMultiSelect: React.FC<MemberMultiSelectProps> = ({
       (member) =>
         `${member.first_name} ${member.last_name}`
           .toLowerCase()
-          .includes(term) || member.email.toLowerCase().includes(term)
+          .includes(term) || member.email?.toLowerCase().includes(term)
     );
   }, [members, searchTerm]);
 

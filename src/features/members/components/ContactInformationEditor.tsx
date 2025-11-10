@@ -45,7 +45,7 @@ export function ContactInformationEditor({
         <Input
           id="email"
           type="email"
-          value={member.email}
+          value={member.email || ""}
           onChange={(e) => handleFieldChange("email", e.target.value)}
           className="h-9"
         />

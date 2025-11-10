@@ -183,7 +183,7 @@ export interface MemberSubscriptionWithSnapshot extends MemberSubscription {
     id: string;
     first_name: string;
     last_name: string;
-    email: string;
+    email: string | null;
   };
 }
 
@@ -297,7 +297,7 @@ export interface Member {
   id: string;
   first_name: string;
   last_name: string;
-  email: string;
+  email: string | null;
   phone?: string;
   date_of_birth?: string;
   gender?: Gender;
@@ -340,7 +340,7 @@ export interface PartialMember {
   id: string;
   first_name: string;
   last_name: string;
-  email: string;
+  email: string | null;
   phone?: string;
 }
 
