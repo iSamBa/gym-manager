@@ -4,12 +4,10 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MachineAvailabilityToggle } from "../MachineAvailabilityToggle";
-import { useAuth } from "@/hooks/use-auth";
 import { useUpdateMachine } from "../../hooks/use-machines";
 import type { Machine } from "../../lib/types";
 
 // Mock dependencies
-vi.mock("@/hooks/use-auth");
 vi.mock("../../hooks/use-machines");
 vi.mock("sonner");
 
@@ -56,54 +54,7 @@ describe("MachineAvailabilityToggle", () => {
     );
   };
 
-  describe("AC-1: Admin Toggle Control - Visibility", () => {
-    it("should be visible only to admin users", () => {
-      // Non-admin user
-      vi.mocked(useAuth).mockReturnValue({
-        user: { id: "user-1", email: "user@gym.com", role: "member" },
-        isAuthenticated: true,
-        isAdmin: false,
-      } as any);
-
-      const { container } = renderComponent(mockMachine);
-      expect(container.firstChild).toBeNull();
-      expect(screen.queryByRole("switch")).not.toBeInTheDocument();
-    });
-
-    it("should be visible to admin users", () => {
-      // Admin user
-      vi.mocked(useAuth).mockReturnValue({
-        user: { id: "admin-1", email: "admin@gym.com", role: "admin" },
-        isAuthenticated: true,
-        isAdmin: true,
-      } as any);
-
-      renderComponent(mockMachine);
-      expect(screen.getByRole("switch")).toBeInTheDocument();
-    });
-
-    it("should not be visible when user is null", () => {
-      vi.mocked(useAuth).mockReturnValue({
-        user: null,
-        isAuthenticated: false,
-        isAdmin: false,
-      } as any);
-
-      const { container } = renderComponent(mockMachine);
-      expect(container.firstChild).toBeNull();
-    });
-  });
-
-  describe("AC-1: Admin Toggle Control - Toggle Functionality", () => {
-    beforeEach(() => {
-      // Set admin user for these tests
-      vi.mocked(useAuth).mockReturnValue({
-        user: { id: "admin-1", email: "admin@gym.com", role: "admin" },
-        isAuthenticated: true,
-        isAdmin: true,
-      } as any);
-    });
-
+  describe("Toggle Functionality", () => {
     it("should display 'Available' label when machine is available", () => {
       renderComponent(mockMachine);
       expect(screen.getByText("Available")).toBeInTheDocument();
@@ -165,15 +116,7 @@ describe("MachineAvailabilityToggle", () => {
     });
   });
 
-  describe("AC-1: Admin Toggle Control - Toast Notifications", () => {
-    beforeEach(() => {
-      vi.mocked(useAuth).mockReturnValue({
-        user: { id: "admin-1", email: "admin@gym.com", role: "admin" },
-        isAuthenticated: true,
-        isAdmin: true,
-      } as any);
-    });
-
+  describe("Toast Notifications", () => {
     it("should show success toast when disabling machine", async () => {
       const user = userEvent.setup();
       mockMutateAsync.mockResolvedValue(mockUnavailableMachine);
@@ -243,14 +186,6 @@ describe("MachineAvailabilityToggle", () => {
   });
 
   describe("Accessibility", () => {
-    beforeEach(() => {
-      vi.mocked(useAuth).mockReturnValue({
-        user: { id: "admin-1", email: "admin@gym.com", role: "admin" },
-        isAuthenticated: true,
-        isAdmin: true,
-      } as any);
-    });
-
     it("should have proper aria-label for available machine", () => {
       renderComponent(mockMachine);
       const toggle = screen.getByRole("switch");

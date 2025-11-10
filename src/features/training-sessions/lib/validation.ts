@@ -104,13 +104,12 @@ export const createSessionSchema = z
   })
   .refine(
     (data) => {
-      // Trial: requires new member fields
+      // Trial: requires new member fields (email is optional)
       if (data.session_type === "trial") {
         return !!(
           data.new_member_first_name &&
           data.new_member_last_name &&
           data.new_member_phone &&
-          data.new_member_email &&
           data.new_member_gender &&
           data.new_member_referral_source
         );
@@ -293,13 +292,12 @@ export const updateSessionSchema = z
       // Only validate if session_type is being changed
       if (!data.session_type) return true;
 
-      // Trial: requires new member fields
+      // Trial: requires new member fields (email is optional)
       if (data.session_type === "trial") {
         return !!(
           data.new_member_first_name &&
           data.new_member_last_name &&
           data.new_member_phone &&
-          data.new_member_email &&
           data.new_member_gender &&
           data.new_member_referral_source
         );

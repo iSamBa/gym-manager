@@ -487,18 +487,27 @@ CREATE POLICY "select_machines"
   USING (true);
 ```
 
-##### `admin_modify_machines`
+##### `staff_modify_machines`
 
-- **Type**: ALL
-- **Rule**: Admin role check using EXISTS subquery
+- **Type**: ALL (INSERT, UPDATE, DELETE)
+- **Rule**: Admin or active trainer role check
+- **Purpose**: Both admins and trainers can modify machine availability
 
 ```sql
-CREATE POLICY "admin_modify_machines"
+CREATE POLICY "staff_modify_machines"
   ON machines FOR ALL
   TO authenticated
   USING (EXISTS (
     SELECT 1 FROM user_profiles
-    WHERE id = auth.uid() AND role = 'admin'
+    WHERE id = auth.uid()
+    AND role IN ('admin', 'trainer')
+    AND is_active = true
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM user_profiles
+    WHERE id = auth.uid()
+    AND role IN ('admin', 'trainer')
+    AND is_active = true
   ));
 ```
 

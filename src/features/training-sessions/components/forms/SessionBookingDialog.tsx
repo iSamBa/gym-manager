@@ -152,6 +152,13 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
         guest_first_name: "",
         guest_last_name: "",
         guest_gym_name: "",
+        // Trial member fields (must be initialized to prevent uncontrolled → controlled warning)
+        new_member_first_name: "",
+        new_member_last_name: "",
+        new_member_phone: "",
+        new_member_email: "", // Initialize as empty string, not undefined
+        new_member_gender: undefined,
+        new_member_referral_source: undefined,
         ...defaultValues,
       },
     });
@@ -176,6 +183,13 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
           guest_first_name: defaultValues.guest_first_name || "",
           guest_last_name: defaultValues.guest_last_name || "",
           guest_gym_name: defaultValues.guest_gym_name || "",
+          // Trial member fields
+          new_member_first_name: defaultValues.new_member_first_name || "",
+          new_member_last_name: defaultValues.new_member_last_name || "",
+          new_member_phone: defaultValues.new_member_phone || "",
+          new_member_email: defaultValues.new_member_email || "", // Empty string, not undefined
+          new_member_gender: defaultValues.new_member_gender,
+          new_member_referral_source: defaultValues.new_member_referral_source,
         });
       }
     }, [open, defaultValues, reset]);

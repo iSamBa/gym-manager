@@ -1,7 +1,6 @@
 import React, { memo, useCallback } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/hooks/use-auth";
 import { useUpdateMachine } from "../hooks/use-machines";
 import { toast } from "sonner";
 import type { Machine } from "../lib/types";
@@ -11,20 +10,21 @@ interface MachineAvailabilityToggleProps {
 }
 
 /**
- * MachineAvailabilityToggle - Admin-only control to enable/disable machines
+ * MachineAvailabilityToggle - Control to enable/disable machines
  *
  * Features:
- * - Only visible to admin role users (returns null for non-admins)
  * - Toggle switch with instant visual feedback
  * - Optimistic UI updates via useUpdateMachine hook
  * - Success toast notifications with clear messaging
+ * - Accessible to all authenticated users (trainers and admins)
+ *
+ * Note: Route-level authentication ensures only trainers and admins can access this component
  *
  * @see US-010: Machine Availability Admin Controls
- * @see AC-1: Admin Toggle Control
+ * @see AC-1: Admin and Trainer Toggle Control
  */
 export const MachineAvailabilityToggle = memo<MachineAvailabilityToggleProps>(
   function MachineAvailabilityToggle({ machine }) {
-    const { isAdmin } = useAuth();
     const { mutateAsync: updateMachine, isPending } = useUpdateMachine();
 
     // Handle toggle with optimistic updates and toast notifications
@@ -53,9 +53,6 @@ export const MachineAvailabilityToggle = memo<MachineAvailabilityToggleProps>(
         });
       }
     }, [machine.id, machine.is_available, machine.name, updateMachine]);
-
-    // Only show to admin users (AC-1: Only visible to admin role)
-    if (!isAdmin) return null;
 
     return (
       <div className="flex items-center gap-2">
