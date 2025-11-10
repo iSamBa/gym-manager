@@ -49,26 +49,28 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe("TrialMemberRegistration", () => {
-  // Test 1: Renders all 6 required fields
+  // Test 1: Renders all fields (5 required + 1 optional)
   it("renders all 6 required fields", () => {
     render(<TestWrapper>{}</TestWrapper>);
 
     expect(screen.getByText("First Name *")).toBeInTheDocument();
     expect(screen.getByText("Last Name *")).toBeInTheDocument();
     expect(screen.getByText("Phone *")).toBeInTheDocument();
-    expect(screen.getByText("Email *")).toBeInTheDocument();
+    expect(screen.getByText("Email")).toBeInTheDocument();
+    expect(screen.getByText("(Optional)")).toBeInTheDocument();
     expect(screen.getByText("Gender *")).toBeInTheDocument();
     expect(screen.getByText("Referral Source *")).toBeInTheDocument();
   });
 
-  // Test 2: Shows correct labels with asterisks
+  // Test 2: Shows correct labels with asterisks for required fields
   it("shows correct labels with required asterisks", () => {
     render(<TestWrapper>{}</TestWrapper>);
 
     expect(screen.getByText("First Name *")).toBeInTheDocument();
     expect(screen.getByText("Last Name *")).toBeInTheDocument();
     expect(screen.getByText("Phone *")).toBeInTheDocument();
-    expect(screen.getByText("Email *")).toBeInTheDocument();
+    expect(screen.getByText("Email")).toBeInTheDocument();
+    expect(screen.getByText("(Optional)")).toBeInTheDocument();
     expect(screen.getByText("Gender *")).toBeInTheDocument();
     expect(screen.getByText("Referral Source *")).toBeInTheDocument();
   });
@@ -90,7 +92,7 @@ describe("TrialMemberRegistration", () => {
       "+1 234 567 8900"
     ) as HTMLInputElement;
     const emailInput = screen.getByPlaceholderText(
-      "john.doe@example.com"
+      "john.doe@example.com (optional)"
     ) as HTMLInputElement;
 
     expect(phoneInput?.type).toBe("tel");
@@ -105,7 +107,7 @@ describe("TrialMemberRegistration", () => {
     expect(screen.getByPlaceholderText("Doe")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("+1 234 567 8900")).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText("john.doe@example.com")
+      screen.getByPlaceholderText("john.doe@example.com (optional)")
     ).toBeInTheDocument();
   });
 
