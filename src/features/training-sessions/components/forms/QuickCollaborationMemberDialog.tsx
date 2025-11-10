@@ -180,7 +180,7 @@ export const QuickCollaborationMemberDialog =
               first_name: data.first_name,
               last_name: data.last_name,
               phone: data.phone,
-              email: data.email || "",
+              email: data.email || undefined,
               member_type: "collaboration",
               status: "active",
               partnership_company: data.partnership_company,

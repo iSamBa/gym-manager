@@ -46,7 +46,7 @@ export interface MemberFilters {
 export interface CreateMemberData {
   first_name: string;
   last_name: string;
-  email: string;
+  email?: string;
   phone?: string;
   date_of_birth?: string;
   gender?: Gender;
@@ -268,7 +268,8 @@ export const memberUtils = {
       // Convert empty strings to null for optional text fields
       if (
         value === "" &&
-        (key === "phone" ||
+        (key === "email" ||
+          key === "phone" ||
           key === "notes" ||
           key === "medical_conditions" ||
           key === "fitness_goals" ||
@@ -328,7 +329,8 @@ export const memberUtils = {
       // Convert empty strings to null for optional text fields
       if (
         value === "" &&
-        (key === "phone" ||
+        (key === "email" ||
+          key === "phone" ||
           key === "notes" ||
           key === "medical_conditions" ||
           key === "fitness_goals" ||
