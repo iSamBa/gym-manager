@@ -1,9 +1,12 @@
 # US-006: Dashboard Page Integration and Layout
 
+**Status**: ✅ Completed
+**Completed**: 2025-01-15
+
 ## 📋 User Story
 
-**As an** admin  
-**I want** a cohesive dashboard with all analytics  
+**As an** admin
+**I want** a cohesive dashboard with all analytics
 **So that** I have a single view of gym operations
 
 ## 💼 Business Value

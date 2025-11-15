@@ -8,12 +8,12 @@
 "use client";
 
 import { memo, useMemo } from "react";
-import { PieChart, Pie, Cell, Tooltip } from "recharts";
+import { PieChart, Pie, Cell } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
 import type { WeeklySessionStats, SessionTypeData } from "../lib/types";
@@ -24,45 +24,46 @@ interface SessionsByTypeChartProps {
 }
 
 // Session type colors - CRITICAL: Must match requirements
+// Using direct hex colors for better compatibility
 const SESSION_TYPE_COLORS = {
-  trial: "hsl(var(--chart-1))", // blue-500
-  member: "hsl(var(--chart-2))", // green-500
-  contractual: "hsl(var(--chart-3))", // orange-500
-  multi_site: "hsl(var(--chart-4))", // purple-500
-  collaboration: "hsl(var(--chart-5))", // lime-600
-  makeup: "hsl(var(--chart-6))", // blue-900
-  non_bookable: "hsl(var(--chart-7))", // red-500
+  trial: "#3b82f6", // blue-500
+  member: "#22c55e", // green-500
+  contractual: "#f97316", // orange-500
+  multi_site: "#a855f7", // purple-500
+  collaboration: "#84cc16", // lime-600
+  makeup: "#1e3a8a", // blue-900
+  non_bookable: "#ef4444", // red-500
 } as const;
 
 // Chart configuration for shadcn/ui ChartContainer
 const chartConfig = {
   trial: {
     label: "Trial",
-    color: "hsl(var(--chart-1))",
+    color: "#3b82f6",
   },
   member: {
     label: "Member",
-    color: "hsl(var(--chart-2))",
+    color: "#22c55e",
   },
   contractual: {
     label: "Contractual",
-    color: "hsl(var(--chart-3))",
+    color: "#f97316",
   },
   multi_site: {
     label: "Multi-Site",
-    color: "hsl(var(--chart-4))",
+    color: "#a855f7",
   },
   collaboration: {
     label: "Collaboration",
-    color: "hsl(var(--chart-5))",
+    color: "#84cc16",
   },
   makeup: {
     label: "Makeup",
-    color: "hsl(var(--chart-6))",
+    color: "#1e3a8a",
   },
   non_bookable: {
     label: "Non-Bookable",
-    color: "hsl(var(--chart-7))",
+    color: "#ef4444",
   },
 } satisfies ChartConfig;
 
@@ -85,37 +86,37 @@ export const SessionsByTypeChart = memo(function SessionsByTypeChart({
   const chartData = useMemo<SessionTypeData[]>(() => {
     return [
       {
-        type: "Trial",
+        type: "trial",
         count: data.trial,
         fill: SESSION_TYPE_COLORS.trial,
       },
       {
-        type: "Member",
+        type: "member",
         count: data.member,
         fill: SESSION_TYPE_COLORS.member,
       },
       {
-        type: "Contractual",
+        type: "contractual",
         count: data.contractual,
         fill: SESSION_TYPE_COLORS.contractual,
       },
       {
-        type: "Multi-Site",
+        type: "multi_site",
         count: data.multi_site,
         fill: SESSION_TYPE_COLORS.multi_site,
       },
       {
-        type: "Collaboration",
+        type: "collaboration",
         count: data.collaboration,
         fill: SESSION_TYPE_COLORS.collaboration,
       },
       {
-        type: "Makeup",
+        type: "makeup",
         count: data.makeup,
         fill: SESSION_TYPE_COLORS.makeup,
       },
       {
-        type: "Non-Bookable",
+        type: "non_bookable",
         count: data.non_bookable,
         fill: SESSION_TYPE_COLORS.non_bookable,
       },
@@ -147,71 +148,85 @@ export const SessionsByTypeChart = memo(function SessionsByTypeChart({
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="flex flex-col p-4">
+      <CardHeader className="p-0 pb-1">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="relative">
+
+      {/* Total sessions on top - full width */}
+      <div className="border-b py-1.5">
+        <div className="text-center">
+          <div className="text-3xl font-bold">{totalSessions}</div>
+          <div className="text-muted-foreground text-sm">Total Sessions</div>
+        </div>
+      </div>
+
+      <CardContent className="flex-1 p-0 pt-2">
+        <div className="flex flex-col items-center gap-2">
+          {/* Pie chart */}
           <ChartContainer
             config={chartConfig}
-            className="h-[280px] sm:h-[350px] md:h-[400px]"
+            className="mx-auto aspect-square w-full max-w-[340px]"
           >
             <PieChart>
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel />}
+              />
               <Pie
                 data={chartData}
                 dataKey="count"
                 nameKey="type"
-                cx="50%"
-                cy="50%"
-                innerRadius="60%"
-                outerRadius="80%"
-                strokeWidth={2}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.fill}
-                    className="transition-opacity hover:opacity-80"
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (!active || !payload?.length) return null;
-                  const data = payload[0];
+                label={({
+                  cx,
+                  cy,
+                  midAngle,
+                  innerRadius,
+                  outerRadius,
+                  value,
+                }) => {
+                  // Calculate position INSIDE the slice, closer to the edge
+                  const RADIAN = Math.PI / 180;
+                  const radius =
+                    innerRadius + (outerRadius - innerRadius) * 0.7;
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
                   return (
-                    <div className="bg-background border-border/50 rounded-lg border px-3 py-2 shadow-xl">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="h-3 w-3 rounded-sm"
-                          style={{ backgroundColor: data.payload.fill }}
-                        />
-                        <span className="text-foreground font-medium">
-                          {data.name}: {data.value}
-                        </span>
-                      </div>
-                    </div>
+                    <text
+                      x={x}
+                      y={y}
+                      fill="white"
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      className="text-sm font-bold"
+                    >
+                      {value}
+                    </text>
                   );
                 }}
-              />
-              <ChartLegend
-                content={<ChartLegendContent nameKey="type" />}
-                verticalAlign="bottom"
-              />
+                labelLine={false}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Pie>
             </PieChart>
           </ChartContainer>
 
-          {/* Center total count display */}
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-3xl font-bold sm:text-4xl md:text-5xl">
-                {totalSessions}
+          {/* Legend below pie - hidden on small screens */}
+          <div className="hidden sm:flex sm:flex-wrap sm:justify-center sm:gap-x-3 sm:gap-y-1">
+            {chartData.map((entry, index) => (
+              <div key={index} className="flex items-center gap-1.5">
+                <div
+                  className="h-2 w-2 shrink-0 rounded-sm"
+                  style={{ backgroundColor: entry.fill }}
+                />
+                <span className="text-muted-foreground text-xs">
+                  {chartConfig[entry.type as keyof typeof chartConfig]?.label}
+                </span>
               </div>
-              <div className="text-muted-foreground mt-1 text-sm">
-                Total Sessions
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </CardContent>
