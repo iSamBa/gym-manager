@@ -102,13 +102,6 @@ export default function Home() {
           },
         },
         {
-          title: "Classes Today",
-          value: dashboardStats.sessions_today.toString(),
-          description: `${dashboardStats.sessions_this_week} this week`,
-          icon: Calendar,
-          trend: { value: 0, label: "today's sessions" },
-        },
-        {
           title: "Total Revenue",
           value: `$${dashboardStats.total_revenue.toLocaleString()}`,
           description: "All time earnings",
@@ -143,13 +136,6 @@ export default function Home() {
           trend: { value: 0, label: "loading" },
         },
         {
-          title: "Classes Today",
-          value: "...",
-          description: "Loading...",
-          icon: Calendar,
-          trend: { value: 0, label: "loading" },
-        },
-        {
           title: "Total Revenue",
           value: "...",
           description: "Loading...",
@@ -179,7 +165,7 @@ export default function Home() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat, index) => (
             <StatsCard
               key={index}
@@ -193,7 +179,7 @@ export default function Home() {
         </div>
 
         {/* Content Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2">
           {/* Quick Actions */}
           <Card>
             <CardHeader>
@@ -263,53 +249,6 @@ export default function Home() {
                     No recent activities found
                   </p>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Today's Classes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Today&apos;s Classes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Morning Yoga</p>
-                    <p className="text-muted-foreground text-xs">
-                      08:00 - 09:00
-                    </p>
-                  </div>
-                  <Badge className="bg-green-100 text-green-800">12/15</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">HIIT Training</p>
-                    <p className="text-muted-foreground text-xs">
-                      10:00 - 11:00
-                    </p>
-                  </div>
-                  <Badge className="bg-yellow-100 text-yellow-800">8/10</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Pilates</p>
-                    <p className="text-muted-foreground text-xs">
-                      18:00 - 19:00
-                    </p>
-                  </div>
-                  <Badge className="bg-blue-100 text-blue-800">15/20</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Strength Training</p>
-                    <p className="text-muted-foreground text-xs">
-                      19:30 - 20:30
-                    </p>
-                  </div>
-                  <Badge variant="secondary">5/12</Badge>
-                </div>
               </div>
             </CardContent>
           </Card>
