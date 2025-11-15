@@ -8,7 +8,7 @@
 "use client";
 
 import { memo, useMemo } from "react";
-import { PieChart, Pie, Cell } from "recharts";
+import { PieChart, Pie, Cell, Label } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
@@ -149,24 +149,16 @@ export const SessionsByTypeChart = memo(function SessionsByTypeChart({
 
   return (
     <Card className="flex flex-col p-4">
-      <CardHeader className="p-0 pb-1">
+      <CardHeader className="p-0">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
 
-      {/* Total sessions on top - full width */}
-      <div className="border-b py-1.5">
-        <div className="text-center">
-          <div className="text-3xl font-bold">{totalSessions}</div>
-          <div className="text-muted-foreground text-sm">Total Sessions</div>
-        </div>
-      </div>
-
-      <CardContent className="flex-1 p-0 pt-2">
-        <div className="flex flex-col items-center gap-2">
+      <CardContent className="flex-1 p-0">
+        <div className="flex flex-col items-center">
           {/* Pie chart */}
           <ChartContainer
             config={chartConfig}
-            className="mx-auto aspect-square w-full max-w-[340px]"
+            className="mx-auto aspect-square w-full max-w-[475px]"
           >
             <PieChart>
               <ChartTooltip
@@ -177,18 +169,20 @@ export const SessionsByTypeChart = memo(function SessionsByTypeChart({
                 data={chartData}
                 dataKey="count"
                 nameKey="type"
+                innerRadius="55%"
+                outerRadius="85%"
+                strokeWidth={2}
                 label={({
                   cx,
                   cy,
                   midAngle,
                   innerRadius,
                   outerRadius,
-                  value,
+                  count,
                 }) => {
-                  // Calculate position INSIDE the slice, closer to the edge
                   const RADIAN = Math.PI / 180;
-                  const radius =
-                    innerRadius + (outerRadius - innerRadius) * 0.7;
+                  // Position label in the middle of the donut ring
+                  const radius = innerRadius + (outerRadius - innerRadius) / 2;
                   const x = cx + radius * Math.cos(-midAngle * RADIAN);
                   const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
@@ -199,23 +193,50 @@ export const SessionsByTypeChart = memo(function SessionsByTypeChart({
                       fill="white"
                       textAnchor="middle"
                       dominantBaseline="central"
-                      className="text-sm font-bold"
+                      className="text-base font-bold"
+                      style={{ textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}
                     >
-                      {value}
+                      {count}
                     </text>
                   );
                 }}
                 labelLine={false}
               >
                 {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.fill}
+                    className="stroke-background hover:opacity-80"
+                  />
                 ))}
+                <Label
+                  content={({ viewBox }) => {
+                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                      return (
+                        <text
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >
+                          <tspan
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            className="fill-foreground text-5xl font-bold"
+                          >
+                            {totalSessions}
+                          </tspan>
+                        </text>
+                      );
+                    }
+                  }}
+                />
               </Pie>
             </PieChart>
           </ChartContainer>
 
           {/* Legend below pie - hidden on small screens */}
-          <div className="hidden sm:flex sm:flex-wrap sm:justify-center sm:gap-x-3 sm:gap-y-1">
+          <div className="hidden sm:flex sm:flex-wrap sm:justify-center sm:gap-x-3 sm:gap-y-1 sm:pt-2">
             {chartData.map((entry, index) => (
               <div key={index} className="flex items-center gap-1.5">
                 <div
