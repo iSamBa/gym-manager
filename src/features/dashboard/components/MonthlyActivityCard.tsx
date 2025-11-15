@@ -1,8 +1,6 @@
 "use client";
 
 import { memo, useState, useMemo } from "react";
-import { Users, UserPlus, UserX, RefreshCw, UserMinus } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -11,7 +9,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatsCard } from "./stats-card";
+import { TrialMetricsChart } from "./TrialMetricsChart";
+import { SubscriptionMetricsChart } from "./SubscriptionMetricsChart";
+import { CancellationsChart } from "./CancellationsChart";
 import { useMonthlyActivity } from "../hooks/use-monthly-activity";
 import { getCurrentMonthBounds, formatMonth } from "../lib/month-utils";
 import { subMonths } from "date-fns";
@@ -53,27 +53,43 @@ export const MonthlyActivityCard = memo(function MonthlyActivityCard() {
 
   if (isError) {
     return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle>Monthly Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex h-[200px] items-center justify-center">
-            <p className="text-destructive">Failed to load monthly data</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Monthly Activity
+          </h2>
+        </div>
+        <div className="border-destructive/50 bg-destructive/10 flex h-[200px] items-center justify-center rounded-lg border">
+          <p className="text-destructive">Failed to load monthly data</p>
+        </div>
+      </div>
     );
   }
 
   if (isLoading || !monthlyData) {
-    return <Skeleton className="h-[300px] w-full" />;
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Monthly Activity
+          </h2>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-[300px] w-full" />
+          <Skeleton className="h-[300px] w-full" />
+          <Skeleton className="h-[300px] w-full" />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle>Monthly Activity</CardTitle>
+    <div className="space-y-4">
+      {/* Header with title and month selector */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold tracking-tight">
+          Monthly Activity
+        </h2>
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select month" />
@@ -86,41 +102,25 @@ export const MonthlyActivityCard = memo(function MonthlyActivityCard() {
             ))}
           </SelectContent>
         </Select>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-          <StatsCard
-            title="Trial Sessions"
-            value={monthlyData.trial_sessions.toString()}
-            description="New trial members this month"
-            icon={Users}
-          />
-          <StatsCard
-            title="Trial Conversions"
-            value={monthlyData.trial_conversions.toString()}
-            description="Trial members who subscribed"
-            icon={UserPlus}
-          />
-          <StatsCard
-            title="Subscriptions Expired"
-            value={monthlyData.subscriptions_expired.toString()}
-            description="Subscriptions that ended"
-            icon={UserX}
-          />
-          <StatsCard
-            title="Subscriptions Renewed"
-            value={monthlyData.subscriptions_renewed.toString()}
-            description="Members who renewed"
-            icon={RefreshCw}
-          />
-          <StatsCard
-            title="Subscriptions Cancelled"
-            value={monthlyData.subscriptions_cancelled.toString()}
-            description="Early cancellations"
-            icon={UserMinus}
-          />
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Chart cards grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <TrialMetricsChart
+          trialSessions={monthlyData.trial_sessions}
+          trialConversions={monthlyData.trial_conversions}
+          month={formatMonth(selectedMonth)}
+        />
+        <SubscriptionMetricsChart
+          subscriptionsExpired={monthlyData.subscriptions_expired}
+          subscriptionsRenewed={monthlyData.subscriptions_renewed}
+          month={formatMonth(selectedMonth)}
+        />
+        <CancellationsChart
+          subscriptionsCancelled={monthlyData.subscriptions_cancelled}
+          month={formatMonth(selectedMonth)}
+        />
+      </div>
+    </div>
   );
 });

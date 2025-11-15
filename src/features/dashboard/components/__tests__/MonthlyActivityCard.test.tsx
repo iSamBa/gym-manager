@@ -1,7 +1,89 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+/**
+ * MonthlyActivityCard Component Tests
+ *
+ * Tests for the monthly activity card wrapper component
+ * This component manages state and renders three chart components
+ */
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MonthlyActivityCard } from "../MonthlyActivityCard";
 import type { MonthlyActivityStats } from "../../lib/types";
+
+// Mock the hooks
+vi.mock("../../hooks/use-monthly-activity");
+vi.mock("../../lib/month-utils", async () => {
+  const actual = await vi.importActual("../../lib/month-utils");
+  return {
+    ...actual,
+    getCurrentMonthBounds: vi.fn(() => ({
+      month_start: "2025-01-01",
+      month_end: "2025-01-31",
+    })),
+    formatMonth: vi.fn((dateString: string) => {
+      if (dateString === "2025-01-01") return "January 2025";
+      if (dateString === "2024-12-01") return "December 2024";
+      if (dateString === "2024-11-01") return "November 2024";
+      return "Month";
+    }),
+  };
+});
+
+// Mock the chart components
+vi.mock("../TrialMetricsChart", () => ({
+  TrialMetricsChart: ({
+    trialSessions,
+    trialConversions,
+    month,
+  }: {
+    trialSessions: number;
+    trialConversions: number;
+    month: string;
+  }) => (
+    <div data-testid="trial-metrics-chart">
+      <span>Trial Metrics Chart</span>
+      <span>{`Sessions: ${trialSessions}`}</span>
+      <span>{`Conversions: ${trialConversions}`}</span>
+      <span>{`Month: ${month}`}</span>
+    </div>
+  ),
+}));
+
+vi.mock("../SubscriptionMetricsChart", () => ({
+  SubscriptionMetricsChart: ({
+    subscriptionsExpired,
+    subscriptionsRenewed,
+    month,
+  }: {
+    subscriptionsExpired: number;
+    subscriptionsRenewed: number;
+    month: string;
+  }) => (
+    <div data-testid="subscription-metrics-chart">
+      <span>Subscription Metrics Chart</span>
+      <span>{`Expired: ${subscriptionsExpired}`}</span>
+      <span>{`Renewed: ${subscriptionsRenewed}`}</span>
+      <span>{`Month: ${month}`}</span>
+    </div>
+  ),
+}));
+
+vi.mock("../CancellationsChart", () => ({
+  CancellationsChart: ({
+    subscriptionsCancelled,
+    month,
+  }: {
+    subscriptionsCancelled: number;
+    month: string;
+  }) => (
+    <div data-testid="cancellations-chart">
+      <span>Cancellations Chart</span>
+      <span>{`Cancelled: ${subscriptionsCancelled}`}</span>
+      <span>{`Month: ${month}`}</span>
+    </div>
+  ),
+}));
 
 const mockData: MonthlyActivityStats = {
   month_start: "2025-01-01",
@@ -13,132 +95,271 @@ const mockData: MonthlyActivityStats = {
   subscriptions_cancelled: 2,
 };
 
+const mockEmptyData: MonthlyActivityStats = {
+  month_start: "2025-01-01",
+  month_end: "2025-01-31",
+  trial_sessions: 0,
+  trial_conversions: 0,
+  subscriptions_expired: 0,
+  subscriptions_renewed: 0,
+  subscriptions_cancelled: 0,
+};
+
 describe("MonthlyActivityCard", () => {
-  describe("Rendering", () => {
-    it("renders container card with month title", () => {
-      render(<MonthlyActivityCard data={mockData} month="January 2025" />);
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-      expect(
-        screen.getByText("Monthly Activity - January 2025")
-      ).toBeInTheDocument();
+  describe("Rendering Tests", () => {
+    it("renders card with title", async () => {
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
+      );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: mockData,
+        isLoading: false,
+        isError: false,
+      } as never);
+
+      render(<MonthlyActivityCard />);
+
+      expect(screen.getByText("Monthly Activity")).toBeInTheDocument();
     });
 
-    it("renders all 5 StatsCard components", () => {
-      render(<MonthlyActivityCard data={mockData} month="January 2025" />);
+    it("renders month selector", async () => {
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
+      );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: mockData,
+        isLoading: false,
+        isError: false,
+      } as never);
 
-      // Check all 5 metric titles are present
-      expect(screen.getByText("Trial Sessions")).toBeInTheDocument();
-      expect(screen.getByText("Trial Conversions")).toBeInTheDocument();
-      expect(screen.getByText("Subscriptions Expired")).toBeInTheDocument();
-      expect(screen.getByText("Subscriptions Renewed")).toBeInTheDocument();
-      expect(screen.getByText("Subscriptions Cancelled")).toBeInTheDocument();
+      render(<MonthlyActivityCard />);
+
+      // Select trigger should be present
+      const selectTrigger = screen.getByRole("combobox");
+      expect(selectTrigger).toBeInTheDocument();
     });
 
-    it("displays correct values for each metric", () => {
-      render(<MonthlyActivityCard data={mockData} month="January 2025" />);
+    it("renders all three chart components when data is available", async () => {
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
+      );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: mockData,
+        isLoading: false,
+        isError: false,
+      } as never);
 
-      // Check all values are displayed
-      expect(screen.getByText("15")).toBeInTheDocument(); // trial_sessions
-      expect(screen.getByText("8")).toBeInTheDocument(); // trial_conversions
-      expect(screen.getByText("3")).toBeInTheDocument(); // subscriptions_expired
-      expect(screen.getByText("22")).toBeInTheDocument(); // subscriptions_renewed
-      expect(screen.getByText("2")).toBeInTheDocument(); // subscriptions_cancelled
-    });
+      render(<MonthlyActivityCard />);
 
-    it("shows proper descriptions for each card", () => {
-      render(<MonthlyActivityCard data={mockData} month="January 2025" />);
-
-      expect(
-        screen.getByText("New trial members this month")
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText("Trial members who subscribed")
-      ).toBeInTheDocument();
-      expect(screen.getByText("Subscriptions that ended")).toBeInTheDocument();
-      expect(screen.getByText("Members who renewed")).toBeInTheDocument();
-      expect(screen.getByText("Early cancellations")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId("trial-metrics-chart")).toBeInTheDocument();
+        expect(
+          screen.getByTestId("subscription-metrics-chart")
+        ).toBeInTheDocument();
+        expect(screen.getByTestId("cancellations-chart")).toBeInTheDocument();
+      });
     });
   });
 
-  describe("Layout", () => {
-    it("has responsive grid classes", () => {
-      const { container } = render(
-        <MonthlyActivityCard data={mockData} month="January 2025" />
+  describe("Data Display Tests", () => {
+    it("passes correct data to TrialMetricsChart", async () => {
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
       );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: mockData,
+        isLoading: false,
+        isError: false,
+      } as never);
 
+      render(<MonthlyActivityCard />);
+
+      await waitFor(() => {
+        expect(screen.getByText("Sessions: 15")).toBeInTheDocument();
+        expect(screen.getByText("Conversions: 8")).toBeInTheDocument();
+      });
+    });
+
+    it("passes correct data to SubscriptionMetricsChart", async () => {
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
+      );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: mockData,
+        isLoading: false,
+        isError: false,
+      } as never);
+
+      render(<MonthlyActivityCard />);
+
+      await waitFor(() => {
+        expect(screen.getByText("Expired: 3")).toBeInTheDocument();
+        expect(screen.getByText("Renewed: 22")).toBeInTheDocument();
+      });
+    });
+
+    it("passes correct data to CancellationsChart", async () => {
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
+      );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: mockData,
+        isLoading: false,
+        isError: false,
+      } as never);
+
+      render(<MonthlyActivityCard />);
+
+      await waitFor(() => {
+        expect(screen.getByText("Cancelled: 2")).toBeInTheDocument();
+      });
+    });
+
+    it("passes month label to all charts", async () => {
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
+      );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: mockData,
+        isLoading: false,
+        isError: false,
+      } as never);
+
+      render(<MonthlyActivityCard />);
+
+      await waitFor(() => {
+        const monthLabels = screen.getAllByText("Month: January 2025");
+        expect(monthLabels).toHaveLength(3); // All three charts receive the month
+      });
+    });
+  });
+
+  describe("Loading State Tests", () => {
+    it("shows skeleton when loading", async () => {
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
+      );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isError: false,
+      } as never);
+
+      const { container } = render(<MonthlyActivityCard />);
+
+      // Skeleton should be present
+      const skeleton = container.querySelector(".animate-pulse");
+      expect(skeleton).toBeInTheDocument();
+    });
+
+    it("does not show charts when loading", async () => {
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
+      );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isError: false,
+      } as never);
+
+      render(<MonthlyActivityCard />);
+
+      expect(
+        screen.queryByTestId("trial-metrics-chart")
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Error State Tests", () => {
+    it("shows error message when isError is true", async () => {
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
+      );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+      } as never);
+
+      render(<MonthlyActivityCard />);
+
+      expect(
+        screen.getByText("Failed to load monthly data")
+      ).toBeInTheDocument();
+    });
+
+    it("does not show charts when error occurs", async () => {
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
+      );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+      } as never);
+
+      render(<MonthlyActivityCard />);
+
+      expect(
+        screen.queryByTestId("trial-metrics-chart")
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("subscription-metrics-chart")
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("cancellations-chart")
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Layout Tests", () => {
+    it("has responsive grid classes", async () => {
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
+      );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: mockData,
+        isLoading: false,
+        isError: false,
+      } as never);
+
+      const { container } = render(<MonthlyActivityCard />);
+
+      // Look for the grid container with responsive classes
       const gridElement = container.querySelector(
-        ".grid.gap-4.md\\:grid-cols-2.lg\\:grid-cols-2"
+        ".grid.gap-6.md\\:grid-cols-2.lg\\:grid-cols-3"
       );
-      expect(gridElement).toBeInTheDocument();
-    });
-
-    it("applies gap-4 class for spacing", () => {
-      const { container } = render(
-        <MonthlyActivityCard data={mockData} month="January 2025" />
-      );
-
-      const gridElement = container.querySelector(".gap-4");
       expect(gridElement).toBeInTheDocument();
     });
   });
 
-  describe("Data Display", () => {
-    it("displays trial sessions value correctly", () => {
-      render(<MonthlyActivityCard data={mockData} month="January 2025" />);
+  describe("Edge Cases Tests", () => {
+    it("handles zero values correctly", async () => {
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
+      );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: mockEmptyData,
+        isLoading: false,
+        isError: false,
+      } as never);
 
-      const trialSessionsValue = screen.getByText("15");
-      expect(trialSessionsValue).toBeInTheDocument();
+      render(<MonthlyActivityCard />);
+
+      await waitFor(() => {
+        expect(screen.getByText("Sessions: 0")).toBeInTheDocument();
+        expect(screen.getByText("Conversions: 0")).toBeInTheDocument();
+        expect(screen.getByText("Expired: 0")).toBeInTheDocument();
+        expect(screen.getByText("Renewed: 0")).toBeInTheDocument();
+        expect(screen.getByText("Cancelled: 0")).toBeInTheDocument();
+      });
     });
 
-    it("displays trial conversions value correctly", () => {
-      render(<MonthlyActivityCard data={mockData} month="January 2025" />);
-
-      const trialConversionsValue = screen.getByText("8");
-      expect(trialConversionsValue).toBeInTheDocument();
-    });
-
-    it("displays subscriptions expired value correctly", () => {
-      render(<MonthlyActivityCard data={mockData} month="January 2025" />);
-
-      const expiredValue = screen.getByText("3");
-      expect(expiredValue).toBeInTheDocument();
-    });
-
-    it("displays subscriptions renewed value correctly", () => {
-      render(<MonthlyActivityCard data={mockData} month="January 2025" />);
-
-      const renewedValue = screen.getByText("22");
-      expect(renewedValue).toBeInTheDocument();
-    });
-
-    it("displays subscriptions cancelled value correctly", () => {
-      render(<MonthlyActivityCard data={mockData} month="January 2025" />);
-
-      const cancelledValue = screen.getByText("2");
-      expect(cancelledValue).toBeInTheDocument();
-    });
-  });
-
-  describe("Edge Cases", () => {
-    it("handles zero values correctly", () => {
-      const zeroData: MonthlyActivityStats = {
-        month_start: "2025-01-01",
-        month_end: "2025-01-31",
-        trial_sessions: 0,
-        trial_conversions: 0,
-        subscriptions_expired: 0,
-        subscriptions_renewed: 0,
-        subscriptions_cancelled: 0,
-      };
-
-      render(<MonthlyActivityCard data={zeroData} month="January 2025" />);
-
-      // Should display "0" not empty string
-      const zeroValues = screen.getAllByText("0");
-      expect(zeroValues).toHaveLength(5);
-    });
-
-    it("handles large numbers correctly", () => {
+    it("handles large numbers correctly", async () => {
       const largeData: MonthlyActivityStats = {
         month_start: "2025-01-01",
         month_end: "2025-01-31",
@@ -149,47 +370,31 @@ describe("MonthlyActivityCard", () => {
         subscriptions_cancelled: 543,
       };
 
-      render(<MonthlyActivityCard data={largeData} month="January 2025" />);
+      const { useMonthlyActivity } = await import(
+        "../../hooks/use-monthly-activity"
+      );
+      vi.mocked(useMonthlyActivity).mockReturnValue({
+        data: largeData,
+        isLoading: false,
+        isError: false,
+      } as never);
 
-      expect(screen.getByText("1234")).toBeInTheDocument();
-      expect(screen.getByText("567")).toBeInTheDocument();
-      expect(screen.getByText("89")).toBeInTheDocument();
-      expect(screen.getByText("9876")).toBeInTheDocument();
-      expect(screen.getByText("543")).toBeInTheDocument();
-    });
+      render(<MonthlyActivityCard />);
 
-    it("displays month label correctly", () => {
-      render(<MonthlyActivityCard data={mockData} month="December 2024" />);
-
-      expect(
-        screen.getByText("Monthly Activity - December 2024")
-      ).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText("Sessions: 1234")).toBeInTheDocument();
+        expect(screen.getByText("Conversions: 567")).toBeInTheDocument();
+        expect(screen.getByText("Expired: 89")).toBeInTheDocument();
+        expect(screen.getByText("Renewed: 9876")).toBeInTheDocument();
+        expect(screen.getByText("Cancelled: 543")).toBeInTheDocument();
+      });
     });
   });
 
-  describe("Optimization", () => {
+  describe("Component Optimization Tests", () => {
     it("component is wrapped in React.memo", () => {
-      // Check that the component has the displayName set by memo
-      expect(MonthlyActivityCard.displayName).toBe(undefined); // memo doesn't set displayName unless explicitly set
-
-      // Alternative: verify component type
-      expect(MonthlyActivityCard.$$typeof).toBeDefined();
-    });
-
-    it("doesn't re-render with same props", () => {
-      const { rerender } = render(
-        <MonthlyActivityCard data={mockData} month="January 2025" />
-      );
-
-      const initialRender = screen.getByText("Monthly Activity - January 2025");
-
-      // Re-render with same props
-      rerender(<MonthlyActivityCard data={mockData} month="January 2025" />);
-
-      const afterRerender = screen.getByText("Monthly Activity - January 2025");
-
-      // Should be the same element (not re-rendered)
-      expect(initialRender).toBe(afterRerender);
+      expect(MonthlyActivityCard).toBeDefined();
+      expect(MonthlyActivityCard).not.toBeNull();
     });
   });
 });

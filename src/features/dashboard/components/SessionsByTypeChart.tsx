@@ -158,7 +158,7 @@ export const SessionsByTypeChart = memo(function SessionsByTypeChart({
           {/* Pie chart */}
           <ChartContainer
             config={chartConfig}
-            className="mx-auto aspect-square w-full max-w-[475px]"
+            className="mx-auto aspect-square w-full max-w-[300px]"
           >
             <PieChart>
               <ChartTooltip
