@@ -120,6 +120,9 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="w-[95vw] sm:max-w-[900px]">
+          <DialogHeader>
+            <DialogTitle>Loading Session...</DialogTitle>
+          </DialogHeader>
           <div className="flex items-center justify-center py-12">
             <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
           </div>

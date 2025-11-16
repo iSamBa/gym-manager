@@ -185,8 +185,10 @@ export const subscriptionUtils = {
 
   /**
    * Consume a session from an active subscription
+   * @param subscriptionId - The subscription to consume from
+   * @param sessionId - Optional session ID to link to this subscription via counted_in_subscription_id
    */
-  async consumeSession(subscriptionId: string) {
+  async consumeSession(subscriptionId: string, sessionId?: string) {
     // Get current subscription state
     const { data: subscription, error: fetchError } = await supabase
       .from("member_subscriptions")
@@ -211,6 +213,7 @@ export const subscriptionUtils = {
     const newUsedSessions = sub.used_sessions + 1;
     const isCompleted = newUsedSessions >= sub.total_sessions_snapshot;
 
+    // Update subscription
     const { data, error } = await supabase
       .from("member_subscriptions")
       .update({
@@ -223,14 +226,33 @@ export const subscriptionUtils = {
       .single();
 
     if (error) throw error;
+
+    // Link session to subscription if sessionId provided
+    if (sessionId) {
+      const { error: linkError } = await supabase
+        .from("training_sessions")
+        .update({ counted_in_subscription_id: subscriptionId })
+        .eq("id", sessionId);
+
+      if (linkError) {
+        // Log error but don't fail the operation - subscription already updated
+        logger.error(
+          `Failed to link session ${sessionId} to subscription ${subscriptionId}`,
+          { sessionId, subscriptionId, error: linkError }
+        );
+      }
+    }
+
     return data as MemberSubscriptionWithSnapshot;
   },
 
   /**
    * Restore a session to a subscription (decrement used_sessions)
-   * Used when a training session is cancelled
+   * Used when a training session is cancelled or deleted
+   * @param subscriptionId - The subscription to restore to
+   * @param sessionId - Optional session ID to unlink from this subscription
    */
-  async restoreSession(subscriptionId: string) {
+  async restoreSession(subscriptionId: string, sessionId?: string) {
     // Get current subscription state
     const { data: subscription, error: fetchError } = await supabase
       .from("member_subscriptions")
@@ -255,6 +277,7 @@ export const subscriptionUtils = {
       sub.status === "expired" &&
       sub.used_sessions === sub.total_sessions_snapshot;
 
+    // Update subscription
     const { data, error } = await supabase
       .from("member_subscriptions")
       .update({
@@ -267,6 +290,23 @@ export const subscriptionUtils = {
       .single();
 
     if (error) throw error;
+
+    // Unlink session from subscription if sessionId provided
+    if (sessionId) {
+      const { error: unlinkError } = await supabase
+        .from("training_sessions")
+        .update({ counted_in_subscription_id: null })
+        .eq("id", sessionId);
+
+      if (unlinkError) {
+        // Log error but don't fail the operation - subscription already updated
+        logger.error(
+          `Failed to unlink session ${sessionId} from subscription ${subscriptionId}`,
+          { sessionId, subscriptionId, error: unlinkError }
+        );
+      }
+    }
+
     return data as MemberSubscriptionWithSnapshot;
   },
 

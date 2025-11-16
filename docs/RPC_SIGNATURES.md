@@ -48,6 +48,8 @@ const sessions = mapSessionRpcResponse<TrainingSession>(data || []);
   status: SessionStatus;
   session_type: SessionType; // member | trial | contractual | multi_site | collaboration | makeup | non_bookable
   machine_id: string;
+  machine_number: number; // Machine number (1, 2, or 3)
+  machine_name: string; // Machine name from machines table
   member_id: string | null; // NULL for non-bookable, multi_site, collaboration sessions
   member_name: string | null; // NULL for sessions without members
   subscription_end_date: string | null;
@@ -67,6 +69,7 @@ const sessions = mapSessionRpcResponse<TrainingSession>(data || []);
   guest_gym_name: string | null;
   collaboration_details: string | null;
   trainer_id: string | null;
+  trainer_name: string | null; // Trainer full name from user_profiles
   notes: string | null;
 }
 ```

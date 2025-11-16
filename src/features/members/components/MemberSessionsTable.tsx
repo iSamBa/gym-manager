@@ -38,6 +38,8 @@ import {
 import { useTrainingSessions } from "@/features/training-sessions/hooks";
 import type { SessionFilters } from "@/features/training-sessions/lib/types";
 import { useRouter } from "next/navigation";
+import { getSessionTypeBadgeColor } from "@/features/training-sessions/lib/session-colors";
+import { cn } from "@/lib/utils";
 
 // Basic session filters type for this component
 type LocalSessionFilters = {
@@ -115,6 +117,36 @@ export function MemberSessionsTable({
   const totalPages = Math.ceil((sessions?.length || 0) / pageSize);
   const hasNextPage = currentPage < totalPages - 1;
   const hasPrevPage = currentPage > 0;
+
+  const getSessionTypeBadge = (sessionType: string) => {
+    const typeLabels: Record<string, string> = {
+      trial: "Trial",
+      member: "Member",
+      contractual: "Contractual",
+      makeup: "Makeup",
+      collaboration: "Collaboration",
+      multi_site: "Multi-site",
+      non_bookable: "Non-bookable",
+    };
+
+    const label = typeLabels[sessionType] || sessionType;
+    const colorClasses = getSessionTypeBadgeColor(
+      sessionType as
+        | "trial"
+        | "member"
+        | "contractual"
+        | "makeup"
+        | "collaboration"
+        | "multi_site"
+        | "non_bookable"
+    );
+
+    return (
+      <Badge variant="secondary" className={cn(colorClasses)}>
+        {label}
+      </Badge>
+    );
+  };
 
   const getStatusBadge = (
     status: string,
@@ -257,6 +289,7 @@ export function MemberSessionsTable({
                   <TableHead>Date & Time</TableHead>
                   <TableHead>Trainer</TableHead>
                   <TableHead>Location</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead className="w-[100px]">Actions</TableHead>
@@ -292,6 +325,9 @@ export function MemberSessionsTable({
                         <MapPin className="text-muted-foreground h-4 w-4" />
                         <span>{session.machine_name || "Not specified"}</span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {getSessionTypeBadge(session.session_type || "member")}
                     </TableCell>
                     <TableCell>
                       {getStatusBadge(session.status, "confirmed", false)}
