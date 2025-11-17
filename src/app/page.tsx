@@ -24,6 +24,14 @@ const SessionsByTypeChart = lazy(() =>
   )
 );
 
+const MembersWithoutReservationsCard = lazy(() =>
+  import("@/features/dashboard/components/MembersWithoutReservationsCard").then(
+    (module) => ({
+      default: module.MembersWithoutReservationsCard,
+    })
+  )
+);
+
 export default function Home() {
   const { user, isLoading: isAuthLoading } = useRequireAdmin();
 
@@ -151,6 +159,13 @@ export default function Home() {
         {/* Monthly Activity Section */}
         <div>
           <MonthlyActivityCard />
+        </div>
+
+        {/* Members Without Reservations Section */}
+        <div>
+          <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+            <MembersWithoutReservationsCard />
+          </Suspense>
         </div>
       </div>
     </MainLayout>
