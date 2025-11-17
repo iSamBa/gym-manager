@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Dumbbell } from "lucide-react";
 import { LoginForm } from "@/components/login-form";
 import { useAuth } from "@/hooks/use-auth";
@@ -7,6 +9,14 @@ import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 
 export default function LoginPage() {
   const { isLoading, isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isLoading, isAuthenticated, router]);
 
   // Show loading skeleton while checking auth state OR if already authenticated
   // This prevents flash of login form during redirect after successful login

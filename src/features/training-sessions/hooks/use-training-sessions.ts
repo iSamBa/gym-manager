@@ -349,40 +349,21 @@ export const useCreateTrainingSession = () => {
       return result;
     },
     onSuccess: async (_result, variables) => {
-      // Consume session from member's active subscription (for MEMBER and MAKEUP sessions)
-      // Both member and makeup sessions consume credits, but makeup bypasses weekly limits
-      // Skip for:
-      // - Trial sessions: no subscription yet
-      // - Contractual sessions: counted retroactively when subscription created
-      // - Guest sessions: no member association
-      if (
-        variables.member_id &&
-        (variables.session_type === "member" ||
-          variables.session_type === "makeup") // Consume for member and makeup sessions
-      ) {
-        try {
-          const subscription =
-            await subscriptionUtils.getMemberActiveSubscription(
-              variables.member_id
-            );
+      // Session counting is now handled by database triggers:
+      // - handle_training_session_completion() increments used_sessions and sets counted_in_subscription_id
+      // - handle_training_session_uncomplete() and handle_training_session_deletion() handle decrements
+      // Application code only needs to invalidate queries for UI updates
 
-          if (subscription) {
-            await subscriptionUtils.consumeSession(subscription.id);
-
-            // Refetch subscription queries for immediate cache updates
-            await queryClient.refetchQueries({
-              queryKey: ["subscriptions", "member", variables.member_id],
-              type: "active",
-            });
-            await queryClient.refetchQueries({
-              queryKey: subscriptionKeys.memberActive(variables.member_id),
-              type: "active",
-            });
-          }
-        } catch (error) {
-          // Log error but don't fail the whole operation
-          logger.error("Failed to consume session", { error });
-        }
+      // Refetch subscription queries if there's a member (for immediate cache updates)
+      if (variables.member_id) {
+        await queryClient.refetchQueries({
+          queryKey: ["subscriptions", "member", variables.member_id],
+          type: "active",
+        });
+        await queryClient.refetchQueries({
+          queryKey: subscriptionKeys.memberActive(variables.member_id),
+          type: "active",
+        });
       }
 
       // ALWAYS refetch queries to ensure calendar updates immediately for ALL session types
@@ -398,10 +379,15 @@ export const useCreateTrainingSession = () => {
         type: "active",
       });
 
-      // Refetch members table to update scheduled_sessions_count
-      await queryClient.refetchQueries({
+      // Invalidate all member queries so they refetch with updated session counts
+      // This ensures both the members table and stats update correctly
+      queryClient.invalidateQueries({
         queryKey: memberKeys.all,
-        type: "active",
+      });
+
+      // Also invalidate member-page-data used by the members page stats
+      queryClient.invalidateQueries({
+        queryKey: ["member-page-data"],
       });
     },
     onError: (error) => {
@@ -771,54 +757,22 @@ export const useDeleteTrainingSession = () => {
         countedInSubscriptionId: session.counted_in_subscription_id,
       };
     },
-    onSuccess: async ({
-      sessionId,
-      memberId,
-      sessionType,
-      countedInSubscriptionId,
-    }) => {
-      // Restore session credit based on session type
+    onSuccess: async ({ sessionId, memberId }) => {
+      // Session credit restoration is now handled by database triggers:
+      // - handle_training_session_deletion() decrements used_sessions when session deleted
+      // - handle_training_session_uncomplete() decrements when status changes from completed
+      // Application code only needs to invalidate queries for UI updates
+
+      // Refetch subscription queries if there's a member
       if (memberId) {
-        try {
-          // For contractual sessions that were counted in a subscription
-          if (sessionType === "contractual" && countedInSubscriptionId) {
-            // Decrement from the specific subscription it was counted in
-            await subscriptionUtils.restoreSession(countedInSubscriptionId);
-
-            // Refetch subscription queries
-            await queryClient.refetchQueries({
-              queryKey: ["subscriptions", "member", memberId],
-              type: "active",
-            });
-            await queryClient.refetchQueries({
-              queryKey: subscriptionKeys.memberActive(memberId),
-              type: "active",
-            });
-          }
-          // For member and makeup sessions, restore to active subscription
-          else if (sessionType === "member" || sessionType === "makeup") {
-            const subscription =
-              await subscriptionUtils.getMemberActiveSubscription(memberId);
-
-            if (subscription) {
-              await subscriptionUtils.restoreSession(subscription.id);
-
-              // Refetch subscription queries for immediate cache updates
-              await queryClient.refetchQueries({
-                queryKey: ["subscriptions", "member", memberId],
-                type: "active",
-              });
-              await queryClient.refetchQueries({
-                queryKey: subscriptionKeys.memberActive(memberId),
-                type: "active",
-              });
-            }
-          }
-          // For other session types (trial, multi_site, etc.), no credit restoration needed
-        } catch (error) {
-          // Log error but don't fail the whole operation
-          logger.error("Failed to restore session credit", { error });
-        }
+        await queryClient.refetchQueries({
+          queryKey: ["subscriptions", "member", memberId],
+          type: "active",
+        });
+        await queryClient.refetchQueries({
+          queryKey: subscriptionKeys.memberActive(memberId),
+          type: "active",
+        });
       }
 
       // Refetch all training session queries to update calendar immediately
@@ -837,10 +791,15 @@ export const useDeleteTrainingSession = () => {
         type: "active",
       });
 
-      // Refetch members table to update scheduled_sessions_count
-      await queryClient.refetchQueries({
+      // Invalidate all member queries so they refetch with updated session counts
+      // This ensures both the members table and stats update correctly
+      queryClient.invalidateQueries({
         queryKey: memberKeys.all,
-        type: "active",
+      });
+
+      // Also invalidate member-page-data used by the members page stats
+      queryClient.invalidateQueries({
+        queryKey: ["member-page-data"],
       });
     },
     onError: (error) => {

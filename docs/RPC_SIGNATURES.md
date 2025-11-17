@@ -48,6 +48,8 @@ const sessions = mapSessionRpcResponse<TrainingSession>(data || []);
   status: SessionStatus;
   session_type: SessionType; // member | trial | contractual | multi_site | collaboration | makeup | non_bookable
   machine_id: string;
+  machine_number: number; // Machine number (1, 2, or 3)
+  machine_name: string; // Machine name from machines table
   member_id: string | null; // NULL for non-bookable, multi_site, collaboration sessions
   member_name: string | null; // NULL for sessions without members
   subscription_end_date: string | null;
@@ -67,6 +69,7 @@ const sessions = mapSessionRpcResponse<TrainingSession>(data || []);
   guest_gym_name: string | null;
   collaboration_details: string | null;
   trainer_id: string | null;
+  trainer_name: string | null; // Trainer full name from user_profiles
   notes: string | null;
 }
 ```
@@ -725,6 +728,160 @@ const { data } = await supabase.rpc("get_dashboard_stats");
 const stats = data[0];
 console.log(`${stats.active_members} active members`);
 ```
+
+---
+
+### `get_weekly_session_stats(p_week_start_date DATE)`
+
+**Purpose:** Aggregate session counts by type for a calendar week (Monday-Sunday). Provides performance-optimized server-side aggregation for dashboard analytics.
+
+**Parameters:**
+
+- `p_week_start_date` (DATE) - Monday of the target week (format: 'YYYY-MM-DD')
+
+**Returns:** Single row with session counts
+
+```typescript
+{
+  week_start: string; // YYYY-MM-DD (Monday)
+  week_end: string; // YYYY-MM-DD (Sunday)
+  total_sessions: number; // Total sessions for the week
+  trial: number; // Trial session count
+  member: number; // Member session count
+  contractual: number; // Contractual session count
+  multi_site: number; // Multi-site session count
+  collaboration: number; // Collaboration session count
+  makeup: number; // Makeup session count
+  non_bookable: number; // Non-bookable session count
+}
+```
+
+**Business Logic:**
+
+- Week end calculated as `week_start + 6 days` (Sunday)
+- Only counts sessions with status 'scheduled' or 'completed'
+- Excludes cancelled sessions
+- Uses `COUNT(*) FILTER` for efficient grouping
+- Filters by `scheduled_start` date (casted to DATE)
+
+**Performance:** Optimized for large datasets with server-side aggregation. Typical query time <100ms.
+
+**Usage:**
+
+```typescript
+// Current week
+const currentWeekStart = new Date();
+currentWeekStart.setDate(
+  currentWeekStart.getDate() - currentWeekStart.getDay() + 1
+); // Monday
+const weekStartStr = currentWeekStart.toISOString().split("T")[0];
+
+const { data } = await supabase.rpc("get_weekly_session_stats", {
+  p_week_start_date: weekStartStr,
+});
+
+const stats = data[0];
+console.log(
+  `Week of ${stats.week_start}: ${stats.total_sessions} total sessions`
+);
+console.log(`Trial: ${stats.trial}, Member: ${stats.member}`);
+```
+
+**Example Response:**
+
+```json
+{
+  "week_start": "2025-11-10",
+  "week_end": "2025-11-16",
+  "total_sessions": 9,
+  "trial": 1,
+  "member": 4,
+  "contractual": 0,
+  "multi_site": 1,
+  "collaboration": 1,
+  "makeup": 1,
+  "non_bookable": 1
+}
+```
+
+---
+
+### `get_monthly_activity_stats(p_month_start_date DATE)`
+
+**Purpose:** Calculate trial conversions and subscription lifecycle metrics for a calendar month. Provides comprehensive monthly activity analytics for dashboard.
+
+**Parameters:**
+
+- `p_month_start_date` (DATE) - First day of target month (format: 'YYYY-MM-DD')
+
+**Returns:** Single row with activity metrics
+
+```typescript
+{
+  month_start: string; // YYYY-MM-DD (1st of month)
+  month_end: string; // YYYY-MM-DD (last day of month)
+  trial_sessions: number; // Trial sessions conducted
+  trial_conversions: number; // New members who got first subscription
+  subscriptions_expired: number; // Subscriptions that expired
+  subscriptions_renewed: number; // Subscriptions renewed (member had previous sub)
+  subscriptions_cancelled: number; // Subscriptions cancelled
+}
+```
+
+**Business Logic:**
+
+- **Month end**: Calculated as last day of month using `DATE_TRUNC` and interval math
+- **Trial sessions**: Count of trial sessions with status 'scheduled' or 'completed' in month
+- **Trial conversions**: DISTINCT members who:
+  - Are 'full' member type
+  - Got their FIRST subscription in the month (no earlier subscriptions exist)
+  - Uses `NOT EXISTS` subquery to identify first subscription
+- **Subscriptions expired**: Count where `status='expired'` AND `end_date` in month
+- **Subscriptions renewed**: Count of new subscriptions where member had previous subscription
+  - Uses `EXISTS` subquery to check for earlier subscriptions
+- **Subscriptions cancelled**: Count where `status='cancelled'` AND `updated_at` in month
+
+**Performance:** Uses multiple subqueries for accuracy. Typical query time <150ms.
+
+**Usage:**
+
+```typescript
+// Current month
+const now = new Date();
+const monthStartStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+
+const { data } = await supabase.rpc("get_monthly_activity_stats", {
+  p_month_start_date: monthStartStr,
+});
+
+const stats = data[0];
+console.log(`${stats.trial_sessions} trial sessions in month`);
+console.log(`${stats.trial_conversions} trial conversions`);
+console.log(
+  `Expired: ${stats.subscriptions_expired}, Renewed: ${stats.subscriptions_renewed}`
+);
+```
+
+**Example Response:**
+
+```json
+{
+  "month_start": "2025-11-01",
+  "month_end": "2025-11-30",
+  "trial_sessions": 3,
+  "trial_conversions": 2,
+  "subscriptions_expired": 0,
+  "subscriptions_renewed": 0,
+  "subscriptions_cancelled": 0
+}
+```
+
+**Important Notes:**
+
+- Trial conversions track FIRST-TIME subscribers only (accurate conversion metric)
+- Renewals count any subscription where member already had a previous one
+- Date filtering uses inclusive ranges (`>=` start, `<=` end)
+- Timestamp fields use `< next_day` to include all of end date
 
 ---
 

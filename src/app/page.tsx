@@ -1,63 +1,53 @@
 "use client";
 
 import { MainLayout } from "@/components/layout/main-layout";
-import { StatsCard } from "@/features/dashboard/components/stats-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Users,
-  DollarSign,
-  Calendar,
-  TrendingUp,
-  Plus,
-  Activity,
-  Handshake,
-} from "lucide-react";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MonthlyActivityCard } from "@/features/dashboard/components/MonthlyActivityCard";
+import { useThreeWeekSessions } from "@/features/dashboard/hooks/use-weekly-sessions";
+import {
+  formatWeekRange,
+  getLastWeekBounds,
+  getCurrentWeekBounds,
+  getNextWeekBounds,
+} from "@/features/dashboard/lib/week-utils";
 
 // Lazy load heavy chart components to reduce initial bundle size
-const MemberEvolutionChart = lazy(() =>
-  import("@/features/dashboard/components/member-evolution-chart").then(
+const SessionsByTypeChart = lazy(() =>
+  import("@/features/dashboard/components/SessionsByTypeChart").then(
     (module) => ({
-      default: module.MemberEvolutionChart,
+      default: module.SessionsByTypeChart,
     })
   )
 );
 
-const MemberStatusDistributionChart = lazy(() =>
-  import(
-    "@/features/dashboard/components/member-status-distribution-chart"
-  ).then((module) => ({
-    default: module.MemberStatusDistributionChart,
-  }))
+const MembersWithoutReservationsCard = lazy(() =>
+  import("@/features/dashboard/components/MembersWithoutReservationsCard").then(
+    (module) => ({
+      default: module.MembersWithoutReservationsCard,
+    })
+  )
 );
-import { useMemberEvolution } from "@/features/dashboard/hooks/use-member-analytics";
-import { useDashboardStats } from "@/features/database/hooks/use-analytics";
-import { useRecentActivities } from "@/features/dashboard/hooks/use-recent-activities";
 
 export default function Home() {
-  const { user, isLoading } = useRequireAdmin();
+  const { user, isLoading: isAuthLoading } = useRequireAdmin();
 
-  // Fetch analytics data
-  const { data: memberEvolutionData, isLoading: isEvolutionLoading } =
-    useMemberEvolution(12);
+  // Fetch weekly session data for 3 weeks (parallel)
+  const {
+    data: weeklyData,
+    isLoading: isWeeklyLoading,
+    isError: isWeeklyError,
+  } = useThreeWeekSessions();
 
-  // Get consolidated dashboard stats (Performance Phase 2: includes collaboration count and status distribution)
-  const { data: dashboardStats } = useDashboardStats();
+  // Get week bounds for titles
+  const lastWeek = getLastWeekBounds();
+  const currentWeek = getCurrentWeekBounds();
+  const nextWeek = getNextWeekBounds();
 
-  // Extract member status data from consolidated dashboard stats
-  const memberStatusData = dashboardStats?.member_status_distribution || [];
-  const isStatusDistributionLoading = !dashboardStats;
-
-  // Get real recent activities data (replaces mock data)
-  const { data: recentActivities, isLoading: isActivitiesLoading } =
-    useRecentActivities(4);
-
-  if (isLoading) {
+  if (isAuthLoading) {
     return <LoadingSkeleton variant="dashboard" />;
   }
 
@@ -65,213 +55,117 @@ export default function Home() {
     return null; // useRequireAdmin will handle redirect
   }
 
-  // Stats data using real database analytics
-  const stats = dashboardStats
-    ? [
-        {
-          title: "Total Members",
-          value: dashboardStats.total_members.toLocaleString(),
-          description: `${dashboardStats.active_members} active`,
-          icon: Users,
-          trend: {
-            value: Math.round(
-              (dashboardStats.active_members / dashboardStats.total_members) *
-                100
-            ),
-            label: "active rate",
-          },
-        },
-        {
-          title: "Partnerships",
-          value: dashboardStats.collaboration_count.toLocaleString(),
-          description: "Collaboration members",
-          icon: Handshake,
-          trend: {
-            value: dashboardStats.collaboration_count,
-            label: "active partnerships",
-          },
-        },
-        {
-          title: "Monthly Revenue",
-          value: `$${dashboardStats.monthly_revenue.toLocaleString()}`,
-          description: "Current month earnings",
-          icon: DollarSign,
-          trend: {
-            value: Math.round(dashboardStats.member_retention_rate),
-            label: "retention rate",
-          },
-        },
-        {
-          title: "Total Revenue",
-          value: `$${dashboardStats.total_revenue.toLocaleString()}`,
-          description: "All time earnings",
-          icon: Activity,
-          trend: {
-            value: Math.round(dashboardStats.member_retention_rate),
-            label: "retention rate",
-          },
-        },
-      ]
-    : [
-        // Loading fallback stats
-        {
-          title: "Total Members",
-          value: "...",
-          description: "Loading...",
-          icon: Users,
-          trend: { value: 0, label: "loading" },
-        },
-        {
-          title: "Partnerships",
-          value: "...",
-          description: "Loading...",
-          icon: Handshake,
-          trend: { value: 0, label: "loading" },
-        },
-        {
-          title: "Monthly Revenue",
-          value: "...",
-          description: "Loading...",
-          icon: DollarSign,
-          trend: { value: 0, label: "loading" },
-        },
-        {
-          title: "Total Revenue",
-          value: "...",
-          description: "Loading...",
-          icon: Activity,
-          trend: { value: 0, label: "loading" },
-        },
-      ];
-
-  // Use real recent activities data or show loading placeholder
-  const activitiesData = recentActivities || [];
-
   return (
     <MainLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Welcome back! Here&apos;s what&apos;s happening at your gym today.
-            </p>
-          </div>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Member
-          </Button>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Analytics and insights for your gym operations
+          </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat, index) => (
-            <StatsCard
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              description={stat.description}
-              icon={stat.icon}
-              trend={stat.trend}
-            />
-          ))}
-        </div>
-
-        {/* Content Grid */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full justify-start">
-                <Users className="mr-2 h-4 w-4" />
-                Register New Member
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Calendar className="mr-2 h-4 w-4" />
-                Schedule Class
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <DollarSign className="mr-2 h-4 w-4" />
-                Process Payment
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <TrendingUp className="mr-2 h-4 w-4" />
-                View Reports
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {isActivitiesLoading ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 4 }).map((_, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="space-y-1">
-                          <div className="h-4 w-24 animate-pulse rounded bg-gray-200"></div>
-                          <div className="h-3 w-32 animate-pulse rounded bg-gray-100"></div>
-                        </div>
-                        <div className="h-5 w-16 animate-pulse rounded bg-gray-200"></div>
-                      </div>
-                    ))}
-                  </div>
-                ) : activitiesData.length > 0 ? (
-                  activitiesData.map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">{activity.member}</p>
-                        <p className="text-muted-foreground text-xs">
-                          {activity.action}
-                        </p>
-                      </div>
-                      <Badge variant="secondary" className="text-xs">
-                        {activity.time}
-                      </Badge>
+        {/* Weekly Session Stats Section - 3 Pie Charts */}
+        <div>
+          <h2 className="mb-4 text-xl font-semibold">
+            Weekly Session Statistics
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {/* Last Week Chart */}
+            <Suspense fallback={<Skeleton className="h-[450px] w-full" />}>
+              {isWeeklyError ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      Last Week (
+                      {formatWeekRange(lastWeek.week_start, lastWeek.week_end)})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex h-[300px] items-center justify-center">
+                      <p className="text-destructive">Failed to load data</p>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground py-4 text-center text-sm">
-                    No recent activities found
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
+              ) : isWeeklyLoading || !weeklyData?.lastWeek ? (
+                <Skeleton className="h-[450px] w-full" />
+              ) : (
+                <SessionsByTypeChart
+                  data={weeklyData.lastWeek}
+                  title={`Last Week (${formatWeekRange(lastWeek.week_start, lastWeek.week_end)})`}
+                />
+              )}
+            </Suspense>
+
+            {/* Current Week Chart */}
+            <Suspense fallback={<Skeleton className="h-[450px] w-full" />}>
+              {isWeeklyError ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      Current Week (
+                      {formatWeekRange(
+                        currentWeek.week_start,
+                        currentWeek.week_end
+                      )}
+                      )
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex h-[300px] items-center justify-center">
+                      <p className="text-destructive">Failed to load data</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : isWeeklyLoading || !weeklyData?.currentWeek ? (
+                <Skeleton className="h-[450px] w-full" />
+              ) : (
+                <SessionsByTypeChart
+                  data={weeklyData.currentWeek}
+                  title={`Current Week (${formatWeekRange(currentWeek.week_start, currentWeek.week_end)})`}
+                />
+              )}
+            </Suspense>
+
+            {/* Next Week Chart */}
+            <Suspense fallback={<Skeleton className="h-[450px] w-full" />}>
+              {isWeeklyError ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      Next Week (
+                      {formatWeekRange(nextWeek.week_start, nextWeek.week_end)})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex h-[300px] items-center justify-center">
+                      <p className="text-destructive">Failed to load data</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : isWeeklyLoading || !weeklyData?.nextWeek ? (
+                <Skeleton className="h-[450px] w-full" />
+              ) : (
+                <SessionsByTypeChart
+                  data={weeklyData.nextWeek}
+                  title={`Next Week (${formatWeekRange(nextWeek.week_start, nextWeek.week_end)})`}
+                />
+              )}
+            </Suspense>
+          </div>
         </div>
 
-        {/* Analytics Charts */}
-        <div className="flex gap-6">
-          <div className="flex-[0.6]">
-            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              <MemberEvolutionChart
-                data={memberEvolutionData}
-                isLoading={isEvolutionLoading}
-              />
-            </Suspense>
-          </div>
-          <div className="flex-[0.4]">
-            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              <MemberStatusDistributionChart
-                data={memberStatusData}
-                isLoading={isStatusDistributionLoading}
-              />
-            </Suspense>
-          </div>
+        {/* Monthly Activity Section */}
+        <div>
+          <MonthlyActivityCard />
+        </div>
+
+        {/* Members Without Reservations Section */}
+        <div>
+          <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+            <MembersWithoutReservationsCard />
+          </Suspense>
         </div>
       </div>
     </MainLayout>
