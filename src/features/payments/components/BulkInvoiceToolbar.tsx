@@ -197,11 +197,15 @@ export function BulkInvoiceToolbar({
 
       {/* Progress Dialog */}
       <Dialog open={showProgressDialog} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-md" showCloseButton={false}>
+        <DialogContent
+          className="sm:max-w-md"
+          showCloseButton={false}
+          aria-describedby="progress-description"
+        >
           <DialogHeader>
             <DialogTitle>Generating Invoices</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div id="progress-description" className="space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>
