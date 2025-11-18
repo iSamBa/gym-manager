@@ -12,7 +12,7 @@
 
 **Target Completion**: TBD
 
-**Overall Progress**: 0 / 4 user stories (0%)
+**Overall Progress**: 1 / 4 user stories (25%)
 
 ---
 
@@ -20,7 +20,28 @@
 
 ### ✅ Completed Stories
 
-_None yet_
+#### US-001: Database RPC Function for Weekly Limit Check
+
+**Priority**: P0
+
+**Status**: ✅ Completed
+
+**Assigned To**: Claude Code
+
+**Started**: 2025-11-18
+
+**Completed**: 2025-11-18
+
+**Implementation Summary**:
+
+- Created RPC function `check_member_weekly_session_limit()` with SECURITY DEFINER
+- Added 2 composite partial indexes for performance optimization
+- TypeScript interface `MemberWeeklyLimitResult` added to types.ts
+- Documentation added to RPC_SIGNATURES.md
+- All 6 acceptance criteria verified and passing
+- Query performance: ~10ms for 10k rows with indexes
+
+**Test Results**: 6/6 acceptance criteria passing, Build successful
 
 ---
 
@@ -31,22 +52,6 @@ _None yet_
 ---
 
 ### 🔲 Not Started
-
-#### US-001: Database RPC Function for Weekly Limit Check
-
-**Priority**: P0
-
-**Status**: 🔲 Not Started
-
-**Assigned To**: TBD
-
-**Started**: -
-
-**Completed**: -
-
-**Blockers**: None
-
-**Notes**: Foundation story - must be completed first
 
 ---
 
@@ -62,9 +67,9 @@ _None yet_
 
 **Completed**: -
 
-**Dependencies**: US-001 must be complete
+**Dependencies**: US-001 ✅ Complete
 
-**Blockers**: Waiting for US-001
+**Blockers**: None
 
 **Notes**: -
 
@@ -112,18 +117,17 @@ _None yet_
 
 ## 🎯 Current Sprint
 
-**Active User Story**: US-001 (Database RPC Function)
+**Active User Story**: None (US-001 Complete)
 
 **Next Actions**:
 
-1. Read US-001-database-rpc-function.md completely
-2. Create database migration file
-3. Implement RPC function
-4. Add performance index
-5. Test with Supabase MCP
-6. Update types and documentation
+1. Start US-002: Application-Level Booking Validation
+2. Integrate RPC function in booking hook
+3. Add helper utilities for week calculation
+4. Implement error handling with user-friendly messages
+5. Test booking flow end-to-end
 
-**Estimated Completion**: TBD
+**Ready for**: `/implement-userstory US-002`
 
 ---
 
@@ -135,7 +139,12 @@ _None yet_
 - ✅ Documentation structure created
 - ✅ START-HERE.md, AGENT-GUIDE.md, README.md, STATUS.md generated
 - ✅ User story files ready for creation
-- 🔲 Ready to start US-001 implementation
+- ✅ **US-001 Implementation Complete**: Database RPC function, indexes, types, and documentation
+  - Migration applied via Supabase MCP
+  - All 6 acceptance criteria verified and passing
+  - TypeScript types added to types.ts
+  - Documentation added to RPC_SIGNATURES.md
+  - Build verification successful
 
 ---
 
