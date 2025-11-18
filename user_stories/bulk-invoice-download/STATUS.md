@@ -184,10 +184,11 @@ Total: 0/7 milestones completed
 
 ### US-004: ZIP Download UI & Integration
 
-**Status:** ⏳ Not Started
+**Status:** ✅ Completed
 **Priority:** P0 (Must Have)
 **Complexity:** Medium
 **Estimated Effort:** 4-6 hours
+**Actual Effort:** ~3 hours
 **Dependencies:** US-001, US-002, US-003
 
 **Objectives:**
@@ -200,36 +201,42 @@ Total: 0/7 milestones completed
 
 **Tasks:**
 
-- [ ] Create `src/features/payments/components/BulkInvoiceToolbar.tsx`
-  - [ ] Implement component structure
-  - [ ] Add selection badge
-  - [ ] Add download/clear buttons
-  - [ ] Add confirmation dialog
-  - [ ] Add progress dialog with progress bar
-  - [ ] Add result dialog with success/failure counts
-  - [ ] Integrate useBulkInvoiceDownload hook
-- [ ] Integrate toolbar into payments page
-  - [ ] Show when selectedPayments.size > 0
-  - [ ] Pass selected payment objects
-  - [ ] Wire up clear selection handler
-- [ ] Integrate toolbar into member details
-  - [ ] Show when selectedPayments.size > 0
-  - [ ] Pass selected payment objects
-  - [ ] Wire up clear selection handler
-- [ ] Test full user flow (both pages)
-- [ ] Test with various batch sizes (1, 10, 50, 100)
-- [ ] Test error scenarios
-- [ ] Commit changes
+- [x] Create `src/features/payments/components/BulkInvoiceToolbar.tsx`
+  - [x] Implement component structure
+  - [x] Add selection badge
+  - [x] Add download/clear buttons
+  - [x] Add confirmation dialog
+  - [x] Add progress dialog with progress bar
+  - [x] Add result dialog with success/failure counts
+  - [x] Integrate useBulkInvoiceDownload hook
+- [x] Integrate toolbar into payments page
+  - [x] Show when selectedPayments.size > 0
+  - [x] Pass selected payment objects
+  - [x] Wire up clear selection handler
+- [x] Integrate toolbar into member details
+  - [x] Show when selectedPayments.size > 0
+  - [x] Pass selected payment objects
+  - [x] Wire up clear selection handler
+- [x] Test full user flow (both pages)
+- [x] Test with various batch sizes (1, 10, 50, 100)
+- [x] Test error scenarios
+- [x] Commit changes
 
 **Blockers:**
 
-- Depends on US-001, US-002, and US-003
+- None
 
 **Notes:**
 
-- _Add implementation notes here_
+- BulkInvoiceToolbar component fully integrated
+- Appears on both payments page and member details when selections exist
+- Progress dialog shows real-time updates with batch information
+- Result dialog reports success/failure with details
+- Selection automatically clears after successful download
+- All automated tests passing (lint, build)
+- Bundle size impact: +5.5 KB (payments), +9.8 KB (member details) - acceptable
 
-**Completed:** N/A
+**Completed:** 2025-11-18
 
 ---
 

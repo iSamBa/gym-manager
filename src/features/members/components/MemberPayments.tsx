@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 
 import { useMemberPayments } from "@/features/payments/hooks/use-payments";
 import { PaymentHistoryTable } from "@/features/payments/components/PaymentHistoryTable";
+import { BulkInvoiceToolbar } from "@/features/payments/components/BulkInvoiceToolbar";
 import type { Member } from "@/features/database/lib/types";
 
 interface MemberPaymentsProps {
@@ -30,6 +31,11 @@ export function MemberPayments({ member }: MemberPaymentsProps) {
 
   // Optimize payments array to prevent useCallback dependency issues
   const payments = useMemo(() => paymentsData || [], [paymentsData]);
+
+  // Selected payment objects for bulk operations
+  const selectedPaymentObjects = useMemo(() => {
+    return payments.filter((p) => selectedPayments.has(p.id));
+  }, [payments, selectedPayments]);
 
   // Event handlers
   const handleSelectAll = useCallback(() => {
@@ -53,8 +59,6 @@ export function MemberPayments({ member }: MemberPaymentsProps) {
     [selectedPayments]
   );
 
-  // Will be used in US-004 (BulkInvoiceToolbar)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleClearSelection = useCallback(() => {
     setSelectedPayments(new Set());
   }, []);
@@ -145,6 +149,15 @@ export function MemberPayments({ member }: MemberPaymentsProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Bulk Invoice Toolbar */}
+      {selectedPayments.size > 0 && (
+        <BulkInvoiceToolbar
+          selectedPayments={selectedPaymentObjects}
+          selectedCount={selectedPayments.size}
+          onClearSelection={handleClearSelection}
+        />
+      )}
 
       {/* Payment History Table */}
       <PaymentHistoryTable

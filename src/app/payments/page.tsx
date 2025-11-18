@@ -56,6 +56,7 @@ import { InvoiceViewDialog } from "@/features/payments/components/InvoiceViewDia
 import { useInvoices } from "@/features/invoices/hooks/use-invoices";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { BulkInvoiceToolbar } from "@/features/payments/components/BulkInvoiceToolbar";
 
 export default function PaymentsManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -106,6 +107,11 @@ export default function PaymentsManagementPage() {
     [paymentsData?.payments]
   );
 
+  // Selected payment objects for bulk operations
+  const selectedPaymentObjects = useMemo(() => {
+    return payments.filter((p) => selectedPayments.has(p.id));
+  }, [payments, selectedPayments]);
+
   // Selection handlers
   const handleSelectAll = useCallback(() => {
     if (selectedPayments.size === payments.length && payments.length > 0) {
@@ -128,8 +134,6 @@ export default function PaymentsManagementPage() {
     [selectedPayments]
   );
 
-  // Will be used in US-004 (BulkInvoiceToolbar)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleClearSelection = useCallback(() => {
     setSelectedPayments(new Set());
   }, []);
@@ -423,6 +427,15 @@ export default function PaymentsManagementPage() {
             </PopoverContent>
           </Popover>
         </div>
+
+        {/* Bulk Invoice Toolbar */}
+        {selectedPayments.size > 0 && (
+          <BulkInvoiceToolbar
+            selectedPayments={selectedPaymentObjects}
+            selectedCount={selectedPayments.size}
+            onClearSelection={handleClearSelection}
+          />
+        )}
 
         {/* Payments Table */}
         <Card>
