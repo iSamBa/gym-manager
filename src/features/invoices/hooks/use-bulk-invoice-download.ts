@@ -99,12 +99,23 @@ export function useBulkInvoiceDownload(): UseBulkInvoiceDownloadReturn {
           await Promise.all(
             batch.map(async (payment) => {
               try {
-                // Fetch existing invoice from database
-                const { data: invoice, error: dbError } = await supabase
-                  .from("invoices")
-                  .select("id, pdf_url, invoice_number")
-                  .eq("payment_id", payment.paymentId)
-                  .maybeSingle();
+                // Timeout helper to prevent indefinite hangs
+                const timeoutPromise = new Promise((_, reject) =>
+                  setTimeout(() => reject(new Error("Request timeout")), 30000)
+                );
+
+                // Fetch existing invoice from database with timeout
+                const result = (await Promise.race([
+                  supabase
+                    .from("invoices")
+                    .select("id, pdf_url, invoice_number")
+                    .eq("payment_id", payment.paymentId)
+                    .maybeSingle(),
+                  timeoutPromise,
+                ])) as Awaited<
+                  ReturnType<(typeof supabase.from<"invoices">)["select"]>
+                >;
+                const { data: invoice, error: dbError } = result;
 
                 // Handle missing invoice
                 if (!invoice || !invoice.pdf_url) {
@@ -115,8 +126,19 @@ export function useBulkInvoiceDownload(): UseBulkInvoiceDownloadReturn {
                   );
                 }
 
-                // Fetch PDF blob from storage
-                const response = await fetch(invoice.pdf_url);
+                // Fetch PDF blob from storage with timeout
+                const fetchTimeoutPromise = new Promise((_, reject) =>
+                  setTimeout(
+                    () => reject(new Error("PDF fetch timeout")),
+                    30000
+                  )
+                );
+
+                const response = (await Promise.race([
+                  fetch(invoice.pdf_url),
+                  fetchTimeoutPromise,
+                ])) as Response;
+
                 if (!response.ok) {
                   throw new Error(
                     `Failed to fetch PDF (${response.status}): ${response.statusText}`
