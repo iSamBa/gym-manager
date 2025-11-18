@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { CreditCard } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +17,47 @@ interface MemberPaymentsProps {
 }
 
 export function MemberPayments({ member }: MemberPaymentsProps) {
-  const { data: payments, isLoading, error } = useMemberPayments(member?.id);
+  const {
+    data: paymentsData,
+    isLoading,
+    error,
+  } = useMemberPayments(member?.id);
+
+  // Selection state for bulk invoice download
+  const [selectedPayments, setSelectedPayments] = useState<Set<string>>(
+    new Set()
+  );
+
+  // Optimize payments array to prevent useCallback dependency issues
+  const payments = useMemo(() => paymentsData || [], [paymentsData]);
+
+  // Event handlers
+  const handleSelectAll = useCallback(() => {
+    if (selectedPayments.size === payments.length && payments.length > 0) {
+      setSelectedPayments(new Set());
+    } else {
+      setSelectedPayments(new Set(payments.map((p) => p.id)));
+    }
+  }, [selectedPayments.size, payments]);
+
+  const handleToggleSelect = useCallback(
+    (paymentId: string) => {
+      const newSelection = new Set(selectedPayments);
+      if (newSelection.has(paymentId)) {
+        newSelection.delete(paymentId);
+      } else {
+        newSelection.add(paymentId);
+      }
+      setSelectedPayments(newSelection);
+    },
+    [selectedPayments]
+  );
+
+  // Will be used in US-004 (BulkInvoiceToolbar)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleClearSelection = useCallback(() => {
+    setSelectedPayments(new Set());
+  }, []);
 
   // Handle null/undefined member
   if (!member || !member.id) {
@@ -111,6 +151,10 @@ export function MemberPayments({ member }: MemberPaymentsProps) {
         payments={payments}
         isLoading={isLoading}
         showSubscriptionColumn={true}
+        showSelection={true}
+        selectedPayments={selectedPayments}
+        onToggleSelect={handleToggleSelect}
+        onSelectAll={handleSelectAll}
       />
     </div>
   );

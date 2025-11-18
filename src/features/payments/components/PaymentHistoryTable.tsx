@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 import type { SubscriptionPaymentWithReceiptAndPlan } from "@/features/database/lib/types";
@@ -30,6 +31,11 @@ interface PaymentHistoryTableProps {
   isLoading?: boolean;
   showMemberColumn?: boolean;
   showSubscriptionColumn?: boolean;
+  // Selection props (optional for backward compatibility)
+  showSelection?: boolean;
+  selectedPayments?: Set<string>;
+  onToggleSelect?: (paymentId: string) => void;
+  onSelectAll?: () => void;
 }
 
 export function PaymentHistoryTable({
@@ -37,6 +43,10 @@ export function PaymentHistoryTable({
   isLoading,
   showMemberColumn = false,
   showSubscriptionColumn = false,
+  showSelection = false,
+  selectedPayments,
+  onToggleSelect,
+  onSelectAll,
 }: PaymentHistoryTableProps) {
   const [selectedPayment, setSelectedPayment] =
     useState<SubscriptionPaymentWithReceiptAndPlan | null>(null);
@@ -231,6 +241,18 @@ export function PaymentHistoryTable({
             <Table>
               <TableHeader>
                 <TableRow>
+                  {showSelection && (
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={
+                          selectedPayments?.size === payments.length &&
+                          payments.length > 0
+                        }
+                        onCheckedChange={onSelectAll}
+                        aria-label="Select all payments"
+                      />
+                    </TableHead>
+                  )}
                   <TableHead>Date</TableHead>
                   <TableHead>Receipt #</TableHead>
                   {showMemberColumn && <TableHead>Member</TableHead>}
@@ -244,6 +266,15 @@ export function PaymentHistoryTable({
               <TableBody>
                 {payments.map((payment) => (
                   <TableRow key={payment.id}>
+                    {showSelection && (
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedPayments?.has(payment.id) || false}
+                          onCheckedChange={() => onToggleSelect?.(payment.id)}
+                          aria-label={`Select payment ${payment.receipt_number}`}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell>
                       {payment.payment_date
                         ? format(new Date(payment.payment_date), "MMM dd, yyyy")

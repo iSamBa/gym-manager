@@ -91,10 +91,11 @@ Total: 0/7 milestones completed
 
 ### US-002: Member Payment Selection UI
 
-**Status:** ⏳ Not Started
+**Status:** ✅ Completed
 **Priority:** P0 (Must Have)
 **Complexity:** Small
 **Estimated Effort:** 2-3 hours
+**Actual Effort:** ~2 hours
 **Dependencies:** US-001
 
 **Objectives:**
@@ -105,23 +106,28 @@ Total: 0/7 milestones completed
 
 **Tasks:**
 
-- [ ] Update PaymentHistoryTable props interface
-- [ ] Add conditional checkbox column to table
-- [ ] Add selection state to member details page
-- [ ] Pass selection props to PaymentHistoryTable
-- [ ] Test selection in member details context
-- [ ] Verify selection independence from payments page
-- [ ] Commit changes
+- [x] Update PaymentHistoryTable props interface
+- [x] Add conditional checkbox column to table
+- [x] Add selection state to member details page
+- [x] Pass selection props to PaymentHistoryTable
+- [x] Test selection in member details context
+- [x] Verify selection independence from payments page
+- [x] Commit changes
 
 **Blockers:**
 
-- Depends on US-001 completion
+- None
 
 **Notes:**
 
-- _Add implementation notes here_
+- Implementation complete with all automated tests passing
+- PaymentHistoryTable now accepts optional selection props
+- Backward compatible - existing usage unaffected
+- Selection state managed by parent component (MemberPayments)
+- Conditional rendering ensures checkboxes only show when enabled
+- Follows same optimization patterns as US-001 (Set, useCallback, useMemo)
 
-**Completed:** N/A
+**Completed:** 2025-11-18
 
 ---
 
