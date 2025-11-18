@@ -105,17 +105,23 @@ export function useBulkInvoiceDownload(): UseBulkInvoiceDownloadReturn {
                 );
 
                 // Fetch existing invoice from database with timeout
-                const result = (await Promise.race([
+                const result = await Promise.race([
                   supabase
                     .from("invoices")
                     .select("id, pdf_url, invoice_number")
                     .eq("payment_id", payment.paymentId)
                     .maybeSingle(),
                   timeoutPromise,
-                ])) as Awaited<
-                  ReturnType<(typeof supabase.from<"invoices">)["select"]>
-                >;
-                const { data: invoice, error: dbError } = result;
+                ]);
+
+                const { data: invoice, error: dbError } = result as {
+                  data: {
+                    id: string;
+                    pdf_url: string;
+                    invoice_number: string;
+                  } | null;
+                  error: { message: string } | null;
+                };
 
                 // Handle missing invoice
                 if (!invoice || !invoice.pdf_url) {

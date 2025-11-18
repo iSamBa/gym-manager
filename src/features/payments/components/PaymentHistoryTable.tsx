@@ -133,21 +133,36 @@ export function PaymentHistoryTable({
   const getOrGenerateInvoice = async (
     payment: SubscriptionPaymentWithReceiptAndPlan
   ) => {
-    // Check if invoice already exists
-    const { data: existingInvoice } = await supabase
+    // Check if invoice already exists (get most recent if multiple exist)
+    const { data: existingInvoices, error: fetchError } = await supabase
       .from("invoices")
       .select("id, pdf_url, invoice_number")
       .eq("payment_id", payment.id)
-      .maybeSingle();
+      .order("created_at", { ascending: false });
 
-    if (existingInvoice?.pdf_url) {
-      return {
-        pdfUrl: existingInvoice.pdf_url,
-        invoiceNumber: existingInvoice.invoice_number,
-      };
+    if (fetchError) {
+      throw new Error(`Failed to fetch invoice: ${fetchError.message}`);
     }
 
-    // Invoice doesn't exist, generate it
+    // If invoice(s) exist with PDF URL, return the most recent one
+    if (existingInvoices && existingInvoices.length > 0) {
+      const invoiceWithPdf = existingInvoices.find((inv) => inv.pdf_url);
+
+      if (invoiceWithPdf) {
+        return {
+          pdfUrl: invoiceWithPdf.pdf_url,
+          invoiceNumber: invoiceWithPdf.invoice_number,
+        };
+      }
+
+      // Invoice exists but no PDF - this shouldn't happen in normal flow
+      // Log warning but continue to generate new invoice
+      toast.warning(
+        `Found ${existingInvoices.length} incomplete invoice(s). Creating new one...`
+      );
+    }
+
+    // Invoice doesn't exist or all are incomplete - generate new one
     toast.info("Generating invoice...");
 
     await generateInvoice({
@@ -157,20 +172,21 @@ export function PaymentHistoryTable({
       amount: payment.amount,
     });
 
-    // Fetch the newly created invoice
-    const { data: newInvoice } = await supabase
+    // Fetch the newly created invoice (get most recent)
+    const { data: newInvoices } = await supabase
       .from("invoices")
       .select("pdf_url, invoice_number")
       .eq("payment_id", payment.id)
-      .single();
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-    if (!newInvoice?.pdf_url) {
+    if (!newInvoices || newInvoices.length === 0 || !newInvoices[0].pdf_url) {
       throw new Error("Invoice generated but PDF URL not found");
     }
 
     return {
-      pdfUrl: newInvoice.pdf_url,
-      invoiceNumber: newInvoice.invoice_number,
+      pdfUrl: newInvoices[0].pdf_url,
+      invoiceNumber: newInvoices[0].invoice_number,
     };
   };
 
