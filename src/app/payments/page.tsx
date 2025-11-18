@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import {
@@ -40,6 +40,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { useAllPayments } from "@/features/payments/hooks/use-all-payments";
 import type {
@@ -55,6 +56,7 @@ import { InvoiceViewDialog } from "@/features/payments/components/InvoiceViewDia
 import { useInvoices } from "@/features/invoices/hooks/use-invoices";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { BulkInvoiceToolbar } from "@/features/payments/components/BulkInvoiceToolbar";
 
 export default function PaymentsManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -79,6 +81,11 @@ export default function PaymentsManagementPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const pageSize = 50;
 
+  // Selection state for bulk operations
+  const [selectedPayments, setSelectedPayments] = useState<Set<string>>(
+    new Set()
+  );
+
   const { generateInvoice } = useInvoices();
 
   // Require admin role for entire page
@@ -94,6 +101,47 @@ export default function PaymentsManagementPage() {
     page: currentPage,
     limit: pageSize,
   });
+
+  const payments = useMemo(
+    () => paymentsData?.payments || [],
+    [paymentsData?.payments]
+  );
+
+  // Selected payment objects for bulk operations
+  const selectedPaymentObjects = useMemo(() => {
+    return payments.filter((p) => selectedPayments.has(p.id));
+  }, [payments, selectedPayments]);
+
+  // Selection handlers
+  const handleSelectAll = useCallback(() => {
+    if (selectedPayments.size === payments.length && payments.length > 0) {
+      setSelectedPayments(new Set());
+    } else {
+      setSelectedPayments(new Set(payments.map((p) => p.id)));
+    }
+  }, [selectedPayments.size, payments]);
+
+  const handleToggleSelect = useCallback(
+    (paymentId: string) => {
+      const newSelection = new Set(selectedPayments);
+      if (newSelection.has(paymentId)) {
+        newSelection.delete(paymentId);
+      } else {
+        newSelection.add(paymentId);
+      }
+      setSelectedPayments(newSelection);
+    },
+    [selectedPayments]
+  );
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedPayments(new Set());
+  }, []);
+
+  // Clear selection when filters or pagination changes
+  useEffect(() => {
+    setSelectedPayments(new Set());
+  }, [searchTerm, methodFilter, statusFilter, dateRange, currentPage]);
 
   if (isAuthLoading) {
     return (
@@ -131,7 +179,6 @@ export default function PaymentsManagementPage() {
     );
   }
 
-  const payments = paymentsData?.payments || [];
   const totalCount = paymentsData?.totalCount || 0;
   const summary = paymentsData?.summary || {
     totalRevenue: 0,
@@ -381,12 +428,31 @@ export default function PaymentsManagementPage() {
           </Popover>
         </div>
 
+        {/* Bulk Invoice Toolbar */}
+        {selectedPayments.size > 0 && (
+          <BulkInvoiceToolbar
+            selectedPayments={selectedPaymentObjects}
+            selectedCount={selectedPayments.size}
+            onClearSelection={handleClearSelection}
+          />
+        )}
+
         {/* Payments Table */}
         <Card>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={
+                        selectedPayments.size === payments.length &&
+                        payments.length > 0
+                      }
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Select all payments"
+                    />
+                  </TableHead>
                   <TableHead>Receipt</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Amount</TableHead>
@@ -404,6 +470,13 @@ export default function PaymentsManagementPage() {
                       payment.is_refund ? "bg-red-50 dark:bg-red-950/20" : ""
                     }
                   >
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedPayments.has(payment.id)}
+                        onCheckedChange={() => handleToggleSelect(payment.id)}
+                        aria-label={`Select payment ${payment.receipt_number}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-sm">
                       {payment.receipt_number}
                       {payment.is_refund && (

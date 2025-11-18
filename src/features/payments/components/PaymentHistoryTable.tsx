@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 import type { SubscriptionPaymentWithReceiptAndPlan } from "@/features/database/lib/types";
@@ -30,6 +31,11 @@ interface PaymentHistoryTableProps {
   isLoading?: boolean;
   showMemberColumn?: boolean;
   showSubscriptionColumn?: boolean;
+  // Selection props (optional for backward compatibility)
+  showSelection?: boolean;
+  selectedPayments?: Set<string>;
+  onToggleSelect?: (paymentId: string) => void;
+  onSelectAll?: () => void;
 }
 
 export function PaymentHistoryTable({
@@ -37,6 +43,10 @@ export function PaymentHistoryTable({
   isLoading,
   showMemberColumn = false,
   showSubscriptionColumn = false,
+  showSelection = false,
+  selectedPayments,
+  onToggleSelect,
+  onSelectAll,
 }: PaymentHistoryTableProps) {
   const [selectedPayment, setSelectedPayment] =
     useState<SubscriptionPaymentWithReceiptAndPlan | null>(null);
@@ -123,21 +133,36 @@ export function PaymentHistoryTable({
   const getOrGenerateInvoice = async (
     payment: SubscriptionPaymentWithReceiptAndPlan
   ) => {
-    // Check if invoice already exists
-    const { data: existingInvoice } = await supabase
+    // Check if invoice already exists (get most recent if multiple exist)
+    const { data: existingInvoices, error: fetchError } = await supabase
       .from("invoices")
       .select("id, pdf_url, invoice_number")
       .eq("payment_id", payment.id)
-      .maybeSingle();
+      .order("created_at", { ascending: false });
 
-    if (existingInvoice?.pdf_url) {
-      return {
-        pdfUrl: existingInvoice.pdf_url,
-        invoiceNumber: existingInvoice.invoice_number,
-      };
+    if (fetchError) {
+      throw new Error(`Failed to fetch invoice: ${fetchError.message}`);
     }
 
-    // Invoice doesn't exist, generate it
+    // If invoice(s) exist with PDF URL, return the most recent one
+    if (existingInvoices && existingInvoices.length > 0) {
+      const invoiceWithPdf = existingInvoices.find((inv) => inv.pdf_url);
+
+      if (invoiceWithPdf) {
+        return {
+          pdfUrl: invoiceWithPdf.pdf_url,
+          invoiceNumber: invoiceWithPdf.invoice_number,
+        };
+      }
+
+      // Invoice exists but no PDF - this shouldn't happen in normal flow
+      // Log warning but continue to generate new invoice
+      toast.warning(
+        `Found ${existingInvoices.length} incomplete invoice(s). Creating new one...`
+      );
+    }
+
+    // Invoice doesn't exist or all are incomplete - generate new one
     toast.info("Generating invoice...");
 
     await generateInvoice({
@@ -147,20 +172,21 @@ export function PaymentHistoryTable({
       amount: payment.amount,
     });
 
-    // Fetch the newly created invoice
-    const { data: newInvoice } = await supabase
+    // Fetch the newly created invoice (get most recent)
+    const { data: newInvoices } = await supabase
       .from("invoices")
       .select("pdf_url, invoice_number")
       .eq("payment_id", payment.id)
-      .single();
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-    if (!newInvoice?.pdf_url) {
+    if (!newInvoices || newInvoices.length === 0 || !newInvoices[0].pdf_url) {
       throw new Error("Invoice generated but PDF URL not found");
     }
 
     return {
-      pdfUrl: newInvoice.pdf_url,
-      invoiceNumber: newInvoice.invoice_number,
+      pdfUrl: newInvoices[0].pdf_url,
+      invoiceNumber: newInvoices[0].invoice_number,
     };
   };
 
@@ -231,6 +257,18 @@ export function PaymentHistoryTable({
             <Table>
               <TableHeader>
                 <TableRow>
+                  {showSelection && (
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={
+                          selectedPayments?.size === payments.length &&
+                          payments.length > 0
+                        }
+                        onCheckedChange={onSelectAll}
+                        aria-label="Select all payments"
+                      />
+                    </TableHead>
+                  )}
                   <TableHead>Date</TableHead>
                   <TableHead>Receipt #</TableHead>
                   {showMemberColumn && <TableHead>Member</TableHead>}
@@ -244,6 +282,15 @@ export function PaymentHistoryTable({
               <TableBody>
                 {payments.map((payment) => (
                   <TableRow key={payment.id}>
+                    {showSelection && (
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedPayments?.has(payment.id) || false}
+                          onCheckedChange={() => onToggleSelect?.(payment.id)}
+                          aria-label={`Select payment ${payment.receipt_number}`}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell>
                       {payment.payment_date
                         ? format(new Date(payment.payment_date), "MMM dd, yyyy")

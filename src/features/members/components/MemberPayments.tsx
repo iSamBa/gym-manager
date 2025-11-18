@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { CreditCard } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 
 import { useMemberPayments } from "@/features/payments/hooks/use-payments";
 import { PaymentHistoryTable } from "@/features/payments/components/PaymentHistoryTable";
+import { BulkInvoiceToolbar } from "@/features/payments/components/BulkInvoiceToolbar";
 import type { Member } from "@/features/database/lib/types";
 
 interface MemberPaymentsProps {
@@ -17,7 +18,50 @@ interface MemberPaymentsProps {
 }
 
 export function MemberPayments({ member }: MemberPaymentsProps) {
-  const { data: payments, isLoading, error } = useMemberPayments(member?.id);
+  const {
+    data: paymentsData,
+    isLoading,
+    error,
+  } = useMemberPayments(member?.id);
+
+  // Selection state for bulk invoice download
+  const [selectedPayments, setSelectedPayments] = useState<Set<string>>(
+    new Set()
+  );
+
+  // Optimize payments array to prevent useCallback dependency issues
+  const payments = useMemo(() => paymentsData || [], [paymentsData]);
+
+  // Selected payment objects for bulk operations
+  const selectedPaymentObjects = useMemo(() => {
+    return payments.filter((p) => selectedPayments.has(p.id));
+  }, [payments, selectedPayments]);
+
+  // Event handlers
+  const handleSelectAll = useCallback(() => {
+    if (selectedPayments.size === payments.length && payments.length > 0) {
+      setSelectedPayments(new Set());
+    } else {
+      setSelectedPayments(new Set(payments.map((p) => p.id)));
+    }
+  }, [selectedPayments.size, payments]);
+
+  const handleToggleSelect = useCallback(
+    (paymentId: string) => {
+      const newSelection = new Set(selectedPayments);
+      if (newSelection.has(paymentId)) {
+        newSelection.delete(paymentId);
+      } else {
+        newSelection.add(paymentId);
+      }
+      setSelectedPayments(newSelection);
+    },
+    [selectedPayments]
+  );
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedPayments(new Set());
+  }, []);
 
   // Handle null/undefined member
   if (!member || !member.id) {
@@ -106,11 +150,24 @@ export function MemberPayments({ member }: MemberPaymentsProps) {
         </Card>
       </div>
 
+      {/* Bulk Invoice Toolbar */}
+      {selectedPayments.size > 0 && (
+        <BulkInvoiceToolbar
+          selectedPayments={selectedPaymentObjects}
+          selectedCount={selectedPayments.size}
+          onClearSelection={handleClearSelection}
+        />
+      )}
+
       {/* Payment History Table */}
       <PaymentHistoryTable
         payments={payments}
         isLoading={isLoading}
         showSubscriptionColumn={true}
+        showSelection={true}
+        selectedPayments={selectedPayments}
+        onToggleSelect={handleToggleSelect}
+        onSelectAll={handleSelectAll}
       />
     </div>
   );
