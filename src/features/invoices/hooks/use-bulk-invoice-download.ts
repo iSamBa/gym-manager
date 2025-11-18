@@ -157,10 +157,10 @@ export function useBulkInvoiceDownload(): UseBulkInvoiceDownloadReturn {
                   );
                 }
 
-                // Add to collection
+                // Add to collection with unique filename (receipt number + invoice number)
                 invoiceBlobs.push({
                   blob,
-                  filename: `invoice-${invoice.invoice_number}.pdf`,
+                  filename: `${payment.receiptNumber}-${invoice.invoice_number}.pdf`,
                 });
 
                 successful.push(payment.paymentId);
