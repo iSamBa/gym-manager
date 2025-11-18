@@ -15,7 +15,7 @@
  * - Maximum selection limit (default: 100)
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -65,6 +65,8 @@ interface BulkInvoiceToolbarProps {
 /**
  * Toolbar component for bulk invoice download operations
  *
+ * Optimized with React.memo to prevent unnecessary re-renders.
+ *
  * @example
  * ```tsx
  * <BulkInvoiceToolbar
@@ -74,7 +76,7 @@ interface BulkInvoiceToolbarProps {
  * />
  * ```
  */
-export function BulkInvoiceToolbar({
+export const BulkInvoiceToolbar = memo(function BulkInvoiceToolbar({
   selectedPayments,
   selectedCount,
   onClearSelection,
@@ -266,4 +268,4 @@ export function BulkInvoiceToolbar({
       </AlertDialog>
     </>
   );
-}
+});
