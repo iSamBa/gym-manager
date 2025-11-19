@@ -17,8 +17,6 @@ import {
   formatTimestampForDatabase,
   formatForDatabase,
 } from "@/lib/date-utils";
-import { bypassesWeeklyLimit } from "../lib/type-guards";
-import { checkMemberWeeklyLimit } from "../lib/session-limit-utils";
 import type {
   TrainingSession,
   CreateSessionData,
@@ -274,20 +272,6 @@ export const useCreateTrainingSession = () => {
           }
 
           memberId = newMember.id;
-        }
-      }
-
-      // MEMBER SESSION: Validate weekly limit (max 1 per week)
-      // Check this BEFORE subscription validation (fail fast)
-      if (!bypassesWeeklyLimit(data.session_type) && memberId) {
-        const result = await checkMemberWeeklyLimit(
-          memberId,
-          new Date(data.scheduled_start),
-          data.session_type
-        );
-
-        if (!result.can_book) {
-          throw new Error(result.message);
         }
       }
 

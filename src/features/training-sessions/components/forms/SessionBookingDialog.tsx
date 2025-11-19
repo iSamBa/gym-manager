@@ -24,7 +24,12 @@ import {
 } from "../../lib/validation";
 import { useStudioSessionLimit } from "../../hooks/use-session-alerts";
 import { QuickCollaborationMemberDialog } from "./QuickCollaborationMemberDialog";
-import { requiresMember, requiresTrialMember } from "../../lib/type-guards";
+import {
+  requiresMember,
+  requiresTrialMember,
+  bypassesWeeklyLimit,
+} from "../../lib/type-guards";
+import { checkMemberWeeklyLimit } from "../../lib/session-limit-utils";
 import { SessionTypeStep, SessionDetailsStep } from "../session-booking";
 import type { MemberType } from "@/features/database/lib/types";
 
@@ -275,6 +280,40 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
 
               return; // Prevent submission
             }
+          }
+        }
+
+        // Validate weekly session limit for member sessions (before mutation)
+        if (!bypassesWeeklyLimit(data.session_type) && data.member_id) {
+          try {
+            const limitCheck = await checkMemberWeeklyLimit(
+              data.member_id,
+              new Date(data.scheduled_start),
+              data.session_type
+            );
+
+            if (!limitCheck.can_book) {
+              logger.warn("Weekly session limit reached", {
+                memberId: data.member_id,
+                sessionType: data.session_type,
+                currentSessions: limitCheck.current_member_sessions,
+                maxAllowed: limitCheck.max_allowed,
+              });
+
+              // Display inline error (no toast, no console error)
+              setFormError(limitCheck.message);
+              return; // Prevent submission
+            }
+          } catch (error) {
+            // Only log actual errors (database failures, etc.)
+            logger.error("Failed to check weekly limit", {
+              error: error instanceof Error ? error.message : String(error),
+            });
+
+            setFormError(
+              "Unable to verify weekly session limit. Please try again."
+            );
+            return;
           }
         }
 
