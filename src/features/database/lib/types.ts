@@ -696,3 +696,16 @@ export interface MemberComment {
   created_at: string;
   updated_at: string;
 }
+
+// Member Weekly Session Limit (US-001)
+
+/**
+ * Return type for check_member_weekly_session_limit RPC function
+ * Validates member weekly session limit enforcement
+ */
+export interface MemberWeeklyLimitResult {
+  can_book: boolean;
+  current_member_sessions: number;
+  max_allowed: number;
+  message: string;
+}

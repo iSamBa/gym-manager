@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   getWeekRange,
+  checkMemberWeeklyLimit,
   checkStudioSessionLimit,
   getCapacityColorScheme,
 } from "../session-limit-utils";
@@ -13,54 +14,318 @@ vi.mock("@/lib/supabase", () => ({
 }));
 
 describe("getWeekRange", () => {
-  it("should return correct Monday-Sunday for a weekday (Thursday)", () => {
-    // Thursday, October 18, 2025
-    const thursday = new Date(2025, 9, 18); // Month is 0-indexed
+  it("should return correct Sunday-Saturday for a weekday (Thursday)", () => {
+    // Thursday, October 16, 2025
+    const thursday = new Date(2025, 9, 16); // Month is 0-indexed
     const result = getWeekRange(thursday);
 
-    // Monday Oct 13 - Sunday Oct 19
-    expect(result.start).toBe("2025-10-13");
-    expect(result.end).toBe("2025-10-19");
+    // Week: Sunday Oct 12 - Saturday Oct 18
+    expect(result.start).toBeInstanceOf(Date);
+    expect(result.end).toBeInstanceOf(Date);
+    expect(result.start.getFullYear()).toBe(2025);
+    expect(result.start.getMonth()).toBe(9); // October
+    expect(result.start.getDate()).toBe(12); // Sunday
+    expect(result.end.getFullYear()).toBe(2025);
+    expect(result.end.getMonth()).toBe(9); // October
+    expect(result.end.getDate()).toBe(18); // Saturday
   });
 
-  it("should return correct Monday-Sunday when input is Monday", () => {
-    // Monday, October 13, 2025
-    const monday = new Date(2025, 9, 13);
-    const result = getWeekRange(monday);
-
-    // Same week: Monday Oct 13 - Sunday Oct 19
-    expect(result.start).toBe("2025-10-13");
-    expect(result.end).toBe("2025-10-19");
-  });
-
-  it("should handle Sunday correctly (end of week, not start)", () => {
-    // Sunday, October 19, 2025
-    const sunday = new Date(2025, 9, 19);
+  it("should return correct Sunday-Saturday when input is Sunday", () => {
+    // Sunday, October 12, 2025
+    const sunday = new Date(2025, 9, 12);
     const result = getWeekRange(sunday);
 
-    // Sunday belongs to previous week: Monday Oct 13 - Sunday Oct 19
-    expect(result.start).toBe("2025-10-13");
-    expect(result.end).toBe("2025-10-19");
+    // Same week: Sunday Oct 12 - Saturday Oct 18
+    expect(result.start.getDate()).toBe(12); // Sunday
+    expect(result.end.getDate()).toBe(18); // Saturday
   });
 
-  it("should handle year boundaries correctly (Dec 31 is Tuesday)", () => {
-    // Tuesday, December 31, 2024
-    const newYearsEve = new Date(2024, 11, 31);
+  it("should handle Saturday correctly (end of week)", () => {
+    // Saturday, October 18, 2025
+    const saturday = new Date(2025, 9, 18);
+    const result = getWeekRange(saturday);
+
+    // Same week: Sunday Oct 12 - Saturday Oct 18
+    expect(result.start.getDate()).toBe(12); // Sunday
+    expect(result.end.getDate()).toBe(18); // Saturday
+  });
+
+  it("should handle year boundaries correctly (Dec 31 is Wednesday)", () => {
+    // Wednesday, December 31, 2025
+    const newYearsEve = new Date(2025, 11, 31);
     const result = getWeekRange(newYearsEve);
 
-    // Monday Dec 30, 2024 - Sunday Jan 5, 2025
-    expect(result.start).toBe("2024-12-30");
-    expect(result.end).toBe("2025-01-05");
+    // Sunday Dec 28, 2025 - Saturday Jan 3, 2026
+    expect(result.start.getFullYear()).toBe(2025);
+    expect(result.start.getMonth()).toBe(11); // December
+    expect(result.start.getDate()).toBe(28); // Sunday
+    expect(result.end.getFullYear()).toBe(2026);
+    expect(result.end.getMonth()).toBe(0); // January
+    expect(result.end.getDate()).toBe(3); // Saturday
   });
 
-  it("should handle year boundaries when Monday is in previous year", () => {
+  it("should handle year boundaries when Sunday is in previous year", () => {
     // Thursday, January 2, 2025
     const jan2 = new Date(2025, 0, 2);
     const result = getWeekRange(jan2);
 
-    // Monday Dec 30, 2024 - Sunday Jan 5, 2025
-    expect(result.start).toBe("2024-12-30");
-    expect(result.end).toBe("2025-01-05");
+    // Sunday Dec 29, 2024 - Saturday Jan 4, 2025
+    expect(result.start.getFullYear()).toBe(2024);
+    expect(result.start.getMonth()).toBe(11); // December
+    expect(result.start.getDate()).toBe(29); // Sunday
+    expect(result.end.getFullYear()).toBe(2025);
+    expect(result.end.getMonth()).toBe(0); // January
+    expect(result.end.getDate()).toBe(4); // Saturday
+  });
+
+  it("should set start to midnight and end to 23:59:59", () => {
+    const date = new Date(2025, 9, 16, 14, 30, 45, 500); // Thursday 2:30 PM
+    const result = getWeekRange(date);
+
+    // Start should be midnight
+    expect(result.start.getHours()).toBe(0);
+    expect(result.start.getMinutes()).toBe(0);
+    expect(result.start.getSeconds()).toBe(0);
+    expect(result.start.getMilliseconds()).toBe(0);
+
+    // End should be 23:59:59.999
+    expect(result.end.getHours()).toBe(23);
+    expect(result.end.getMinutes()).toBe(59);
+    expect(result.end.getSeconds()).toBe(59);
+    expect(result.end.getMilliseconds()).toBe(999);
+  });
+});
+
+describe("checkMemberWeeklyLimit", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should allow booking when member has no sessions this week", async () => {
+    const mockResult = {
+      can_book: true,
+      current_member_sessions: 0,
+      max_allowed: 1,
+      message: "Booking allowed",
+    };
+
+    const { supabase } = await import("@/lib/supabase");
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: mockResult,
+      error: null,
+    } as any);
+
+    const result = await checkMemberWeeklyLimit(
+      "member-uuid-123",
+      new Date(2025, 9, 16),
+      "member"
+    );
+
+    expect(result.can_book).toBe(true);
+    expect(result.current_member_sessions).toBe(0);
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "check_member_weekly_session_limit",
+      expect.objectContaining({
+        p_member_id: "member-uuid-123",
+        p_session_type: "member",
+      })
+    );
+  });
+
+  it("should block booking when member already has 1 member session this week", async () => {
+    const mockResult = {
+      can_book: false,
+      current_member_sessions: 1,
+      max_allowed: 1,
+      message:
+        "Member already has 1 member session booked this week. Please use the 'Makeup' session type for additional sessions.",
+    };
+
+    const { supabase } = await import("@/lib/supabase");
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: mockResult,
+      error: null,
+    } as any);
+
+    const result = await checkMemberWeeklyLimit(
+      "member-uuid-123",
+      new Date(2025, 9, 16),
+      "member"
+    );
+
+    expect(result.can_book).toBe(false);
+    expect(result.current_member_sessions).toBe(1);
+    expect(result.message).toContain(
+      "Member already has 1 member session booked this week"
+    );
+  });
+
+  it("should correctly calculate week range (Sunday to Saturday)", async () => {
+    const mockResult = {
+      can_book: true,
+      current_member_sessions: 0,
+      max_allowed: 1,
+      message: "Booking allowed",
+    };
+
+    const { supabase } = await import("@/lib/supabase");
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: mockResult,
+      error: null,
+    } as any);
+
+    // Thursday, October 16, 2025
+    await checkMemberWeeklyLimit(
+      "member-uuid-123",
+      new Date(2025, 9, 16),
+      "member"
+    );
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "check_member_weekly_session_limit",
+      expect.objectContaining({
+        p_week_start: "2025-10-12", // Sunday
+        p_week_end: "2025-10-18", // Saturday
+      })
+    );
+  });
+
+  it("should throw error when database query fails", async () => {
+    const mockError = new Error("Database connection failed");
+
+    const { supabase } = await import("@/lib/supabase");
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: null,
+      error: mockError,
+    } as any);
+
+    await expect(
+      checkMemberWeeklyLimit("member-uuid-123", new Date(2025, 9, 16), "member")
+    ).rejects.toThrow(
+      "Failed to check weekly limit: Database connection failed"
+    );
+  });
+
+  it("should handle cancelled sessions correctly (RPC returns can_book: true)", async () => {
+    // RPC function excludes cancelled sessions, so result shows 0 sessions
+    const mockResult = {
+      can_book: true,
+      current_member_sessions: 0,
+      max_allowed: 1,
+      message: "Booking allowed",
+    };
+
+    const { supabase } = await import("@/lib/supabase");
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: mockResult,
+      error: null,
+    } as any);
+
+    const result = await checkMemberWeeklyLimit(
+      "member-uuid-123",
+      new Date(2025, 9, 16),
+      "member"
+    );
+
+    expect(result.can_book).toBe(true);
+    expect(result.current_member_sessions).toBe(0);
+  });
+
+  it("should use default session type 'member' when not specified", async () => {
+    const mockResult = {
+      can_book: true,
+      current_member_sessions: 0,
+      max_allowed: 1,
+      message: "Booking allowed",
+    };
+
+    const { supabase } = await import("@/lib/supabase");
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: mockResult,
+      error: null,
+    } as any);
+
+    // Call without session type parameter
+    await checkMemberWeeklyLimit("member-uuid-123", new Date(2025, 9, 16));
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "check_member_weekly_session_limit",
+      expect.objectContaining({
+        p_session_type: "member",
+      })
+    );
+  });
+
+  it("should return null when RPC returns null data with no error", async () => {
+    const { supabase } = await import("@/lib/supabase");
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: null,
+      error: null,
+    } as any);
+
+    const result = await checkMemberWeeklyLimit(
+      "member-uuid-123",
+      new Date(2025, 9, 16),
+      "member"
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it("should correctly handle dates at exact midnight boundaries", async () => {
+    const mockResult = {
+      can_book: true,
+      current_member_sessions: 0,
+      max_allowed: 1,
+      message: "Booking allowed",
+    };
+
+    const { supabase } = await import("@/lib/supabase");
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: mockResult,
+      error: null,
+    } as any);
+
+    // Test with date at exactly midnight
+    const midnightDate = new Date(2025, 9, 16, 0, 0, 0, 0);
+    await checkMemberWeeklyLimit("member-uuid-123", midnightDate, "member");
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "check_member_weekly_session_limit",
+      expect.objectContaining({
+        p_week_start: "2025-10-12", // Sunday
+        p_week_end: "2025-10-18", // Saturday
+      })
+    );
+  });
+
+  it("should handle sessions for different session types correctly", async () => {
+    const mockResult = {
+      can_book: true,
+      current_member_sessions: 0,
+      max_allowed: 1,
+      message: "Booking allowed",
+    };
+
+    const { supabase } = await import("@/lib/supabase");
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: mockResult,
+      error: null,
+    } as any);
+
+    // Test with makeup session type
+    await checkMemberWeeklyLimit(
+      "member-uuid-123",
+      new Date(2025, 9, 16),
+      "makeup"
+    );
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "check_member_weekly_session_limit",
+      expect.objectContaining({
+        p_session_type: "makeup",
+      })
+    );
   });
 });
 
@@ -95,8 +360,8 @@ describe("checkStudioSessionLimit", () => {
     });
 
     expect(mockRpc).toHaveBeenCalledWith("check_studio_session_limit", {
-      p_week_start: "2025-10-13",
-      p_week_end: "2025-10-19",
+      p_week_start: "2025-10-12",
+      p_week_end: "2025-10-18",
     });
   });
 

@@ -97,6 +97,106 @@ const sessions = mapSessionRpcResponse<TrainingSession>(data || []);
 
 ---
 
+### `check_member_weekly_session_limit(p_member_id UUID, p_week_start DATE, p_week_end DATE, p_session_type TEXT)`
+
+**Purpose:** Validates member weekly session limit enforcement. Members can book max 1 "member" session per week. Makeup/trial/contractual/collaboration sessions bypass this limit.
+
+**Parameters:**
+
+- `p_member_id` (UUID) - UUID of the member
+- `p_week_start` (DATE) - Start date of the week (Sunday, format: 'YYYY-MM-DD')
+- `p_week_end` (DATE) - End date of the week (Saturday, format: 'YYYY-MM-DD')
+- `p_session_type` (TEXT) - Type of session being booked
+
+**Returns:** JSONB
+
+```typescript
+{
+  can_book: boolean; // Whether booking is allowed
+  current_member_sessions: number; // Current count of member sessions
+  max_allowed: number; // Maximum allowed (always 1)
+  message: string; // User-friendly message
+}
+```
+
+**Business Logic:**
+
+- Counts "member" type sessions for the specified member in the date range
+- Excludes cancelled sessions (both session status and booking status)
+- Bypasses validation for non-member session types (makeup, trial, contractual, collaboration)
+- Returns validation result with count and message
+- Uses `training_session_members` junction table for member-session relationships
+
+**Performance:** O(log n) with composite indexes, ~10ms for 10k rows
+
+**Validation Rules:**
+
+- Only "member" session type counts toward the 1-per-week limit
+- Sessions with `status = 'cancelled'` are excluded
+- Bookings with `booking_status = 'cancelled'` are excluded
+- Week boundaries handled by caller (application determines Sunday-Saturday range)
+- Non-member session types always return `can_book: true`
+
+**Usage:**
+
+```typescript
+const { data, error } = await supabase.rpc(
+  "check_member_weekly_session_limit",
+  {
+    p_member_id: memberId,
+    p_week_start: "2025-11-17", // Sunday
+    p_week_end: "2025-11-23", // Saturday
+    p_session_type: "member",
+  }
+);
+
+if (!data.can_book) {
+  // Show error: data.message
+  alert(data.message);
+} else {
+  // Proceed with booking
+}
+```
+
+**Example Responses:**
+
+```typescript
+// Member has no sessions this week
+{
+  can_book: true,
+  current_member_sessions: 0,
+  max_allowed: 1,
+  message: "Member can book this session"
+}
+
+// Member already has 1 member session
+{
+  can_book: false,
+  current_member_sessions: 1,
+  max_allowed: 1,
+  message: "Member already has 1 member session booked this week. Please use the 'Makeup' session type for additional sessions."
+}
+
+// Makeup session (bypasses limit)
+{
+  can_book: true,
+  current_member_sessions: 0,
+  max_allowed: 1,
+  message: "Session type bypasses weekly limit"
+}
+```
+
+**Created:** US-001 (member-weekly-session-limit feature)
+
+**Related TypeScript Interface:** `MemberWeeklyLimitResult` (in `types.ts`)
+
+**Database Indexes:**
+
+- `idx_training_sessions_weekly_limit` on `training_sessions(session_type, scheduled_start)` WHERE `status != 'cancelled'`
+- `idx_training_session_members_weekly_limit` on `training_session_members(member_id, session_id)` WHERE `booking_status != 'cancelled'`
+
+---
+
 ### `create_training_session_with_members(...)`
 
 **Purpose:** Create a training session with member bookings in a single transaction.
