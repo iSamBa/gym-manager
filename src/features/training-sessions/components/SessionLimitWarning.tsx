@@ -6,6 +6,7 @@ import {
   getCapacityColorScheme,
   getWeekRange,
 } from "../lib/session-limit-utils";
+import { getLocalDateString } from "@/lib/date-utils";
 
 interface SessionLimitWarningProps {
   date: Date;
@@ -53,7 +54,8 @@ export function SessionLimitWarning({ date }: SessionLimitWarningProps) {
       <AlertDescription>
         <div className="mt-2 space-y-2">
           <p className="text-sm !text-gray-950">
-            Week of {weekRange.start} - {weekRange.end}
+            Week of {getLocalDateString(weekRange.start)} -{" "}
+            {getLocalDateString(weekRange.end)}
           </p>
 
           <Progress value={limit.percentage} className="w-full" />

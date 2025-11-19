@@ -28,10 +28,11 @@ export function createsNewMember(type: SessionType): boolean {
 
 /**
  * Check if session type bypasses weekly limit
- * Makeup sessions bypass the member's weekly session limit
+ * Only "member" sessions are subject to weekly limits.
+ * All other session types (makeup, trial, contractual, collaboration, multi_site, non_bookable) bypass the limit.
  */
 export function bypassesWeeklyLimit(type: SessionType): boolean {
-  return type === "makeup";
+  return type !== "member";
 }
 
 /**

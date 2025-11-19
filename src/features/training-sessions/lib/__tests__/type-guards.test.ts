@@ -55,17 +55,17 @@ describe("Session Type Guards", () => {
   });
 
   describe("bypassesWeeklyLimit", () => {
-    it("returns true only for makeup sessions", () => {
-      expect(bypassesWeeklyLimit("makeup")).toBe(true);
+    it("returns false only for member sessions (subject to weekly limit)", () => {
+      expect(bypassesWeeklyLimit("member")).toBe(false);
     });
 
-    it("returns false for all other session types", () => {
-      expect(bypassesWeeklyLimit("trial")).toBe(false);
-      expect(bypassesWeeklyLimit("member")).toBe(false);
-      expect(bypassesWeeklyLimit("contractual")).toBe(false);
-      expect(bypassesWeeklyLimit("multi_site")).toBe(false);
-      expect(bypassesWeeklyLimit("collaboration")).toBe(false);
-      expect(bypassesWeeklyLimit("non_bookable")).toBe(false);
+    it("returns true for all other session types (bypass weekly limit)", () => {
+      expect(bypassesWeeklyLimit("makeup")).toBe(true);
+      expect(bypassesWeeklyLimit("trial")).toBe(true);
+      expect(bypassesWeeklyLimit("contractual")).toBe(true);
+      expect(bypassesWeeklyLimit("multi_site")).toBe(true);
+      expect(bypassesWeeklyLimit("collaboration")).toBe(true);
+      expect(bypassesWeeklyLimit("non_bookable")).toBe(true);
     });
   });
 

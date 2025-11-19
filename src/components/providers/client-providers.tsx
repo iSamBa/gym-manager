@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AuthErrorBoundary } from "@/components/error-boundary";
+import { Toaster } from "@/components/ui/sonner";
 
 const AuthProvider = dynamic(
   () =>
@@ -29,7 +30,10 @@ export function ClientProviders({ children }: ClientProvidersProps) {
     <ThemeProvider defaultTheme="system" storageKey="gym-manager-theme">
       <AuthErrorBoundary>
         <AuthProvider>
-          <QueryProvider>{children}</QueryProvider>
+          <QueryProvider>
+            {children}
+            <Toaster />
+          </QueryProvider>
         </AuthProvider>
       </AuthErrorBoundary>
     </ThemeProvider>

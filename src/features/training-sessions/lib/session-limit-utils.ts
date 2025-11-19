@@ -1,35 +1,84 @@
 import { supabase } from "@/lib/supabase";
-import { getLocalDateString } from "@/lib/date-utils";
-import type { StudioSessionLimit, WeekRange } from "./types";
+import { getLocalDateString, formatForDatabase } from "@/lib/date-utils";
+import type { StudioSessionLimit } from "./types";
+import type {
+  MemberWeeklyLimitResult,
+  SessionType,
+} from "@/features/database/lib/types";
 
 /**
  * Get the start and end dates of the week containing the given date.
- * Week is Monday-Sunday.
+ * Week is Sunday-Saturday for member weekly limit validation.
  *
  * @param date - The date to get the week range for
- * @returns WeekRange object with start (Monday) and end (Sunday) in YYYY-MM-DD format
+ * @returns WeekRange object with start (Sunday) and end (Saturday) Date objects
  *
  * @example
  * // For Thursday, Oct 18, 2025
  * getWeekRange(new Date(2025, 9, 18))
- * // Returns: { start: "2025-10-13", end: "2025-10-19" }
+ * // Returns: { start: Date(Sunday), end: Date(Saturday) }
  */
-export function getWeekRange(date: Date): WeekRange {
-  const day = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-  const diff = day === 0 ? -6 : 1 - day; // Adjust to Monday
+export function getWeekRange(date: Date): { start: Date; end: Date } {
+  const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
 
-  const monday = new Date(date);
-  monday.setDate(date.getDate() + diff);
-  monday.setHours(0, 0, 0, 0);
+  // Start of week (Sunday)
+  const weekStart = new Date(date);
+  weekStart.setDate(date.getDate() - dayOfWeek);
+  weekStart.setHours(0, 0, 0, 0);
 
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
+  // End of week (Saturday)
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
 
   return {
-    start: getLocalDateString(monday),
-    end: getLocalDateString(sunday),
+    start: weekStart,
+    end: weekEnd,
   };
+}
+
+/**
+ * Check if member has reached weekly session limit.
+ * Calls the database RPC function check_member_weekly_session_limit.
+ *
+ * @param memberId - UUID of the member
+ * @param scheduledStart - Start time of the session being booked
+ * @param sessionType - Type of session being booked (default: "member")
+ * @returns Validation result from RPC function
+ * @throws Error if database query fails
+ *
+ * @example
+ * const result = await checkMemberWeeklyLimit(
+ *   "member-uuid",
+ *   new Date("2025-10-18T10:00:00"),
+ *   "member"
+ * );
+ * if (!result.can_book) {
+ *   throw new Error(result.message);
+ * }
+ */
+export async function checkMemberWeeklyLimit(
+  memberId: string,
+  scheduledStart: Date,
+  sessionType: SessionType = "member"
+): Promise<MemberWeeklyLimitResult> {
+  const weekRange = getWeekRange(scheduledStart);
+
+  const { data, error } = await supabase.rpc(
+    "check_member_weekly_session_limit",
+    {
+      p_member_id: memberId,
+      p_week_start: formatForDatabase(weekRange.start),
+      p_week_end: formatForDatabase(weekRange.end),
+      p_session_type: sessionType,
+    }
+  );
+
+  if (error) {
+    throw new Error(`Failed to check weekly limit: ${error.message}`);
+  }
+
+  return data;
 }
 
 /**
@@ -56,8 +105,8 @@ export async function checkStudioSessionLimit(
   const weekRange = getWeekRange(date);
 
   const { data, error } = await supabase.rpc("check_studio_session_limit", {
-    p_week_start: weekRange.start,
-    p_week_end: weekRange.end,
+    p_week_start: getLocalDateString(weekRange.start),
+    p_week_end: getLocalDateString(weekRange.end),
   });
 
   if (error) throw error;

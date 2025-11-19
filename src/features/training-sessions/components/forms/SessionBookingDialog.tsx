@@ -125,6 +125,9 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
     // Quick member creation dialog state
     const [showQuickMemberDialog, setShowQuickMemberDialog] = useState(false);
 
+    // Form-level error state for displaying validation errors
+    const [formError, setFormError] = useState<string | null>(null);
+
     // Fetch data
     const { data: machines = [], isLoading: machinesLoading } = useMachines();
     const { data: members = [], isLoading: membersLoading } = useMembers({
@@ -236,6 +239,9 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
     // Handle form submission
     const onSubmit = useCallback(
       async (data: BookingFormData) => {
+        // Clear any previous errors
+        setFormError(null);
+
         logger.debug("Form submission initiated", {
           sessionType: data.session_type,
           machineId: data.machine_id,
@@ -300,32 +306,34 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
               ? error.message
               : "An unexpected error occurred.";
 
-          toast.error("Failed to book session", {
-            description: message,
-          });
+          // Set inline error (user will see it in the dialog)
+          setFormError(message);
         }
       },
-      [createSessionMutation, onOpenChange, reset, members]
+      [createSessionMutation, onOpenChange, reset, members, setFormError]
     );
 
     // Step navigation
     const handleNext = useCallback(() => {
       if (!sessionType) return; // Validation
+      setFormError(null); // Clear errors when moving to next step
       setCurrentStep(2);
-    }, [sessionType]);
+    }, [sessionType, setFormError]);
 
     const handleBack = useCallback(() => {
+      setFormError(null); // Clear errors when going back
       setCurrentStep(1);
-    }, []);
+    }, [setFormError]);
 
     // Handle dialog close
     const handleClose = useCallback(() => {
       if (!createSessionMutation.isPending) {
         setCurrentStep(1); // Reset to step 1
+        setFormError(null); // Clear any errors
         reset();
         onOpenChange(false);
       }
-    }, [createSessionMutation.isPending, reset, onOpenChange]);
+    }, [createSessionMutation.isPending, reset, onOpenChange, setFormError]);
 
     // Handle new member creation
     const handleMemberCreated = useCallback(
@@ -394,6 +402,18 @@ export const SessionBookingDialog = memo<SessionBookingDialogProps>(
                         )
                       )}
                     </ul>
+                  </div>
+                )}
+
+                {/* Display booking validation errors (e.g., weekly limit) */}
+                {formError && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/20">
+                    <p className="text-sm font-semibold text-red-900 dark:text-red-100">
+                      Cannot book session
+                    </p>
+                    <p className="mt-1 text-sm text-red-800 dark:text-red-200">
+                      {formError}
+                    </p>
                   </div>
                 )}
 
