@@ -383,11 +383,13 @@ describe("Invoice Edge Cases", () => {
         },
       };
 
-      const invoiceWithLongAddress = {
+      const invoiceWithLongAddress: Invoice = {
         ...baseInvoice,
         business_address: {
-          ...baseInvoice.business_address,
           street: longStreet,
+          city: "Test City",
+          postal_code: "12345",
+          country: "Morocco",
         },
       };
 
@@ -461,12 +463,14 @@ describe("Invoice Edge Cases", () => {
         invoice_footer_notes: longFooter,
       };
 
-      const extremeInvoice = {
+      const extremeInvoice: Invoice = {
         ...baseInvoice,
         business_name: longName,
         business_address: {
-          ...baseInvoice.business_address,
           street: longStreet,
+          city: "Test City",
+          postal_code: "12345",
+          country: "Morocco",
         },
         footer_notes: longFooter,
       };

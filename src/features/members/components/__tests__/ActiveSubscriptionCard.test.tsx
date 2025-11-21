@@ -56,9 +56,15 @@ const mockMember: Member = {
   marketing_consent: true,
   waiver_signed: true,
   waiver_signed_date: "2024-01-15",
-  created_by: null,
+  created_by: undefined,
   created_at: "2024-01-15T10:00:00Z",
   updated_at: "2024-01-15T10:00:00Z",
+  member_type: "full",
+  uniform_size: "M",
+  uniform_received: false,
+  vest_size: "V1",
+  hip_belt_size: "V1",
+  referral_source: "instagram",
 };
 
 const baseSubscription: MemberSubscriptionWithSnapshot = {
@@ -68,15 +74,11 @@ const baseSubscription: MemberSubscriptionWithSnapshot = {
   status: "active",
   start_date: "2024-01-01",
   end_date: "2024-12-31",
-  next_billing_date: "2024-02-01",
-  billing_cycle: "monthly",
   price: 99.99,
-  currency: "USD",
   signup_fee_paid: 25.0,
-  auto_renew: true,
   renewal_count: 0,
   notes: "Premium membership",
-  created_by: null,
+  created_by: undefined,
   created_at: "2024-01-01T00:00:00Z",
   updated_at: "2024-01-01T00:00:00Z",
   plan_name_snapshot: "Premium Monthly",
@@ -107,8 +109,12 @@ describe("ActiveSubscriptionCard", () => {
     } as any);
 
     vi.mocked(paymentUtils.calculateBalanceInfo).mockReturnValue({
+      totalAmount: 199.99,
+      paidAmount: 150.0,
       balance: 49.99,
       paidPercentage: 75,
+      isFullyPaid: false,
+      isOverpaid: false,
     });
 
     // Mock current date to be stable
@@ -233,7 +239,7 @@ describe("ActiveSubscriptionCard", () => {
     it("hides action buttons for completed subscription", () => {
       render(
         <ActiveSubscriptionCard
-          subscription={{ ...baseSubscription, status: "completed" }}
+          subscription={{ ...baseSubscription, status: "expired" }}
           member={mockMember}
         />,
         { wrapper: createQueryWrapper() }
@@ -252,8 +258,12 @@ describe("ActiveSubscriptionCard", () => {
   describe("Outstanding Balance", () => {
     it("shows add payment button when there's outstanding balance", () => {
       vi.mocked(paymentUtils.calculateBalanceInfo).mockReturnValue({
+        totalAmount: 199.99,
+        paidAmount: 150.0,
         balance: 50.0,
         paidPercentage: 75,
+        isFullyPaid: false,
+        isOverpaid: false,
       });
 
       render(
@@ -269,8 +279,12 @@ describe("ActiveSubscriptionCard", () => {
 
     it("hides add payment button when fully paid", () => {
       vi.mocked(paymentUtils.calculateBalanceInfo).mockReturnValue({
+        totalAmount: 199.99,
+        paidAmount: 199.99,
         balance: 0,
         paidPercentage: 100,
+        isFullyPaid: true,
+        isOverpaid: false,
       });
 
       render(
@@ -288,8 +302,12 @@ describe("ActiveSubscriptionCard", () => {
   describe("Alerts and Warnings", () => {
     it("shows low sessions alert when 2 or fewer sessions remaining", () => {
       vi.mocked(paymentUtils.calculateBalanceInfo).mockReturnValue({
+        totalAmount: 199.99,
+        paidAmount: 199.99,
         balance: 0,
         paidPercentage: 100,
+        isFullyPaid: true,
+        isOverpaid: false,
       });
 
       render(
@@ -331,8 +349,12 @@ describe("ActiveSubscriptionCard", () => {
 
     it("shows outstanding balance alert", () => {
       vi.mocked(paymentUtils.calculateBalanceInfo).mockReturnValue({
+        totalAmount: 199.99,
+        paidAmount: 150.0,
         balance: 49.99,
         paidPercentage: 75,
+        isFullyPaid: false,
+        isOverpaid: false,
       });
 
       render(
@@ -350,8 +372,12 @@ describe("ActiveSubscriptionCard", () => {
 
     it("shows multiple alerts when applicable", () => {
       vi.mocked(paymentUtils.calculateBalanceInfo).mockReturnValue({
+        totalAmount: 199.99,
+        paidAmount: 150.0,
         balance: 49.99,
         paidPercentage: 75,
+        isFullyPaid: false,
+        isOverpaid: false,
       });
 
       vi.setSystemTime(new Date("2024-12-25"));
@@ -467,8 +493,12 @@ describe("ActiveSubscriptionCard", () => {
 
     it("opens payment dialog when add payment button is clicked", async () => {
       vi.mocked(paymentUtils.calculateBalanceInfo).mockReturnValue({
+        totalAmount: 199.99,
+        paidAmount: 150.0,
         balance: 50.0,
         paidPercentage: 75,
+        isFullyPaid: false,
+        isOverpaid: false,
       });
 
       render(
@@ -603,8 +633,12 @@ describe("ActiveSubscriptionCard", () => {
 
     it("has proper alert roles", () => {
       vi.mocked(paymentUtils.calculateBalanceInfo).mockReturnValue({
+        totalAmount: 199.99,
+        paidAmount: 150.0,
         balance: 49.99,
         paidPercentage: 75,
+        isFullyPaid: false,
+        isOverpaid: false,
       });
 
       render(

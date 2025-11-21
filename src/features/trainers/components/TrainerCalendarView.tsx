@@ -1,5 +1,4 @@
 "use client";
-// @ts-nocheck - Stub component with placeholder data properties that don't match actual types
 
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +25,14 @@ const getSessionMemberNames = (session: TrainingSession): string => {
     return "No members";
   }
   return session.participants.map((p) => p.name).join(", ");
+};
+
+// Helper function to determine if a session is upcoming
+const isUpcomingSession = (session: TrainingSession): boolean => {
+  return (
+    session.status === "scheduled" &&
+    new Date(session.scheduled_start) > new Date()
+  );
 };
 
 interface TrainerCalendarViewProps {
@@ -155,11 +162,9 @@ export function TrainerCalendarView({
                           <div
                             key={session.id}
                             className={`cursor-pointer rounded-lg border p-2 text-xs transition-shadow hover:shadow-sm ${
-                              // @ts-expect-error - Stub component with placeholder data
-                              session.is_upcoming
+                              isUpcomingSession(session)
                                 ? "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/50"
-                                : // @ts-expect-error - Stub component with placeholder data
-                                  session.session_status === "completed"
+                                : session.status === "completed"
                                   ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/50"
                                   : "border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950/50"
                             }`}
@@ -197,11 +202,9 @@ export function TrainerCalendarView({
                             <div className="mt-2">
                               <Badge
                                 variant={
-                                  // @ts-expect-error - Stub component with placeholder properties
-                                  session.session_status === "completed"
+                                  session.status === "completed"
                                     ? "default"
-                                    : // @ts-expect-error - Stub component with placeholder properties
-                                      session.is_upcoming
+                                    : isUpcomingSession(session)
                                       ? "secondary"
                                       : "outline"
                                 }

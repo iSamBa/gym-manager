@@ -53,13 +53,13 @@ const mockMember: Member = {
   status: "active",
   join_date: "2024-01-15",
   notes: "Test notes",
-  medical_conditions: null,
+  medical_conditions: undefined,
   fitness_goals: "Weight loss",
   preferred_contact_method: "email",
   marketing_consent: true,
   waiver_signed: true,
   waiver_signed_date: "2024-01-15",
-  created_by: null,
+  created_by: undefined,
   created_at: "2024-01-15T10:00:00Z",
   updated_at: "2024-01-15T10:00:00Z",
   member_type: "full",
@@ -69,7 +69,7 @@ const mockMember: Member = {
   hip_belt_size: "V1",
   referral_source: "studio",
   referred_by_member_id: null,
-  training_preference: null,
+  training_preference: undefined,
 };
 
 const createWrapper = () => {

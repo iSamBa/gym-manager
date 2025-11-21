@@ -44,10 +44,10 @@ describe("subscription-db-utils", () => {
         name: "Test Plan",
         description: "Test Description",
         price: 99.99,
-        duration_days: 30,
+        signup_fee: 25.0,
+        duration_months: 1,
         is_active: true,
-        features: ["feature1", "feature2"],
-        sort_order: 1,
+        is_collaboration_plan: false,
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
         sessions_count: 10,
@@ -61,10 +61,13 @@ describe("subscription-db-utils", () => {
       const mockSubscription: MemberSubscriptionWithSnapshot = {
         id: "sub-123",
         member_id: "member-123",
-        subscription_plan_id: "plan-123",
+        plan_id: "plan-123",
         start_date: "2024-01-01T00:00:00Z",
         end_date: "2024-01-31T00:00:00Z",
         status: "active",
+        price: 99.99,
+        signup_fee_paid: 25.0,
+        renewal_count: 0,
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
         plan_name_snapshot: "Test Plan",
@@ -90,18 +93,21 @@ describe("subscription-db-utils", () => {
         subscription_id: "sub-123",
         member_id: "member-123",
         amount: 99.99,
+        currency: "MAD",
         payment_method: "card",
+        payment_status: "completed",
         payment_date: "2024-01-01T00:00:00Z",
-        status: "completed",
+        due_date: "2024-01-01T00:00:00Z",
+        late_fee: 0,
+        discount_amount: 0,
+        refund_amount: 0,
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
         receipt_number: "REC-001",
-        receipt_generated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(mockPayment).toBeDefined();
       expect(mockPayment.receipt_number).toBe("REC-001");
-      expect(mockPayment.receipt_generated_at).toBeDefined();
     });
   });
 
