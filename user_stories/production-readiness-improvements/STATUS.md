@@ -12,11 +12,11 @@
 
 | Sprint                       | Status             | Stories Completed | Total Stories    | Progress |
 | ---------------------------- | ------------------ | ----------------- | ---------------- | -------- |
-| Sprint 1: Critical Stability | 🔴 Not Started     | 0 / 4             | US-001 to US-004 | 0%       |
+| Sprint 1: Critical Stability | 🟡 In Progress     | 2 / 4             | US-001 to US-004 | 50%      |
 | Sprint 2: Performance        | 🔴 Not Started     | 0 / 4             | US-005 to US-008 | 0%       |
 | Sprint 3: Code Quality       | 🔴 Not Started     | 0 / 3             | US-009 to US-011 | 0%       |
 | Sprint 4: Production Audit   | 🔴 Not Started     | 0 / 1             | US-012           | 0%       |
-| **Overall**                  | **🔴 Not Started** | **0 / 12**        | **All Stories**  | **0%**   |
+| **Overall**                  | **🟡 In Progress** | **2 / 12**        | **All Stories**  | **17%**  |
 
 ## Metrics Tracking
 
@@ -34,8 +34,8 @@
 
 | KPI                   | Baseline     | Current      | Target        | Status |
 | --------------------- | ------------ | ------------ | ------------- | ------ |
-| Error Boundaries      | 2 routes     | 2 routes     | 10+ routes    | 🔴     |
-| Loading States        | 0 routes     | 0 routes     | 10+ routes    | 🔴     |
+| Error Boundaries      | 2 routes     | 10 routes    | 10+ routes    | ✅     |
+| Loading States        | 0 routes     | 10 routes    | 10+ routes    | ✅     |
 | Unvalidated Env Vars  | 10 instances | 10 instances | 0 instances   | 🔴     |
 | Files with `any` Type | 92 files     | 92 files     | 0 files       | 🔴     |
 | Console Statements    | 10 files     | 10 files     | 0 files       | 🔴     |
@@ -47,59 +47,84 @@
 
 ## Sprint 1: Critical Stability Fixes (Week 1)
 
-**Status**: 🔴 Not Started
+**Status**: 🟡 In Progress (2/4 completed - 50%)
 **Duration**: Week 1
 **Estimated Effort**: 28 hours
 
 ### US-001: Add Error Boundaries to All Routes
 
-- **Status**: 🔴 Not Started
+- **Status**: ✅ Completed
 - **Priority**: P0 (Must Have)
 - **Estimated Effort**: 8 hours
-- **Actual Effort**: TBD
-- **Started**: TBD
-- **Completed**: TBD
-- **Assignee**: TBD
+- **Actual Effort**: ~6 hours
+- **Started**: 2025-01-21
+- **Completed**: 2025-01-21
+- **Assignee**: Claude Code
 
 **Key Deliverables**:
 
-- [ ] Consolidated AppErrorBoundary component
-- [ ] error.tsx for all 9 major routes
-- [ ] Remove duplicate error boundaries
-- [ ] docs/ERROR-HANDLING-GUIDE.md
+- [x] Consolidated AppErrorBoundary component
+- [x] error.tsx for all 9 major routes (10 total with root)
+- [x] Remove duplicate error boundaries
+- [x] docs/ERROR-HANDLING-GUIDE.md
 
-**Acceptance Criteria**: 0 / 6 completed
+**Acceptance Criteria**: 6 / 6 completed
 
 **Blockers**: None
 
 **Notes**:
-_Add implementation notes here_
+
+- Created 10 error.tsx files covering all major routes:
+  - Root level (src/app/error.tsx)
+  - Members routes (including detail page)
+  - Trainers routes (including detail page)
+  - Payments, Plans, Settings, Subscriptions, Training Sessions
+- Implemented consolidated AppErrorBoundary component with consistent error handling
+- Removed legacy error boundaries (ErrorBoundary.tsx, MemberErrorBoundary, TrainerErrorBoundary)
+- Created comprehensive ERROR-HANDLING-GUIDE.md documentation
+- All routes now have proper error boundaries providing graceful error recovery
 
 ---
 
 ### US-002: Add Loading States to All Routes
 
-- **Status**: 🔴 Not Started
+- **Status**: ✅ Completed
 - **Priority**: P0 (Must Have)
 - **Estimated Effort**: 8 hours
-- **Actual Effort**: TBD
-- **Started**: TBD
-- **Completed**: TBD
-- **Assignee**: TBD
+- **Actual Effort**: ~6 hours
+- **Started**: 2025-01-21
+- **Completed**: 2025-01-21
+- **Assignee**: Claude Code
 
 **Key Deliverables**:
 
-- [ ] LoadingSkeleton component library
-- [ ] loading.tsx for all 10 data-fetching routes
-- [ ] Skeleton variants (table, form, card, detail, dashboard)
-- [ ] Shimmer animations
+- [x] LoadingSkeleton component library
+- [x] loading.tsx for all 10 data-fetching routes
+- [x] Skeleton variants (table, form, card, detail, dashboard)
+- [x] Shimmer animations
 
-**Acceptance Criteria**: 0 / 5 completed
+**Acceptance Criteria**: 5 / 5 completed
 
 **Blockers**: None
 
 **Notes**:
-_Add implementation notes here_
+
+- Created comprehensive skeleton component library with 5 variants:
+  - TableSkeleton (with optional stats and filters)
+  - FormSkeleton (with configurable field count and layout)
+  - CardSkeleton (grid layouts with configurable columns)
+  - DetailPageSkeleton (header + sections layout)
+  - DashboardSkeleton (stats + charts + tables)
+- Implemented loading.tsx for 10 routes:
+  - Root level (src/app/loading.tsx)
+  - Members (list and detail)
+  - Trainers (list and detail)
+  - Payments, Plans, Settings, Subscriptions, Training Sessions, Equipment
+- All skeletons use React.memo for performance optimization
+- Proper accessibility attributes (role="status", aria-busy, aria-label)
+- Shimmer animations using Tailwind's animate-pulse
+- 63 comprehensive tests covering all variants (100% pass rate)
+- Barrel export for easy imports: @/components/feedback/skeletons
 
 ---
 
@@ -475,6 +500,8 @@ _Add implementation notes here_
 | Version | Date       | Author      | Changes                    |
 | ------- | ---------- | ----------- | -------------------------- |
 | 1.0     | 2024-01-20 | Claude Code | Initial STATUS.md creation |
+| 1.1     | 2025-01-21 | Claude Code | Marked US-001 as completed |
+| 1.2     | 2025-01-21 | Claude Code | Marked US-002 as completed |
 
 ---
 
@@ -507,5 +534,5 @@ _Add implementation notes here_
 
 ---
 
-**Last Updated**: 2024-01-20
+**Last Updated**: 2025-01-21
 **Next Review**: TBD

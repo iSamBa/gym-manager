@@ -12,10 +12,6 @@ export { MemberDetailsModal } from "./MemberDetailsModal";
 export { MemberForm } from "./MemberForm";
 export { ProgressiveMemberForm } from "./ProgressiveMemberForm";
 export { EditMemberDialog } from "./EditMemberDialog";
-export {
-  MemberErrorBoundary,
-  withMemberErrorBoundary,
-} from "./MemberErrorBoundary";
 
 // Profile header
 export { MemberProfileHeader } from "./MemberProfileHeader";

@@ -7,10 +7,6 @@ export { SimpleTrainerFilters } from "./SimpleTrainerFilters";
 export { ProgressiveTrainerForm } from "./ProgressiveTrainerForm";
 export { EditTrainerDialog } from "./EditTrainerDialog";
 export { DeleteTrainerDialog } from "./DeleteTrainerDialog";
-export {
-  TrainerErrorBoundary,
-  withTrainerErrorBoundary,
-} from "./TrainerErrorBoundary";
 
 // Session-related components
 export { TrainerSessions } from "./TrainerSessions";

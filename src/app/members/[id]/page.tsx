@@ -13,7 +13,6 @@ import { useAuth } from "@/hooks/use-auth";
 // Direct imports instead of barrel export to reduce bundle size
 import { MemberProfileHeader } from "@/features/members/components/MemberProfileHeader";
 import { EditMemberDialog } from "@/features/members/components/EditMemberDialog";
-import { withMemberErrorBoundary } from "@/features/members/components/MemberErrorBoundary";
 import { MemberSessions } from "@/features/members/components/MemberSessions";
 import { MemberSubscriptions } from "@/features/members/components/MemberSubscriptions";
 import { MemberPayments } from "@/features/members/components/MemberPayments";
@@ -439,4 +438,4 @@ function MemberDetailPage({ params }: MemberDetailPageProps) {
   );
 }
 
-export default withMemberErrorBoundary(MemberDetailPage);
+export default MemberDetailPage;
