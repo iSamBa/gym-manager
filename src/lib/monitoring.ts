@@ -10,6 +10,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { logger } from "./logger";
+import { isProduction } from "@/lib/env";
 
 /**
  * Core Web Vitals metric names
@@ -94,7 +95,7 @@ function getVitalRating(
  */
 export function reportWebVital(metric: WebVitalData): void {
   // Only report in production
-  if (process.env.NODE_ENV !== "production") {
+  if (!isProduction()) {
     logger.debug("Web Vital", { metric });
     return;
   }
@@ -153,7 +154,7 @@ export function trackPerformance(metric: PerformanceMetric): void {
   logger.debug(`Performance: ${name}`, { value, unit, tags });
 
   // Only send to Sentry in production
-  if (process.env.NODE_ENV !== "production") {
+  if (!isProduction()) {
     return;
   }
 
@@ -225,7 +226,7 @@ export function trackQueryPerformance(queryData: QueryPerformance): void {
   }
 
   // Only send to Sentry in production
-  if (process.env.NODE_ENV !== "production") {
+  if (!isProduction()) {
     return;
   }
 

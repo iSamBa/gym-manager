@@ -219,20 +219,27 @@ describe("AppErrorBoundary", () => {
       vi.unstubAllEnvs();
     });
 
-    it("should hide error details in production mode", () => {
-      // Use vi.stubEnv to mock NODE_ENV
+    it("should hide error details in production mode", async () => {
+      // Stub environment and reset modules to clear cached env
       vi.stubEnv("NODE_ENV", "production");
+      vi.resetModules();
+
+      // Dynamically import to get fresh env module
+      const { AppErrorBoundary: FreshBoundary } = await import(
+        "../AppErrorBoundary"
+      );
 
       render(
-        <AppErrorBoundary feature="test">
+        <FreshBoundary feature="test">
           <ThrowError message="Production error" />
-        </AppErrorBoundary>
+        </FreshBoundary>
       );
 
       expect(screen.queryByText("Error Details:")).not.toBeInTheDocument();
       expect(screen.queryByText("Production error")).not.toBeInTheDocument();
 
       vi.unstubAllEnvs();
+      vi.resetModules();
     });
   });
 

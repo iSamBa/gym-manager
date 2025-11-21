@@ -13,7 +13,9 @@
  * All other errors are passed through normally for proper debugging.
  */
 
-if (process.env.NODE_ENV === "development") {
+import { isDevelopment } from "@/lib/env";
+
+if (isDevelopment()) {
   // Filter out harmless HMR errors in the browser
   if (typeof window !== "undefined") {
     window.addEventListener("unhandledrejection", (event) => {

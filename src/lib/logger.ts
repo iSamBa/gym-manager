@@ -11,6 +11,8 @@
  * - Performance metrics tracking
  */
 
+import { isDevelopment } from "@/lib/env";
+
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 interface LogContext {
@@ -19,18 +21,11 @@ interface LogContext {
 
 class Logger {
   /**
-   * Check if running in development environment
-   */
-  private get isDevelopment(): boolean {
-    return process.env.NODE_ENV === "development";
-  }
-
-  /**
    * Internal log method that handles formatting and environment filtering
    */
   private log(level: LogLevel, message: string, context?: LogContext) {
     // In production, suppress debug and info logs to reduce noise
-    if (!this.isDevelopment && (level === "debug" || level === "info")) {
+    if (!isDevelopment() && (level === "debug" || level === "info")) {
       return;
     }
 
@@ -54,7 +49,7 @@ class Logger {
     };
 
     // In development, use console with readable formatting
-    if (this.isDevelopment) {
+    if (isDevelopment()) {
       const consoleFn =
         level === "error"
           ? console.error

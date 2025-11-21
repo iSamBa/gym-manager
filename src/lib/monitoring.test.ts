@@ -30,14 +30,13 @@ vi.mock("./logger", () => ({
 }));
 
 describe("monitoring utilities", () => {
-  const originalEnv = process.env.NODE_ENV;
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.resetModules();
   });
 
   describe("reportWebVital", () => {
@@ -59,8 +58,13 @@ describe("monitoring utilities", () => {
       expect(Sentry.setMeasurement).not.toHaveBeenCalled();
     });
 
-    it("should report good FCP metric to Sentry in production", () => {
+    it("should report good FCP metric to Sentry in production", async () => {
       vi.stubEnv("NODE_ENV", "production");
+      vi.resetModules();
+
+      const { reportWebVital: prodReportWebVital } = await import(
+        "./monitoring"
+      );
 
       const metric: WebVitalData = {
         id: "test-id",
@@ -71,7 +75,7 @@ describe("monitoring utilities", () => {
         navigationType: "navigate",
       };
 
-      reportWebVital(metric);
+      prodReportWebVital(metric);
 
       expect(Sentry.setMeasurement).toHaveBeenCalledWith(
         "FCP",
@@ -91,8 +95,13 @@ describe("monitoring utilities", () => {
       expect(logger.warn).not.toHaveBeenCalled();
     });
 
-    it("should warn about poor LCP metric", () => {
+    it("should warn about poor LCP metric", async () => {
       vi.stubEnv("NODE_ENV", "production");
+      vi.resetModules();
+
+      const { reportWebVital: prodReportWebVital } = await import(
+        "./monitoring"
+      );
 
       const metric: WebVitalData = {
         id: "test-id",
@@ -103,7 +112,7 @@ describe("monitoring utilities", () => {
         navigationType: "navigate",
       };
 
-      reportWebVital(metric);
+      prodReportWebVital(metric);
 
       expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
         category: "web-vital",
@@ -119,8 +128,13 @@ describe("monitoring utilities", () => {
       });
     });
 
-    it("should handle CLS metric correctly", () => {
+    it("should handle CLS metric correctly", async () => {
       vi.stubEnv("NODE_ENV", "production");
+      vi.resetModules();
+
+      const { reportWebVital: prodReportWebVital } = await import(
+        "./monitoring"
+      );
 
       const metric: WebVitalData = {
         id: "test-id",
@@ -131,7 +145,7 @@ describe("monitoring utilities", () => {
         navigationType: "navigate",
       };
 
-      reportWebVital(metric);
+      prodReportWebVital(metric);
 
       expect(Sentry.setMeasurement).toHaveBeenCalledWith(
         "CLS",
@@ -162,8 +176,13 @@ describe("monitoring utilities", () => {
       expect(Sentry.setMeasurement).not.toHaveBeenCalled();
     });
 
-    it("should send performance metric to Sentry in production", () => {
+    it("should send performance metric to Sentry in production", async () => {
       vi.stubEnv("NODE_ENV", "production");
+      vi.resetModules();
+
+      const { trackPerformance: prodTrackPerformance } = await import(
+        "./monitoring"
+      );
 
       const metric: PerformanceMetric = {
         name: "data_fetch",
@@ -172,7 +191,7 @@ describe("monitoring utilities", () => {
         tags: { endpoint: "/api/members" },
       };
 
-      trackPerformance(metric);
+      prodTrackPerformance(metric);
 
       expect(Sentry.setMeasurement).toHaveBeenCalledWith(
         "data_fetch",
@@ -191,15 +210,20 @@ describe("monitoring utilities", () => {
       });
     });
 
-    it("should use default values for optional parameters", () => {
+    it("should use default values for optional parameters", async () => {
       vi.stubEnv("NODE_ENV", "production");
+      vi.resetModules();
+
+      const { trackPerformance: prodTrackPerformance } = await import(
+        "./monitoring"
+      );
 
       const metric: PerformanceMetric = {
         name: "simple_metric",
         value: 100,
       };
 
-      trackPerformance(metric);
+      prodTrackPerformance(metric);
 
       expect(Sentry.setMeasurement).toHaveBeenCalledWith(
         "simple_metric",
@@ -257,8 +281,13 @@ describe("monitoring utilities", () => {
       );
     });
 
-    it("should send slow query to Sentry in production", () => {
+    it("should send slow query to Sentry in production", async () => {
       vi.stubEnv("NODE_ENV", "production");
+      vi.resetModules();
+
+      const { trackQueryPerformance: prodTrackQueryPerformance } = await import(
+        "./monitoring"
+      );
 
       const queryData: QueryPerformance = {
         query: "complex_join",
@@ -268,7 +297,7 @@ describe("monitoring utilities", () => {
         tags: { table: "subscriptions" },
       };
 
-      trackQueryPerformance(queryData);
+      prodTrackQueryPerformance(queryData);
 
       expect(Sentry.setMeasurement).toHaveBeenCalledWith(
         "db.query.complex_join",
@@ -292,8 +321,13 @@ describe("monitoring utilities", () => {
       );
     });
 
-    it("should handle failed queries", () => {
+    it("should handle failed queries", async () => {
       vi.stubEnv("NODE_ENV", "production");
+      vi.resetModules();
+
+      const { trackQueryPerformance: prodTrackQueryPerformance } = await import(
+        "./monitoring"
+      );
 
       const queryData: QueryPerformance = {
         query: "failed_query",
@@ -303,7 +337,7 @@ describe("monitoring utilities", () => {
         tags: { error: "connection_timeout" },
       };
 
-      trackQueryPerformance(queryData);
+      prodTrackQueryPerformance(queryData);
 
       expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
         expect.objectContaining({

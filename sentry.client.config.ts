@@ -1,7 +1,8 @@
 import * as Sentry from "@sentry/nextjs";
+import { env, isDevelopment } from "@/lib/env";
 
 Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  dsn: env.NEXT_PUBLIC_SENTRY_DSN,
 
   // Adjust this value in production, or use tracesSampler for greater control
   tracesSampleRate: 0.1,
@@ -10,12 +11,12 @@ Sentry.init({
   debug: false,
 
   // Environment
-  environment: process.env.NODE_ENV,
+  environment: env.NODE_ENV,
 
   // Only send events in production
   beforeSend(event) {
     // Don't send events in development
-    if (process.env.NODE_ENV === "development") {
+    if (isDevelopment()) {
       return null;
     }
     return event;

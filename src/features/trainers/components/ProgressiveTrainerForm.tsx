@@ -51,6 +51,7 @@ import {
 } from "./progressive-form";
 
 import { logger } from "@/lib/logger";
+import { isDevelopment } from "@/lib/env";
 
 const steps: StepInfo[] = [
   {
@@ -229,7 +230,7 @@ export const ProgressiveTrainerForm = memo(function ProgressiveTrainerForm({
 
   // Debug form values when they change (remove in production)
   useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
+    if (isDevelopment()) {
       const subscription = form.watch((values, { name, type }) => {
         if (type === "change" && name) {
           logger.debug("Field changed:", { fieldName: name, values });

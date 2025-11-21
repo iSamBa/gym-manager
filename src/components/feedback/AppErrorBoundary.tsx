@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { logger } from "@/lib/logger";
+import { isDevelopment } from "@/lib/env";
 
 interface AppErrorBoundaryProps {
   feature: string;
@@ -89,7 +90,7 @@ export class AppErrorBoundary extends Component<
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {process.env.NODE_ENV === "development" && this.state.error && (
+              {isDevelopment() && this.state.error && (
                 <div
                   className="bg-muted rounded-md p-4 font-mono text-sm"
                   role="region"

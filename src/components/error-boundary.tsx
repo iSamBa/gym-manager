@@ -5,6 +5,7 @@ import { AlertCircle, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { logger } from "@/lib/logger";
+import { isDevelopment } from "@/lib/env";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -83,7 +84,7 @@ export class ErrorBoundary extends Component<
             </Alert>
 
             {/* Show error details in development */}
-            {process.env.NODE_ENV === "development" && this.state.errorInfo && (
+            {isDevelopment() && this.state.errorInfo && (
               <div className="bg-muted space-y-2 rounded-lg p-4">
                 <h3 className="text-sm font-semibold">Error Details</h3>
                 <pre className="text-muted-foreground max-h-48 overflow-auto text-xs">
@@ -168,7 +169,7 @@ export function AuthErrorBoundary({ children }: { children: ReactNode }) {
           </div>
 
           {/* Development mode - show technical details */}
-          {process.env.NODE_ENV === "development" && (
+          {isDevelopment() && (
             <details className="bg-muted rounded-lg p-4">
               <summary className="cursor-pointer text-sm font-medium">
                 Technical Details

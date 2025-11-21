@@ -5,12 +5,8 @@ describe("Logger", () => {
   let consoleLogSpy: ReturnType<typeof vi.spyOn>;
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
-  let originalEnv: string | undefined;
 
   beforeEach(() => {
-    // Save original environment
-    originalEnv = process.env.NODE_ENV;
-
     // Spy on console methods
     consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -18,15 +14,16 @@ describe("Logger", () => {
   });
 
   afterEach(() => {
-    // Restore original environment
-    if (originalEnv) {
-      process.env.NODE_ENV = originalEnv;
-    }
-
     // Restore console methods
     consoleLogSpy.mockRestore();
     consoleWarnSpy.mockRestore();
     consoleErrorSpy.mockRestore();
+
+    // Clean up environment stubs
+    vi.unstubAllEnvs();
+
+    // Reset modules to clear cached env values
+    vi.resetModules();
   });
 
   describe("Development Environment", () => {
@@ -86,26 +83,30 @@ describe("Logger", () => {
   });
 
   describe("Production Environment", () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       vi.stubEnv("NODE_ENV", "production");
+      vi.resetModules();
     });
 
-    it("should NOT log debug messages in production", () => {
-      logger.debug("test debug message", { key: "value" });
+    it("should NOT log debug messages in production", async () => {
+      const { logger: prodLogger } = await import("../logger");
+      prodLogger.debug("test debug message", { key: "value" });
 
       expect(consoleLogSpy).not.toHaveBeenCalled();
       expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
 
-    it("should NOT log info messages in production", () => {
-      logger.info("test info message", { userId: "123" });
+    it("should NOT log info messages in production", async () => {
+      const { logger: prodLogger } = await import("../logger");
+      prodLogger.info("test info message", { userId: "123" });
 
       expect(consoleLogSpy).not.toHaveBeenCalled();
       expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
 
-    it("should log warn messages in production as JSON", () => {
-      logger.warn("test warning", { warning: "details" });
+    it("should log warn messages in production as JSON", async () => {
+      const { logger: prodLogger } = await import("../logger");
+      prodLogger.warn("test warning", { warning: "details" });
 
       expect(consoleWarnSpy).toHaveBeenCalled();
 
@@ -122,8 +123,9 @@ describe("Logger", () => {
       expect(parsedLog.timestamp).toBeDefined();
     });
 
-    it("should log error messages in production as JSON", () => {
-      logger.error("test error", { error: "details" });
+    it("should log error messages in production as JSON", async () => {
+      const { logger: prodLogger } = await import("../logger");
+      prodLogger.error("test error", { error: "details" });
 
       expect(consoleErrorSpy).toHaveBeenCalled();
 
