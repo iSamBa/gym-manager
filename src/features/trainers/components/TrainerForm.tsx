@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -126,7 +126,7 @@ const certificationOptions = [
 // Common languages - restricted to required languages only
 const languageOptions = ["English", "French", "Arabic"];
 
-export function TrainerForm({
+export const TrainerForm = memo(function TrainerForm({
   trainer,
   onSubmit,
   onCancel,
@@ -154,12 +154,15 @@ export function TrainerForm({
   }, []);
 
   // Helper function to convert specialization names to UUIDs
-  const convertNamesToUuids = (names: string[]): string[] => {
-    return names.map((name) => {
-      const spec = availableSpecializations.find((s) => s.name === name);
-      return spec ? spec.id : name; // Fallback to name if not found
-    });
-  };
+  const convertNamesToUuids = useCallback(
+    (names: string[]): string[] => {
+      return names.map((name) => {
+        const spec = availableSpecializations.find((s) => s.name === name);
+        return spec ? spec.id : name; // Fallback to name if not found
+      });
+    },
+    [availableSpecializations]
+  );
 
   const form = useForm<TrainerFormData>({
     resolver: zodResolver(trainerFormSchema),
@@ -295,30 +298,33 @@ export function TrainerForm({
     [removeLanguage]
   );
 
-  const handleFormSubmit = (data: TrainerFormData) => {
-    // Convert specialization names to UUIDs before submission
-    // Handle empty string values for number fields
-    const submissionData = {
-      ...data,
-      commission_rate:
-        data.commission_rate === ""
-          ? undefined
-          : typeof data.commission_rate === "string"
-            ? Number(data.commission_rate)
-            : data.commission_rate,
-      max_clients_per_session:
-        data.max_clients_per_session === ""
-          ? undefined
-          : typeof data.max_clients_per_session === "string"
-            ? Number(data.max_clients_per_session)
-            : data.max_clients_per_session,
-      specializations: data.specializations
-        ? convertNamesToUuids(data.specializations)
-        : [],
-    } as const;
+  const handleFormSubmit = useCallback(
+    (data: TrainerFormData) => {
+      // Convert specialization names to UUIDs before submission
+      // Handle empty string values for number fields
+      const submissionData = {
+        ...data,
+        commission_rate:
+          data.commission_rate === ""
+            ? undefined
+            : typeof data.commission_rate === "string"
+              ? Number(data.commission_rate)
+              : data.commission_rate,
+        max_clients_per_session:
+          data.max_clients_per_session === ""
+            ? undefined
+            : typeof data.max_clients_per_session === "string"
+              ? Number(data.max_clients_per_session)
+              : data.max_clients_per_session,
+        specializations: data.specializations
+          ? convertNamesToUuids(data.specializations)
+          : [],
+      } as const;
 
-    return onSubmit(submissionData as CreateTrainerData);
-  };
+      return onSubmit(submissionData as CreateTrainerData);
+    },
+    [convertNamesToUuids, onSubmit]
+  );
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -837,4 +843,4 @@ export function TrainerForm({
       </Form>
     </div>
   );
-}
+});

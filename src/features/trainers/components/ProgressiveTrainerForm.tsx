@@ -138,12 +138,15 @@ export const ProgressiveTrainerForm = memo(function ProgressiveTrainerForm({
   }, []);
 
   // Helper function to convert specialization names to UUIDs
-  const convertNamesToUuids = (names: string[]): string[] => {
-    return names.map((name) => {
-      const spec = availableSpecializations.find((s) => s.name === name);
-      return spec ? spec.id : name; // Fallback to name if not found
-    });
-  };
+  const convertNamesToUuids = useCallback(
+    (names: string[]): string[] => {
+      return names.map((name) => {
+        const spec = availableSpecializations.find((s) => s.name === name);
+        return spec ? spec.id : name; // Fallback to name if not found
+      });
+    },
+    [availableSpecializations]
+  );
 
   const form = useForm<TrainerFormData>({
     resolver: zodResolver(trainerFormSchema),
@@ -271,69 +274,75 @@ export const ProgressiveTrainerForm = memo(function ProgressiveTrainerForm({
     }
   }, [currentStep, currentStepInfo.schema, form, completedSteps]);
 
-  const handleNextStep = async () => {
+  const handleNextStep = useCallback(async () => {
     const isValid = await validateCurrentStep();
     if (isValid && currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     }
-  };
+  }, [validateCurrentStep, currentStep]);
 
-  const handlePreviousStep = () => {
+  const handlePreviousStep = useCallback(() => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
-  };
+  }, [currentStep]);
 
-  const handleStepClick = async (stepId: number) => {
-    if (stepId < currentStep || completedSteps.includes(stepId)) {
-      setCurrentStep(stepId);
-    } else if (stepId === currentStep + 1) {
-      await handleNextStep();
-    }
-  };
+  const handleStepClick = useCallback(
+    async (stepId: number) => {
+      if (stepId < currentStep || completedSteps.includes(stepId)) {
+        setCurrentStep(stepId);
+      } else if (stepId === currentStep + 1) {
+        await handleNextStep();
+      }
+    },
+    [currentStep, completedSteps, handleNextStep]
+  );
 
-  const handleSubmit = async (data: TrainerFormData) => {
-    // Validate all steps before final submission
-    for (const step of steps) {
-      try {
-        await step.schema.parseAsync(data);
-      } catch (error) {
-        if (error instanceof z.ZodError && !step.isOptional) {
-          toast.error(`Please complete step ${step.id}: ${step.title}`);
-          setCurrentStep(step.id);
-          return;
+  const handleSubmit = useCallback(
+    async (data: TrainerFormData) => {
+      // Validate all steps before final submission
+      for (const step of steps) {
+        try {
+          await step.schema.parseAsync(data);
+        } catch (error) {
+          if (error instanceof z.ZodError && !step.isOptional) {
+            toast.error(`Please complete step ${step.id}: ${step.title}`);
+            setCurrentStep(step.id);
+            return;
+          }
         }
       }
-    }
 
-    try {
-      // Convert specialization names to UUIDs and handle empty string values for number fields
-      const submissionData = {
-        ...data,
-        commission_rate:
-          data.commission_rate === ""
-            ? undefined
-            : typeof data.commission_rate === "string"
-              ? Number(data.commission_rate)
-              : data.commission_rate,
-        max_clients_per_session:
-          data.max_clients_per_session === ""
-            ? undefined
-            : typeof data.max_clients_per_session === "string"
-              ? Number(data.max_clients_per_session)
-              : data.max_clients_per_session,
-        specializations: data.specializations
-          ? convertNamesToUuids(data.specializations)
-          : [],
-      } as const;
+      try {
+        // Convert specialization names to UUIDs and handle empty string values for number fields
+        const submissionData = {
+          ...data,
+          commission_rate:
+            data.commission_rate === ""
+              ? undefined
+              : typeof data.commission_rate === "string"
+                ? Number(data.commission_rate)
+                : data.commission_rate,
+          max_clients_per_session:
+            data.max_clients_per_session === ""
+              ? undefined
+              : typeof data.max_clients_per_session === "string"
+                ? Number(data.max_clients_per_session)
+                : data.max_clients_per_session,
+          specializations: data.specializations
+            ? convertNamesToUuids(data.specializations)
+            : [],
+        } as const;
 
-      await onSubmit(submissionData as CreateTrainerData);
-      // No localStorage cleanup needed - we don't persist form data anymore
-    } catch (error) {
-      logger.error("Failed to submit form:", { error });
-      throw error; // Re-throw to let parent handle the error
-    }
-  };
+        await onSubmit(submissionData as CreateTrainerData);
+        // No localStorage cleanup needed - we don't persist form data anymore
+      } catch (error) {
+        logger.error("Failed to submit form:", { error });
+        throw error; // Re-throw to let parent handle the error
+      }
+    },
+    [convertNamesToUuids, onSubmit]
+  );
 
   // Handle cancel - no cleanup needed
   const handleCancel = useCallback(() => {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo, memo } from "react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import {
@@ -58,7 +58,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { BulkInvoiceToolbar } from "@/features/payments/components/BulkInvoiceToolbar";
 
-export default function PaymentsManagementPage() {
+const PaymentsManagementPage = memo(function PaymentsManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [methodFilter, setMethodFilter] = useState<PaymentMethod | "all">(
     "all"
@@ -143,6 +143,117 @@ export default function PaymentsManagementPage() {
     setSelectedPayments(new Set());
   }, [searchTerm, methodFilter, statusFilter, dateRange, currentPage]);
 
+  // Action handlers - Must be defined before conditional returns
+  /**
+   * Get or generate invoice for a payment, then perform action (view/download)
+   */
+  const getOrGenerateInvoice = useCallback(
+    async (payment: AllPaymentsResponse["payments"][0]) => {
+      // Check if invoice already exists
+      const { data: existingInvoice } = await supabase
+        .from("invoices")
+        .select("id, pdf_url, invoice_number")
+        .eq("payment_id", payment.id)
+        .maybeSingle();
+
+      if (existingInvoice?.pdf_url) {
+        return {
+          pdfUrl: existingInvoice.pdf_url,
+          invoiceNumber: existingInvoice.invoice_number,
+        };
+      }
+
+      // Invoice doesn't exist, generate it
+      toast.info("Generating invoice...");
+
+      await generateInvoice({
+        payment_id: payment.id,
+        member_id: payment.member_id,
+        subscription_id: payment.subscription_id || undefined,
+        amount: payment.amount,
+      });
+
+      // Fetch the newly created invoice
+      const { data: newInvoice } = await supabase
+        .from("invoices")
+        .select("pdf_url, invoice_number")
+        .eq("payment_id", payment.id)
+        .single();
+
+      if (!newInvoice?.pdf_url) {
+        throw new Error("Invoice generated but PDF URL not found");
+      }
+
+      return {
+        pdfUrl: newInvoice.pdf_url,
+        invoiceNumber: newInvoice.invoice_number,
+      };
+    },
+    [generateInvoice]
+  );
+
+  const handleViewInvoice = useCallback(
+    async (payment: AllPaymentsResponse["payments"][0]) => {
+      try {
+        setLoadingInvoice(payment.id);
+        const { pdfUrl, invoiceNumber } = await getOrGenerateInvoice(payment);
+
+        // Open invoice in dialog
+        setInvoicePdfUrl(pdfUrl);
+        setInvoiceNumber(invoiceNumber);
+        setShowInvoiceDialog(true);
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to view invoice"
+        );
+      } finally {
+        setLoadingInvoice(null);
+      }
+    },
+    [getOrGenerateInvoice]
+  );
+
+  const handleDownloadInvoice = useCallback(
+    async (payment: AllPaymentsResponse["payments"][0]) => {
+      try {
+        setLoadingInvoice(payment.id);
+        setIsDownloading(true);
+        const { pdfUrl, invoiceNumber } = await getOrGenerateInvoice(payment);
+
+        // Download the PDF
+        const response = await fetch(pdfUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `invoice-${invoiceNumber}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        toast.success("Invoice downloaded successfully");
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to download invoice"
+        );
+      } finally {
+        setLoadingInvoice(null);
+        setIsDownloading(false);
+      }
+    },
+    [getOrGenerateInvoice]
+  );
+
+  const handleRefund = useCallback(
+    (payment: AllPaymentsResponse["payments"][0]) => {
+      setSelectedPayment(payment);
+      setShowRefundDialog(true);
+    },
+    []
+  );
+
+  // Early returns AFTER all hooks
   if (isAuthLoading) {
     return (
       <MainLayout>
@@ -184,110 +295,6 @@ export default function PaymentsManagementPage() {
     totalRevenue: 0,
     totalRefunded: 0,
     paymentCount: 0,
-  };
-
-  // Action handlers
-  /**
-   * Get or generate invoice for a payment, then perform action (view/download)
-   */
-  const getOrGenerateInvoice = async (
-    payment: AllPaymentsResponse["payments"][0]
-  ) => {
-    // Check if invoice already exists
-    const { data: existingInvoice } = await supabase
-      .from("invoices")
-      .select("id, pdf_url, invoice_number")
-      .eq("payment_id", payment.id)
-      .maybeSingle();
-
-    if (existingInvoice?.pdf_url) {
-      return {
-        pdfUrl: existingInvoice.pdf_url,
-        invoiceNumber: existingInvoice.invoice_number,
-      };
-    }
-
-    // Invoice doesn't exist, generate it
-    toast.info("Generating invoice...");
-
-    await generateInvoice({
-      payment_id: payment.id,
-      member_id: payment.member_id,
-      subscription_id: payment.subscription_id || undefined,
-      amount: payment.amount,
-    });
-
-    // Fetch the newly created invoice
-    const { data: newInvoice } = await supabase
-      .from("invoices")
-      .select("pdf_url, invoice_number")
-      .eq("payment_id", payment.id)
-      .single();
-
-    if (!newInvoice?.pdf_url) {
-      throw new Error("Invoice generated but PDF URL not found");
-    }
-
-    return {
-      pdfUrl: newInvoice.pdf_url,
-      invoiceNumber: newInvoice.invoice_number,
-    };
-  };
-
-  const handleViewInvoice = async (
-    payment: AllPaymentsResponse["payments"][0]
-  ) => {
-    try {
-      setLoadingInvoice(payment.id);
-      const { pdfUrl, invoiceNumber } = await getOrGenerateInvoice(payment);
-
-      // Open invoice in dialog
-      setInvoicePdfUrl(pdfUrl);
-      setInvoiceNumber(invoiceNumber);
-      setShowInvoiceDialog(true);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to view invoice"
-      );
-    } finally {
-      setLoadingInvoice(null);
-    }
-  };
-
-  const handleDownloadInvoice = async (
-    payment: AllPaymentsResponse["payments"][0]
-  ) => {
-    try {
-      setLoadingInvoice(payment.id);
-      setIsDownloading(true);
-      const { pdfUrl, invoiceNumber } = await getOrGenerateInvoice(payment);
-
-      // Download the PDF
-      const response = await fetch(pdfUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `invoice-${invoiceNumber}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast.success("Invoice downloaded successfully");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to download invoice"
-      );
-    } finally {
-      setLoadingInvoice(null);
-      setIsDownloading(false);
-    }
-  };
-
-  const handleRefund = (payment: AllPaymentsResponse["payments"][0]) => {
-    setSelectedPayment(payment);
-    setShowRefundDialog(true);
   };
 
   return (
@@ -649,4 +656,6 @@ export default function PaymentsManagementPage() {
       </div>
     </MainLayout>
   );
-}
+});
+
+export default PaymentsManagementPage;
