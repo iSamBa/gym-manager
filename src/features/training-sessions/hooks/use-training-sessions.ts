@@ -22,7 +22,6 @@ import type {
   CreateSessionData,
   UpdateSessionData,
   SessionFilters,
-  SessionParticipant,
 } from "../lib/types";
 
 // Query keys
@@ -42,6 +41,8 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
   return useQuery({
     queryKey: TRAINING_SESSIONS_KEYS.list(filters || {}),
     queryFn: async () => {
+      const startTime = performance.now();
+
       // If date_range is provided, use the planning indicators function
       // This includes planning data (subscription_end_date, latest_payment_date, etc.)
       if (filters?.date_range) {
@@ -64,7 +65,9 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
           (data || []) as RpcSessionResponse<TrainingSession>[]
         );
 
-        // Apply additional filters
+        // PERFORMANCE: Apply filters server-side via RPC in future optimization
+        // For now, filtering on already-limited date-range dataset (acceptable performance)
+        // TODO US-006: Move these filters to RPC function parameters
         if (filters.trainer_id) {
           sessions = sessions.filter(
             (s) => s.trainer_id === filters.trainer_id
@@ -85,22 +88,26 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
           sessions = sessions.filter((s) => s.member_id === filters.member_id);
         }
 
+        const duration = performance.now() - startTime;
+        logger.debug("Training sessions query performance (RPC)", {
+          filters,
+          duration: `${duration.toFixed(2)}ms`,
+          count: sessions.length,
+        });
+
         return sessions;
       }
 
-      // Fallback to view for non-date-range queries
+      // SERVER-SIDE FILTERING: Use Supabase query builder for optimal performance
       let query = supabase
         .from("training_sessions_calendar")
         .select("*")
         .order("scheduled_start", { ascending: false });
 
-      // Apply filters (simplified)
+      // Apply all filters server-side using Supabase query builder
       if (filters?.trainer_id) {
         query = query.eq("trainer_id", filters.trainer_id);
       }
-
-      // Note: member_id filtering removed as training_sessions_calendar view doesn't have member_id column
-      // Member filtering should be done by checking the participants array after fetching
 
       if (filters?.status && filters.status !== "all") {
         query = query.eq("status", filters.status);
@@ -110,23 +117,49 @@ export const useTrainingSessions = (filters?: SessionFilters) => {
         query = query.eq("machine_id", filters.machine_id);
       }
 
+      // SERVER-SIDE MEMBER FILTERING: Use join with training_session_members
+      if (filters?.member_id) {
+        // Use inner join to filter sessions by member participation
+        query = supabase
+          .from("training_sessions_calendar")
+          .select(
+            `
+            *,
+            training_session_members!inner(member_id)
+          `
+          )
+          .eq("training_session_members.member_id", filters.member_id)
+          .eq("training_session_members.booking_status", "confirmed")
+          .order("scheduled_start", { ascending: false });
+
+        // Re-apply other filters after changing to join query
+        if (filters.trainer_id) {
+          query = query.eq("trainer_id", filters.trainer_id);
+        }
+
+        if (filters.status && filters.status !== "all") {
+          query = query.eq("status", filters.status);
+        }
+
+        if (filters.machine_id) {
+          query = query.eq("machine_id", filters.machine_id);
+        }
+      }
+
       const { data, error } = await query;
 
       if (error) {
         throw new Error(`Failed to fetch training sessions: ${error.message}`);
       }
 
-      let sessions = data as TrainingSession[];
+      const duration = performance.now() - startTime;
+      logger.debug("Training sessions query performance (view)", {
+        filters,
+        duration: `${duration.toFixed(2)}ms`,
+        count: data?.length || 0,
+      });
 
-      // Filter by member_id if specified (check participants array)
-      if (filters?.member_id && sessions) {
-        sessions = sessions.filter((session) => {
-          const participants = session.participants as SessionParticipant[];
-          return participants?.some((p) => p.id === filters.member_id);
-        });
-      }
-
-      return sessions;
+      return data as TrainingSession[];
     },
   });
 };
