@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "@/lib/dev-error-handler"; // Filter HMR errors in development
 import { ClientProviders } from "@/components/providers/client-providers";
+import { reportWebVital, type WebVitalData } from "@/lib/monitoring";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,4 +34,13 @@ export default async function RootLayout({ children }: RootLayoutProps) {
       </body>
     </html>
   );
+}
+
+/**
+ * Report Web Vitals to monitoring system
+ * Metrics tracked: FCP, LCP, CLS, FID, TTFB, INP
+ * Only reported in production builds
+ */
+export function reportWebVitals(metric: WebVitalData) {
+  reportWebVital(metric);
 }
