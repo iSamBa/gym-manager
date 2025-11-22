@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useMemo } from "react";
+import { memo, useState, useMemo, lazy, Suspense } from "react";
 import {
   Select,
   SelectContent,
@@ -9,13 +9,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrialMetricsChart } from "./TrialMetricsChart";
-import { SubscriptionMetricsChart } from "./SubscriptionMetricsChart";
-import { CancellationsChart } from "./CancellationsChart";
 import { useMonthlyActivity } from "../hooks/use-monthly-activity";
 import { getCurrentMonthBounds, formatMonth } from "../lib/month-utils";
 import { subMonths } from "date-fns";
 import { getLocalDateString } from "@/lib/date-utils";
+
+// Lazy load chart components to reduce initial bundle size
+const TrialMetricsChart = lazy(() =>
+  import("./TrialMetricsChart").then((module) => ({
+    default: module.TrialMetricsChart,
+  }))
+);
+
+const SubscriptionMetricsChart = lazy(() =>
+  import("./SubscriptionMetricsChart").then((module) => ({
+    default: module.SubscriptionMetricsChart,
+  }))
+);
+
+const CancellationsChart = lazy(() =>
+  import("./CancellationsChart").then((module) => ({
+    default: module.CancellationsChart,
+  }))
+);
 
 export const MonthlyActivityCard = memo(function MonthlyActivityCard() {
   // State for selected month (default: current month)
@@ -106,20 +122,26 @@ export const MonthlyActivityCard = memo(function MonthlyActivityCard() {
 
       {/* Chart cards grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <TrialMetricsChart
-          trialSessions={monthlyData.trial_sessions}
-          trialConversions={monthlyData.trial_conversions}
-          month={formatMonth(selectedMonth)}
-        />
-        <SubscriptionMetricsChart
-          subscriptionsExpired={monthlyData.subscriptions_expired}
-          subscriptionsRenewed={monthlyData.subscriptions_renewed}
-          month={formatMonth(selectedMonth)}
-        />
-        <CancellationsChart
-          subscriptionsCancelled={monthlyData.subscriptions_cancelled}
-          month={formatMonth(selectedMonth)}
-        />
+        <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+          <TrialMetricsChart
+            trialSessions={monthlyData.trial_sessions}
+            trialConversions={monthlyData.trial_conversions}
+            month={formatMonth(selectedMonth)}
+          />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+          <SubscriptionMetricsChart
+            subscriptionsExpired={monthlyData.subscriptions_expired}
+            subscriptionsRenewed={monthlyData.subscriptions_renewed}
+            month={formatMonth(selectedMonth)}
+          />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+          <CancellationsChart
+            subscriptionsCancelled={monthlyData.subscriptions_cancelled}
+            month={formatMonth(selectedMonth)}
+          />
+        </Suspense>
       </div>
     </div>
   );
