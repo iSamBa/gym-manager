@@ -616,7 +616,8 @@ The user story was written assuming 99 total hooks, but audit revealed only **31
 
 **Total: 31 hooks (6 features compliant, 3 slightly over)**
 
-**Pragmatic Approach**:
+#### Pragmatic Approach
+
 The 4-hook guideline aims to prevent "hook proliferation" (many tiny overlapping hooks). Our current hooks are **well-designed** with distinct responsibilities:
 
 1. **Settings (7 hooks)**: Each serves different settings tab - consolidation would create artificial coupling
