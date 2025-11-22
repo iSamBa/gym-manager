@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import type { MemberFormData } from "../progressive-form/types";
 
 const statusOptions = [
   { value: "active", label: "Active" },
@@ -28,8 +29,7 @@ const statusOptions = [
 ];
 
 interface StatusSettingsSectionProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
+  control: Control<MemberFormData>;
 }
 
 export const StatusSettingsSection = memo(function StatusSettingsSection({

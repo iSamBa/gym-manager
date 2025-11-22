@@ -18,10 +18,10 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMembers } from "@/features/members/hooks";
+import type { MemberFormData } from "../progressive-form/types";
 
 interface ReferralSectionProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
+  control: Control<MemberFormData>;
   excludeMemberId?: string; // For edit mode - exclude current member
 }
 

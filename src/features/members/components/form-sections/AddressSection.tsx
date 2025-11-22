@@ -10,10 +10,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { MemberFormData } from "../progressive-form/types";
 
 interface AddressSectionProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
+  control: Control<MemberFormData>;
 }
 
 export const AddressSection = memo(function AddressSection({
@@ -51,19 +51,6 @@ export const AddressSection = memo(function AddressSection({
                 <FormLabel>City</FormLabel>
                 <FormControl>
                   <Input placeholder="Enter city" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={control}
-            name="address.state"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>State/Province</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter state" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

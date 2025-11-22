@@ -1,5 +1,5 @@
 import React, { memo, useEffect } from "react";
-import { Control, useWatch } from "react-hook-form";
+import { Control, useWatch, UseFormSetValue } from "react-hook-form";
 import { Users } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -11,12 +11,11 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { MemberFormData } from "../progressive-form/types";
 
 interface TrainingPreferenceSectionProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setValue: any; // To clear training_preference when gender changes
+  control: Control<MemberFormData>;
+  setValue: UseFormSetValue<MemberFormData>;
 }
 
 export const TrainingPreferenceSection = memo(

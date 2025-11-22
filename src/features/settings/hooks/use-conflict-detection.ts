@@ -90,8 +90,10 @@ async function checkConflicts(
     const sessionEndTime = format(sessionEnd, "HH:mm");
 
     // Get machine number (handle both array and object from Supabase)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const machines = session.machines as any;
+    const machines = session.machines as
+      | { machine_number: number }
+      | { machine_number: number }[]
+      | null;
     const machineNumber =
       Array.isArray(machines) && machines.length > 0
         ? machines[0]?.machine_number

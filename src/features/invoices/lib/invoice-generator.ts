@@ -23,6 +23,36 @@ import type {
   InvoiceSettings,
 } from "@/features/database/lib/types";
 
+// Type definitions for dynamically imported jsPDF library
+interface JsPDFConstructor {
+  new (options?: { format?: string; unit?: string }): JsPDFDocument;
+}
+
+interface JsPDFDocument {
+  addImage(
+    imageData: string,
+    format: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): void;
+  setFontSize(size: number): void;
+  setFont(font: string, style?: string): void;
+  setTextColor(r: number, g?: number, b?: number): void;
+  setLineWidth(width: number): void;
+  text(text: string | string[], x: number, y: number, options?: unknown): void;
+  line(x1: number, y1: number, x2: number, y2: number): void;
+  splitTextToSize(text: string, maxWidth: number): string[];
+  save(filename: string): void;
+  output(type: string, options?: unknown): Blob;
+  lastAutoTable?: { finalY: number };
+}
+
+interface AutoTableFunction {
+  (doc: JsPDFDocument, options: unknown): void;
+}
+
 /**
  * Format currency for display
  *
@@ -95,12 +125,12 @@ export async function generateInvoicePDF(
     });
 
     // Dynamic import for bundle optimization (CRITICAL for performance)
-    // Import jsPDF using named export (works in browser/Next.js runtime)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { jsPDF } = (await import("jspdf")) as any;
+    // Import jsPDF - using default export with type assertion through unknown
+    const jsPDFModule = await import("jspdf");
+    const jsPDF = jsPDFModule.default as unknown as JsPDFConstructor;
     // Import autotable as default export (v5.x uses default export)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const autoTable = (await import("jspdf-autotable")).default as any;
+    const autoTableModule = await import("jspdf-autotable");
+    const autoTable = autoTableModule.default as unknown as AutoTableFunction;
 
     // Create A4 PDF in portrait mode
     const doc = new jsPDF({
@@ -253,9 +283,8 @@ export async function generateInvoicePDF(
       margin: { left: margin, right: margin },
     });
 
-    // Get Y position after table
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const finalTableY = (doc as any).lastAutoTable?.finalY || currentY + 40;
+    // Get Y position after table (lastAutoTable is added by jspdf-autotable)
+    const finalTableY = doc.lastAutoTable?.finalY || currentY + 40;
 
     currentY = finalTableY + 10;
 

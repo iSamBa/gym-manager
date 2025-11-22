@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatForDatabase } from "@/lib/date-utils";
+import type { MemberFormData } from "../progressive-form/types";
 
 const genderOptions = [
   { value: "male", label: "Male" },
@@ -26,8 +27,7 @@ const genderOptions = [
 ];
 
 interface PersonalInfoSectionProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
+  control: Control<MemberFormData>;
 }
 
 export const PersonalInfoSection = memo(function PersonalInfoSection({

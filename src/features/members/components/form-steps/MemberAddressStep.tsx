@@ -7,10 +7,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import type { MemberFormData } from "../progressive-form/types";
 
 interface MemberAddressStepProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  form: UseFormReturn<any>;
+  form: UseFormReturn<MemberFormData>;
 }
 
 export function MemberAddressStep({ form }: MemberAddressStepProps) {

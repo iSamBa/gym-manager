@@ -28,6 +28,9 @@ CLAUDE-BACKUP.md
 .vscode
 *.pem
 
+# Playwright MCP artifacts
+.playwright-mcp/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
